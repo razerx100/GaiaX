@@ -13,9 +13,9 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/")
 
 if(IMGUIFLAG STREQUAL "ENABLE")
-    file(GLOB_RECURSE SRC src/*.cpp includes/*.hpp templates/*.hpp ImGui/*.cpp ImGui/*.h)
+    file(GLOB_RECURSE SRC src/*.cpp includes/*.hpp includes/D3D/*.hpp templates/*.hpp ImGui/*.cpp ImGui/*.h)
 else()
-    file(GLOB_RECURSE SRC src/*.cpp includes/*.hpp templates/*.hpp)
+    file(GLOB_RECURSE SRC src/*.cpp includes/*.hpp includes/D3D/*.hpp templates/*.hpp)
 endif()
 
 add_library(${PROJECT_NAME} STATIC
