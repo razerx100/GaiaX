@@ -1,4 +1,4 @@
-#include <GraphicsExceptions.hpp>
+#include <D3DExceptions.hpp>
 #include <sstream>
 
 // HR EXCEPTION

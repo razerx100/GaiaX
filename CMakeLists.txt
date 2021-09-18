@@ -22,9 +22,10 @@ add_library(${PROJECT_NAME} STATIC
     ${SRC}
 )
 
-target_include_directories(${PROJECT_NAME} PRIVATE includes/ includes/Exceptions/ templates/)
+target_include_directories(${PROJECT_NAME} PRIVATE includes/ includes/D3D/ includes/Exceptions/ templates/)
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE "$<$<CONFIG:DEBUG>:_DEBUG>" "$<$<CONFIG:RELEASE>:NDEBUG>")
+
 
 if(IMGUIFLAG STREQUAL "ENABLE")
     target_include_directories(${PROJECT_NAME} PRIVATE ImGui/includes/)

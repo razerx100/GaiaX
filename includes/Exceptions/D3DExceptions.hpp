@@ -1,5 +1,5 @@
-#ifndef __GRAPHICS_EXCEPTIONS_HPP__
-#define __GRAPHICS_EXCEPTIONS_HPP__
+#ifndef __D3D_EXCEPTIONS_HPP__
+#define __D3D_EXCEPTIONS_HPP__
 #include <Win32BaseException.hpp>
 #include <vector>
 
