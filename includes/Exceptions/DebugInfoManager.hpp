@@ -1,16 +1,14 @@
 #ifndef __DXGI_INFO_MANAGER_HPP__
 #define __DXGI_INFO_MANAGER_HPP__
-#include <wrl/client.h>
+#include <D3DHeaders.hpp>
 #include <vector>
 #include <string>
-#include <d3d12.h>
 
 using Microsoft::WRL::ComPtr;
 
 class DebugInfoManager {
 public:
 	DebugInfoManager();
-	~DebugInfoManager() = default;
 
 	DebugInfoManager(const DebugInfoManager&) = delete;
 	DebugInfoManager& operator=(const DebugInfoManager&) = delete;
@@ -21,14 +19,11 @@ public:
 	ComPtr<ID3D12InfoQueue> m_pInfoQueue;
 private:
 	std::uint64_t m_next;
+};
 
 #ifdef _DEBUG
-public:
-	static void SetDebugInfoManager(ID3D12Device5* device) noexcept;
-	static DebugInfoManager& GetDebugInfoManager() noexcept;
-
-private:
-	static DebugInfoManager s_InfoManager;
+	DebugInfoManager* GetDebugInfoManagerInstance() noexcept;
+	void InitDebugInfoManagerInstance(ID3D12Device5* device);
+	void CleanUpDebugInfoManagerInstance();
 #endif
-};
 #endif

@@ -1,9 +1,8 @@
 #ifndef __DEVICE_MANAGER_HPP__
 #define __DEVICE_MANAGER_HPP__
 #include <D3DHeaders.hpp>
-#include <GenericSingleton.hpp>
 
-class DeviceManager : public GenericSingleton<DeviceManager> {
+class DeviceManager {
 public:
 	DeviceManager();
 
@@ -18,4 +17,8 @@ private:
 private:
 	ComPtr<ID3D12Device5> m_pDevice;
 };
+
+DeviceManager* GetD3DDeviceInstance() noexcept;
+void InitD3DDeviceInstance();
+void CleanUpD3DDeviceInstance();
 #endif

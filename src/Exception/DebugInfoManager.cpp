@@ -33,14 +33,24 @@ std::vector<std::string> DebugInfoManager::GetMessages() const {
 }
 
 #ifdef _DEBUG
+static DebugInfoManager* s_pDebugInfoManager = nullptr;
 
-DebugInfoManager DebugInfoManager::s_InfoManager;
+void InitDebugInfoManagerInstance(ID3D12Device5* device) {
+	if (!s_pDebugInfoManager) {
+		s_pDebugInfoManager = new DebugInfoManager();
 
-void DebugInfoManager::SetDebugInfoManager(ID3D12Device5* device) noexcept {
-    device->QueryInterface(__uuidof(ID3D12InfoQueue), &s_InfoManager.m_pInfoQueue);
+		device->QueryInterface(
+			__uuidof(ID3D12InfoQueue), &s_pDebugInfoManager->m_pInfoQueue
+		);
+	}
 }
 
-DebugInfoManager& DebugInfoManager::GetDebugInfoManager() noexcept {
-	return s_InfoManager;
+DebugInfoManager* GetDebugInfoManagerInstance() noexcept {
+	return s_pDebugInfoManager;
+}
+
+void CleanUpDebugInfoManagerInstance() {
+	if (s_pDebugInfoManager)
+		delete s_pDebugInfoManager;
 }
 #endif
