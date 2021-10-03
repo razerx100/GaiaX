@@ -49,7 +49,7 @@ DebugInfoManager* GetDebugInfoManagerInstance() noexcept {
 	return s_pDebugInfoManager;
 }
 
-void CleanUpDebugInfoManagerInstance() {
+void CleanUpDebugInfoManagerInstance() noexcept {
 	if (s_pDebugInfoManager)
 		delete s_pDebugInfoManager;
 }

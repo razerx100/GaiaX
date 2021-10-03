@@ -27,6 +27,6 @@ public:
 
 GAIAX_DLL GraphicsEngine* _cdecl GetGraphicsEngineInstance() noexcept;
 GAIAX_DLL void _cdecl InitGraphicsEngineInstance(void* windowHandle);
-GAIAX_DLL void _cdecl CleanUpGraphicsEngineInstance();
+GAIAX_DLL void _cdecl CleanUpGraphicsEngineInstance() noexcept;
 
 #endif

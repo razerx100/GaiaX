@@ -20,5 +20,5 @@ private:
 
 DeviceManager* GetD3DDeviceInstance() noexcept;
 void InitD3DDeviceInstance();
-void CleanUpD3DDeviceInstance();
+void CleanUpD3DDeviceInstance() noexcept;
 #endif

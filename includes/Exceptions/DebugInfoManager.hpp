@@ -24,6 +24,6 @@ private:
 #ifdef _DEBUG
 	DebugInfoManager* GetDebugInfoManagerInstance() noexcept;
 	void InitDebugInfoManagerInstance(ID3D12Device5* device);
-	void CleanUpDebugInfoManagerInstance();
+	void CleanUpDebugInfoManagerInstance() noexcept;
 #endif
 #endif
