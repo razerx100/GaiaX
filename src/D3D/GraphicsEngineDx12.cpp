@@ -10,7 +10,7 @@ GraphicsEngineDx12::GraphicsEngineDx12(void* windowHandle) {
 #endif
 }
 
-GraphicsEngineDx12::~GraphicsEngineDx12() {
+GraphicsEngineDx12::~GraphicsEngineDx12() noexcept {
 	CleanUpD3DDeviceInstance();
 #ifdef _DEBUG
 	CleanUpDebugInfoManagerInstance();

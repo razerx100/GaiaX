@@ -7,7 +7,7 @@
 class GraphicsEngineDx12 : public GraphicsEngine {
 public:
 	GraphicsEngineDx12(void* windowHandle);
-	~GraphicsEngineDx12();
+	~GraphicsEngineDx12() noexcept;
 
 	void SubmitCommands() override;
 	void Render() override;
