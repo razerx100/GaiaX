@@ -14,13 +14,12 @@ DeviceManager::DeviceManager() {
     }
 #endif
 
-    ComPtr<IDXGIFactory4> factory;
-    CreateDXGIFactory2(dxgiFactoryFlags, __uuidof(IDXGIFactory4), &factory);
+    CreateDXGIFactory2(dxgiFactoryFlags, __uuidof(IDXGIFactory4), &m_pFactory);
 
     {
         ComPtr<IDXGIAdapter1> adapter;
 
-        GetHardwareAdapter(factory.Get(), &adapter);
+        GetHardwareAdapter(m_pFactory.Get(), &adapter);
 
         D3D12CreateDevice(
             adapter.Get(),
@@ -33,6 +32,10 @@ DeviceManager::DeviceManager() {
 
 ID3D12Device5* DeviceManager::GetDeviceRef() const noexcept {
 	return m_pDevice.Get();
+}
+
+IDXGIFactory4* DeviceManager::GetFactoryRef() const noexcept {
+    return m_pFactory.Get();
 }
 
 void DeviceManager::GetHardwareAdapter(

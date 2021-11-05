@@ -38,6 +38,10 @@ SwapChainManager::SwapChainManager(
 		)
 	);
 
+	GFX_THROW_FAILED(
+		hr, swapChain.As(&m_pSwapChain)
+	);
+
 	if (variableRefreshRateAvailable)
 		GFX_THROW_FAILED(
 			hr, factory->MakeWindowAssociation(
@@ -46,29 +50,7 @@ SwapChainManager::SwapChainManager(
 			)
 		);
 
-	GFX_THROW_FAILED(
-		hr, swapChain.As(&m_pSwapChain)
-	);
-
-	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
-	rtvHeapDesc.NumDescriptors = bufferCount;
-	rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-	rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-
-	ID3D12Device5* deviceRef = GetD3DDeviceInstance()->GetDeviceRef();
-
-	GFX_THROW_FAILED(
-		hr, deviceRef->CreateDescriptorHeap(
-			&rtvHeapDesc,
-			__uuidof(ID3D12DescriptorHeap),
-			&m_pRtvHeap
-		)
-	);
-
-	m_rtvDescSize = deviceRef->GetDescriptorHandleIncrementSize(
-		D3D12_DESCRIPTOR_HEAP_TYPE_RTV
-	);
-
+	CreateRTVHeap(bufferCount);
 	CreateRTVs();
 }
 
@@ -80,18 +62,20 @@ void SwapChainManager::CreateRTVs() {
 	HRESULT hr;
 	ID3D12Device5* deviceRef = GetD3DDeviceInstance()->GetDeviceRef();
 
-	for (std::uint32_t index = 0; index < m_pRenderTargetViews.size(); ++index) {
-		GFX_THROW_FAILED(
-			hr, m_pSwapChain->GetBuffer(
-				index, __uuidof(ID3D12Resource), &m_pRenderTargetViews[index]
-			)
-		);
+	if (deviceRef) {
+		for (std::uint32_t index = 0; index < m_pRenderTargetViews.size(); ++index) {
+			GFX_THROW_FAILED(
+				hr, m_pSwapChain->GetBuffer(
+					index, __uuidof(ID3D12Resource), &m_pRenderTargetViews[index]
+				)
+			);
 
-		deviceRef->CreateRenderTargetView(
-			m_pRenderTargetViews[index].Get(), nullptr, rtvHandle
-		);
+			deviceRef->CreateRenderTargetView(
+				m_pRenderTargetViews[index].Get(), nullptr, rtvHandle
+			);
 
-		rtvHandle.Offset(1, m_rtvDescSize);
+			rtvHandle.Offset(1, m_rtvDescSize);
+		}
 	}
 }
 
@@ -99,31 +83,31 @@ std::uint32_t SwapChainManager::GetCurrentBackBufferIndex() const noexcept {
 	return m_pSwapChain->GetCurrentBackBufferIndex();
 }
 
-D3D12_CPU_DESCRIPTOR_HANDLE SwapChainManager::GetRTVHandle(
-	std::uint8_t frameIndex
+D3D12_CPU_DESCRIPTOR_HANDLE SwapChainManager::ClearRTV(
+	ID3D12GraphicsCommandList* commandList, float* clearColor
 ) noexcept {
-	return CD3DX12_CPU_DESCRIPTOR_HANDLE(
+	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(
 		m_pRtvHeap->GetCPUDescriptorHandleForHeapStart(),
-		frameIndex,
+		GetCurrentBackBufferIndex(),
 		m_rtvDescSize
 	);
+
+	commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
+
+	return rtvHandle;
 }
 
-D3D12_RESOURCE_BARRIER SwapChainManager::GetRenderStateBarrier(
-	std::uint8_t frameIndex
-) noexcept {
+D3D12_RESOURCE_BARRIER SwapChainManager::GetRenderStateBarrier() const noexcept {
 	return CD3DX12_RESOURCE_BARRIER::Transition(
-		m_pRenderTargetViews[frameIndex].Get(),
+		m_pRenderTargetViews[GetCurrentBackBufferIndex()].Get(),
 		D3D12_RESOURCE_STATE_PRESENT,
 		D3D12_RESOURCE_STATE_RENDER_TARGET
 	);
 }
 
-D3D12_RESOURCE_BARRIER SwapChainManager::GetPresentStateBarrier(
-	std::uint8_t frameIndex
-) noexcept {
+D3D12_RESOURCE_BARRIER SwapChainManager::GetPresentStateBarrier() const noexcept {
 	return CD3DX12_RESOURCE_BARRIER::Transition(
-		m_pRenderTargetViews[frameIndex].Get(),
+		m_pRenderTargetViews[GetCurrentBackBufferIndex()].Get(),
 		D3D12_RESOURCE_STATE_RENDER_TARGET,
 		D3D12_RESOURCE_STATE_PRESENT
 	);
@@ -168,5 +152,36 @@ void SwapChainManager::Resize(std::uint32_t width, std::uint32_t height) {
 				desc.Flags
 			)
 		);
+
+		m_width = width;
+		m_height = height;
+
+		CreateRTVs();
 	}
+}
+
+void SwapChainManager::CreateRTVHeap(std::uint8_t bufferCount) {
+	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
+	rtvHeapDesc.NumDescriptors = bufferCount;
+	rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
+	rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+
+	ID3D12Device5* deviceRef = GetD3DDeviceInstance()->GetDeviceRef();
+
+	HRESULT hr;
+	GFX_THROW_FAILED(
+		hr, deviceRef->CreateDescriptorHeap(
+			&rtvHeapDesc,
+			__uuidof(ID3D12DescriptorHeap),
+			&m_pRtvHeap
+		)
+	);
+
+	m_rtvDescSize = deviceRef->GetDescriptorHandleIncrementSize(
+		D3D12_DESCRIPTOR_HEAP_TYPE_RTV
+	);
+}
+
+IDXGISwapChain4* SwapChainManager::GetRef() const noexcept {
+	return m_pSwapChain.Get();
 }

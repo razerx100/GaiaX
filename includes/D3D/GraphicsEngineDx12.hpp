@@ -6,14 +6,27 @@
 
 class GraphicsEngineDx12 : public GraphicsEngine {
 public:
-	GraphicsEngineDx12(void* windowHandle);
+	GraphicsEngineDx12(
+		void* windowHandle, std::uint32_t width, std::uint32_t height,
+		std::uint8_t bufferCount
+	);
 	~GraphicsEngineDx12() noexcept;
 
+	void SetBackgroundColor(Color color) noexcept override;
 	void SubmitCommands() override;
 	void Render() override;
 	void Resize(std::uint32_t width, std::uint32_t height) override;
 	SRect GetMonitorCoordinates() override;
 
 	static constexpr DXGI_FORMAT RENDER_FORMAT = DXGI_FORMAT_R8G8B8A8_UNORM;
+
+private:
+	void InitViewPortAndScissor(std::uint32_t width, std::uint32_t height) noexcept;
+
+private:
+	D3D12_VIEWPORT m_viewport;
+	D3D12_RECT m_scissorRect;
+
+	Color m_backgroundColor;
 };
 #endif

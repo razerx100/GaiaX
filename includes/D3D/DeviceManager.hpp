@@ -7,6 +7,7 @@ public:
 	DeviceManager();
 
 	ID3D12Device5* GetDeviceRef() const noexcept;
+	IDXGIFactory4* GetFactoryRef() const noexcept;
 
 private:
 	void GetHardwareAdapter(
@@ -16,6 +17,7 @@ private:
 
 private:
 	ComPtr<ID3D12Device5> m_pDevice;
+    ComPtr<IDXGIFactory4> m_pFactory;
 };
 
 DeviceManager* GetD3DDeviceInstance() noexcept;

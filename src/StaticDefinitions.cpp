@@ -1,12 +1,15 @@
 #include <DeviceManager.hpp>
 #include <GraphicsEngineDx12.hpp>
 #include <SwapChainManager.hpp>
+#include <CommandQueueManager.hpp>
 
 static DeviceManager* s_pD3DDevice = nullptr;
 
 static GraphicsEngine* s_pGraphicsEngine = nullptr;
 
 static SwapChainManager* s_pSwapChainManager = nullptr;
+
+static CommandQueueManager* s_pGraphicsQueue = nullptr;
 
 DeviceManager* GetD3DDeviceInstance() noexcept {
 	return s_pD3DDevice;
@@ -26,9 +29,14 @@ GraphicsEngine* GetGraphicsEngineInstance() noexcept {
 	return s_pGraphicsEngine;
 }
 
-void InitGraphicsEngineInstance(void* windowHandle) {
+void InitGraphicsEngineInstance(
+	void* windowHandle, std::uint32_t width, std::uint32_t height,
+	std::uint8_t bufferCount
+) {
 	if(!s_pGraphicsEngine)
-		s_pGraphicsEngine = new GraphicsEngineDx12(windowHandle);
+		s_pGraphicsEngine = new GraphicsEngineDx12(
+			windowHandle, width, height, bufferCount
+		);
 }
 
 void CleanUpGraphicsEngineInstance() noexcept {
@@ -57,4 +65,25 @@ void InitSwapChianInstance(
 void CleanUpSwapChainInstance() noexcept {
 	if (s_pSwapChainManager)
 		delete s_pSwapChainManager;
+}
+
+CommandQueueManager* GetGraphicsQueueInstance() noexcept {
+	return s_pGraphicsQueue;
+}
+
+void InitGraphicsQueueInstance(
+	ID3D12Device5* device,
+	std::uint8_t bufferCount
+) {
+	if (!s_pGraphicsQueue)
+		s_pGraphicsQueue = new CommandQueueManager(
+			device,
+			D3D12_COMMAND_LIST_TYPE_DIRECT,
+			bufferCount
+		);
+}
+
+void CleanUpGraphicsQueueInstance() noexcept {
+	if (s_pGraphicsQueue)
+		delete s_pGraphicsQueue;
 }

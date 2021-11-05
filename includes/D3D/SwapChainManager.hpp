@@ -19,12 +19,17 @@ public:
 	// Should be only called when all of the back buffers have finished executing
 	void Resize(std::uint32_t width, std::uint32_t height);
 
+	D3D12_CPU_DESCRIPTOR_HANDLE ClearRTV(
+		ID3D12GraphicsCommandList* commandList, float* clearColor
+	) noexcept;
 	std::uint32_t GetCurrentBackBufferIndex() const noexcept;
-	D3D12_CPU_DESCRIPTOR_HANDLE GetRTVHandle(std::uint8_t frameIndex) noexcept;
-	D3D12_RESOURCE_BARRIER GetRenderStateBarrier(std::uint8_t frameIndex) noexcept;
-	D3D12_RESOURCE_BARRIER GetPresentStateBarrier(std::uint8_t frameIndex) noexcept;
+	D3D12_RESOURCE_BARRIER GetRenderStateBarrier() const noexcept;
+	D3D12_RESOURCE_BARRIER GetPresentStateBarrier() const noexcept;
+
+	IDXGISwapChain4* GetRef() const noexcept;
 
 private:
+	void CreateRTVHeap(std::uint8_t bufferCount);
 	void CreateRTVs();
 
 private:
