@@ -6,8 +6,7 @@ CommandListManager::CommandListManager(
 	ID3D12Device5* device,
 	D3D12_COMMAND_LIST_TYPE type, std::uint8_t allocatorsCount
 ) :
-	m_pCommandAllocators(allocatorsCount),
-	m_allocatorsInUse(allocatorsCount) {
+	m_pCommandAllocators(allocatorsCount) {
 
 	HRESULT hr;
 	for (std::uint32_t index = 0; index < allocatorsCount; ++index) {
@@ -29,31 +28,23 @@ CommandListManager::CommandListManager(
 	);
 }
 
-std::uint32_t CommandListManager::Reset() {
+void CommandListManager::Reset() {
 	std::uint32_t allocIndex = 0u;
-	for(std::uint32_t index = 0u; index < m_allocatorsInUse.size(); ++index)
-		if (!m_allocatorsInUse[index]) {
-			m_allocatorsInUse[index] = true;
-			allocIndex = index;
-			break;
-		}
+
+	SwapChainManager* swapRef = GetSwapChainInstance();
+	if (swapRef)
+		allocIndex = swapRef->GetCurrentBackBufferIndex();
 
 	HRESULT hr;
 	GFX_THROW_FAILED(hr, m_pCommandAllocators[allocIndex]->Reset());
 	GFX_THROW_FAILED(hr,
 		m_pCommandList->Reset(m_pCommandAllocators[allocIndex].Get(), nullptr)
 	);
-
-	return allocIndex;
 }
 
 void CommandListManager::Close() const {
 	HRESULT hr;
 	GFX_THROW_FAILED(hr, m_pCommandList->Close());
-}
-
-void CommandListManager::FreeAllocator(std::uint32_t index) noexcept {
-	m_allocatorsInUse[index] = false;
 }
 
 ID3D12GraphicsCommandList* CommandListManager::GetCommandList() const noexcept {
@@ -65,7 +56,6 @@ CommandQueueManager::CommandQueueManager(
 	D3D12_COMMAND_LIST_TYPE type, std::uint8_t bufferCount
 )
 	: m_commandListMan(device, type, bufferCount),
-	m_commandAllocatorIndex(0u),
 	m_fenceEvent(nullptr),
 	m_fenceValues(bufferCount) {
 
@@ -96,15 +86,11 @@ void CommandQueueManager::ExecuteCommandLists() const noexcept {
 }
 
 void CommandQueueManager::RecordCommandList() {
-	m_commandAllocatorIndex = m_commandListMan.Reset();
+	m_commandListMan.Reset();
 }
 
 void CommandQueueManager::CloseCommandList() const {
 	m_commandListMan.Close();
-}
-
-void CommandQueueManager::FinishExecution() noexcept {
-	m_commandListMan.FreeAllocator(m_commandAllocatorIndex);
 }
 
 void CommandQueueManager::InitSyncObjects(

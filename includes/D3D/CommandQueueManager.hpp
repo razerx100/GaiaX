@@ -11,16 +11,14 @@ public:
 		D3D12_COMMAND_LIST_TYPE type, std::uint8_t allocatorsCount
 	);
 
-	std::uint32_t Reset();
+	void Reset();
 	void Close() const;
-	void FreeAllocator(std::uint32_t index) noexcept;
 
 	ID3D12GraphicsCommandList* GetCommandList() const noexcept;
 
 private:
 	ComPtr<ID3D12GraphicsCommandList> m_pCommandList;
 	std::vector<ComPtr<ID3D12CommandAllocator>> m_pCommandAllocators;
-	std::vector<bool> m_allocatorsInUse;
 };
 
 class CommandQueueManager {
@@ -34,7 +32,6 @@ public:
 
 	void RecordCommandList();
 	void CloseCommandList() const;
-	void FinishExecution() noexcept;
 	void WaitForGPU(std::uint32_t backBufferIndex);
 	void MoveToNextFrame(std::uint32_t backBufferIndex);
 
@@ -45,7 +42,6 @@ public:
 private:
 	ComPtr<ID3D12CommandQueue> m_pCommandQueue;
 	CommandListManager m_commandListMan;
-	std::uint32_t m_commandAllocatorIndex;
 
 	ComPtr<ID3D12Fence> m_pFence;
 	HANDLE m_fenceEvent;

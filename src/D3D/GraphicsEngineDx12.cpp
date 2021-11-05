@@ -84,8 +84,6 @@ void GraphicsEngineDx12::Render() {
 
 	swapRef->PresentWithTear();
 	queueRef->MoveToNextFrame(backBufferIndex);
-
-	queueRef->FinishExecution();
 }
 
 void GraphicsEngineDx12::Resize(std::uint32_t width, std::uint32_t height) {
