@@ -30,11 +30,7 @@ add_library(${PROJECT_NAME} SHARED
 
 target_include_directories(${PROJECT_NAME} PRIVATE includes/ includes/D3D/ includes/Exceptions/ templates/ exports/)
 
-target_compile_definitions(${PROJECT_NAME} PRIVATE "$<$<CONFIG:DEBUG>:_DEBUG>" "$<$<CONFIG:RELEASE>:NDEBUG>")
-
-if(PROJECT_IS_TOP_LEVEL)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE BUILD_GAIAX)
-endif()
+target_compile_definitions(${PROJECT_NAME} PRIVATE "$<$<CONFIG:DEBUG>:_DEBUG>" "$<$<CONFIG:RELEASE>:NDEBUG>" BUILD_GAIAX)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
     d3d12.lib dxgi.lib dxguid.lib uuid.lib d3dcompiler.lib
