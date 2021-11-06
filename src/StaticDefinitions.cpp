@@ -30,13 +30,18 @@ GraphicsEngine* GetGraphicsEngineInstance() noexcept {
 }
 
 void InitGraphicsEngineInstance(
-	void* windowHandle, std::uint32_t width, std::uint32_t height,
+	void* windowHandle,
+	void* moduleHandle,
+	std::uint32_t width, std::uint32_t height,
 	std::uint8_t bufferCount
 ) {
 	if(!s_pGraphicsEngine)
 		s_pGraphicsEngine = new GraphicsEngineDx12(
 			windowHandle, width, height, bufferCount
 		);
+
+	// Useless
+	moduleHandle = nullptr;
 }
 
 void CleanUpGraphicsEngineInstance() noexcept {

@@ -8,7 +8,7 @@
 GraphicsEngineDx12::GraphicsEngineDx12(
 	void* windowHandle, std::uint32_t width, std::uint32_t height,
 	std::uint8_t bufferCount
-) : m_backgroundColor{1.0f, 1.0f, 1.0f, 1.0f} {
+) : m_backgroundColor{0.1f, 0.1f, 0.1f, 0.1f} {
 	InitD3DDeviceInstance();
 
 #ifdef _DEBUG
