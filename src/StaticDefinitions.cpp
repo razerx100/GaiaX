@@ -9,7 +9,7 @@ static GraphicsEngine* s_pGraphicsEngine = nullptr;
 
 static SwapChainManager* s_pSwapChainManager = nullptr;
 
-static CommandQueueManager* s_pGraphicsQueue = nullptr;
+static GraphicsCQueueManager* s_pGraphicsQueue = nullptr;
 
 DeviceManager* GetD3DDeviceInstance() noexcept {
 	return s_pD3DDevice;
@@ -67,7 +67,7 @@ void CleanUpSwapChainInstance() noexcept {
 		delete s_pSwapChainManager;
 }
 
-CommandQueueManager* GetGraphicsQueueInstance() noexcept {
+GraphicsCQueueManager* GetGraphicsQueueInstance() noexcept {
 	return s_pGraphicsQueue;
 }
 
@@ -76,7 +76,7 @@ void InitGraphicsQueueInstance(
 	std::uint8_t bufferCount
 ) {
 	if (!s_pGraphicsQueue)
-		s_pGraphicsQueue = new CommandQueueManager(
+		s_pGraphicsQueue = new GraphicsCQueueManager(
 			device,
 			D3D12_COMMAND_LIST_TYPE_DIRECT,
 			bufferCount

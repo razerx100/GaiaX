@@ -27,6 +27,8 @@ std::vector<std::string> DebugInfoManager::GetMessages() const {
 			i, pMessage, &messageLength
 		));
 		messages.emplace_back(pMessage->pDescription);
+
+		delete[] pMessage;
 	}
 
 	return messages;

@@ -11,7 +11,7 @@ public:
 		D3D12_COMMAND_LIST_TYPE type, std::uint8_t allocatorsCount
 	);
 
-	void Reset();
+	void Reset(std::uint32_t allocIndex);
 	void Close() const;
 
 	ID3D12GraphicsCommandList* GetCommandList() const noexcept;
@@ -21,25 +21,22 @@ private:
 	std::vector<ComPtr<ID3D12CommandAllocator>> m_pCommandAllocators;
 };
 
-class CommandQueueManager {
+class _CommandQueueManager {
 public:
-	CommandQueueManager(
+	_CommandQueueManager(
 		ID3D12Device5* device,
 		D3D12_COMMAND_LIST_TYPE type, std::uint8_t bufferCount
 	);
 
 	void InitSyncObjects(ID3D12Device5* device, std::uint32_t backBufferIndex);
 
-	void RecordCommandList();
-	void CloseCommandList() const;
 	void WaitForGPU(std::uint32_t backBufferIndex);
-	void MoveToNextFrame(std::uint32_t backBufferIndex);
+	void ExecuteCommandLists() const noexcept;
 
 	ID3D12CommandQueue* GetCommandQueueRef() const noexcept;
 	ID3D12GraphicsCommandList* GetCommandListRef() const noexcept;
-	void ExecuteCommandLists() const noexcept;
 
-private:
+protected:
 	ComPtr<ID3D12CommandQueue> m_pCommandQueue;
 	CommandListManager m_commandListMan;
 
@@ -48,7 +45,16 @@ private:
 	std::vector<std::uint64_t> m_fenceValues;
 };
 
-CommandQueueManager* GetGraphicsQueueInstance() noexcept;
+class GraphicsCQueueManager : public _CommandQueueManager {
+public:
+	using _CommandQueueManager::_CommandQueueManager;
+
+	void RecordCommandList();
+	void CloseCommandList() const;
+	void MoveToNextFrame(std::uint32_t backBufferIndex);
+};
+
+GraphicsCQueueManager* GetGraphicsQueueInstance() noexcept;
 void InitGraphicsQueueInstance(
 	ID3D12Device5* device,
 	std::uint8_t bufferCount

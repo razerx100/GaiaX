@@ -20,7 +20,7 @@ GraphicsEngineDx12::GraphicsEngineDx12(
 		bufferCount
 	);
 
-	CommandQueueManager* queueRef = GetGraphicsQueueInstance();
+	GraphicsCQueueManager* queueRef = GetGraphicsQueueInstance();
 
 	InitSwapChianInstance(
 		GetD3DDeviceInstance()->GetFactoryRef(),
@@ -55,7 +55,7 @@ void GraphicsEngineDx12::SubmitCommands() {
 }
 
 void GraphicsEngineDx12::Render() {
-	CommandQueueManager* queueRef = GetGraphicsQueueInstance();
+	GraphicsCQueueManager* queueRef = GetGraphicsQueueInstance();
 	ID3D12GraphicsCommandList* commandList = queueRef->GetCommandListRef();
 	SwapChainManager* swapRef = GetSwapChainInstance();
 

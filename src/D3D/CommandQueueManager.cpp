@@ -2,6 +2,7 @@
 #include <D3DThrowMacros.hpp>
 #include <SwapChainManager.hpp>
 
+// CommandList
 CommandListManager::CommandListManager(
 	ID3D12Device5* device,
 	D3D12_COMMAND_LIST_TYPE type, std::uint8_t allocatorsCount
@@ -28,13 +29,7 @@ CommandListManager::CommandListManager(
 	);
 }
 
-void CommandListManager::Reset() {
-	std::uint32_t allocIndex = 0u;
-
-	SwapChainManager* swapRef = GetSwapChainInstance();
-	if (swapRef)
-		allocIndex = swapRef->GetCurrentBackBufferIndex();
-
+void CommandListManager::Reset(std::uint32_t allocIndex) {
 	HRESULT hr;
 	GFX_THROW_FAILED(hr, m_pCommandAllocators[allocIndex]->Reset());
 	GFX_THROW_FAILED(hr,
@@ -51,7 +46,8 @@ ID3D12GraphicsCommandList* CommandListManager::GetCommandList() const noexcept {
 	return m_pCommandList.Get();
 }
 
-CommandQueueManager::CommandQueueManager(
+// CommandQueue
+_CommandQueueManager::_CommandQueueManager(
 	ID3D12Device5* device,
 	D3D12_COMMAND_LIST_TYPE type, std::uint8_t bufferCount
 )
@@ -69,31 +65,15 @@ CommandQueueManager::CommandQueueManager(
 	));
 }
 
-ID3D12CommandQueue* CommandQueueManager::GetCommandQueueRef() const noexcept {
+ID3D12CommandQueue* _CommandQueueManager::GetCommandQueueRef() const noexcept {
 	return m_pCommandQueue.Get();
 }
 
-ID3D12GraphicsCommandList* CommandQueueManager::GetCommandListRef() const noexcept {
+ID3D12GraphicsCommandList* _CommandQueueManager::GetCommandListRef() const noexcept {
 	return m_commandListMan.GetCommandList();
 }
 
-void CommandQueueManager::ExecuteCommandLists() const noexcept {
-	ID3D12CommandList* ppCommandLists[] = { m_commandListMan.GetCommandList() };
-
-	m_pCommandQueue->ExecuteCommandLists(
-		static_cast<std::uint32_t>(std::size(ppCommandLists)), ppCommandLists
-	);
-}
-
-void CommandQueueManager::RecordCommandList() {
-	m_commandListMan.Reset();
-}
-
-void CommandQueueManager::CloseCommandList() const {
-	m_commandListMan.Close();
-}
-
-void CommandQueueManager::InitSyncObjects(
+void _CommandQueueManager::InitSyncObjects(
 	ID3D12Device5* device,
 	std::uint32_t backBufferIndex
 ) {
@@ -111,7 +91,7 @@ void CommandQueueManager::InitSyncObjects(
 		GFX_THROW_FAILED(hr, HRESULT_FROM_WIN32(GetLastError()));
 }
 
-void CommandQueueManager::WaitForGPU(std::uint32_t backBufferIndex) {
+void _CommandQueueManager::WaitForGPU(std::uint32_t backBufferIndex) {
 	HRESULT hr;
 	GFX_THROW_FAILED(hr, m_pCommandQueue->Signal(
 		m_pFence.Get(), m_fenceValues[backBufferIndex])
@@ -125,7 +105,29 @@ void CommandQueueManager::WaitForGPU(std::uint32_t backBufferIndex) {
 	m_fenceValues[backBufferIndex]++;
 }
 
-void CommandQueueManager::MoveToNextFrame(std::uint32_t backBufferIndex) {
+void _CommandQueueManager::ExecuteCommandLists() const noexcept {
+	ID3D12CommandList* ppCommandLists[] = { m_commandListMan.GetCommandList() };
+
+	m_pCommandQueue->ExecuteCommandLists(
+		static_cast<std::uint32_t>(std::size(ppCommandLists)), ppCommandLists
+	);
+}
+
+// Graphics Command Queue
+void GraphicsCQueueManager::RecordCommandList() {
+	std::uint32_t allocIndex = 0u;
+	SwapChainManager* swapRef = GetSwapChainInstance();
+	if (swapRef)
+		allocIndex = swapRef->GetCurrentBackBufferIndex();
+
+	m_commandListMan.Reset(allocIndex);
+}
+
+void GraphicsCQueueManager::CloseCommandList() const {
+	m_commandListMan.Close();
+}
+
+void GraphicsCQueueManager::MoveToNextFrame(std::uint32_t backBufferIndex) {
 	const std::uint64_t currentFenceValue = m_fenceValues[backBufferIndex];
 	HRESULT hr;
 	GFX_THROW_FAILED(hr,
