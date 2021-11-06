@@ -52,6 +52,7 @@ public:
 	void RecordCommandList();
 	void CloseCommandList() const;
 	void MoveToNextFrame(std::uint32_t backBufferIndex);
+	void ResetFenceValuesWith(std::uint32_t valueIndex);
 };
 
 GraphicsCQueueManager* GetGraphicsQueueInstance() noexcept;

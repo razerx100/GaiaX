@@ -2,6 +2,7 @@
 #include <GraphicsEngineDx12.hpp>
 #include <D3DThrowMacros.hpp>
 #include <DeviceManager.hpp>
+#include <CommandQueueManager.hpp>
 #include <d3dx12.h>
 
 SwapChainManager::SwapChainManager(
@@ -139,6 +140,11 @@ void SwapChainManager::Resize(std::uint32_t width, std::uint32_t height) {
 	if (width != m_width || height != m_height) {
 		for (auto& rt : m_pRenderTargetViews)
 			rt.Reset();
+
+		GraphicsCQueueManager* pGraphicsQueue = GetGraphicsQueueInstance();
+
+		if (pGraphicsQueue)
+			pGraphicsQueue->ResetFenceValuesWith(GetCurrentBackBufferIndex());
 
 		DXGI_SWAP_CHAIN_DESC1 desc = {};
 		m_pSwapChain->GetDesc1(&desc);

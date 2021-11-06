@@ -146,3 +146,8 @@ void GraphicsCQueueManager::MoveToNextFrame(std::uint32_t backBufferIndex) {
 
 	m_fenceValues[backBufferIndex] = currentFenceValue + 1;
 }
+
+void GraphicsCQueueManager::ResetFenceValuesWith(std::uint32_t valueIndex) {
+	for (std::uint32_t index = 0; index < m_fenceValues.size(); ++index)
+		m_fenceValues[index] = m_fenceValues[valueIndex];
+}
