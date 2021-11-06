@@ -3,10 +3,12 @@
 #include <GraphicsEngine.hpp>
 #include <D3DHeaders.hpp>
 #include <cstdint>
+#include <string>
 
 class GraphicsEngineDx12 : public GraphicsEngine {
 public:
 	GraphicsEngineDx12(
+		const char* appName,
 		void* windowHandle, std::uint32_t width, std::uint32_t height,
 		std::uint8_t bufferCount
 	);
@@ -28,5 +30,7 @@ private:
 	D3D12_RECT m_scissorRect;
 
 	Color m_backgroundColor;
+
+	const std::string m_appName;
 };
 #endif

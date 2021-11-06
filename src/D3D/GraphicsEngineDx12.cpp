@@ -6,9 +6,10 @@
 #include <D3DThrowMacros.hpp>
 
 GraphicsEngineDx12::GraphicsEngineDx12(
+	const char* appName,
 	void* windowHandle, std::uint32_t width, std::uint32_t height,
 	std::uint8_t bufferCount
-) : m_backgroundColor{0.1f, 0.1f, 0.1f, 0.1f} {
+) : m_backgroundColor{0.1f, 0.1f, 0.1f, 0.1f}, m_appName(appName) {
 	InitD3DDeviceInstance();
 
 #ifdef _DEBUG

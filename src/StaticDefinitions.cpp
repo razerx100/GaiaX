@@ -30,6 +30,7 @@ GraphicsEngine* GetGraphicsEngineInstance() noexcept {
 }
 
 void InitGraphicsEngineInstance(
+	const char* appName,
 	void* windowHandle,
 	void* moduleHandle,
 	std::uint32_t width, std::uint32_t height,
@@ -37,6 +38,7 @@ void InitGraphicsEngineInstance(
 ) {
 	if(!s_pGraphicsEngine)
 		s_pGraphicsEngine = new GraphicsEngineDx12(
+			appName,
 			windowHandle, width, height, bufferCount
 		);
 
