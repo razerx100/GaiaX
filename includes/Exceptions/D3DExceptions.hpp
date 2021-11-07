@@ -1,15 +1,19 @@
 #ifndef __D3D_EXCEPTIONS_HPP__
 #define __D3D_EXCEPTIONS_HPP__
-#include <Win32BaseException.hpp>
+#include <Exception.hpp>
 #include <vector>
 
-class HrException : public Win32BaseException {
+class HrException : public Exception {
 public:
 	HrException(int line, const char* file, long hr) noexcept;
 	HrException(
 		int line, const char* file,
 		long hr, const std::vector<std::string>& infoMsgs
 	) noexcept;
+
+	static std::string TranslateErrorCode(long hr) noexcept;
+	long GetErrorCode() const noexcept;
+	std::string GetErrorString() const noexcept;
 
 	void GenerateWhatBuffer() noexcept override;
 	const char* what() const noexcept override;

@@ -49,7 +49,6 @@ std::vector<std::string> DebugInfoManager::GetMessages() const {
 			DXGI_DEBUG_ALL, i, nullptr, &messageLength
 		));
 
-
 		byte* bytes = new byte[messageLength];
 		DXGI_INFO_QUEUE_MESSAGE* pMessage =
 			reinterpret_cast<DXGI_INFO_QUEUE_MESSAGE*>(bytes);

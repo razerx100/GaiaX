@@ -1,9 +1,24 @@
 #include <D3DExceptions.hpp>
 #include <sstream>
+#include <comdef.h>
 
 // HR EXCEPTION
 HrException::HrException(int line, const char* file, long hr) noexcept
-	: Win32BaseException(line, file, hr) {
+	: Exception(line, file), m_hr(hr) {
+	GenerateWhatBuffer();
+}
+
+HrException::HrException(int line, const char* file, long hr,
+	const std::vector<std::string>& infoMsgs) noexcept
+	: Exception(line, file), m_hr(hr) {
+	for (const std::string& m : infoMsgs) {
+		m_info += m;
+		m_info.append("\n");
+	}
+
+	if (!m_info.empty())
+		m_info.pop_back();
+
 	GenerateWhatBuffer();
 }
 
@@ -19,20 +34,6 @@ void HrException::GenerateWhatBuffer() noexcept {
 	m_whatBuffer = oss.str();
 }
 
-HrException::HrException(int line, const char* file, long hr,
-	const std::vector<std::string>& infoMsgs) noexcept
-	: Win32BaseException(line, file, hr) {
-	for (const std::string& m : infoMsgs) {
-		m_info += m;
-		m_info.append("\n");
-	}
-
-	if (!m_info.empty())
-		m_info.pop_back();
-
-	GenerateWhatBuffer();
-}
-
 const char* HrException::what() const noexcept {
 	return m_whatBuffer.c_str();
 }
@@ -43,6 +44,18 @@ const char* HrException::GetType() const noexcept {
 
 std::string HrException::GetErrorInfo() const noexcept {
 	return m_info;
+}
+
+std::string HrException::TranslateErrorCode(long hr) noexcept {
+	return _com_error(hr).ErrorMessage();
+}
+
+long HrException::GetErrorCode() const noexcept {
+	return m_hr;
+}
+
+std::string HrException::GetErrorString() const noexcept {
+	return TranslateErrorCode(m_hr);
 }
 
 // DEVICE REMOVED EXCEPTION
