@@ -3,6 +3,7 @@
 #include <D3DHeaders.hpp>
 #include <vector>
 #include <string>
+#include <dxgidebug.h>
 
 using Microsoft::WRL::ComPtr;
 
@@ -16,14 +17,14 @@ public:
 	void Set() noexcept;
 	std::vector<std::string> GetMessages() const;
 
-	ComPtr<ID3D12InfoQueue> m_pInfoQueue;
 private:
 	std::uint64_t m_next;
+	ComPtr<IDXGIInfoQueue> m_pDxgiInfoQueue;
 };
 
 #ifdef _DEBUG
 	DebugInfoManager* GetDebugInfoManagerInstance() noexcept;
-	void InitDebugInfoManagerInstance(ID3D12Device5* device);
+	void InitDebugInfoManagerInstance();
 	void CleanUpDebugInfoManagerInstance() noexcept;
 #endif
 #endif

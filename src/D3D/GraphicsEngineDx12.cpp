@@ -13,7 +13,7 @@ GraphicsEngineDx12::GraphicsEngineDx12(
 	InitD3DDeviceInstance();
 
 #ifdef _DEBUG
-	InitDebugInfoManagerInstance(GetD3DDeviceInstance()->GetDeviceRef());
+	InitDebugInfoManagerInstance();
 #endif
 
 	InitGraphicsQueueInstance(

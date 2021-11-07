@@ -42,7 +42,7 @@ void InitGraphicsEngineInstance(
 			windowHandle, width, height, bufferCount
 		);
 
-	// Useless
+	// Useless here. Necessary for Vulkan
 	moduleHandle = nullptr;
 }
 
