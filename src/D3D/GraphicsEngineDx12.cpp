@@ -1,5 +1,4 @@
 #include <GraphicsEngineDx12.hpp>
-#include <DebugInfoManager.hpp>
 #include <DeviceManager.hpp>
 #include <CommandQueueManager.hpp>
 #include <SwapChainManager.hpp>
@@ -13,6 +12,7 @@ GraphicsEngineDx12::GraphicsEngineDx12(
 	InitD3DDeviceInstance();
 
 #ifdef _DEBUG
+#include <DebugInfoManager.hpp>
 	InitDebugInfoManagerInstance();
 #endif
 
