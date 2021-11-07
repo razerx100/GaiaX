@@ -1,5 +1,5 @@
 #include <DebugInfoManager.hpp>
-#include <D3DThrowMacros.hpp>
+#include <D3DExceptions.hpp>
 
 DebugInfoManager::DebugInfoManager()
 	: m_next(0u), m_pDxgiInfoQueue(nullptr) {
@@ -43,20 +43,21 @@ std::vector<std::string> DebugInfoManager::GetMessages() const {
 	const std::uint64_t end = m_pDxgiInfoQueue->GetNumStoredMessages(DXGI_DEBUG_ALL);
 
 	for (std::uint64_t i = m_next; i < end; i++) {
-		HRESULT hr;
 		SIZE_T messageLength = 0;
-		GFX_THROW_NOINFO(hr, m_pDxgiInfoQueue->GetMessageA(
+		m_pDxgiInfoQueue->GetMessageA(
 			DXGI_DEBUG_ALL, i, nullptr, &messageLength
-		));
+		);
 
 		byte* bytes = new byte[messageLength];
 		DXGI_INFO_QUEUE_MESSAGE* pMessage =
 			reinterpret_cast<DXGI_INFO_QUEUE_MESSAGE*>(bytes);
 
-		GFX_THROW_NOINFO(hr, m_pDxgiInfoQueue->GetMessageA(
+		m_pDxgiInfoQueue->GetMessageA(
 			DXGI_DEBUG_ALL, i, pMessage, &messageLength
-		));
-		messages.emplace_back(pMessage->pDescription);
+		);
+
+		if (pMessage)
+			messages.emplace_back(pMessage->pDescription);
 
 		delete[] bytes;
 	}
