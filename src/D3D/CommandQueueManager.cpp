@@ -53,7 +53,7 @@ _CommandQueueManager::_CommandQueueManager(
 )
 	: m_commandListMan(device, type, bufferCount),
 	m_fenceEvent(nullptr),
-	m_fenceValues(bufferCount) {
+	m_fenceValues(bufferCount, 0u) {
 
 	D3D12_COMMAND_QUEUE_DESC queueDesc = {};
 	queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
