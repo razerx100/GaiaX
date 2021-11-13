@@ -19,16 +19,16 @@ else()
 endif()
 
 if(IMGUIFLAG STREQUAL "ENABLE")
-    file(GLOB_RECURSE SRC src/*.cpp includes/*.hpp includes/D3D/*.hpp templates/*.hpp exports/*.hpp ImGui/*.cpp ImGui/*.h)
+    file(GLOB_RECURSE SRC src/*.cpp includes/*.hpp templates/*.hpp exports/*.hpp ImGui/*.cpp ImGui/*.h)
 else()
-    file(GLOB_RECURSE SRC src/*.cpp includes/*.hpp includes/D3D/*.hpp templates/*.hpp exports/*.hpp)
+    file(GLOB_RECURSE SRC src/*.cpp includes/*.hpp templates/*.hpp exports/*.hpp)
 endif()
 
 add_library(${PROJECT_NAME} SHARED
     ${SRC}
 )
 
-target_include_directories(${PROJECT_NAME} PRIVATE includes/ includes/D3D/ includes/Exceptions/ templates/ exports/)
+target_include_directories(${PROJECT_NAME} PRIVATE includes/ includes/D3D/ includes/D3D/Impl/ includes/Exceptions/ templates/ exports/)
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE "$<$<CONFIG:DEBUG>:_DEBUG>" "$<$<CONFIG:RELEASE>:NDEBUG>" BUILD_GAIAX)
 

@@ -1,7 +1,7 @@
 #include <GraphicsEngineDx12.hpp>
-#include <DeviceManager.hpp>
-#include <CommandQueueManager.hpp>
-#include <SwapChainManager.hpp>
+#include <IDeviceManager.hpp>
+#include <IGraphicsQueueManager.hpp>
+#include <ISwapChainManager.hpp>
 #include <D3DThrowMacros.hpp>
 
 GraphicsEngineDx12::GraphicsEngineDx12(
@@ -21,11 +21,11 @@ GraphicsEngineDx12::GraphicsEngineDx12(
 		bufferCount
 	);
 
-	GraphicsCQueueManager* queueRef = GetGraphicsQueueInstance();
+	IGraphicsQueueManager* queueRef = GetGraphicsQueueInstance();
 
 	InitSwapChianInstance(
 		GetD3DDeviceInstance()->GetFactoryRef(),
-		queueRef->GetCommandQueueRef(),
+		queueRef->GetQueueRef(),
 		windowHandle,
 		bufferCount, width, height
 	);
@@ -56,9 +56,9 @@ void GraphicsEngineDx12::SubmitCommands() {
 }
 
 void GraphicsEngineDx12::Render() {
-	GraphicsCQueueManager* queueRef = GetGraphicsQueueInstance();
+	IGraphicsQueueManager* queueRef = GetGraphicsQueueInstance();
 	ID3D12GraphicsCommandList* commandList = queueRef->GetCommandListRef();
-	SwapChainManager* swapRef = GetSwapChainInstance();
+	ISwapChainManager* swapRef = GetSwapChainInstance();
 
 	queueRef->RecordCommandList();
 	D3D12_RESOURCE_BARRIER renderBarrier = swapRef->GetRenderStateBarrier();
@@ -88,7 +88,7 @@ void GraphicsEngineDx12::Render() {
 }
 
 void GraphicsEngineDx12::Resize(std::uint32_t width, std::uint32_t height) {
-	SwapChainManager* swapRef = GetSwapChainInstance();
+	ISwapChainManager* swapRef = GetSwapChainInstance();
 	GetGraphicsQueueInstance()->WaitForGPU(
 		swapRef->GetCurrentBackBufferIndex()
 	);

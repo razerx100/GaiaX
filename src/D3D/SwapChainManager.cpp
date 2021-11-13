@@ -1,8 +1,8 @@
 #include <SwapChainManager.hpp>
 #include <GraphicsEngineDx12.hpp>
 #include <D3DThrowMacros.hpp>
-#include <DeviceManager.hpp>
-#include <CommandQueueManager.hpp>
+#include <IDeviceManager.hpp>
+#include <IGraphicsQueueManager.hpp>
 #include <d3dx12.h>
 
 SwapChainManager::SwapChainManager(
@@ -141,7 +141,7 @@ void SwapChainManager::Resize(std::uint32_t width, std::uint32_t height) {
 		for (auto& rt : m_pRenderTargetViews)
 			rt.Reset();
 
-		GraphicsCQueueManager* pGraphicsQueue = GetGraphicsQueueInstance();
+		IGraphicsQueueManager* pGraphicsQueue = GetGraphicsQueueInstance();
 
 		if (pGraphicsQueue)
 			pGraphicsQueue->ResetFenceValuesWith(GetCurrentBackBufferIndex());

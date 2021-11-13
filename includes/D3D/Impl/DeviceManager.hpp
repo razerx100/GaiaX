@@ -1,13 +1,13 @@
 #ifndef __DEVICE_MANAGER_HPP__
 #define __DEVICE_MANAGER_HPP__
-#include <D3DHeaders.hpp>
+#include <IDeviceManager.hpp>
 
-class DeviceManager {
+class DeviceManager : public IDeviceManager {
 public:
 	DeviceManager();
 
-	ID3D12Device5* GetDeviceRef() const noexcept;
-	IDXGIFactory4* GetFactoryRef() const noexcept;
+	ID3D12Device5* GetDeviceRef() const noexcept override;
+	IDXGIFactory4* GetFactoryRef() const noexcept override;
 
 private:
 	void GetHardwareAdapter(
@@ -19,8 +19,4 @@ private:
 	ComPtr<ID3D12Device5> m_pDevice;
     ComPtr<IDXGIFactory4> m_pFactory;
 };
-
-DeviceManager* GetD3DDeviceInstance() noexcept;
-void InitD3DDeviceInstance();
-void CleanUpD3DDeviceInstance() noexcept;
 #endif

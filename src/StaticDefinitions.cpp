@@ -1,17 +1,17 @@
 #include <DeviceManager.hpp>
 #include <GraphicsEngineDx12.hpp>
 #include <SwapChainManager.hpp>
-#include <CommandQueueManager.hpp>
+#include <GraphicsQueueManager.hpp>
 
 static DeviceManager* s_pD3DDevice = nullptr;
 
 static GraphicsEngine* s_pGraphicsEngine = nullptr;
 
-static SwapChainManager* s_pSwapChainManager = nullptr;
+static ISwapChainManager* s_pSwapChainManager = nullptr;
 
-static GraphicsCQueueManager* s_pGraphicsQueue = nullptr;
+static IGraphicsQueueManager* s_pGraphicsQueue = nullptr;
 
-DeviceManager* GetD3DDeviceInstance() noexcept {
+IDeviceManager* GetD3DDeviceInstance() noexcept {
 	return s_pD3DDevice;
 }
 
@@ -51,7 +51,7 @@ void CleanUpGraphicsEngineInstance() noexcept {
 		delete s_pGraphicsEngine;
 }
 
-SwapChainManager* GetSwapChainInstance() noexcept {
+ISwapChainManager* GetSwapChainInstance() noexcept {
 	return s_pSwapChainManager;
 }
 
@@ -74,7 +74,7 @@ void CleanUpSwapChainInstance() noexcept {
 		delete s_pSwapChainManager;
 }
 
-GraphicsCQueueManager* GetGraphicsQueueInstance() noexcept {
+IGraphicsQueueManager* GetGraphicsQueueInstance() noexcept {
 	return s_pGraphicsQueue;
 }
 
@@ -83,7 +83,7 @@ void InitGraphicsQueueInstance(
 	std::uint8_t bufferCount
 ) {
 	if (!s_pGraphicsQueue)
-		s_pGraphicsQueue = new GraphicsCQueueManager(
+		s_pGraphicsQueue = new GraphicsQueueManager(
 			device,
 			D3D12_COMMAND_LIST_TYPE_DIRECT,
 			bufferCount

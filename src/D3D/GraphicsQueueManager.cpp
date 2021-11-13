@@ -1,53 +1,9 @@
-#include <CommandQueueManager.hpp>
-#include <D3DThrowMacros.hpp>
+#include <GraphicsQueueManager.hpp>
 #include <SwapChainManager.hpp>
+#include <D3DThrowMacros.hpp>
 
-// CommandList
-CommandListManager::CommandListManager(
-	ID3D12Device5* device,
-	D3D12_COMMAND_LIST_TYPE type, std::uint8_t allocatorsCount
-) :
-	m_pCommandAllocators(allocatorsCount) {
-
-	HRESULT hr;
-	for (std::uint32_t index = 0; index < allocatorsCount; ++index) {
-		GFX_THROW_FAILED(hr,
-			device->CreateCommandAllocator(
-				type,
-				__uuidof(ID3D12CommandAllocator),
-				&m_pCommandAllocators[index]
-			));
-	}
-
-	GFX_THROW_FAILED(hr,
-		device->CreateCommandList1(
-			0, type,
-			D3D12_COMMAND_LIST_FLAG_NONE,
-			__uuidof(ID3D12GraphicsCommandList),
-			&m_pCommandList
-		)
-	);
-}
-
-void CommandListManager::Reset(std::uint32_t allocIndex) {
-	HRESULT hr;
-	GFX_THROW_FAILED(hr, m_pCommandAllocators[allocIndex]->Reset());
-	GFX_THROW_FAILED(hr,
-		m_pCommandList->Reset(m_pCommandAllocators[allocIndex].Get(), nullptr)
-	);
-}
-
-void CommandListManager::Close() const {
-	HRESULT hr;
-	GFX_THROW_FAILED(hr, m_pCommandList->Close());
-}
-
-ID3D12GraphicsCommandList* CommandListManager::GetCommandList() const noexcept {
-	return m_pCommandList.Get();
-}
-
-// CommandQueue
-_CommandQueueManager::_CommandQueueManager(
+// Graphics Command Queue
+GraphicsQueueManager::GraphicsQueueManager(
 	ID3D12Device5* device,
 	D3D12_COMMAND_LIST_TYPE type, std::uint8_t bufferCount
 )
@@ -65,15 +21,15 @@ _CommandQueueManager::_CommandQueueManager(
 	));
 }
 
-ID3D12CommandQueue* _CommandQueueManager::GetCommandQueueRef() const noexcept {
+ID3D12CommandQueue* GraphicsQueueManager::GetQueueRef() const noexcept {
 	return m_pCommandQueue.Get();
 }
 
-ID3D12GraphicsCommandList* _CommandQueueManager::GetCommandListRef() const noexcept {
+ID3D12GraphicsCommandList* GraphicsQueueManager::GetCommandListRef() const noexcept {
 	return m_commandListMan.GetCommandList();
 }
 
-void _CommandQueueManager::InitSyncObjects(
+void GraphicsQueueManager::InitSyncObjects(
 	ID3D12Device5* device,
 	std::uint32_t backBufferIndex
 ) {
@@ -91,7 +47,7 @@ void _CommandQueueManager::InitSyncObjects(
 		GFX_THROW_FAILED(hr, HRESULT_FROM_WIN32(GetLastError()));
 }
 
-void _CommandQueueManager::WaitForGPU(std::uint32_t backBufferIndex) {
+void GraphicsQueueManager::WaitForGPU(std::uint32_t backBufferIndex) {
 	HRESULT hr;
 	GFX_THROW_FAILED(hr, m_pCommandQueue->Signal(
 		m_pFence.Get(), m_fenceValues[backBufferIndex])
@@ -105,7 +61,7 @@ void _CommandQueueManager::WaitForGPU(std::uint32_t backBufferIndex) {
 	m_fenceValues[backBufferIndex]++;
 }
 
-void _CommandQueueManager::ExecuteCommandLists() const noexcept {
+void GraphicsQueueManager::ExecuteCommandLists() const noexcept {
 	ID3D12CommandList* ppCommandLists[] = { m_commandListMan.GetCommandList() };
 
 	m_pCommandQueue->ExecuteCommandLists(
@@ -113,21 +69,20 @@ void _CommandQueueManager::ExecuteCommandLists() const noexcept {
 	);
 }
 
-// Graphics Command Queue
-void GraphicsCQueueManager::RecordCommandList() {
+void GraphicsQueueManager::RecordCommandList() {
 	std::uint32_t allocIndex = 0u;
-	SwapChainManager* swapRef = GetSwapChainInstance();
+	ISwapChainManager* swapRef = GetSwapChainInstance();
 	if (swapRef)
 		allocIndex = swapRef->GetCurrentBackBufferIndex();
 
 	m_commandListMan.Reset(allocIndex);
 }
 
-void GraphicsCQueueManager::CloseCommandList() const {
+void GraphicsQueueManager::CloseCommandList() const {
 	m_commandListMan.Close();
 }
 
-void GraphicsCQueueManager::MoveToNextFrame(std::uint32_t backBufferIndex) {
+void GraphicsQueueManager::MoveToNextFrame(std::uint32_t backBufferIndex) {
 	const std::uint64_t currentFenceValue = m_fenceValues[backBufferIndex];
 	HRESULT hr;
 	GFX_THROW_FAILED(hr,
@@ -147,7 +102,7 @@ void GraphicsCQueueManager::MoveToNextFrame(std::uint32_t backBufferIndex) {
 	m_fenceValues[backBufferIndex] = currentFenceValue + 1;
 }
 
-void GraphicsCQueueManager::ResetFenceValuesWith(std::uint32_t valueIndex) {
+void GraphicsQueueManager::ResetFenceValuesWith(std::uint32_t valueIndex) {
 	for (std::uint32_t index = 0; index < m_fenceValues.size(); ++index)
 		m_fenceValues[index] = m_fenceValues[valueIndex];
 }
