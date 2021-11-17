@@ -2,6 +2,7 @@
 #include <GraphicsEngineDx12.hpp>
 #include <SwapChainManager.hpp>
 #include <GraphicsQueueManager.hpp>
+#include <CommandListManager.hpp>
 
 static DeviceManager* s_pD3DDevice = nullptr;
 
@@ -10,6 +11,8 @@ static GraphicsEngine* s_pGraphicsEngine = nullptr;
 static ISwapChainManager* s_pSwapChainManager = nullptr;
 
 static IGraphicsQueueManager* s_pGraphicsQueue = nullptr;
+
+static ICommandListManager* s_pGraphicsList = nullptr;
 
 IDeviceManager* GetD3DDeviceInstance() noexcept {
 	return s_pD3DDevice;
@@ -93,4 +96,25 @@ void InitGraphicsQueueInstance(
 void CleanUpGraphicsQueueInstance() noexcept {
 	if (s_pGraphicsQueue)
 		delete s_pGraphicsQueue;
+}
+
+ICommandListManager* GetGraphicsListInstance() noexcept {
+	return s_pGraphicsList;
+}
+
+void InitGraphicsListInstance(
+	ID3D12Device5* device,
+	std::uint8_t bufferCount
+) {
+	if (!s_pGraphicsList)
+		s_pGraphicsList = new CommandListManager(
+			device,
+			D3D12_COMMAND_LIST_TYPE_DIRECT,
+			bufferCount
+		);
+}
+
+void CleanUpGraphicsListInstance() noexcept {
+	if (s_pGraphicsList)
+		delete s_pGraphicsList;
 }

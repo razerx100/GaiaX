@@ -1,6 +1,7 @@
 #include <GraphicsEngineDx12.hpp>
 #include <IDeviceManager.hpp>
 #include <IGraphicsQueueManager.hpp>
+#include <ICommandListManager.hpp>
 #include <ISwapChainManager.hpp>
 #include <D3DThrowMacros.hpp>
 
@@ -17,6 +18,10 @@ GraphicsEngineDx12::GraphicsEngineDx12(
 #endif
 
 	InitGraphicsQueueInstance(
+		GetD3DDeviceInstance()->GetDeviceRef(),
+		bufferCount
+	);
+	InitGraphicsListInstance(
 		GetD3DDeviceInstance()->GetDeviceRef(),
 		bufferCount
 	);
@@ -44,6 +49,7 @@ GraphicsEngineDx12::GraphicsEngineDx12(
 
 GraphicsEngineDx12::~GraphicsEngineDx12() noexcept {
 	CleanUpSwapChainInstance();
+	CleanUpGraphicsListInstance();
 	CleanUpGraphicsQueueInstance();
 	CleanUpD3DDeviceInstance();
 #ifdef _DEBUG
@@ -57,10 +63,13 @@ void GraphicsEngineDx12::SubmitCommands() {
 
 void GraphicsEngineDx12::Render() {
 	IGraphicsQueueManager* queueRef = GetGraphicsQueueInstance();
-	ID3D12GraphicsCommandList* commandList = queueRef->GetCommandListRef();
 	ISwapChainManager* swapRef = GetSwapChainInstance();
+	ICommandListManager* listManRef = GetGraphicsListInstance();
+	ID3D12GraphicsCommandList* commandList = listManRef->GetCommandListRef();
 
-	queueRef->RecordCommandList();
+	listManRef->Reset(
+		swapRef->GetCurrentBackBufferIndex()
+	);
 	D3D12_RESOURCE_BARRIER renderBarrier = swapRef->GetRenderStateBarrier();
 	commandList->ResourceBarrier(1, &renderBarrier);
 
@@ -78,8 +87,8 @@ void GraphicsEngineDx12::Render() {
 	D3D12_RESOURCE_BARRIER presentBarrier = swapRef->GetPresentStateBarrier();
 	commandList->ResourceBarrier(1, &presentBarrier);
 
-	queueRef->CloseCommandList();
-	queueRef->ExecuteCommandLists();
+	listManRef->Close();
+	queueRef->ExecuteCommandLists(commandList);
 
 	std::uint32_t backBufferIndex = swapRef->GetCurrentBackBufferIndex();
 

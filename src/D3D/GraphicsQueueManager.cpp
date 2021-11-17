@@ -7,8 +7,7 @@ GraphicsQueueManager::GraphicsQueueManager(
 	ID3D12Device5* device,
 	D3D12_COMMAND_LIST_TYPE type, std::uint8_t bufferCount
 )
-	: m_commandListMan(device, type, bufferCount),
-	m_fenceEvent(nullptr),
+	: m_fenceEvent(nullptr),
 	m_fenceValues(bufferCount, 0u) {
 
 	D3D12_COMMAND_QUEUE_DESC queueDesc = {};
@@ -23,10 +22,6 @@ GraphicsQueueManager::GraphicsQueueManager(
 
 ID3D12CommandQueue* GraphicsQueueManager::GetQueueRef() const noexcept {
 	return m_pCommandQueue.Get();
-}
-
-ID3D12GraphicsCommandList* GraphicsQueueManager::GetCommandListRef() const noexcept {
-	return m_commandListMan.GetCommandList();
 }
 
 void GraphicsQueueManager::InitSyncObjects(
@@ -61,25 +56,14 @@ void GraphicsQueueManager::WaitForGPU(std::uint32_t backBufferIndex) {
 	m_fenceValues[backBufferIndex]++;
 }
 
-void GraphicsQueueManager::ExecuteCommandLists() const noexcept {
-	ID3D12CommandList* ppCommandLists[] = { m_commandListMan.GetCommandList() };
+void GraphicsQueueManager::ExecuteCommandLists(
+	ID3D12GraphicsCommandList* commandList
+) const noexcept {
+	ID3D12CommandList* const ppCommandLists[] = { commandList };
 
 	m_pCommandQueue->ExecuteCommandLists(
 		static_cast<std::uint32_t>(std::size(ppCommandLists)), ppCommandLists
 	);
-}
-
-void GraphicsQueueManager::RecordCommandList() {
-	std::uint32_t allocIndex = 0u;
-	ISwapChainManager* swapRef = GetSwapChainInstance();
-	if (swapRef)
-		allocIndex = swapRef->GetCurrentBackBufferIndex();
-
-	m_commandListMan.Reset(allocIndex);
-}
-
-void GraphicsQueueManager::CloseCommandList() const {
-	m_commandListMan.Close();
 }
 
 void GraphicsQueueManager::MoveToNextFrame(std::uint32_t backBufferIndex) {

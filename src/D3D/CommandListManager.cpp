@@ -28,7 +28,7 @@ CommandListManager::CommandListManager(
 	);
 }
 
-void CommandListManager::Reset(std::uint32_t allocIndex) {
+void CommandListManager::Reset(std::uint32_t allocIndex) const {
 	HRESULT hr;
 	GFX_THROW_FAILED(hr, m_pCommandAllocators[allocIndex]->Reset());
 	GFX_THROW_FAILED(hr,
@@ -41,6 +41,6 @@ void CommandListManager::Close() const {
 	GFX_THROW_FAILED(hr, m_pCommandList->Close());
 }
 
-ID3D12GraphicsCommandList* CommandListManager::GetCommandList() const noexcept {
+ID3D12GraphicsCommandList* CommandListManager::GetCommandListRef() const noexcept {
 	return m_pCommandList.Get();
 }
