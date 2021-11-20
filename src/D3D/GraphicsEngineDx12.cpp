@@ -137,3 +137,9 @@ void  GraphicsEngineDx12::InitViewPortAndScissor(
 void GraphicsEngineDx12::SetBackgroundColor(Color color) noexcept {
 	m_backgroundColor = color;
 }
+
+void GraphicsEngineDx12::WaitForAsyncTasks() {
+	GetGraphicsQueueInstance()->WaitForGPU(
+		GetSwapChainInstance()->GetCurrentBackBufferIndex()
+	);
+}

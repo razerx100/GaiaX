@@ -19,6 +19,7 @@ public:
 	void Render() override;
 	void Resize(std::uint32_t width, std::uint32_t height) override;
 	SRect GetMonitorCoordinates() override;
+	void WaitForAsyncTasks() override;
 
 	static constexpr DXGI_FORMAT RENDER_FORMAT = DXGI_FORMAT_R8G8B8A8_UNORM;
 
