@@ -24,8 +24,10 @@ void InitD3DDeviceInstance() {
 }
 
 void CleanUpD3DDeviceInstance() noexcept {
-	if (s_pD3DDevice)
+	if (s_pD3DDevice) {
 		delete s_pD3DDevice;
+		s_pD3DDevice = nullptr;
+	}
 }
 
 GraphicsEngine* GetGraphicsEngineInstance() noexcept {
@@ -50,8 +52,10 @@ void InitGraphicsEngineInstance(
 }
 
 void CleanUpGraphicsEngineInstance() noexcept {
-	if (s_pGraphicsEngine)
+	if (s_pGraphicsEngine) {
 		delete s_pGraphicsEngine;
+		s_pGraphicsEngine = nullptr;
+	}
 }
 
 ISwapChainManager* GetSwapChainInstance() noexcept {
@@ -73,8 +77,10 @@ void InitSwapChianInstance(
 }
 
 void CleanUpSwapChainInstance() noexcept {
-	if (s_pSwapChainManager)
+	if (s_pSwapChainManager) {
 		delete s_pSwapChainManager;
+		s_pSwapChainManager = nullptr;
+	}
 }
 
 IGraphicsQueueManager* GetGraphicsQueueInstance() noexcept {
@@ -94,8 +100,10 @@ void InitGraphicsQueueInstance(
 }
 
 void CleanUpGraphicsQueueInstance() noexcept {
-	if (s_pGraphicsQueue)
+	if (s_pGraphicsQueue) {
 		delete s_pGraphicsQueue;
+		s_pGraphicsQueue = nullptr;
+	}
 }
 
 ICommandListManager* GetGraphicsListInstance() noexcept {
@@ -115,6 +123,8 @@ void InitGraphicsListInstance(
 }
 
 void CleanUpGraphicsListInstance() noexcept {
-	if (s_pGraphicsList)
+	if (s_pGraphicsList) {
 		delete s_pGraphicsList;
+		s_pGraphicsList = nullptr;
+	}
 }

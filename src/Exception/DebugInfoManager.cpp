@@ -78,7 +78,9 @@ DebugInfoManager* GetDebugInfoManagerInstance() noexcept {
 }
 
 void CleanUpDebugInfoManagerInstance() noexcept {
-	if (s_pDebugInfoManager)
+	if (s_pDebugInfoManager) {
 		delete s_pDebugInfoManager;
+		s_pDebugInfoManager = nullptr;
+	}
 }
 #endif
