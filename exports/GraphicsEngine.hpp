@@ -1,26 +1,13 @@
 #ifndef __GRAPHICS_ENGINE_HPP__
 #define __GRAPHICS_ENGINE_HPP__
 #include <cstdint>
+#include "SUtility.hpp"
 
 #ifdef BUILD_GAIAX
 #define GAIAX_DLL __declspec(dllexport)
 #else
 #define GAIAX_DLL __declspec(dllimport)
 #endif
-
-struct GAIAX_DLL SRect {
-	long left;
-	long top;
-	long right;
-	long bottom;
-};
-
-struct GAIAX_DLL Color {
-	float r;
-	float g;
-	float b;
-	float a;
-};
 
 class GAIAX_DLL GraphicsEngine {
 public:
