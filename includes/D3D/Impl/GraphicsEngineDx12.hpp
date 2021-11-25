@@ -2,7 +2,6 @@
 #define __GRAPHICS_ENGINE_DX12_HPP__
 #include <GraphicsEngine.hpp>
 #include <D3DHeaders.hpp>
-#include <cstdint>
 #include <string>
 
 class GraphicsEngineDx12 : public GraphicsEngine {
@@ -14,8 +13,8 @@ public:
 	);
 	~GraphicsEngineDx12() noexcept;
 
-	void SetBackgroundColor(Color color) noexcept override;
-	void SubmitCommands() override;
+	void SetBackgroundColor(DirectX::XMVECTORF32 color) noexcept override;
+	void SubmitModels(const IModel* const models, std::uint32_t modelCount) override;
 	void Render() override;
 	void Resize(std::uint32_t width, std::uint32_t height) override;
 	SRect GetMonitorCoordinates() override;
@@ -30,7 +29,7 @@ private:
 	D3D12_VIEWPORT m_viewport;
 	D3D12_RECT m_scissorRect;
 
-	Color m_backgroundColor;
+	DirectX::XMVECTORF32 m_backgroundColor;
 
 	const std::string m_appName;
 };

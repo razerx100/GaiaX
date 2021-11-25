@@ -57,7 +57,7 @@ GraphicsEngineDx12::~GraphicsEngineDx12() noexcept {
 #endif
 }
 
-void GraphicsEngineDx12::SubmitCommands() {
+void GraphicsEngineDx12::SubmitModels(const IModel* const models, std::uint32_t modelCount) {
 
 }
 
@@ -77,7 +77,7 @@ void GraphicsEngineDx12::Render() {
 	commandList->RSSetScissorRects(1, &m_scissorRect);
 
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = swapRef->ClearRTV(
-		commandList, &m_backgroundColor.r
+		commandList, m_backgroundColor.f
 	);
 
 	commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
@@ -134,7 +134,7 @@ void  GraphicsEngineDx12::InitViewPortAndScissor(
 	m_scissorRect.bottom = static_cast<LONG>(m_viewport.TopLeftY + m_viewport.Height);
 }
 
-void GraphicsEngineDx12::SetBackgroundColor(Color color) noexcept {
+void GraphicsEngineDx12::SetBackgroundColor(DirectX::XMVECTORF32 color) noexcept {
 	m_backgroundColor = color;
 }
 

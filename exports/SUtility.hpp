@@ -13,11 +13,4 @@ struct GAIAX_DLL SRect {
 	long right;
 	long bottom;
 };
-
-struct GAIAX_DLL Color {
-	float r;
-	float g;
-	float b;
-	float a;
-};
 #endif
