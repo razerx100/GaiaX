@@ -1,0 +1,3 @@
+[submodule "Ceres"]
+	path = Ceres
+	url = https://github.com/razerx100/Ceres
