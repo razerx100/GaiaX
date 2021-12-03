@@ -23,13 +23,11 @@ public:
 	virtual IDXGISwapChain4* GetRef() const noexcept = 0;
 };
 
-ISwapChainManager* GetSwapChainInstance() noexcept;
-void InitSwapChianInstance(
+ISwapChainManager* CreateSwapChainInstance(
 	IDXGIFactory4* factory, ID3D12CommandQueue* cmdQueue, void* windowHandle,
 	std::uint8_t bufferCount,
 	std::uint32_t width, std::uint32_t height,
 	bool variableRefreshRateAvailable = true
 );
-void CleanUpSwapChainInstance() noexcept;
 
 #endif

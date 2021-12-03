@@ -1,59 +1,57 @@
 #include <GraphicsEngineDx12.hpp>
-#include <IDeviceManager.hpp>
-#include <IGraphicsQueueManager.hpp>
-#include <ICommandListManager.hpp>
-#include <ISwapChainManager.hpp>
 #include <D3DThrowMacros.hpp>
+#include <InstanceManager.hpp>
 
 GraphicsEngineDx12::GraphicsEngineDx12(
 	const char* appName,
 	void* windowHandle, std::uint32_t width, std::uint32_t height,
 	std::uint8_t bufferCount
 ) : m_backgroundColor{0.1f, 0.1f, 0.1f, 0.1f}, m_appName(appName) {
-	InitD3DDeviceInstance();
+	DeviceInst::Init();
 
 #ifdef _DEBUG
-#include <DebugInfoManager.hpp>
-	InitDebugInfoManagerInstance();
+	DebugInfoInst::Init();
 #endif
 
-	InitGraphicsQueueInstance(
-		GetD3DDeviceInstance()->GetDeviceRef(),
+	ID3D12Device5* deviceRef = DeviceInst::GetRef()->GetDeviceRef();
+
+	GfxQueInst::Init(
+		deviceRef,
 		bufferCount
 	);
-	InitGraphicsListInstance(
-		GetD3DDeviceInstance()->GetDeviceRef(),
+	GfxCmdListInst::Init(
+		deviceRef,
 		bufferCount
 	);
 
-	IGraphicsQueueManager* queueRef = GetGraphicsQueueInstance();
+	IGraphicsQueueManager* queueRef = GfxQueInst::GetRef();
 
-	InitSwapChianInstance(
-		GetD3DDeviceInstance()->GetFactoryRef(),
+	SwapchainInst::Init(
+		DeviceInst::GetRef()->GetFactoryRef(),
 		queueRef->GetQueueRef(),
 		windowHandle,
 		bufferCount, width, height
 	);
 
 	queueRef->InitSyncObjects(
-		GetD3DDeviceInstance()->GetDeviceRef(),
-		GetSwapChainInstance()->GetCurrentBackBufferIndex()
+		deviceRef,
+		SwapchainInst::GetRef()->GetCurrentBackBufferIndex()
 	);
 
 	InitViewPortAndScissor(width, height);
 
 	queueRef->WaitForGPU(
-		GetSwapChainInstance()->GetCurrentBackBufferIndex()
+		SwapchainInst::GetRef()->GetCurrentBackBufferIndex()
 	);
 }
 
 GraphicsEngineDx12::~GraphicsEngineDx12() noexcept {
-	CleanUpSwapChainInstance();
-	CleanUpGraphicsListInstance();
-	CleanUpGraphicsQueueInstance();
-	CleanUpD3DDeviceInstance();
+	SwapchainInst::CleanUp();
+	GfxCmdListInst::CleanUp();
+	GfxQueInst::CleanUp();
+	DeviceInst::CleanUp();
 #ifdef _DEBUG
-	CleanUpDebugInfoManagerInstance();
+	DebugInfoInst::CleanUp();
 #endif
 }
 
@@ -62,9 +60,9 @@ void GraphicsEngineDx12::SubmitModels(const IModel* const models, std::uint32_t 
 }
 
 void GraphicsEngineDx12::Render() {
-	IGraphicsQueueManager* queueRef = GetGraphicsQueueInstance();
-	ISwapChainManager* swapRef = GetSwapChainInstance();
-	ICommandListManager* listManRef = GetGraphicsListInstance();
+	IGraphicsQueueManager* queueRef = GfxQueInst::GetRef();
+	ISwapChainManager* swapRef = SwapchainInst::GetRef ();
+	ICommandListManager* listManRef = GfxCmdListInst::GetRef();
 	ID3D12GraphicsCommandList* commandList = listManRef->GetCommandListRef();
 
 	listManRef->Reset(
@@ -97,8 +95,8 @@ void GraphicsEngineDx12::Render() {
 }
 
 void GraphicsEngineDx12::Resize(std::uint32_t width, std::uint32_t height) {
-	ISwapChainManager* swapRef = GetSwapChainInstance();
-	GetGraphicsQueueInstance()->WaitForGPU(
+	ISwapChainManager* swapRef = SwapchainInst::GetRef();
+	GfxQueInst::GetRef()->WaitForGPU(
 		swapRef->GetCurrentBackBufferIndex()
 	);
 	swapRef->Resize(width, height);
@@ -111,7 +109,7 @@ void GraphicsEngineDx12::GetMonitorCoordinates(
 	ComPtr<IDXGIOutput> pOutput;
 	HRESULT hr;
 	GFX_THROW_FAILED(hr,
-		GetSwapChainInstance()->GetRef()->GetContainingOutput(&pOutput)
+		SwapchainInst::GetRef()->GetRef()->GetContainingOutput(&pOutput)
 	);
 
 	DXGI_OUTPUT_DESC desc;
@@ -142,7 +140,7 @@ void GraphicsEngineDx12::SetBackgroundColor(const Ceres::VectorF32& color) noexc
 }
 
 void GraphicsEngineDx12::WaitForAsyncTasks() {
-	GetGraphicsQueueInstance()->WaitForGPU(
-		GetSwapChainInstance()->GetCurrentBackBufferIndex()
+	GfxQueInst::GetRef()->WaitForGPU(
+		SwapchainInst::GetRef()->GetCurrentBackBufferIndex()
 	);
 }

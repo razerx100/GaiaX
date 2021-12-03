@@ -1,6 +1,6 @@
 #include <GraphicsQueueManager.hpp>
-#include <SwapChainManager.hpp>
 #include <D3DThrowMacros.hpp>
+#include <InstanceManager.hpp>
 
 // Graphics Command Queue
 GraphicsQueueManager::GraphicsQueueManager(
@@ -74,7 +74,7 @@ void GraphicsQueueManager::MoveToNextFrame(std::uint32_t backBufferIndex) {
 			currentFenceValue)
 	);
 
-	backBufferIndex = GetSwapChainInstance()->GetCurrentBackBufferIndex();
+	backBufferIndex = SwapchainInst::GetRef()->GetCurrentBackBufferIndex();
 
 	if (m_pFence->GetCompletedValue() < m_fenceValues[backBufferIndex]) {
 		GFX_THROW_FAILED(hr,

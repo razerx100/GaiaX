@@ -13,10 +13,10 @@ public:
 	virtual ID3D12GraphicsCommandList* GetCommandListRef() const noexcept = 0;
 };
 
-ICommandListManager* GetGraphicsListInstance() noexcept;
-void InitGraphicsListInstance(
+ICommandListManager* CreateCommandListInstance(
 	ID3D12Device5* device,
+	D3D12_COMMAND_LIST_TYPE type,
 	std::uint8_t bufferCount
 );
-void CleanUpGraphicsListInstance() noexcept;
+
 #endif

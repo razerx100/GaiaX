@@ -1,8 +1,7 @@
 #include <SwapChainManager.hpp>
 #include <GraphicsEngineDx12.hpp>
 #include <D3DThrowMacros.hpp>
-#include <IDeviceManager.hpp>
-#include <IGraphicsQueueManager.hpp>
+#include <InstanceManager.hpp>
 #include <d3dx12.h>
 
 SwapChainManager::SwapChainManager(
@@ -61,7 +60,7 @@ void SwapChainManager::CreateRTVs() {
 	);
 
 	HRESULT hr;
-	ID3D12Device5* deviceRef = GetD3DDeviceInstance()->GetDeviceRef();
+	ID3D12Device5* deviceRef = DeviceInst::GetRef()->GetDeviceRef();
 
 	if (deviceRef) {
 		for (std::uint32_t index = 0; index < m_pRenderTargetViews.size(); ++index) {
@@ -141,7 +140,7 @@ void SwapChainManager::Resize(std::uint32_t width, std::uint32_t height) {
 		for (auto& rt : m_pRenderTargetViews)
 			rt.Reset();
 
-		IGraphicsQueueManager* pGraphicsQueue = GetGraphicsQueueInstance();
+		IGraphicsQueueManager* pGraphicsQueue = GfxQueInst::GetRef();
 
 		if (pGraphicsQueue)
 			pGraphicsQueue->ResetFenceValuesWith(GetCurrentBackBufferIndex());
@@ -172,7 +171,7 @@ void SwapChainManager::CreateRTVHeap(std::uint8_t bufferCount) {
 	rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
 	rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 
-	ID3D12Device5* deviceRef = GetD3DDeviceInstance()->GetDeviceRef();
+	ID3D12Device5* deviceRef = DeviceInst::GetRef()->GetDeviceRef();
 
 	HRESULT hr;
 	GFX_THROW_FAILED(

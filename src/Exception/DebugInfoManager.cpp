@@ -65,22 +65,6 @@ std::vector<std::string> DebugInfoManager::GetMessages() const {
 	return messages;
 }
 
-#ifdef _DEBUG
-static DebugInfoManager* s_pDebugInfoManager = nullptr;
-
-void InitDebugInfoManagerInstance() {
-	if (!s_pDebugInfoManager)
-		s_pDebugInfoManager = new DebugInfoManager();
+DebugInfoManager* CreateDebugInfoManagerInstance() {
+	return new DebugInfoManager();
 }
-
-DebugInfoManager* GetDebugInfoManagerInstance() noexcept {
-	return s_pDebugInfoManager;
-}
-
-void CleanUpDebugInfoManagerInstance() noexcept {
-	if (s_pDebugInfoManager) {
-		delete s_pDebugInfoManager;
-		s_pDebugInfoManager = nullptr;
-	}
-}
-#endif

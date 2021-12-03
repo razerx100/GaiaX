@@ -18,10 +18,9 @@ public:
 	virtual ID3D12CommandQueue* GetQueueRef() const noexcept = 0;
 };
 
-IGraphicsQueueManager* GetGraphicsQueueInstance() noexcept;
-void InitGraphicsQueueInstance(
+IGraphicsQueueManager* CreateGraphicsQueueInstance(
 	ID3D12Device5* device,
 	std::uint8_t bufferCount
 );
-void CleanUpGraphicsQueueInstance() noexcept;
+
 #endif

@@ -26,14 +26,4 @@ public:
 	virtual void WaitForAsyncTasks() = 0;
 };
 
-GAIAX_DLL GraphicsEngine* __cdecl GetGraphicsEngineInstance() noexcept;
-GAIAX_DLL void __cdecl InitGraphicsEngineInstance(
-	const char* appName,
-	void* windowHandle,
-	void* moduleHandle,
-	std::uint32_t width, std::uint32_t height,
-	std::uint8_t bufferCount = 2u
-);
-GAIAX_DLL void __cdecl CleanUpGraphicsEngineInstance() noexcept;
-
 #endif

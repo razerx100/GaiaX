@@ -22,9 +22,6 @@ private:
 	ComPtr<IDXGIInfoQueue> m_pDxgiInfoQueue;
 };
 
-#ifdef _DEBUG
-	DebugInfoManager* GetDebugInfoManagerInstance() noexcept;
-	void InitDebugInfoManagerInstance();
-	void CleanUpDebugInfoManagerInstance() noexcept;
-#endif
+DebugInfoManager* CreateDebugInfoManagerInstance();
+
 #endif

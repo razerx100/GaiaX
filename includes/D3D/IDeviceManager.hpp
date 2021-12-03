@@ -10,7 +10,6 @@ public:
 	virtual IDXGIFactory4* GetFactoryRef() const noexcept = 0;
 };
 
-IDeviceManager* GetD3DDeviceInstance() noexcept;
-void InitD3DDeviceInstance();
-void CleanUpD3DDeviceInstance() noexcept;
+IDeviceManager* CreateD3DDeviceInstance();
+
 #endif
