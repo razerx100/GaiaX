@@ -49,3 +49,9 @@ void DebugInfoInst::Init() {
 		CreateDebugInfoManagerInstance()
 	);
 }
+
+void DepthBuffInst::Init(ID3D12Device* device) {
+	Set(
+		CreateDepthBufferInstance(device)
+	);
+}

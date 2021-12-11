@@ -6,6 +6,7 @@
 #include <IGraphicsQueueManager.hpp>
 #include <ICommandListManager.hpp>
 #include <DebugInfoManager.hpp>
+#include <IDepthBuffer.hpp>
 
 class DeviceInst : public _ObjectManager<IDeviceManager> {
 public:
@@ -41,5 +42,10 @@ public:
 class DebugInfoInst : public _ObjectManager<DebugInfoManager> {
 public:
 	static void Init();
+};
+
+class DepthBuffInst : public _ObjectManager<IDepthBuffer> {
+public:
+	static void Init(ID3D12Device* device);
 };
 #endif

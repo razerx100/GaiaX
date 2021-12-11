@@ -5,11 +5,11 @@
 
 class Shader : public IShader {
 public:
-	void LoadBinary(const std::string& fileName) override;
+	void LoadBinary(const std::string& fileName);
 	void CompileBinary(
 		const std::string& fileName, const char* target,
 		const char* entryPoint = "main"
-	) override;
+	);
 
 	D3D12_SHADER_BYTECODE GetByteCode() const noexcept override;
 

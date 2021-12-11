@@ -13,9 +13,11 @@ public:
 	// Should be only called when all of the back buffers have finished executing
 	virtual void Resize(std::uint32_t width, std::uint32_t height) = 0;
 
-	virtual D3D12_CPU_DESCRIPTOR_HANDLE ClearRTV(
+	virtual void ClearRTV(
 		ID3D12GraphicsCommandList* commandList, float* clearColor
 	) noexcept = 0;
+	virtual D3D12_CPU_DESCRIPTOR_HANDLE GetRTVHandle() const noexcept = 0;
+
 	virtual std::uint32_t GetCurrentBackBufferIndex() const noexcept = 0;
 	virtual D3D12_RESOURCE_BARRIER GetRenderStateBarrier() const noexcept = 0;
 	virtual D3D12_RESOURCE_BARRIER GetPresentStateBarrier() const noexcept = 0;

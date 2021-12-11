@@ -2,6 +2,7 @@
 #include <SwapChainManager.hpp>
 #include <GraphicsQueueManager.hpp>
 #include <CommandListManager.hpp>
+#include <DepthBuffer.hpp>
 
 IDeviceManager* CreateD3DDeviceInstance() {
 	return new DeviceManager();
@@ -41,4 +42,8 @@ ICommandListManager* CreateCommandListInstance(
 		type,
 		bufferCount
 	);
+}
+
+IDepthBuffer* CreateDepthBufferInstance(ID3D12Device* device) {
+	return new DepthBuffer(device);
 }

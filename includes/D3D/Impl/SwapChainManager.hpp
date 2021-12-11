@@ -17,9 +17,11 @@ public:
 	void PresentWithoutTear() override;
 	void Resize(std::uint32_t width, std::uint32_t height) override;
 
-	D3D12_CPU_DESCRIPTOR_HANDLE ClearRTV(
+	void ClearRTV(
 		ID3D12GraphicsCommandList* commandList, float* clearColor
 	) noexcept override;
+	D3D12_CPU_DESCRIPTOR_HANDLE GetRTVHandle() const noexcept override;
+
 	std::uint32_t GetCurrentBackBufferIndex() const noexcept override;
 	D3D12_RESOURCE_BARRIER GetRenderStateBarrier() const noexcept override;
 	D3D12_RESOURCE_BARRIER GetPresentStateBarrier() const noexcept override;

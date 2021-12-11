@@ -15,6 +15,13 @@ GraphicsEngineDx12::GraphicsEngineDx12(
 
 	ID3D12Device5* deviceRef = DeviceInst::GetRef()->GetDeviceRef();
 
+	DepthBuffInst::Init(
+		deviceRef
+	);
+	DepthBuffInst::GetRef()->CreateDepthBuffer(
+		deviceRef, width, height
+	);
+
 	GfxQueInst::Init(
 		deviceRef,
 		bufferCount
@@ -49,6 +56,7 @@ GraphicsEngineDx12::~GraphicsEngineDx12() noexcept {
 	SwapchainInst::CleanUp();
 	GfxCmdListInst::CleanUp();
 	GfxQueInst::CleanUp();
+	DepthBuffInst::CleanUp();
 	DeviceInst::CleanUp();
 #ifdef _DEBUG
 	DebugInfoInst::CleanUp();
@@ -74,11 +82,19 @@ void GraphicsEngineDx12::Render() {
 	commandList->RSSetViewports(1, &m_viewport);
 	commandList->RSSetScissorRects(1, &m_scissorRect);
 
-	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = swapRef->ClearRTV(
+	swapRef->ClearRTV(
 		commandList, &m_backgroundColor.F32.x
 	);
 
-	commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
+	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = swapRef->GetRTVHandle();
+
+	IDepthBuffer* depthRef = DepthBuffInst::GetRef();
+
+	depthRef->ClearDSV(commandList);
+
+	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = depthRef->GetDSVHandle();
+
+	commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
 
 	// Record objects
 
@@ -100,6 +116,10 @@ void GraphicsEngineDx12::Resize(std::uint32_t width, std::uint32_t height) {
 		swapRef->GetCurrentBackBufferIndex()
 	);
 	swapRef->Resize(width, height);
+	DepthBuffInst::GetRef()->CreateDepthBuffer(
+		DeviceInst::GetRef()->GetDeviceRef(),
+		width, height
+	);
 	InitViewPortAndScissor(width, height);
 }
 
