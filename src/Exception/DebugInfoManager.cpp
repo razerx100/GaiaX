@@ -1,5 +1,6 @@
 #include <DebugInfoManager.hpp>
 #include <D3DExceptions.hpp>
+#include <D3DThrowMacros.hpp>
 
 DebugInfoManager::DebugInfoManager()
 	: m_next(0u), m_pDxgiInfoQueue(nullptr) {
@@ -11,21 +12,15 @@ DebugInfoManager::DebugInfoManager()
 	);
 
 	if (!hmodDxgiDebug)
-		throw GenericException(
-			__LINE__, __FILE__,
-			"Couldn't load dxgidebug.dll."
-		);
+		D3D_GENERIC_THROW("Couldn't load dxgidebug.dll.");
 
 	DXGIGetDebugInterface dxgiGetDebugInterface =
 		reinterpret_cast<DXGIGetDebugInterface>(
 			GetProcAddress(hmodDxgiDebug, "DXGIGetDebugInterface")
 			);
 
-	if(!dxgiGetDebugInterface)
-		throw GenericException(
-			__LINE__, __FILE__,
-			"Couldn't load DXGIGetDebugInterface."
-		);
+	if (!dxgiGetDebugInterface)
+		D3D_GENERIC_THROW("Couldn't load DXGIGetDebugInterface.");
 
 	dxgiGetDebugInterface(__uuidof(IDXGIInfoQueue), &m_pDxgiInfoQueue);
 

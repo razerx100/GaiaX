@@ -1,5 +1,6 @@
 #include <DeviceManager.hpp>
 #include <Exception.hpp>
+#include <D3DThrowMacros.hpp>
 
 DeviceManager::DeviceManager() {
     std::uint32_t dxgiFactoryFlags = 0;
@@ -61,8 +62,5 @@ void DeviceManager::GetHardwareAdapter(
             *ppAdapter, D3D_FEATURE_LEVEL_11_0,
             __uuidof(ID3D12Device), nullptr)
     ))
-        throw GenericException(
-            __LINE__, __FILE__,
-            "GPU doesn't have hardware support for DirectX12."
-        );
+        D3D_GENERIC_THROW("GPU doesn't have hardware support for DirectX12.");
 }

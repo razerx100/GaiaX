@@ -15,7 +15,7 @@ GraphicsQueueManager::GraphicsQueueManager(
 	queueDesc.Type = type;
 
 	HRESULT hr;
-	GFX_THROW_FAILED(hr, device->CreateCommandQueue(
+	D3D_THROW_FAILED(hr, device->CreateCommandQueue(
 		&queueDesc, __uuidof(ID3D12CommandQueue), &m_pCommandQueue
 	));
 }
@@ -29,7 +29,7 @@ void GraphicsQueueManager::InitSyncObjects(
 	std::uint32_t backBufferIndex
 ) {
 	HRESULT hr;
-	GFX_THROW_FAILED(hr, device->CreateFence(
+	D3D_THROW_FAILED(hr, device->CreateFence(
 		m_fenceValues[backBufferIndex],
 		D3D12_FENCE_FLAG_NONE,
 		__uuidof(ID3D12Fence),
@@ -39,16 +39,16 @@ void GraphicsQueueManager::InitSyncObjects(
 
 	m_fenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
 	if (m_fenceEvent == nullptr)
-		GFX_THROW_FAILED(hr, HRESULT_FROM_WIN32(GetLastError()));
+		D3D_THROW_FAILED(hr, HRESULT_FROM_WIN32(GetLastError()));
 }
 
 void GraphicsQueueManager::WaitForGPU(std::uint32_t backBufferIndex) {
 	HRESULT hr;
-	GFX_THROW_FAILED(hr, m_pCommandQueue->Signal(
+	D3D_THROW_FAILED(hr, m_pCommandQueue->Signal(
 		m_pFence.Get(), m_fenceValues[backBufferIndex])
 	);
 
-	GFX_THROW_FAILED(hr,
+	D3D_THROW_FAILED(hr,
 		m_pFence->SetEventOnCompletion(
 			m_fenceValues[backBufferIndex], m_fenceEvent));
 	WaitForSingleObjectEx(m_fenceEvent, INFINITE, FALSE);
@@ -69,7 +69,7 @@ void GraphicsQueueManager::ExecuteCommandLists(
 void GraphicsQueueManager::MoveToNextFrame(std::uint32_t backBufferIndex) {
 	const std::uint64_t currentFenceValue = m_fenceValues[backBufferIndex];
 	HRESULT hr;
-	GFX_THROW_FAILED(hr,
+	D3D_THROW_FAILED(hr,
 		m_pCommandQueue->Signal(m_pFence.Get(),
 			currentFenceValue)
 	);
@@ -77,7 +77,7 @@ void GraphicsQueueManager::MoveToNextFrame(std::uint32_t backBufferIndex) {
 	backBufferIndex = SwapchainInst::GetRef()->GetCurrentBackBufferIndex();
 
 	if (m_pFence->GetCompletedValue() < m_fenceValues[backBufferIndex]) {
-		GFX_THROW_FAILED(hr,
+		D3D_THROW_FAILED(hr,
 			m_pFence->SetEventOnCompletion(
 				m_fenceValues[backBufferIndex], m_fenceEvent));
 		WaitForSingleObjectEx(m_fenceEvent, INFINITE, FALSE);

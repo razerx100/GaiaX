@@ -10,7 +10,7 @@ CommandListManager::CommandListManager(
 
 	HRESULT hr;
 	for (std::uint32_t index = 0; index < allocatorsCount; ++index) {
-		GFX_THROW_FAILED(hr,
+		D3D_THROW_FAILED(hr,
 			device->CreateCommandAllocator(
 				type,
 				__uuidof(ID3D12CommandAllocator),
@@ -18,7 +18,7 @@ CommandListManager::CommandListManager(
 			));
 	}
 
-	GFX_THROW_FAILED(hr,
+	D3D_THROW_FAILED(hr,
 		device->CreateCommandList1(
 			0, type,
 			D3D12_COMMAND_LIST_FLAG_NONE,
@@ -30,15 +30,15 @@ CommandListManager::CommandListManager(
 
 void CommandListManager::Reset(std::uint32_t allocIndex) const {
 	HRESULT hr;
-	GFX_THROW_FAILED(hr, m_pCommandAllocators[allocIndex]->Reset());
-	GFX_THROW_FAILED(hr,
+	D3D_THROW_FAILED(hr, m_pCommandAllocators[allocIndex]->Reset());
+	D3D_THROW_FAILED(hr,
 		m_pCommandList->Reset(m_pCommandAllocators[allocIndex].Get(), nullptr)
 	);
 }
 
 void CommandListManager::Close() const {
 	HRESULT hr;
-	GFX_THROW_FAILED(hr, m_pCommandList->Close());
+	D3D_THROW_FAILED(hr, m_pCommandList->Close());
 }
 
 ID3D12GraphicsCommandList* CommandListManager::GetCommandListRef() const noexcept {

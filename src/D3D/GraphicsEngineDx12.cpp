@@ -108,12 +108,12 @@ void GraphicsEngineDx12::GetMonitorCoordinates(
 ) {
 	ComPtr<IDXGIOutput> pOutput;
 	HRESULT hr;
-	GFX_THROW_FAILED(hr,
+	D3D_THROW_FAILED(hr,
 		SwapchainInst::GetRef()->GetRef()->GetContainingOutput(&pOutput)
 	);
 
 	DXGI_OUTPUT_DESC desc;
-	GFX_THROW_FAILED(hr, pOutput->GetDesc(&desc));
+	D3D_THROW_FAILED(hr, pOutput->GetDesc(&desc));
 
 	monitorWidth = static_cast<std::uint64_t>(desc.DesktopCoordinates.right);
 	monitorHeight = static_cast<std::uint64_t>(desc.DesktopCoordinates.bottom);

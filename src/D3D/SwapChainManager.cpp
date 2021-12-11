@@ -28,7 +28,7 @@ SwapChainManager::SwapChainManager(
 
 	ComPtr<IDXGISwapChain1> swapChain;
 	HRESULT hr;
-	GFX_THROW_FAILED(
+	D3D_THROW_FAILED(
 		hr, factory->CreateSwapChainForHwnd(
 			cmdQueue,
 			reinterpret_cast<HWND>(windowHandle),
@@ -38,12 +38,12 @@ SwapChainManager::SwapChainManager(
 		)
 	);
 
-	GFX_THROW_FAILED(
+	D3D_THROW_FAILED(
 		hr, swapChain.As(&m_pSwapChain)
 	);
 
 	if (variableRefreshRateAvailable)
-		GFX_THROW_FAILED(
+		D3D_THROW_FAILED(
 			hr, factory->MakeWindowAssociation(
 				reinterpret_cast<HWND>(windowHandle),
 				DXGI_MWA_NO_ALT_ENTER
@@ -60,11 +60,11 @@ void SwapChainManager::CreateRTVs() {
 	);
 
 	HRESULT hr;
-	ID3D12Device5* deviceRef = DeviceInst::GetRef()->GetDeviceRef();
+	ID3D12Device* deviceRef = DeviceInst::GetRef()->GetDeviceRef();
 
 	if (deviceRef) {
 		for (std::uint32_t index = 0; index < m_pRenderTargetViews.size(); ++index) {
-			GFX_THROW_FAILED(
+			D3D_THROW_FAILED(
 				hr, m_pSwapChain->GetBuffer(
 					index, __uuidof(ID3D12Resource), &m_pRenderTargetViews[index]
 				)
@@ -119,7 +119,7 @@ void SwapChainManager::ToggleVSync() noexcept {
 
 void SwapChainManager::PresentWithTear() {
 	HRESULT hr;
-	GFX_THROW_FAILED(
+	D3D_THROW_FAILED(
 		hr, m_pSwapChain->Present(
 			0, DXGI_PRESENT_ALLOW_TEARING
 		)
@@ -128,7 +128,7 @@ void SwapChainManager::PresentWithTear() {
 
 void SwapChainManager::PresentWithoutTear() {
 	HRESULT hr;
-	GFX_THROW_FAILED(
+	D3D_THROW_FAILED(
 		hr, m_pSwapChain->Present(
 			m_vsyncFlag, 0
 		)
@@ -149,7 +149,7 @@ void SwapChainManager::Resize(std::uint32_t width, std::uint32_t height) {
 		m_pSwapChain->GetDesc1(&desc);
 
 		HRESULT hr;
-		GFX_THROW_FAILED(
+		D3D_THROW_FAILED(
 			hr, m_pSwapChain->ResizeBuffers(
 				m_pRenderTargetViews.size(),
 				width, height,
@@ -174,7 +174,7 @@ void SwapChainManager::CreateRTVHeap(std::uint8_t bufferCount) {
 	ID3D12Device5* deviceRef = DeviceInst::GetRef()->GetDeviceRef();
 
 	HRESULT hr;
-	GFX_THROW_FAILED(
+	D3D_THROW_FAILED(
 		hr, deviceRef->CreateDescriptorHeap(
 			&rtvHeapDesc,
 			__uuidof(ID3D12DescriptorHeap),
