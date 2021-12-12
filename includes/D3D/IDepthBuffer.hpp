@@ -12,7 +12,7 @@ public:
 		std::uint32_t width, std::uint32_t height
 	) = 0;
 
-	virtual void ClearDSV(ID3D12GraphicsCommandList* commandList) noexcept = 0;
+	virtual void ClearDSV(ID3D12GraphicsCommandList* commandList, D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle) noexcept = 0;
 	virtual D3D12_CPU_DESCRIPTOR_HANDLE GetDSVHandle() const noexcept = 0;
 };
 

@@ -82,17 +82,18 @@ void GraphicsEngineDx12::Render() {
 	commandList->RSSetViewports(1, &m_viewport);
 	commandList->RSSetScissorRects(1, &m_scissorRect);
 
-	swapRef->ClearRTV(
-		commandList, &m_backgroundColor.F32.x
-	);
-
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = swapRef->GetRTVHandle();
+
+	swapRef->ClearRTV(
+		commandList, &m_backgroundColor.F32.x, rtvHandle
+	);
 
 	IDepthBuffer* depthRef = DepthBuffInst::GetRef();
 
-	depthRef->ClearDSV(commandList);
 
 	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = depthRef->GetDSVHandle();
+
+	depthRef->ClearDSV(commandList, dsvHandle);
 
 	commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
 

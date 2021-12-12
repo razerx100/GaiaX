@@ -84,14 +84,9 @@ std::uint32_t SwapChainManager::GetCurrentBackBufferIndex() const noexcept {
 }
 
 void SwapChainManager::ClearRTV(
-	ID3D12GraphicsCommandList* commandList, float* clearColor
+	ID3D12GraphicsCommandList* commandList, float* clearColor,
+	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle
 ) noexcept {
-	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(
-		m_pRtvHeap->GetCPUDescriptorHandleForHeapStart(),
-		GetCurrentBackBufferIndex(),
-		m_rtvDescSize
-	);
-
 	commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
 }
 

@@ -58,9 +58,9 @@ D3D12_CPU_DESCRIPTOR_HANDLE DepthBuffer::GetDSVHandle() const noexcept {
     return m_pDSVHeap->GetCPUDescriptorHandleForHeapStart();
 }
 
-void DepthBuffer::ClearDSV(ID3D12GraphicsCommandList* commandList) noexcept {
+void DepthBuffer::ClearDSV(ID3D12GraphicsCommandList* commandList, D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle) noexcept {
     commandList->ClearDepthStencilView(
-        m_pDSVHeap->GetCPUDescriptorHandleForHeapStart(),
+        dsvHandle,
         D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr
     );
 }

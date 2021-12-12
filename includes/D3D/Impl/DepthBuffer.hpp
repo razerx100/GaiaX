@@ -11,7 +11,7 @@ public:
 		std::uint32_t width, std::uint32_t height
 	) override;
 
-	void ClearDSV(ID3D12GraphicsCommandList* commandList) noexcept override;
+	void ClearDSV(ID3D12GraphicsCommandList* commandList, D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle) noexcept override;
 	D3D12_CPU_DESCRIPTOR_HANDLE GetDSVHandle() const noexcept override;
 
 private:

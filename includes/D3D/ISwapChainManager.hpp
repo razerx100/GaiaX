@@ -14,7 +14,8 @@ public:
 	virtual void Resize(std::uint32_t width, std::uint32_t height) = 0;
 
 	virtual void ClearRTV(
-		ID3D12GraphicsCommandList* commandList, float* clearColor
+		ID3D12GraphicsCommandList* commandList, float* clearColor,
+		D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle
 	) noexcept = 0;
 	virtual D3D12_CPU_DESCRIPTOR_HANDLE GetRTVHandle() const noexcept = 0;
 
