@@ -17,7 +17,7 @@
 #else
 #define D3D_THROW_NO_HR(funCall) funCall;
 #define D3D_THROW(hr) throw HrException(__LINE__, __FILE__, hr)
-#define D3D_THROW_FAILED(hr, hrCall) GFX_THROW_NOINFO(hr, hrCall)
+#define D3D_THROW_FAILED(hr, hrCall) D3D_THROW_NOINFO(hr, hrCall)
 #define D3D_DEVICE_REMOVED_EXCEPT(hr) DeviceRemovedException(__LINE__, __FILE__, hr)
 #endif
 
