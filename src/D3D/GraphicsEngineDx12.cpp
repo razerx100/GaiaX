@@ -53,6 +53,7 @@ GraphicsEngineDx12::GraphicsEngineDx12(
 }
 
 GraphicsEngineDx12::~GraphicsEngineDx12() noexcept {
+	ModelContainerInst::CleanUp();
 	SwapchainInst::CleanUp();
 	GfxCmdListInst::CleanUp();
 	GfxQueInst::CleanUp();
@@ -63,8 +64,22 @@ GraphicsEngineDx12::~GraphicsEngineDx12() noexcept {
 #endif
 }
 
-void GraphicsEngineDx12::SubmitModels(const IModel* const models, std::uint32_t modelCount) {
-
+void GraphicsEngineDx12::SubmitModels(
+	IModel* models, std::uint32_t modelCount,
+	bool texture
+) {
+	if (texture)
+		for (std::uint32_t index = 0u; index < modelCount; ++index)
+			ModelContainerInst::GetRef()->AddTexturedModel(
+				DeviceInst::GetRef()->GetDeviceRef(),
+				std::unique_ptr<IModel>(models + index)
+			);
+	else
+		for (std::uint32_t index = 0u; index < modelCount; ++index)
+			ModelContainerInst::GetRef()->AddColoredModel(
+				DeviceInst::GetRef()->GetDeviceRef(),
+				std::unique_ptr<IModel>(models + index)
+			);
 }
 
 void GraphicsEngineDx12::Render() {
@@ -90,7 +105,6 @@ void GraphicsEngineDx12::Render() {
 
 	IDepthBuffer* depthRef = DepthBuffInst::GetRef();
 
-
 	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = depthRef->GetDSVHandle();
 
 	depthRef->ClearDSV(commandList, dsvHandle);
@@ -98,6 +112,7 @@ void GraphicsEngineDx12::Render() {
 	commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
 
 	// Record objects
+	ModelContainerInst::GetRef()->BindCommands(commandList);
 
 	D3D12_RESOURCE_BARRIER presentBarrier = swapRef->GetPresentStateBarrier();
 	commandList->ResourceBarrier(1, &presentBarrier);
@@ -164,4 +179,12 @@ void GraphicsEngineDx12::WaitForAsyncTasks() {
 	GfxQueInst::GetRef()->WaitForGPU(
 		SwapchainInst::GetRef()->GetCurrentBackBufferIndex()
 	);
+}
+
+void GraphicsEngineDx12::SetShaderPath(const char* path) noexcept {
+	m_shaderPath = path;
+}
+
+void GraphicsEngineDx12::InitResourceBasedObjects() {
+	ModelContainerInst::Init(m_shaderPath.c_str());
 }

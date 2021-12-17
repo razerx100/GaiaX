@@ -3,6 +3,7 @@
 #include <GraphicsQueueManager.hpp>
 #include <CommandListManager.hpp>
 #include <DepthBuffer.hpp>
+#include <ModelContainer.hpp>
 
 IDeviceManager* CreateD3DDeviceInstance() {
 	return new DeviceManager();
@@ -46,4 +47,10 @@ ICommandListManager* CreateCommandListInstance(
 
 IDepthBuffer* CreateDepthBufferInstance(ID3D12Device* device) {
 	return new DepthBuffer(device);
+}
+
+IModelContainer* CreateModelContainerInstance(
+	const char* shaderPath
+) {
+	return new ModelContainer(shaderPath);
 }

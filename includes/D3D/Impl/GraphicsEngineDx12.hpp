@@ -14,7 +14,10 @@ public:
 	~GraphicsEngineDx12() noexcept;
 
 	void SetBackgroundColor(const Ceres::VectorF32& color) noexcept override;
-	void SubmitModels(const IModel* const models, std::uint32_t modelCount) override;
+	void SubmitModels(
+		IModel* models, std::uint32_t modelCount,
+		bool texture = true
+	) override;
 	void Render() override;
 	void Resize(std::uint32_t width, std::uint32_t height) override;
 	void GetMonitorCoordinates(
@@ -22,6 +25,10 @@ public:
 	) override;
 	void WaitForAsyncTasks() override;
 
+	void SetShaderPath(const char* path) noexcept override;
+	void InitResourceBasedObjects() override;
+
+public:
 	static constexpr DXGI_FORMAT RENDER_FORMAT = DXGI_FORMAT_R8G8B8A8_UNORM;
 
 private:
@@ -34,5 +41,6 @@ private:
 	Ceres::VectorF32 m_backgroundColor;
 
 	const std::string m_appName;
+	std::string m_shaderPath;
 };
 #endif

@@ -55,3 +55,9 @@ void DepthBuffInst::Init(ID3D12Device* device) {
 		CreateDepthBufferInstance(device)
 	);
 }
+
+void ModelContainerInst::Init(const char* shaderPath) {
+	Set(
+		CreateModelContainerInstance(shaderPath)
+	);
+}

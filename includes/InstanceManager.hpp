@@ -7,6 +7,7 @@
 #include <ICommandListManager.hpp>
 #include <DebugInfoManager.hpp>
 #include <IDepthBuffer.hpp>
+#include <IModelContainer.hpp>
 
 class DeviceInst : public _ObjectManager<IDeviceManager> {
 public:
@@ -47,5 +48,10 @@ public:
 class DepthBuffInst : public _ObjectManager<IDepthBuffer> {
 public:
 	static void Init(ID3D12Device* device);
+};
+
+class ModelContainerInst : public _ObjectManager<IModelContainer> {
+public:
+	static void Init(const char* shaderPath);
 };
 #endif
