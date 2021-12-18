@@ -65,20 +65,20 @@ GraphicsEngineDx12::~GraphicsEngineDx12() noexcept {
 }
 
 void GraphicsEngineDx12::SubmitModels(
-	IModel* models, std::uint32_t modelCount,
+	IModel** models, std::uint32_t modelCount,
 	bool texture
 ) {
 	if (texture)
 		for (std::uint32_t index = 0u; index < modelCount; ++index)
 			ModelContainerInst::GetRef()->AddTexturedModel(
 				DeviceInst::GetRef()->GetDeviceRef(),
-				std::unique_ptr<IModel>(models + index)
+				std::unique_ptr<IModel>(*(models + index))
 			);
 	else
 		for (std::uint32_t index = 0u; index < modelCount; ++index)
 			ModelContainerInst::GetRef()->AddColoredModel(
 				DeviceInst::GetRef()->GetDeviceRef(),
-				std::unique_ptr<IModel>(models + index)
+				std::unique_ptr<IModel>(*(models + index))
 			);
 }
 

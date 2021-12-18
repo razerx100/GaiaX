@@ -15,7 +15,7 @@ public:
 
 	void SetBackgroundColor(const Ceres::VectorF32& color) noexcept override;
 	void SubmitModels(
-		IModel* models, std::uint32_t modelCount,
+		IModel** models, std::uint32_t modelCount,
 		bool texture = true
 	) override;
 	void Render() override;
