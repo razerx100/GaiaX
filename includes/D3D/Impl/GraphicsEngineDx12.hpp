@@ -14,10 +14,7 @@ public:
 	~GraphicsEngineDx12() noexcept;
 
 	void SetBackgroundColor(const Ceres::VectorF32& color) noexcept override;
-	void SubmitModels(
-		IModel** models, std::uint32_t modelCount,
-		bool texture = true
-	) override;
+	void SubmitModel(const IModel* const modelRef, bool texture = true) override;
 	void Render() override;
 	void Resize(std::uint32_t width, std::uint32_t height) override;
 	void GetMonitorCoordinates(

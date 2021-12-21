@@ -13,10 +13,10 @@ public:
 	virtual void AddPSO(std::unique_ptr<IPipelineObject> pso) noexcept = 0;
 	virtual void AddRootSignature(std::shared_ptr<IRootSignature> signature) noexcept = 0;
 	virtual void AddColoredModel(
-		ID3D12Device* device, std::unique_ptr<IModel> model
+		ID3D12Device* device, const IModel* const modelRef
 	) noexcept = 0;
 	virtual void AddTexturedModel(
-		ID3D12Device* device, std::unique_ptr<IModel> model
+		ID3D12Device* device, const IModel* const modelRef
 	) noexcept = 0;
 
 	virtual void BindCommands(ID3D12GraphicsCommandList* commandList) noexcept = 0;

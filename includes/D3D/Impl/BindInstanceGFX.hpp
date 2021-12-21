@@ -16,10 +16,10 @@ public:
 	void AddPSO(std::unique_ptr<IPipelineObject> pso) noexcept override;
 	void AddRootSignature(std::shared_ptr<IRootSignature> signature) noexcept override;
 	void AddColoredModel(
-		ID3D12Device* device, std::unique_ptr<IModel> model
+		ID3D12Device* device, const IModel* const modelRef
 	) noexcept override;
 	void AddTexturedModel(
-		ID3D12Device* device, std::unique_ptr<IModel> model
+		ID3D12Device* device, const IModel* const modelRef
 	) noexcept override;
 
 	void BindCommands(ID3D12GraphicsCommandList* commandList) noexcept override;
@@ -27,10 +27,11 @@ public:
 private:
 	class ModelRaw {
 	public:
-		ModelRaw() = default;
+		ModelRaw(const IModel* const m_modelRef) noexcept;
 		ModelRaw(
 			std::unique_ptr<IVertexBuffer> vertexBuffer,
-			std::unique_ptr<IIndexBuffer> indexBuffer
+			std::unique_ptr<IIndexBuffer> indexBuffer,
+			const IModel* const modelRef
 		) noexcept;
 
 		void AddVB(std::unique_ptr<IVertexBuffer> vertexBuffer) noexcept;
@@ -41,6 +42,7 @@ private:
 	private:
 		std::unique_ptr<IVertexBuffer> m_vertexBuffer;
 		std::unique_ptr<IIndexBuffer> m_indexBuffer;
+		const IModel* const m_modelRef;
 	};
 
 private:

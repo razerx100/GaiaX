@@ -16,30 +16,32 @@ void BindInstanceGFX::AddRootSignature(std::shared_ptr<IRootSignature> signature
 }
 
 void BindInstanceGFX::AddColoredModel(
-	ID3D12Device* device, std::unique_ptr<IModel> model
+	ID3D12Device* device, const IModel* const modelRef
 ) noexcept {
 	m_modelsRaw.emplace_back(
 		std::make_unique<ModelRaw>(
 			std::make_unique<VertexBuffer>(
 				device,
-				model->GetVertices(),
-				model->GetSolidColor()
+				modelRef->GetVertices(),
+				modelRef->GetSolidColor()
 				),
-			std::make_unique<IndexBuffer>(device, model->GetIndices())
+			std::make_unique<IndexBuffer>(device, modelRef->GetIndices()),
+			modelRef
 			)
 	);
 }
 
 void BindInstanceGFX::AddTexturedModel(
-	ID3D12Device* device, std::unique_ptr<IModel> model
+	ID3D12Device* device, const IModel* const modelRef
 ) noexcept {
 	m_modelsRaw.emplace_back(
 		std::make_unique<ModelRaw>(
 			std::make_unique<VertexBuffer>(
 				device,
-				model->GetVertices()
+				modelRef->GetVertices()
 				),
-			std::make_unique<IndexBuffer>(device, model->GetIndices())
+			std::make_unique<IndexBuffer>(device, modelRef->GetIndices()),
+			modelRef
 			)
 	);
 }
@@ -54,10 +56,17 @@ void BindInstanceGFX::BindCommands(ID3D12GraphicsCommandList* commandList) noexc
 }
 
 // Model Raw
+BindInstanceGFX::ModelRaw::ModelRaw(const IModel* const modelRef) noexcept
+	: m_modelRef(modelRef) {}
+
 BindInstanceGFX::ModelRaw::ModelRaw(
 	std::unique_ptr<IVertexBuffer> vertexBuffer,
-	std::unique_ptr<IIndexBuffer> indexBuffer
-) noexcept : m_vertexBuffer(std::move(vertexBuffer)), m_indexBuffer(std::move(indexBuffer)) {}
+	std::unique_ptr<IIndexBuffer> indexBuffer,
+	const IModel* const modelRef
+) noexcept
+	:
+	m_vertexBuffer(std::move(vertexBuffer)),
+	m_indexBuffer(std::move(indexBuffer)), m_modelRef(modelRef) {}
 
 void BindInstanceGFX::ModelRaw::AddVB(std::unique_ptr<IVertexBuffer> vertexBuffer) noexcept {
 	m_vertexBuffer = std::move(vertexBuffer);

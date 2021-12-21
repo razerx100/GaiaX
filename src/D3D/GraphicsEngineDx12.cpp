@@ -64,22 +64,17 @@ GraphicsEngineDx12::~GraphicsEngineDx12() noexcept {
 #endif
 }
 
-void GraphicsEngineDx12::SubmitModels(
-	IModel** models, std::uint32_t modelCount,
-	bool texture
-) {
+void GraphicsEngineDx12::SubmitModel(const IModel* const modelRef, bool texture) {
 	if (texture)
-		for (std::uint32_t index = 0u; index < modelCount; ++index)
-			ModelContainerInst::GetRef()->AddTexturedModel(
-				DeviceInst::GetRef()->GetDeviceRef(),
-				std::unique_ptr<IModel>(*(models + index))
-			);
+		ModelContainerInst::GetRef()->AddTexturedModel(
+			DeviceInst::GetRef()->GetDeviceRef(),
+			modelRef
+		);
 	else
-		for (std::uint32_t index = 0u; index < modelCount; ++index)
-			ModelContainerInst::GetRef()->AddColoredModel(
-				DeviceInst::GetRef()->GetDeviceRef(),
-				std::unique_ptr<IModel>(*(models + index))
-			);
+		ModelContainerInst::GetRef()->AddColoredModel(
+			DeviceInst::GetRef()->GetDeviceRef(),
+			modelRef
+		);
 }
 
 void GraphicsEngineDx12::Render() {

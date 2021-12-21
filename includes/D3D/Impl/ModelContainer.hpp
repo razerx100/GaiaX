@@ -10,8 +10,8 @@ class ModelContainer : public IModelContainer {
 public:
 	ModelContainer(const char* shaderPath) noexcept;
 
-	void AddColoredModel(ID3D12Device* device, std::unique_ptr<IModel> model) override;
-	void AddTexturedModel(ID3D12Device* device, std::unique_ptr<IModel> model) override;
+	void AddColoredModel(ID3D12Device* device, const IModel* const modelRef) override;
+	void AddTexturedModel(ID3D12Device* device, const IModel* const modelRef) override;
 
 	void BindCommands(ID3D12GraphicsCommandList* commandList) noexcept override;
 

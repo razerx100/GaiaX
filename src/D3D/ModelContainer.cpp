@@ -8,7 +8,7 @@
 ModelContainer::ModelContainer(const char* shaderPath) noexcept
 	: m_coloredInstanceData{}, m_texturedInstanceData{}, m_shaderPath(shaderPath) {}
 
-void ModelContainer::AddColoredModel(ID3D12Device* device, std::unique_ptr<IModel> model) {
+void ModelContainer::AddColoredModel(ID3D12Device* device, const IModel* const modelRef) {
 	if (!m_coloredInstanceData.available) {
 		InitNewInstance(m_coloredInstanceData);
 
@@ -17,7 +17,7 @@ void ModelContainer::AddColoredModel(ID3D12Device* device, std::unique_ptr<IMode
 
 		m_bindInstances[m_coloredInstanceData.index]->AddRootSignature(m_pRootSignature);
 
-		VertexLayout layout = VertexLayout(model->GetVertexLayout());
+		VertexLayout layout = VertexLayout(modelRef->GetVertexLayout());
 
 		std::shared_ptr<Shader> vs = std::make_shared<Shader>();
 		vs->LoadBinary(m_shaderPath + "VSColored.cso");
@@ -37,10 +37,10 @@ void ModelContainer::AddColoredModel(ID3D12Device* device, std::unique_ptr<IMode
 		m_bindInstances[m_coloredInstanceData.index]->AddPSO(std::move(pso));
 	}
 
-	m_bindInstances[m_coloredInstanceData.index]->AddColoredModel(device, std::move(model));
+	m_bindInstances[m_coloredInstanceData.index]->AddColoredModel(device, modelRef);
 }
 
-void ModelContainer::AddTexturedModel(ID3D12Device* device, std::unique_ptr<IModel> model) {
+void ModelContainer::AddTexturedModel(ID3D12Device* device, const IModel* const modelRef) {
 	if (!m_texturedInstanceData.available) {
 		InitNewInstance(m_texturedInstanceData);
 
@@ -52,7 +52,7 @@ void ModelContainer::AddTexturedModel(ID3D12Device* device, std::unique_ptr<IMod
 		// Init Pipeline Object
 	}
 
-	m_bindInstances[m_texturedInstanceData.index]->AddTexturedModel(device, std::move(model));
+	m_bindInstances[m_texturedInstanceData.index]->AddTexturedModel(device, modelRef);
 }
 
 void ModelContainer::BindCommands(ID3D12GraphicsCommandList* commandList) noexcept {
