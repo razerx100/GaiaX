@@ -8,9 +8,20 @@
 ModelContainer::ModelContainer(const char* shaderPath) noexcept
 	: m_coloredInstanceData{}, m_texturedInstanceData{}, m_shaderPath(shaderPath) {}
 
-void ModelContainer::AddColoredModel(ID3D12Device* device, const IModel* const modelRef) {
+void ModelContainer::AddModel(
+	ID3D12Device* device, const IModel* const modelRef, bool texture
+) {
+	if (texture)
+		AddTexturedModel(device, modelRef);
+	else
+		AddColoredModel(device, modelRef);
+}
+
+void ModelContainer::AddColoredModel(
+	ID3D12Device* device, const IModel* const modelRef
+) {
 	if (!m_coloredInstanceData.available) {
-		InitNewInstance(m_coloredInstanceData);
+		InitNewInstance(m_coloredInstanceData, false);
 
 		if (!m_pRootSignature)
 			CreateRootSignature(device);
@@ -37,12 +48,14 @@ void ModelContainer::AddColoredModel(ID3D12Device* device, const IModel* const m
 		m_bindInstances[m_coloredInstanceData.index]->AddPSO(std::move(pso));
 	}
 
-	m_bindInstances[m_coloredInstanceData.index]->AddColoredModel(device, modelRef);
+	m_bindInstances[m_coloredInstanceData.index]->AddModel(device, modelRef);
 }
 
-void ModelContainer::AddTexturedModel(ID3D12Device* device, const IModel* const modelRef) {
+void ModelContainer::AddTexturedModel(
+	ID3D12Device* device, const IModel* const modelRef
+) {
 	if (!m_texturedInstanceData.available) {
-		InitNewInstance(m_texturedInstanceData);
+		InitNewInstance(m_texturedInstanceData, true);
 
 		if (!m_pRootSignature)
 			CreateRootSignature(device);
@@ -52,7 +65,7 @@ void ModelContainer::AddTexturedModel(ID3D12Device* device, const IModel* const 
 		// Init Pipeline Object
 	}
 
-	m_bindInstances[m_texturedInstanceData.index]->AddTexturedModel(device, modelRef);
+	m_bindInstances[m_texturedInstanceData.index]->AddModel(device, modelRef);
 }
 
 void ModelContainer::BindCommands(ID3D12GraphicsCommandList* commandList) noexcept {
@@ -60,8 +73,8 @@ void ModelContainer::BindCommands(ID3D12GraphicsCommandList* commandList) noexce
 		bindInstance->BindCommands(commandList);
 }
 
-void ModelContainer::InitNewInstance(InstanceData& instanceData) noexcept {
-	m_bindInstances.emplace_back(std::make_unique<BindInstanceGFX>());
+void ModelContainer::InitNewInstance(InstanceData& instanceData, bool texture) noexcept {
+	m_bindInstances.emplace_back(std::make_unique<BindInstanceGFX>(texture));
 	instanceData = { true, static_cast<std::uint32_t>(m_bindInstances.size()) - 1u };
 }
 
@@ -71,4 +84,14 @@ void ModelContainer::CreateRootSignature(ID3D12Device* device) {
 	signature->CreateSignature(device);
 
 	m_pRootSignature = signature;
+}
+
+void ModelContainer::CopyBuffers(ID3D12Device* device) {
+	for (auto& bindInstance : m_bindInstances)
+		bindInstance->CopyData(device);
+}
+
+void ModelContainer::RecordUploadBuffers(ID3D12GraphicsCommandList* copyList) {
+	for (auto& bindInstance : m_bindInstances)
+		bindInstance->RecordUploadBuffers(copyList);
 }

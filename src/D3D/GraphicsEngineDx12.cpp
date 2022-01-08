@@ -47,13 +47,20 @@ GraphicsEngineDx12::GraphicsEngineDx12(
 
 	InitViewPortAndScissor(width, height);
 
-	queueRef->WaitForGPU(
-		SwapchainInst::GetRef()->GetCurrentBackBufferIndex()
-	);
+	CpyQueInst::Init(deviceRef);
+	CpyQueInst::GetRef()->InitSyncObjects(deviceRef);
+
+	CpyCmdListInst::Init(deviceRef);
+	VertexBufferInst::Init();
+	IndexBufferInst::Init();
 }
 
 GraphicsEngineDx12::~GraphicsEngineDx12() noexcept {
+	CpyCmdListInst::CleanUp();
+	CpyQueInst::CleanUp();
 	ModelContainerInst::CleanUp();
+	VertexBufferInst::CleanUp();
+	IndexBufferInst::CleanUp();
 	SwapchainInst::CleanUp();
 	GfxCmdListInst::CleanUp();
 	GfxQueInst::CleanUp();
@@ -65,16 +72,11 @@ GraphicsEngineDx12::~GraphicsEngineDx12() noexcept {
 }
 
 void GraphicsEngineDx12::SubmitModel(const IModel* const modelRef, bool texture) {
-	if (texture)
-		ModelContainerInst::GetRef()->AddTexturedModel(
-			DeviceInst::GetRef()->GetDeviceRef(),
-			modelRef
-		);
-	else
-		ModelContainerInst::GetRef()->AddColoredModel(
-			DeviceInst::GetRef()->GetDeviceRef(),
-			modelRef
-		);
+	ModelContainerInst::GetRef()->AddModel(
+		DeviceInst::GetRef()->GetDeviceRef(),
+		modelRef,
+		texture
+	);
 }
 
 void GraphicsEngineDx12::Render() {
@@ -174,6 +176,7 @@ void GraphicsEngineDx12::WaitForAsyncTasks() {
 	GfxQueInst::GetRef()->WaitForGPU(
 		SwapchainInst::GetRef()->GetCurrentBackBufferIndex()
 	);
+	CpyQueInst::GetRef()->WaitForGPU();
 }
 
 void GraphicsEngineDx12::SetShaderPath(const char* path) noexcept {
@@ -182,4 +185,16 @@ void GraphicsEngineDx12::SetShaderPath(const char* path) noexcept {
 
 void GraphicsEngineDx12::InitResourceBasedObjects() {
 	ModelContainerInst::Init(m_shaderPath.c_str());
+}
+
+void GraphicsEngineDx12::ProcessData() {
+	ModelContainerInst::GetRef()->CopyBuffers(DeviceInst::GetRef()->GetDeviceRef());
+
+	ID3D12GraphicsCommandList* copyList = CpyCmdListInst::GetRef()->GetCommandListRef();
+
+	ModelContainerInst::GetRef()->RecordUploadBuffers(copyList);
+
+	ICopyQueueManager* copyQue = CpyQueInst::GetRef();
+	copyQue->ExecuteCommandLists(copyList);
+	copyQue->WaitForGPU();
 }

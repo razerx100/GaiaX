@@ -3,6 +3,7 @@ Graphics Engine module based on DirectX12. It needs a Win32 window module handle
 
 # Library used
 1. [Ceres](https://github.com/razerx100/Ceres).
+2. [Venus](https://github.com/razerx100/Venus).
 
 # Third party library Used
 1. [ImGui](https://github.com/ocornut/imgui).

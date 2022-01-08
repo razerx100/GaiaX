@@ -4,15 +4,14 @@
 
 // Graphics Command Queue
 GraphicsQueueManager::GraphicsQueueManager(
-	ID3D12Device5* device,
-	D3D12_COMMAND_LIST_TYPE type, std::uint8_t bufferCount
+	ID3D12Device* device, std::uint8_t bufferCount
 )
 	: m_fenceEvent(nullptr),
 	m_fenceValues(bufferCount, 0u) {
 
 	D3D12_COMMAND_QUEUE_DESC queueDesc = {};
 	queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
-	queueDesc.Type = type;
+	queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
 
 	HRESULT hr;
 	D3D_THROW_FAILED(hr, device->CreateCommandQueue(
@@ -25,7 +24,7 @@ ID3D12CommandQueue* GraphicsQueueManager::GetQueueRef() const noexcept {
 }
 
 void GraphicsQueueManager::InitSyncObjects(
-	ID3D12Device5* device,
+	ID3D12Device* device,
 	std::uint32_t backBufferIndex
 ) {
 	HRESULT hr;

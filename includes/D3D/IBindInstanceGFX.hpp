@@ -12,12 +12,16 @@ public:
 
 	virtual void AddPSO(std::unique_ptr<IPipelineObject> pso) noexcept = 0;
 	virtual void AddRootSignature(std::shared_ptr<IRootSignature> signature) noexcept = 0;
-	virtual void AddColoredModel(
+	virtual void AddModel(
 		ID3D12Device* device, const IModel* const modelRef
 	) noexcept = 0;
-	virtual void AddTexturedModel(
-		ID3D12Device* device, const IModel* const modelRef
-	) noexcept = 0;
+
+	virtual void CopyData(
+		ID3D12Device* device
+	) = 0;
+	virtual void RecordUploadBuffers(
+		ID3D12GraphicsCommandList* copyList
+	) = 0;
 
 	virtual void BindCommands(ID3D12GraphicsCommandList* commandList) noexcept = 0;
 };

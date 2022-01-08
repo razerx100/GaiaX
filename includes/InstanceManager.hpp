@@ -8,6 +8,8 @@
 #include <DebugInfoManager.hpp>
 #include <IDepthBuffer.hpp>
 #include <IModelContainer.hpp>
+#include <ICopyQueueManager.hpp>
+#include <IResourceBuffer.hpp>
 
 class DeviceInst : public _ObjectManager<IDeviceManager> {
 public:
@@ -27,7 +29,7 @@ public:
 class GfxQueInst : public _ObjectManager<IGraphicsQueueManager> {
 public:
 	static void Init(
-		ID3D12Device5* device,
+		ID3D12Device* device,
 		std::uint8_t bufferCount
 	);
 };
@@ -53,5 +55,29 @@ public:
 class ModelContainerInst : public _ObjectManager<IModelContainer> {
 public:
 	static void Init(const char* shaderPath);
+};
+
+class CpyQueInst : public _ObjectManager<ICopyQueueManager> {
+public:
+	static void Init(
+		ID3D12Device* device
+	);
+};
+
+class CpyCmdListInst : public _ObjectManager<ICommandListManager> {
+public:
+	static void Init(
+		ID3D12Device5* device
+	);
+};
+
+class VertexBufferInst : public _ObjectManager<IResourceBuffer> {
+public:
+	static void Init();
+};
+
+class IndexBufferInst : public _ObjectManager<IResourceBuffer> {
+public:
+	static void Init();
 };
 #endif

@@ -7,7 +7,7 @@ class IGraphicsQueueManager {
 public:
 	virtual ~IGraphicsQueueManager() = default;
 
-	virtual void InitSyncObjects(ID3D12Device5* device, std::uint32_t backBufferIndex) = 0;
+	virtual void InitSyncObjects(ID3D12Device* device, std::uint32_t backBufferIndex) = 0;
 	virtual void WaitForGPU(std::uint32_t backBufferIndex) = 0;
 	virtual void ExecuteCommandLists(
 		ID3D12GraphicsCommandList* commandList
@@ -19,7 +19,7 @@ public:
 };
 
 IGraphicsQueueManager* CreateGraphicsQueueInstance(
-	ID3D12Device5* device,
+	ID3D12Device* device,
 	std::uint8_t bufferCount
 );
 

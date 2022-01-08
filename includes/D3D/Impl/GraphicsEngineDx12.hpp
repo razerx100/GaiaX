@@ -24,6 +24,7 @@ public:
 
 	void SetShaderPath(const char* path) noexcept override;
 	void InitResourceBasedObjects() override;
+	void ProcessData() override;
 
 public:
 	static constexpr DXGI_FORMAT RENDER_FORMAT = DXGI_FORMAT_R8G8B8A8_UNORM;

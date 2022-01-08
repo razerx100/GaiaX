@@ -4,6 +4,8 @@
 #include <CommandListManager.hpp>
 #include <DepthBuffer.hpp>
 #include <ModelContainer.hpp>
+#include <CopyQueueManager.hpp>
+#include <ResourceBuffer.hpp>
 
 IDeviceManager* CreateD3DDeviceInstance() {
 	return new DeviceManager();
@@ -23,12 +25,11 @@ ISwapChainManager* CreateSwapChainInstance(
 }
 
 IGraphicsQueueManager* CreateGraphicsQueueInstance(
-	ID3D12Device5* device,
+	ID3D12Device* device,
 	std::uint8_t bufferCount
 ) {
 	return new GraphicsQueueManager(
 		device,
-		D3D12_COMMAND_LIST_TYPE_DIRECT,
 		bufferCount
 	);
 }
@@ -53,4 +54,14 @@ IModelContainer* CreateModelContainerInstance(
 	const char* shaderPath
 ) {
 	return new ModelContainer(shaderPath);
+}
+
+ICopyQueueManager* CreateCopyQueueInstance(
+	ID3D12Device* device
+) {
+	return new CopyQueueManager(device);
+}
+
+IResourceBuffer* CreateResourceBufferInstance() {
+	return new ResourceBuffer();
 }

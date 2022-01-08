@@ -21,7 +21,7 @@ void SwapchainInst::Init(
 }
 
 void GfxQueInst::Init(
-	ID3D12Device5* device,
+	ID3D12Device* device,
 	std::uint8_t bufferCount
 ) {
 	Set(
@@ -59,5 +59,37 @@ void DepthBuffInst::Init(ID3D12Device* device) {
 void ModelContainerInst::Init(const char* shaderPath) {
 	Set(
 		CreateModelContainerInstance(shaderPath)
+	);
+}
+
+void CpyQueInst::Init(
+	ID3D12Device* device
+) {
+	Set(
+		CreateCopyQueueInstance(device)
+	);
+}
+
+void CpyCmdListInst::Init(
+	ID3D12Device5* device
+) {
+	Set(
+		CreateCommandListInstance(
+			device,
+			D3D12_COMMAND_LIST_TYPE_COPY,
+			1u
+		)
+	);
+}
+
+void VertexBufferInst::Init() {
+	Set(
+		CreateResourceBufferInstance()
+	);
+}
+
+void IndexBufferInst::Init() {
+	Set(
+		CreateResourceBufferInstance()
 	);
 }

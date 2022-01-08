@@ -6,11 +6,10 @@
 class GraphicsQueueManager : public IGraphicsQueueManager {
 public:
 	GraphicsQueueManager(
-		ID3D12Device5* device,
-		D3D12_COMMAND_LIST_TYPE type, std::uint8_t bufferCount
+		ID3D12Device* device, std::uint8_t bufferCount
 	);
 
-	void InitSyncObjects(ID3D12Device5* device, std::uint32_t backBufferIndex) override;
+	void InitSyncObjects(ID3D12Device* device, std::uint32_t backBufferIndex) override;
 	void WaitForGPU(std::uint32_t backBufferIndex) override;
 	void ExecuteCommandLists(
 		ID3D12GraphicsCommandList* commandList
