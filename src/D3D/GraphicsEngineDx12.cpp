@@ -190,11 +190,16 @@ void GraphicsEngineDx12::InitResourceBasedObjects() {
 void GraphicsEngineDx12::ProcessData() {
 	ModelContainerInst::GetRef()->CopyBuffers(DeviceInst::GetRef()->GetDeviceRef());
 
+	CpyCmdListInst::GetRef()->Reset(0u);
 	ID3D12GraphicsCommandList* copyList = CpyCmdListInst::GetRef()->GetCommandListRef();
 
 	ModelContainerInst::GetRef()->RecordUploadBuffers(copyList);
 
+	CpyCmdListInst::GetRef()->Close();
 	ICopyQueueManager* copyQue = CpyQueInst::GetRef();
 	copyQue->ExecuteCommandLists(copyList);
 	copyQue->WaitForGPU();
+
+	VertexBufferInst::GetRef()->ReleaseUploadBuffer();
+	IndexBufferInst::GetRef()->ReleaseUploadBuffer();
 }

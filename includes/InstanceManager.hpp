@@ -11,12 +11,12 @@
 #include <ICopyQueueManager.hpp>
 #include <IResourceBuffer.hpp>
 
-class DeviceInst : public _ObjectManager<IDeviceManager> {
+class DeviceInst : public _ObjectManager<IDeviceManager, DeviceInst> {
 public:
 	static void Init();
 };
 
-class SwapchainInst : public _ObjectManager<ISwapChainManager> {
+class SwapchainInst : public _ObjectManager<ISwapChainManager, SwapchainInst> {
 public:
 	static void Init(
 		IDXGIFactory4* factory, ID3D12CommandQueue* cmdQueue, void* windowHandle,
@@ -26,7 +26,7 @@ public:
 	);
 };
 
-class GfxQueInst : public _ObjectManager<IGraphicsQueueManager> {
+class GfxQueInst : public _ObjectManager<IGraphicsQueueManager, GfxQueInst> {
 public:
 	static void Init(
 		ID3D12Device* device,
@@ -34,7 +34,7 @@ public:
 	);
 };
 
-class GfxCmdListInst : public _ObjectManager<ICommandListManager> {
+class GfxCmdListInst : public _ObjectManager<ICommandListManager, GfxCmdListInst> {
 public:
 	static void Init(
 		ID3D12Device5* device,
@@ -42,41 +42,41 @@ public:
 	);
 };
 
-class DebugInfoInst : public _ObjectManager<DebugInfoManager> {
+class DebugInfoInst : public _ObjectManager<DebugInfoManager, DebugInfoInst> {
 public:
 	static void Init();
 };
 
-class DepthBuffInst : public _ObjectManager<IDepthBuffer> {
+class DepthBuffInst : public _ObjectManager<IDepthBuffer, DepthBuffInst> {
 public:
 	static void Init(ID3D12Device* device);
 };
 
-class ModelContainerInst : public _ObjectManager<IModelContainer> {
+class ModelContainerInst : public _ObjectManager<IModelContainer, ModelContainerInst> {
 public:
 	static void Init(const char* shaderPath);
 };
 
-class CpyQueInst : public _ObjectManager<ICopyQueueManager> {
+class CpyQueInst : public _ObjectManager<ICopyQueueManager, CpyQueInst> {
 public:
 	static void Init(
 		ID3D12Device* device
 	);
 };
 
-class CpyCmdListInst : public _ObjectManager<ICommandListManager> {
+class CpyCmdListInst : public _ObjectManager<ICommandListManager, CpyCmdListInst> {
 public:
 	static void Init(
 		ID3D12Device5* device
 	);
 };
 
-class VertexBufferInst : public _ObjectManager<IResourceBuffer> {
+class VertexBufferInst : public _ObjectManager<IResourceBuffer, VertexBufferInst> {
 public:
 	static void Init();
 };
 
-class IndexBufferInst : public _ObjectManager<IResourceBuffer> {
+class IndexBufferInst : public _ObjectManager<IResourceBuffer, IndexBufferInst> {
 public:
 	static void Init();
 };
