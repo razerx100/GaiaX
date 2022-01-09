@@ -35,7 +35,7 @@ void ResourceBuffer::RecordUpload(ID3D12GraphicsCommandList* copyList, BufferTyp
 }
 
 void ResourceBuffer::ReleaseUploadBuffer() {
-	m_pUploadBuffer.release();
+	m_pUploadBuffer.reset();
 }
 
 D3D12_GPU_VIRTUAL_ADDRESS ResourceBuffer::GetGPUHandle() const noexcept {
