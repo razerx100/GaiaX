@@ -76,7 +76,7 @@ void CpyCmdListInst::Init(
 	Set(
 		CreateCommandListInstance(
 			device,
-			D3D12_COMMAND_LIST_TYPE_COPY,
+			D3D12_COMMAND_LIST_TYPE_DIRECT,
 			1u
 		)
 	);
