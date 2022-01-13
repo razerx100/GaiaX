@@ -68,6 +68,13 @@ private:
 	};
 
 private:
+	void ConfigureBuffers(
+		ID3D12Device* device,
+		size_t& vertexBufferSize, size_t& indexBufferSize,
+		bool textured
+	);
+
+private:
 	std::unique_ptr<IPipelineObject> m_pso;
 	std::shared_ptr<IRootSignature> m_rootSignature;
 	std::vector<std::unique_ptr<ModelRaw>> m_modelsRaw;

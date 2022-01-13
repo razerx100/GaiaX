@@ -50,47 +50,7 @@ void BindInstanceGFX::CopyData(
 	IResourceBuffer* indexBufferRef = IndexBufferInst::GetRef();
 
 	if (m_textureAvailable) {
-		for (auto& modelRaw : m_modelsRaw) {
-			const IModel* const modelRef = modelRaw->GetModelRef();
-
-			const std::vector<std::uint16_t>& indicesRef = modelRef->GetIndices();
-			const std::vector<Ceres::Float32_3>& verticesRef = modelRef->GetVertices();
-
-			size_t currentIndicesSize =
-				indicesRef.size() * sizeof(decltype(indicesRef[0]));
-
-			size_t vertexStrideSize = sizeof(decltype(verticesRef[0]));
-			size_t currentVerticesSize =
-				verticesRef.size() * vertexStrideSize;
-
-			modelRaw->AddIBV(
-				D3D12_INDEX_BUFFER_VIEW{
-					indexBufferSize,
-					static_cast<UINT>(currentIndicesSize),
-					DXGI_FORMAT_R16_UINT
-				},
-				static_cast<std::uint64_t>(indicesRef.size())
-			);
-
-			modelRaw->AddVBV(
-				D3D12_VERTEX_BUFFER_VIEW{
-					vertexBufferSize,
-					static_cast<UINT>(currentVerticesSize),
-					static_cast<UINT>(vertexStrideSize)
-				}
-			);
-
-			indexBufferSize += currentIndicesSize;
-			vertexBufferSize += currentVerticesSize;
-		}
-
-		vertexBufferRef->CreateBuffer(device, vertexBufferSize);
-		indexBufferRef->CreateBuffer(device, indexBufferSize);
-
-		for (auto& modelRaw : m_modelsRaw) {
-			modelRaw->UpdateIBVGPUOffset(indexBufferRef->GetGPUHandle());
-			modelRaw->UpdateVBVGPUOffset(vertexBufferRef->GetGPUHandle());
-		}
+		ConfigureBuffers(device, vertexBufferSize, indexBufferSize, true);
 
 		GetVenusInstance()->SubmitWork([&] {
 			for (auto& modelRaw : m_modelsRaw) {
@@ -123,48 +83,7 @@ void BindInstanceGFX::CopyData(
 		);
 	}
 	else {
-		for (auto& modelRaw : m_modelsRaw) {
-			const IModel* const modelRef = modelRaw->GetModelRef();
-
-			const std::vector<std::uint16_t>& indicesRef = modelRef->GetIndices();
-			const std::vector<Ceres::Float32_3>& verticesRef = modelRef->GetVertices();
-
-			size_t currentIndicesSize =
-				indicesRef.size() * sizeof(decltype(indicesRef[0]));
-
-			size_t vertexStrideSize =
-				sizeof(decltype(verticesRef[0])) + sizeof(Ceres::VectorF32);
-			size_t currentVerticesSize =
-				verticesRef.size() * vertexStrideSize;
-
-			modelRaw->AddIBV(
-				D3D12_INDEX_BUFFER_VIEW{
-					indexBufferSize,
-					static_cast<UINT>(currentIndicesSize),
-					DXGI_FORMAT_R16_UINT
-				},
-				static_cast<std::uint64_t>(indicesRef.size())
-			);
-
-			modelRaw->AddVBV(
-				D3D12_VERTEX_BUFFER_VIEW{
-					vertexBufferSize,
-					static_cast<UINT>(currentVerticesSize),
-					static_cast<UINT>(vertexStrideSize)
-				}
-			);
-
-			indexBufferSize += currentIndicesSize;
-			vertexBufferSize += currentVerticesSize;
-		}
-
-		vertexBufferRef->CreateBuffer(device, vertexBufferSize);
-		indexBufferRef->CreateBuffer(device, indexBufferSize);
-
-		for (auto& modelRaw : m_modelsRaw) {
-			modelRaw->UpdateIBVGPUOffset(indexBufferRef->GetGPUHandle());
-			modelRaw->UpdateVBVGPUOffset(vertexBufferRef->GetGPUHandle());
-		}
+		ConfigureBuffers(device, vertexBufferSize, indexBufferSize, false);
 
 		GetVenusInstance()->SubmitWork([&] {
 			for (auto& modelRaw : m_modelsRaw) {
@@ -205,6 +124,59 @@ void BindInstanceGFX::CopyData(
 void BindInstanceGFX::RecordUploadBuffers(ID3D12GraphicsCommandList* copyList) {
 	VertexBufferInst::GetRef()->RecordUpload(copyList, BufferType::Vertex);
 	IndexBufferInst::GetRef()->RecordUpload(copyList, BufferType::Index);
+}
+
+void BindInstanceGFX::ConfigureBuffers(
+	ID3D12Device* device,
+	size_t& vertexBufferSize, size_t& indexBufferSize,
+	bool textured
+) {
+	for (auto& modelRaw : m_modelsRaw) {
+		const IModel* const modelRef = modelRaw->GetModelRef();
+
+		const std::vector<std::uint16_t>& indicesRef = modelRef->GetIndices();
+		const std::vector<Ceres::Float32_3>& verticesRef = modelRef->GetVertices();
+
+		size_t currentIndicesSize =
+			indicesRef.size() * sizeof(decltype(indicesRef[0]));
+
+		size_t vertexStrideSize =
+			textured ? sizeof(decltype(verticesRef[0]))
+			: sizeof(decltype(verticesRef[0])) + sizeof(Ceres::VectorF32);
+		size_t currentVerticesSize =
+			verticesRef.size() * vertexStrideSize;
+
+		modelRaw->AddIBV(
+			D3D12_INDEX_BUFFER_VIEW{
+				indexBufferSize,
+				static_cast<UINT>(currentIndicesSize),
+				DXGI_FORMAT_R16_UINT
+			},
+			static_cast<std::uint64_t>(indicesRef.size())
+		);
+
+		modelRaw->AddVBV(
+			D3D12_VERTEX_BUFFER_VIEW{
+				vertexBufferSize,
+				static_cast<UINT>(currentVerticesSize),
+				static_cast<UINT>(vertexStrideSize)
+			}
+		);
+
+		indexBufferSize += currentIndicesSize;
+		vertexBufferSize += currentVerticesSize;
+	}
+
+	IResourceBuffer* vertexBufferRef = VertexBufferInst::GetRef();
+	IResourceBuffer* indexBufferRef = IndexBufferInst::GetRef();
+
+	vertexBufferRef->CreateBuffer(device, vertexBufferSize);
+	indexBufferRef->CreateBuffer(device, indexBufferSize);
+
+	for (auto& modelRaw : m_modelsRaw) {
+		modelRaw->UpdateIBVGPUOffset(indexBufferRef->GetGPUHandle());
+		modelRaw->UpdateVBVGPUOffset(vertexBufferRef->GetGPUHandle());
+	}
 }
 
 // Model Raw
