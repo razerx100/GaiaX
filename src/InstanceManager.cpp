@@ -8,7 +8,7 @@ void DeviceInst::Init() {
 
 void SwapchainInst::Init(
 	IDXGIFactory4* factory, ID3D12CommandQueue* cmdQueue, void* windowHandle,
-	std::uint8_t bufferCount,
+	size_t bufferCount,
 	std::uint32_t width, std::uint32_t height,
 	bool variableRefreshRateAvailable
 ) {
@@ -22,7 +22,7 @@ void SwapchainInst::Init(
 
 void GfxQueInst::Init(
 	ID3D12Device* device,
-	std::uint8_t bufferCount
+	size_t bufferCount
 ) {
 	Set(
 		CreateGraphicsQueueInstance(
@@ -33,7 +33,7 @@ void GfxQueInst::Init(
 
 void GfxCmdListInst::Init(
 	ID3D12Device5* device,
-	std::uint8_t bufferCount
+	size_t bufferCount
 ) {
 	Set(
 		CreateCommandListInstance(

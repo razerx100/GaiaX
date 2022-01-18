@@ -37,10 +37,10 @@ std::vector<std::string> DebugInfoManager::GetMessages() const {
 	std::vector<std::string> messages;
 	const std::uint64_t end = m_pDxgiInfoQueue->GetNumStoredMessages(DXGI_DEBUG_ALL);
 
-	for (std::uint64_t i = m_next; i < end; i++) {
-		SIZE_T messageLength = 0;
+	for (std::uint64_t index = m_next; index < end; ++index) {
+		SIZE_T messageLength = 0u;
 		m_pDxgiInfoQueue->GetMessageA(
-			DXGI_DEBUG_ALL, i, nullptr, &messageLength
+			DXGI_DEBUG_ALL, index, nullptr, &messageLength
 		);
 
 		byte* bytes = new byte[messageLength];
@@ -48,7 +48,7 @@ std::vector<std::string> DebugInfoManager::GetMessages() const {
 			reinterpret_cast<DXGI_INFO_QUEUE_MESSAGE*>(bytes);
 
 		m_pDxgiInfoQueue->GetMessageA(
-			DXGI_DEBUG_ALL, i, pMessage, &messageLength
+			DXGI_DEBUG_ALL, index, pMessage, &messageLength
 		);
 
 		if (pMessage)

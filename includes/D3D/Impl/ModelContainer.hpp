@@ -22,7 +22,7 @@ public:
 private:
 	struct InstanceData {
 		bool available;
-		std::uint32_t index;
+		size_t index;
 	};
 
 private:

@@ -7,7 +7,7 @@ class ICommandListManager {
 public:
 	virtual ~ICommandListManager() = default;
 
-	virtual void Reset(std::uint32_t allocIndex) const = 0;
+	virtual void Reset(size_t allocIndex) const = 0;
 	virtual void Close() const = 0;
 
 	virtual ID3D12GraphicsCommandList* GetCommandListRef() const noexcept = 0;
@@ -16,7 +16,7 @@ public:
 ICommandListManager* CreateCommandListInstance(
 	ID3D12Device5* device,
 	D3D12_COMMAND_LIST_TYPE type,
-	std::uint8_t bufferCount
+	size_t bufferCount
 );
 
 #endif

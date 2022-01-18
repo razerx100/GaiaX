@@ -20,7 +20,7 @@ class SwapchainInst : public _ObjectManager<ISwapChainManager, SwapchainInst> {
 public:
 	static void Init(
 		IDXGIFactory4* factory, ID3D12CommandQueue* cmdQueue, void* windowHandle,
-		std::uint8_t bufferCount,
+		size_t bufferCount,
 		std::uint32_t width, std::uint32_t height,
 		bool variableRefreshRateAvailable = true
 	);
@@ -30,7 +30,7 @@ class GfxQueInst : public _ObjectManager<IGraphicsQueueManager, GfxQueInst> {
 public:
 	static void Init(
 		ID3D12Device* device,
-		std::uint8_t bufferCount
+		size_t bufferCount
 	);
 };
 
@@ -38,7 +38,7 @@ class GfxCmdListInst : public _ObjectManager<ICommandListManager, GfxCmdListInst
 public:
 	static void Init(
 		ID3D12Device5* device,
-		std::uint8_t bufferCount
+		size_t bufferCount
 	);
 };
 

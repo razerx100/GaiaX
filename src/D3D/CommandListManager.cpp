@@ -4,12 +4,12 @@
 // CommandList
 CommandListManager::CommandListManager(
 	ID3D12Device5* device,
-	D3D12_COMMAND_LIST_TYPE type, std::uint8_t allocatorsCount
+	D3D12_COMMAND_LIST_TYPE type, size_t allocatorsCount
 ) :
 	m_pCommandAllocators(allocatorsCount) {
 
 	HRESULT hr;
-	for (std::uint32_t index = 0; index < allocatorsCount; ++index) {
+	for (size_t index = 0u; index < allocatorsCount; ++index) {
 		D3D_THROW_FAILED(hr,
 			device->CreateCommandAllocator(
 				type,
@@ -20,7 +20,7 @@ CommandListManager::CommandListManager(
 
 	D3D_THROW_FAILED(hr,
 		device->CreateCommandList1(
-			0, type,
+			0u, type,
 			D3D12_COMMAND_LIST_FLAG_NONE,
 			__uuidof(ID3D12GraphicsCommandList),
 			&m_pCommandList
@@ -28,7 +28,7 @@ CommandListManager::CommandListManager(
 	);
 }
 
-void CommandListManager::Reset(std::uint32_t allocIndex) const {
+void CommandListManager::Reset(size_t allocIndex) const {
 	HRESULT hr;
 	D3D_THROW_FAILED(hr, m_pCommandAllocators[allocIndex]->Reset());
 	D3D_THROW_FAILED(hr,

@@ -22,7 +22,7 @@ void CopyQueueManager::InitSyncObjects(ID3D12Device* device) {
 		__uuidof(ID3D12Fence),
 		&m_pFence
 	));
-	m_fenceValue++;
+	++m_fenceValue;
 
 	m_fenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
 	if (m_fenceEvent == nullptr)
@@ -40,7 +40,7 @@ void CopyQueueManager::WaitForGPU() {
 			m_fenceValue, m_fenceEvent));
 	WaitForSingleObjectEx(m_fenceEvent, INFINITE, FALSE);
 
-	m_fenceValue++;
+	++m_fenceValue;
 }
 
 void CopyQueueManager::ExecuteCommandLists(
@@ -49,7 +49,7 @@ void CopyQueueManager::ExecuteCommandLists(
 	ID3D12CommandList* const ppCommandLists[] = { commandList };
 
 	m_pCommandQueue->ExecuteCommandLists(
-		static_cast<std::uint32_t>(std::size(ppCommandLists)), ppCommandLists
+		static_cast<UINT>(std::size(ppCommandLists)), ppCommandLists
 	);
 }
 

@@ -20,10 +20,10 @@ void PipelineObjectGFX::CreatePipelineState(
 	psoDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
 	psoDesc.DepthStencilState.StencilEnable = FALSE;
 	psoDesc.SampleMask = UINT_MAX;
-	psoDesc.NumRenderTargets = 1;
-	psoDesc.RTVFormats[0] = GraphicsEngineDx12::RENDER_FORMAT;
+	psoDesc.NumRenderTargets = 1u;
+	psoDesc.RTVFormats[0u] = GraphicsEngineDx12::RENDER_FORMAT;
 	psoDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
-	psoDesc.SampleDesc.Count = 1;
+	psoDesc.SampleDesc.Count = 1u;
 	psoDesc.InputLayout = vertexLayout.GetLayout();
 	psoDesc.pRootSignature = rootSignature;
 	psoDesc.VS = vertexShader->GetByteCode();

@@ -32,30 +32,30 @@ private:
 		ModelRaw(
 			const D3D12_VERTEX_BUFFER_VIEW& vertexBufferView,
 			const D3D12_INDEX_BUFFER_VIEW& indexBufferView,
-			std::uint64_t indicesCount,
+			size_t indicesCount,
 			const IModel* const modelRef
 		) noexcept;
 		ModelRaw(
 			D3D12_VERTEX_BUFFER_VIEW&& vertexBufferView,
 			D3D12_INDEX_BUFFER_VIEW&& indexBufferView,
-			std::uint64_t indicesCount,
+			size_t indicesCount,
 			const IModel* const modelRef
 		) noexcept;
 
 		const IModel* const GetModelRef() const noexcept;
 
-		void UpdateVBVGPUOffset(std::uint64_t offset) noexcept;
-		void UpdateIBVGPUOffset(std::uint64_t offset) noexcept;
+		void UpdateVBVGPUOffset(size_t offset) noexcept;
+		void UpdateIBVGPUOffset(size_t offset) noexcept;
 
 		void AddVBV(const D3D12_VERTEX_BUFFER_VIEW& vertexBufferView) noexcept;
 		void AddIBV(
 			const D3D12_INDEX_BUFFER_VIEW& indexBufferView,
-			std::uint64_t indicesCount
+			size_t indicesCount
 		) noexcept;
 		void AddVBV(D3D12_VERTEX_BUFFER_VIEW&& vertexBufferView) noexcept;
 		void AddIBV(
 			D3D12_INDEX_BUFFER_VIEW&& indexBufferView,
-			std::uint64_t indicesCount
+			size_t indicesCount
 		) noexcept;
 
 		void Draw(ID3D12GraphicsCommandList* commandList) noexcept;
@@ -64,7 +64,7 @@ private:
 		D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView;
 		D3D12_INDEX_BUFFER_VIEW m_indexBufferView;
 		const IModel* const m_modelRef;
-		std::uint64_t m_indicesCount;
+		size_t m_indicesCount;
 	};
 
 private:

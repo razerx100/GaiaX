@@ -24,7 +24,7 @@ void UploadBuffer::CreateBuffer(ID3D12Device* device, size_t bufferSize) {
 
 	D3D_THROW_FAILED(
 		hr,
-		m_uploadBuffer->Map(0, nullptr, reinterpret_cast<void**>(&m_cpuHandle))
+		m_uploadBuffer->Map(0u, nullptr, reinterpret_cast<void**>(&m_cpuHandle))
 	);
 }
 

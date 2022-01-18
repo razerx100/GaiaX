@@ -18,6 +18,6 @@ public:
 private:
 	std::unique_ptr<IUploadBuffer> m_pUploadBuffer;
 	std::unique_ptr<IGPUBuffer> m_pGPUBuffer;
-	std::uint64_t m_currentMemoryOffset;
+	size_t m_currentMemoryOffset;
 };
 #endif

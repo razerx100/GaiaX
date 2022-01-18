@@ -4,7 +4,7 @@
 
 // Graphics Command Queue
 GraphicsQueueManager::GraphicsQueueManager(
-	ID3D12Device* device, std::uint8_t bufferCount
+	ID3D12Device* device, size_t bufferCount
 )
 	: m_fenceEvent(nullptr),
 	m_fenceValues(bufferCount, 0u) {
@@ -25,7 +25,7 @@ ID3D12CommandQueue* GraphicsQueueManager::GetQueueRef() const noexcept {
 
 void GraphicsQueueManager::InitSyncObjects(
 	ID3D12Device* device,
-	std::uint32_t backBufferIndex
+	size_t backBufferIndex
 ) {
 	HRESULT hr;
 	D3D_THROW_FAILED(hr, device->CreateFence(
@@ -34,14 +34,14 @@ void GraphicsQueueManager::InitSyncObjects(
 		__uuidof(ID3D12Fence),
 		&m_pFence
 	));
-	m_fenceValues[backBufferIndex]++;
+	++m_fenceValues[backBufferIndex];
 
 	m_fenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
 	if (m_fenceEvent == nullptr)
 		D3D_THROW_FAILED(hr, HRESULT_FROM_WIN32(GetLastError()));
 }
 
-void GraphicsQueueManager::WaitForGPU(std::uint32_t backBufferIndex) {
+void GraphicsQueueManager::WaitForGPU(size_t backBufferIndex) {
 	HRESULT hr;
 	D3D_THROW_FAILED(hr, m_pCommandQueue->Signal(
 		m_pFence.Get(), m_fenceValues[backBufferIndex])
@@ -52,7 +52,7 @@ void GraphicsQueueManager::WaitForGPU(std::uint32_t backBufferIndex) {
 			m_fenceValues[backBufferIndex], m_fenceEvent));
 	WaitForSingleObjectEx(m_fenceEvent, INFINITE, FALSE);
 
-	m_fenceValues[backBufferIndex]++;
+	++m_fenceValues[backBufferIndex];
 }
 
 void GraphicsQueueManager::ExecuteCommandLists(
@@ -61,11 +61,11 @@ void GraphicsQueueManager::ExecuteCommandLists(
 	ID3D12CommandList* const ppCommandLists[] = { commandList };
 
 	m_pCommandQueue->ExecuteCommandLists(
-		static_cast<std::uint32_t>(std::size(ppCommandLists)), ppCommandLists
+		static_cast<UINT>(std::size(ppCommandLists)), ppCommandLists
 	);
 }
 
-void GraphicsQueueManager::MoveToNextFrame(std::uint32_t backBufferIndex) {
+void GraphicsQueueManager::MoveToNextFrame(size_t backBufferIndex) {
 	const std::uint64_t currentFenceValue = m_fenceValues[backBufferIndex];
 	HRESULT hr;
 	D3D_THROW_FAILED(hr,
@@ -82,10 +82,10 @@ void GraphicsQueueManager::MoveToNextFrame(std::uint32_t backBufferIndex) {
 		WaitForSingleObjectEx(m_fenceEvent, INFINITE, FALSE);
 	}
 
-	m_fenceValues[backBufferIndex] = currentFenceValue + 1;
+	m_fenceValues[backBufferIndex] = currentFenceValue + 1u;
 }
 
-void GraphicsQueueManager::ResetFenceValuesWith(std::uint32_t valueIndex) {
-	for (std::uint32_t index = 0; index < m_fenceValues.size(); ++index)
+void GraphicsQueueManager::ResetFenceValuesWith(size_t valueIndex) {
+	for (size_t index = 0; index < m_fenceValues.size(); ++index)
 		m_fenceValues[index] = m_fenceValues[valueIndex];
 }

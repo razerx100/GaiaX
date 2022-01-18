@@ -36,7 +36,7 @@ void RootSignatureDynamic::AddDescriptorTable(
 	m_rangePreserver.emplace_back(descRange);
 
 	CD3DX12_ROOT_PARAMETER1 descTableParam = {};
-	descTableParam.InitAsDescriptorTable(1, &m_rangePreserver.back(), visibility);
+	descTableParam.InitAsDescriptorTable(1u, &m_rangePreserver.back(), visibility);
 
 	m_rootParameters.emplace_back(descTableParam);
 }

@@ -19,7 +19,7 @@ public:
 	) noexcept = 0;
 	virtual D3D12_CPU_DESCRIPTOR_HANDLE GetRTVHandle() const noexcept = 0;
 
-	virtual std::uint32_t GetCurrentBackBufferIndex() const noexcept = 0;
+	virtual size_t GetCurrentBackBufferIndex() const noexcept = 0;
 	virtual D3D12_RESOURCE_BARRIER GetRenderStateBarrier() const noexcept = 0;
 	virtual D3D12_RESOURCE_BARRIER GetPresentStateBarrier() const noexcept = 0;
 
@@ -28,7 +28,7 @@ public:
 
 ISwapChainManager* CreateSwapChainInstance(
 	IDXGIFactory4* factory, ID3D12CommandQueue* cmdQueue, void* windowHandle,
-	std::uint8_t bufferCount,
+	size_t bufferCount,
 	std::uint32_t width, std::uint32_t height,
 	bool variableRefreshRateAvailable = true
 );

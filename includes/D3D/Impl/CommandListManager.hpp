@@ -7,10 +7,10 @@ class CommandListManager : public ICommandListManager {
 public:
 	CommandListManager(
 		ID3D12Device5* device,
-		D3D12_COMMAND_LIST_TYPE type, std::uint8_t allocatorsCount
+		D3D12_COMMAND_LIST_TYPE type, size_t allocatorsCount
 	);
 
-	void Reset(std::uint32_t allocIndex) const override;
+	void Reset(size_t allocIndex) const override;
 	void Close() const override;
 
 	ID3D12GraphicsCommandList* GetCommandListRef() const noexcept override;

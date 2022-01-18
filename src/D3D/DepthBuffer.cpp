@@ -6,7 +6,7 @@ DepthBuffer::DepthBuffer(
     ID3D12Device* device
 ) {
     D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};
-    dsvHeapDesc.NumDescriptors = 1;
+    dsvHeapDesc.NumDescriptors = 1u;
     dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
     dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 
@@ -22,13 +22,13 @@ void DepthBuffer::CreateDepthBuffer(
 ) {
     D3D12_CLEAR_VALUE depthValue = {};
     depthValue.Format = DXGI_FORMAT_D32_FLOAT;
-    depthValue.DepthStencil = { 1.0f, 0 };
+    depthValue.DepthStencil = { 1.0f, 0u };
 
     CD3DX12_HEAP_PROPERTIES heapProp = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
 
     CD3DX12_RESOURCE_DESC rsDesc = CD3DX12_RESOURCE_DESC::Tex2D(
         DXGI_FORMAT_D32_FLOAT, width, height,
-        1, 1, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL
+        1u, 1u, 1u, 0u, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL
     );
 
     HRESULT hr;
@@ -45,7 +45,7 @@ void DepthBuffer::CreateDepthBuffer(
     D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
     dsvDesc.Format = DXGI_FORMAT_D32_FLOAT;
     dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
-    dsvDesc.Texture2D.MipSlice = 0;
+    dsvDesc.Texture2D.MipSlice = 0u;
     dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
 
     device->CreateDepthStencilView(
@@ -58,9 +58,11 @@ D3D12_CPU_DESCRIPTOR_HANDLE DepthBuffer::GetDSVHandle() const noexcept {
     return m_pDSVHeap->GetCPUDescriptorHandleForHeapStart();
 }
 
-void DepthBuffer::ClearDSV(ID3D12GraphicsCommandList* commandList, D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle) noexcept {
+void DepthBuffer::ClearDSV(
+    ID3D12GraphicsCommandList* commandList, D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle
+) noexcept {
     commandList->ClearDepthStencilView(
         dsvHandle,
-        D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr
+        D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0u, 0u, nullptr
     );
 }

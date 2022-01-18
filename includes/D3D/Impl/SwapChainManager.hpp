@@ -7,7 +7,7 @@ class SwapChainManager : public ISwapChainManager {
 public:
 	SwapChainManager(
 		IDXGIFactory4* factory, ID3D12CommandQueue* cmdQueue, void* windowHandle,
-		std::uint8_t bufferCount,
+		size_t bufferCount,
 		std::uint32_t width, std::uint32_t height,
 		bool variableRefreshRateAvailable
 	);
@@ -23,20 +23,20 @@ public:
 	) noexcept override;
 	D3D12_CPU_DESCRIPTOR_HANDLE GetRTVHandle() const noexcept override;
 
-	std::uint32_t GetCurrentBackBufferIndex() const noexcept override;
+	size_t GetCurrentBackBufferIndex() const noexcept override;
 	D3D12_RESOURCE_BARRIER GetRenderStateBarrier() const noexcept override;
 	D3D12_RESOURCE_BARRIER GetPresentStateBarrier() const noexcept override;
 
 	IDXGISwapChain4* GetRef() const noexcept override;
 
 private:
-	void CreateRTVHeap(std::uint8_t bufferCount);
+	void CreateRTVHeap(size_t bufferCount);
 	void CreateRTVs();
 
 private:
 	std::uint32_t m_width;
 	std::uint32_t m_height;
-	std::uint32_t m_rtvDescSize;
+	size_t m_rtvDescSize;
 	bool m_vsyncFlag;
 	ComPtr<IDXGISwapChain4> m_pSwapChain;
 	std::vector<ComPtr<ID3D12Resource>> m_pRenderTargetViews;

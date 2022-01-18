@@ -6,6 +6,6 @@ GAIAX_DLL GraphicsEngine* __cdecl CreateGaiaInstance(
 	const char* appName,
 	void* windowHandle,
 	std::uint32_t width, std::uint32_t height,
-	std::uint8_t bufferCount = 2u
+	size_t bufferCount = 2u
 );
 #endif

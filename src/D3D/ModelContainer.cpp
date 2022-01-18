@@ -75,7 +75,7 @@ void ModelContainer::BindCommands(ID3D12GraphicsCommandList* commandList) noexce
 
 void ModelContainer::InitNewInstance(InstanceData& instanceData, bool texture) noexcept {
 	m_bindInstances.emplace_back(std::make_unique<BindInstanceGFX>(texture));
-	instanceData = { true, static_cast<std::uint32_t>(m_bindInstances.size()) - 1u };
+	instanceData = { true, m_bindInstances.size() - 1u };
 }
 
 void ModelContainer::CreateRootSignature(ID3D12Device* device) {

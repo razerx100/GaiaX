@@ -6,7 +6,7 @@
 
 SwapChainManager::SwapChainManager(
 	IDXGIFactory4* factory, ID3D12CommandQueue* cmdQueue, void* windowHandle,
-	std::uint8_t bufferCount,
+	size_t bufferCount,
 	std::uint32_t width, std::uint32_t height,
 	bool variableRefreshRateAvailable
 )
@@ -21,7 +21,7 @@ SwapChainManager::SwapChainManager(
 	desc.Format = GraphicsEngineDx12::RENDER_FORMAT;
 	desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 	desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
-	desc.SampleDesc.Count = 1;
+	desc.SampleDesc.Count = 1u;
 
 	if (variableRefreshRateAvailable)
 		desc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
@@ -63,7 +63,7 @@ void SwapChainManager::CreateRTVs() {
 	ID3D12Device* deviceRef = DeviceInst::GetRef()->GetDeviceRef();
 
 	if (deviceRef) {
-		for (std::uint32_t index = 0; index < m_pRenderTargetViews.size(); ++index) {
+		for (size_t index = 0u; index < m_pRenderTargetViews.size(); ++index) {
 			D3D_THROW_FAILED(
 				hr, m_pSwapChain->GetBuffer(
 					index, __uuidof(ID3D12Resource), &m_pRenderTargetViews[index]
@@ -74,27 +74,27 @@ void SwapChainManager::CreateRTVs() {
 				m_pRenderTargetViews[index].Get(), nullptr, rtvHandle
 			);
 
-			rtvHandle.Offset(1, m_rtvDescSize);
+			rtvHandle.Offset(1u, m_rtvDescSize);
 		}
 	}
 }
 
-std::uint32_t SwapChainManager::GetCurrentBackBufferIndex() const noexcept {
-	return m_pSwapChain->GetCurrentBackBufferIndex();
+size_t SwapChainManager::GetCurrentBackBufferIndex() const noexcept {
+	return static_cast<size_t>(m_pSwapChain->GetCurrentBackBufferIndex());
 }
 
 void SwapChainManager::ClearRTV(
 	ID3D12GraphicsCommandList* commandList, float* clearColor,
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle
 ) noexcept {
-	commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
+	commandList->ClearRenderTargetView(rtvHandle, clearColor, 0u, nullptr);
 }
 
 D3D12_CPU_DESCRIPTOR_HANDLE SwapChainManager::GetRTVHandle() const noexcept {
 	return CD3DX12_CPU_DESCRIPTOR_HANDLE(
 		m_pRtvHeap->GetCPUDescriptorHandleForHeapStart(),
-		GetCurrentBackBufferIndex(),
-		m_rtvDescSize
+		static_cast<INT>(GetCurrentBackBufferIndex()),
+		static_cast<UINT>(m_rtvDescSize)
 	);
 }
 
@@ -122,7 +122,7 @@ void SwapChainManager::PresentWithTear() {
 	HRESULT hr;
 	D3D_THROW_FAILED(
 		hr, m_pSwapChain->Present(
-			0, DXGI_PRESENT_ALLOW_TEARING
+			0u, DXGI_PRESENT_ALLOW_TEARING
 		)
 	);
 }
@@ -131,7 +131,7 @@ void SwapChainManager::PresentWithoutTear() {
 	HRESULT hr;
 	D3D_THROW_FAILED(
 		hr, m_pSwapChain->Present(
-			m_vsyncFlag, 0
+			m_vsyncFlag, 0u
 		)
 	);
 }
@@ -166,9 +166,9 @@ void SwapChainManager::Resize(std::uint32_t width, std::uint32_t height) {
 	}
 }
 
-void SwapChainManager::CreateRTVHeap(std::uint8_t bufferCount) {
+void SwapChainManager::CreateRTVHeap(size_t bufferCount) {
 	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
-	rtvHeapDesc.NumDescriptors = bufferCount;
+	rtvHeapDesc.NumDescriptors = static_cast<UINT>(bufferCount);
 	rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
 	rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 

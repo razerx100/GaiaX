@@ -13,7 +13,7 @@ IDeviceManager* CreateD3DDeviceInstance() {
 
 ISwapChainManager* CreateSwapChainInstance(
 	IDXGIFactory4* factory, ID3D12CommandQueue* cmdQueue, void* windowHandle,
-	std::uint8_t bufferCount,
+	size_t bufferCount,
 	std::uint32_t width, std::uint32_t height,
 	bool variableRefreshRateAvailable
 ) {
@@ -26,7 +26,7 @@ ISwapChainManager* CreateSwapChainInstance(
 
 IGraphicsQueueManager* CreateGraphicsQueueInstance(
 	ID3D12Device* device,
-	std::uint8_t bufferCount
+	size_t bufferCount
 ) {
 	return new GraphicsQueueManager(
 		device,
@@ -37,7 +37,7 @@ IGraphicsQueueManager* CreateGraphicsQueueInstance(
 ICommandListManager* CreateCommandListInstance(
 	ID3D12Device5* device,
 	D3D12_COMMAND_LIST_TYPE type,
-	std::uint8_t bufferCount
+	size_t bufferCount
 ) {
 	return new CommandListManager(
 		device,

@@ -3,7 +3,7 @@
 #include <D3DThrowMacros.hpp>
 
 DeviceManager::DeviceManager() {
-    std::uint32_t dxgiFactoryFlags = 0;
+    std::uint32_t dxgiFactoryFlags = 0u;
 
 #ifdef _DEBUG
     {

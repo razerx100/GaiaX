@@ -1,7 +1,6 @@
 #ifndef __I_SHADER_HPP__
 #define __I_SHADER_HPP__
 #include <D3DHeaders.hpp>
-#include <string>
 
 class IShader {
 public:

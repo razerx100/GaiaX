@@ -6,16 +6,16 @@
 class GraphicsQueueManager : public IGraphicsQueueManager {
 public:
 	GraphicsQueueManager(
-		ID3D12Device* device, std::uint8_t bufferCount
+		ID3D12Device* device, size_t bufferCount
 	);
 
-	void InitSyncObjects(ID3D12Device* device, std::uint32_t backBufferIndex) override;
-	void WaitForGPU(std::uint32_t backBufferIndex) override;
+	void InitSyncObjects(ID3D12Device* device, size_t backBufferIndex) override;
+	void WaitForGPU(size_t backBufferIndex) override;
 	void ExecuteCommandLists(
 		ID3D12GraphicsCommandList* commandList
 	) const noexcept override;
-	void MoveToNextFrame(std::uint32_t backBufferIndex) override;
-	void ResetFenceValuesWith(std::uint32_t valueIndex) override;
+	void MoveToNextFrame(size_t backBufferIndex) override;
+	void ResetFenceValuesWith(size_t valueIndex) override;
 
 	ID3D12CommandQueue* GetQueueRef() const noexcept override;
 

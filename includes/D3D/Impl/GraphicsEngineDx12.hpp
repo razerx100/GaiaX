@@ -9,7 +9,7 @@ public:
 	GraphicsEngineDx12(
 		const char* appName,
 		void* windowHandle, std::uint32_t width, std::uint32_t height,
-		std::uint8_t bufferCount
+		size_t bufferCount
 	);
 	~GraphicsEngineDx12() noexcept;
 

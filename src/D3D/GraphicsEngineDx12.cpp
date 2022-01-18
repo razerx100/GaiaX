@@ -5,7 +5,7 @@
 GraphicsEngineDx12::GraphicsEngineDx12(
 	const char* appName,
 	void* windowHandle, std::uint32_t width, std::uint32_t height,
-	std::uint8_t bufferCount
+	size_t bufferCount
 ) : m_backgroundColor{0.1f, 0.1f, 0.1f, 0.1f}, m_appName(appName) {
 	DeviceInst::Init();
 
@@ -89,10 +89,10 @@ void GraphicsEngineDx12::Render() {
 		swapRef->GetCurrentBackBufferIndex()
 	);
 	D3D12_RESOURCE_BARRIER renderBarrier = swapRef->GetRenderStateBarrier();
-	commandList->ResourceBarrier(1, &renderBarrier);
+	commandList->ResourceBarrier(1u, &renderBarrier);
 
-	commandList->RSSetViewports(1, &m_viewport);
-	commandList->RSSetScissorRects(1, &m_scissorRect);
+	commandList->RSSetViewports(1u, &m_viewport);
+	commandList->RSSetScissorRects(1u, &m_scissorRect);
 
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = swapRef->GetRTVHandle();
 
@@ -106,18 +106,18 @@ void GraphicsEngineDx12::Render() {
 
 	depthRef->ClearDSV(commandList, dsvHandle);
 
-	commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
+	commandList->OMSetRenderTargets(1u, &rtvHandle, FALSE, &dsvHandle);
 
 	// Record objects
 	ModelContainerInst::GetRef()->BindCommands(commandList);
 
 	D3D12_RESOURCE_BARRIER presentBarrier = swapRef->GetPresentStateBarrier();
-	commandList->ResourceBarrier(1, &presentBarrier);
+	commandList->ResourceBarrier(1u, &presentBarrier);
 
 	listManRef->Close();
 	queueRef->ExecuteCommandLists(commandList);
 
-	std::uint32_t backBufferIndex = swapRef->GetCurrentBackBufferIndex();
+	size_t backBufferIndex = swapRef->GetCurrentBackBufferIndex();
 
 	swapRef->PresentWithTear();
 	queueRef->MoveToNextFrame(backBufferIndex);
@@ -155,8 +155,8 @@ void GraphicsEngineDx12::GetMonitorCoordinates(
 void  GraphicsEngineDx12::InitViewPortAndScissor(
 	std::uint32_t width, std::uint32_t height
 ) noexcept {
-	m_viewport.TopLeftX = 0;
-	m_viewport.TopLeftY = 0;
+	m_viewport.TopLeftX = 0.0f;
+	m_viewport.TopLeftY = 0.0f;
 	m_viewport.Width = static_cast<float>(width);
 	m_viewport.Height = static_cast<float>(height);
 	m_viewport.MinDepth = 0.0f;

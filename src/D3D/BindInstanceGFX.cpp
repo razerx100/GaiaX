@@ -59,7 +59,7 @@ void BindInstanceGFX::CopyData(
 
 				vertexBufferRef->CopyData(
 					verticesRef.data(),
-					verticesRef.size() * sizeof(decltype(verticesRef[0]))
+					verticesRef.size() * sizeof(decltype(verticesRef[0u]))
 				);
 			}
 
@@ -74,7 +74,7 @@ void BindInstanceGFX::CopyData(
 
 				indexBufferRef->CopyData(
 					indicesRef.data(),
-					indicesRef.size() * sizeof(decltype(indicesRef[0]))
+					indicesRef.size() * sizeof(decltype(indicesRef[0u]))
 				);
 			}
 
@@ -109,7 +109,7 @@ void BindInstanceGFX::CopyData(
 
 				indexBufferRef->CopyData(
 					indicesRef.data(),
-					indicesRef.size() * sizeof(decltype(indicesRef[0]))
+					indicesRef.size() * sizeof(decltype(indicesRef[0u]))
 				);
 			}
 
@@ -138,11 +138,11 @@ void BindInstanceGFX::ConfigureBuffers(
 		const std::vector<Ceres::Float32_3>& verticesRef = modelRef->GetVertices();
 
 		size_t currentIndicesSize =
-			indicesRef.size() * sizeof(decltype(indicesRef[0]));
+			indicesRef.size() * sizeof(decltype(indicesRef[0u]));
 
 		size_t vertexStrideSize =
-			textured ? sizeof(decltype(verticesRef[0]))
-			: sizeof(decltype(verticesRef[0])) + sizeof(Ceres::VectorF32);
+			textured ? sizeof(decltype(verticesRef[0u]))
+			: sizeof(decltype(verticesRef[0u])) + sizeof(Ceres::VectorF32);
 		size_t currentVerticesSize =
 			verticesRef.size() * vertexStrideSize;
 
@@ -152,7 +152,7 @@ void BindInstanceGFX::ConfigureBuffers(
 				static_cast<UINT>(currentIndicesSize),
 				DXGI_FORMAT_R16_UINT
 			},
-			static_cast<std::uint64_t>(indicesRef.size())
+			indicesRef.size()
 		);
 
 		modelRaw->AddVBV(
@@ -190,7 +190,7 @@ BindInstanceGFX::ModelRaw::ModelRaw(const IModel* const modelRef) noexcept
 BindInstanceGFX::ModelRaw::ModelRaw(
 	const D3D12_VERTEX_BUFFER_VIEW& vertexBufferView,
 	const D3D12_INDEX_BUFFER_VIEW& indexBufferView,
-	std::uint64_t indicesCount,
+	size_t indicesCount,
 	const IModel* const modelRef
 ) noexcept
 	:
@@ -202,7 +202,7 @@ BindInstanceGFX::ModelRaw::ModelRaw(
 BindInstanceGFX::ModelRaw::ModelRaw(
 	D3D12_VERTEX_BUFFER_VIEW&& vertexBufferView,
 	D3D12_INDEX_BUFFER_VIEW&& indexBufferView,
-	std::uint64_t indicesCount,
+	size_t indicesCount,
 	const IModel* const modelRef
 ) noexcept
 	:
@@ -221,7 +221,7 @@ void BindInstanceGFX::ModelRaw::AddVBV(D3D12_VERTEX_BUFFER_VIEW&& vertexBufferVi
 
 void BindInstanceGFX::ModelRaw::AddIBV(
 	const D3D12_INDEX_BUFFER_VIEW& indexBufferView,
-	std::uint64_t indicesCount
+	size_t indicesCount
 ) noexcept {
 	m_indexBufferView = indexBufferView;
 	m_indicesCount = indicesCount;
@@ -229,7 +229,7 @@ void BindInstanceGFX::ModelRaw::AddIBV(
 
 void BindInstanceGFX::ModelRaw::AddIBV(
 	D3D12_INDEX_BUFFER_VIEW&& indexBufferView,
-	std::uint64_t indicesCount
+	size_t indicesCount
 ) noexcept {
 	m_indexBufferView = std::move(indexBufferView);
 	m_indicesCount = indicesCount;
@@ -246,10 +246,10 @@ const IModel* const BindInstanceGFX::ModelRaw::GetModelRef() const noexcept {
 	return m_modelRef;
 }
 
-void BindInstanceGFX::ModelRaw::UpdateVBVGPUOffset(std::uint64_t offset) noexcept {
+void BindInstanceGFX::ModelRaw::UpdateVBVGPUOffset(size_t offset) noexcept {
 	m_vertexBufferView.BufferLocation += offset;
 }
 
-void BindInstanceGFX::ModelRaw::UpdateIBVGPUOffset(std::uint64_t offset) noexcept {
+void BindInstanceGFX::ModelRaw::UpdateIBVGPUOffset(size_t offset) noexcept {
 	m_indexBufferView.BufferLocation += offset;
 }
