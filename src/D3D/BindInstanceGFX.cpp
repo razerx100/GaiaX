@@ -171,8 +171,6 @@ void BindInstanceGFX::ConfigureBuffers(
 	IResourceBuffer* vertexBufferRef = VertexBufferInst::GetRef();
 	IResourceBuffer* indexBufferRef = IndexBufferInst::GetRef();
 
-	using namespace Ceres::Math;
-
 	vertexBufferRef->CreateBuffer(device, Ceres::Math::Align(vertexBufferSize, 64_KB));
 	indexBufferRef->CreateBuffer(device, Ceres::Math::Align(indexBufferSize, 64_KB));
 
