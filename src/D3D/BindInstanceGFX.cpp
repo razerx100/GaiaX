@@ -1,6 +1,7 @@
 #include <BindInstanceGFX.hpp>
 #include <InstanceManager.hpp>
 #include <VenusInstance.hpp>
+#include <CRSMath.hpp>
 
 BindInstanceGFX::BindInstanceGFX(
 bool textureAvailable
@@ -170,8 +171,10 @@ void BindInstanceGFX::ConfigureBuffers(
 	IResourceBuffer* vertexBufferRef = VertexBufferInst::GetRef();
 	IResourceBuffer* indexBufferRef = IndexBufferInst::GetRef();
 
-	vertexBufferRef->CreateBuffer(device, vertexBufferSize);
-	indexBufferRef->CreateBuffer(device, indexBufferSize);
+	using namespace Ceres::Math;
+
+	vertexBufferRef->CreateBuffer(device, Ceres::Math::Align(vertexBufferSize, 64_KB));
+	indexBufferRef->CreateBuffer(device, Ceres::Math::Align(indexBufferSize, 64_KB));
 
 	for (auto& modelRaw : m_modelsRaw) {
 		modelRaw->UpdateIBVGPUOffset(indexBufferRef->GetGPUHandle());
