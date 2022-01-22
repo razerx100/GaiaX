@@ -15,7 +15,7 @@ public:
 	void AddPSO(std::unique_ptr<IPipelineObject> pso) noexcept override;
 	void AddRootSignature(std::shared_ptr<IRootSignature> signature) noexcept override;
 	void AddModel(
-		ID3D12Device* device, const IModel* const modelRef
+		const IModel* const modelRef
 	) noexcept override;
 
 	void CopyData(
@@ -64,7 +64,7 @@ private:
 		D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView;
 		D3D12_INDEX_BUFFER_VIEW m_indexBufferView;
 		const IModel* const m_modelRef;
-		size_t m_indicesCount;
+		UINT m_indicesCount;
 	};
 
 private:

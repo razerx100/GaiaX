@@ -48,7 +48,7 @@ void ModelContainer::AddColoredModel(
 		m_bindInstances[m_coloredInstanceData.index]->AddPSO(std::move(pso));
 	}
 
-	m_bindInstances[m_coloredInstanceData.index]->AddModel(device, modelRef);
+	m_bindInstances[m_coloredInstanceData.index]->AddModel(modelRef);
 }
 
 void ModelContainer::AddTexturedModel(
@@ -65,7 +65,7 @@ void ModelContainer::AddTexturedModel(
 		// Init Pipeline Object
 	}
 
-	m_bindInstances[m_texturedInstanceData.index]->AddModel(device, modelRef);
+	m_bindInstances[m_texturedInstanceData.index]->AddModel(modelRef);
 }
 
 void ModelContainer::BindCommands(ID3D12GraphicsCommandList* commandList) noexcept {

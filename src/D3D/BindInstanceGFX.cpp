@@ -23,7 +23,7 @@ void BindInstanceGFX::AddRootSignature(std::shared_ptr<IRootSignature> signature
 }
 
 void BindInstanceGFX::AddModel(
-	ID3D12Device* device, const IModel* const modelRef
+	const IModel* const modelRef
 ) noexcept {
 	m_modelsRaw.emplace_back(
 		std::make_unique<ModelRaw>(modelRef)
@@ -197,7 +197,7 @@ BindInstanceGFX::ModelRaw::ModelRaw(
 	:
 	m_vertexBufferView(vertexBufferView),
 	m_indexBufferView(indexBufferView),
-	m_indicesCount(indicesCount),
+	m_indicesCount(static_cast<UINT>(indicesCount)),
 	m_modelRef(modelRef) {}
 
 BindInstanceGFX::ModelRaw::ModelRaw(
@@ -209,7 +209,7 @@ BindInstanceGFX::ModelRaw::ModelRaw(
 	:
 	m_vertexBufferView(std::move(vertexBufferView)),
 	m_indexBufferView(std::move(indexBufferView)),
-	m_indicesCount(indicesCount),
+	m_indicesCount(static_cast<UINT>(indicesCount)),
 	m_modelRef(modelRef) {}
 
 void BindInstanceGFX::ModelRaw::AddVBV(const D3D12_VERTEX_BUFFER_VIEW& vertexBufferView) noexcept {
@@ -225,7 +225,7 @@ void BindInstanceGFX::ModelRaw::AddIBV(
 	size_t indicesCount
 ) noexcept {
 	m_indexBufferView = indexBufferView;
-	m_indicesCount = indicesCount;
+	m_indicesCount = static_cast<UINT>(indicesCount);
 }
 
 void BindInstanceGFX::ModelRaw::AddIBV(
@@ -233,7 +233,7 @@ void BindInstanceGFX::ModelRaw::AddIBV(
 	size_t indicesCount
 ) noexcept {
 	m_indexBufferView = std::move(indexBufferView);
-	m_indicesCount = indicesCount;
+	m_indicesCount = static_cast<UINT>(indicesCount);
 }
 
 void BindInstanceGFX::ModelRaw::Draw(ID3D12GraphicsCommandList* commandList) noexcept {

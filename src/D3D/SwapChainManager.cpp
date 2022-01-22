@@ -15,7 +15,7 @@ SwapChainManager::SwapChainManager(
 	, m_vsyncFlag(false), m_pRenderTargetViews(bufferCount) {
 
 	DXGI_SWAP_CHAIN_DESC1 desc = {};
-	desc.BufferCount = bufferCount;
+	desc.BufferCount = static_cast<UINT>(bufferCount);
 	desc.Width = m_width;
 	desc.Height = m_height;
 	desc.Format = GraphicsEngineDx12::RENDER_FORMAT;
@@ -66,7 +66,8 @@ void SwapChainManager::CreateRTVs() {
 		for (size_t index = 0u; index < m_pRenderTargetViews.size(); ++index) {
 			D3D_THROW_FAILED(
 				hr, m_pSwapChain->GetBuffer(
-					index, __uuidof(ID3D12Resource), &m_pRenderTargetViews[index]
+					static_cast<UINT>(index),
+					__uuidof(ID3D12Resource), &m_pRenderTargetViews[index]
 				)
 			);
 
@@ -74,7 +75,7 @@ void SwapChainManager::CreateRTVs() {
 				m_pRenderTargetViews[index].Get(), nullptr, rtvHandle
 			);
 
-			rtvHandle.Offset(1u, m_rtvDescSize);
+			rtvHandle.Offset(1u, static_cast<UINT>(m_rtvDescSize));
 		}
 	}
 }
@@ -152,7 +153,7 @@ void SwapChainManager::Resize(std::uint32_t width, std::uint32_t height) {
 		HRESULT hr;
 		D3D_THROW_FAILED(
 			hr, m_pSwapChain->ResizeBuffers(
-				m_pRenderTargetViews.size(),
+				static_cast<UINT>(m_pRenderTargetViews.size()),
 				width, height,
 				desc.Format,
 				desc.Flags
