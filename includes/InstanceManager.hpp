@@ -10,6 +10,7 @@
 #include <IModelContainer.hpp>
 #include <ICopyQueueManager.hpp>
 #include <IResourceBuffer.hpp>
+#include <IViewportAndScissorManager.hpp>
 
 class DeviceInst : public _ObjectManager<IDeviceManager, DeviceInst> {
 public:
@@ -79,5 +80,10 @@ public:
 class IndexBufferInst : public _ObjectManager<IResourceBuffer, IndexBufferInst> {
 public:
 	static void Init();
+};
+
+class ViewPAndScsrInst : public _ObjectManager<IViewportAndScissorManager, ViewPAndScsrInst> {
+public:
+	static void Init(std::uint32_t width, std::uint32_t height);
 };
 #endif

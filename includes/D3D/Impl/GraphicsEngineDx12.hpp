@@ -3,8 +3,6 @@
 #include <GraphicsEngine.hpp>
 #include <D3DHeaders.hpp>
 #include <string>
-#include <IViewportAndScissorManager.hpp>
-#include <memory>
 
 class GraphicsEngineDx12 : public GraphicsEngine {
 public:
@@ -32,8 +30,6 @@ public:
 	static constexpr DXGI_FORMAT RENDER_FORMAT = DXGI_FORMAT_R8G8B8A8_UNORM;
 
 private:
-	std::unique_ptr<IViewportAndScissorManager> m_viewportAndScissor;
-
 	Ceres::VectorF32 m_backgroundColor;
 
 	const std::string m_appName;

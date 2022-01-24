@@ -45,9 +45,7 @@ GraphicsEngineDx12::GraphicsEngineDx12(
 		SwapchainInst::GetRef()->GetCurrentBackBufferIndex()
 	);
 
-	m_viewportAndScissor = std::unique_ptr<IViewportAndScissorManager>(
-		CreateViewportAndScissorInstance(width, height)
-		);
+	ViewPAndScsrInst::Init(width, height);
 
 	CpyQueInst::Init(deviceRef);
 	CpyQueInst::GetRef()->InitSyncObjects(deviceRef);
@@ -58,6 +56,7 @@ GraphicsEngineDx12::GraphicsEngineDx12(
 }
 
 GraphicsEngineDx12::~GraphicsEngineDx12() noexcept {
+	ViewPAndScsrInst::CleanUp();
 	CpyCmdListInst::CleanUp();
 	CpyQueInst::CleanUp();
 	ModelContainerInst::CleanUp();
@@ -93,8 +92,10 @@ void GraphicsEngineDx12::Render() {
 	D3D12_RESOURCE_BARRIER renderBarrier = swapRef->GetRenderStateBarrier();
 	commandList->ResourceBarrier(1u, &renderBarrier);
 
-	commandList->RSSetViewports(1u, m_viewportAndScissor->GetViewportRef());
-	commandList->RSSetScissorRects(1u, m_viewportAndScissor->GetScissorRef());
+	IViewportAndScissorManager* viewportRef = ViewPAndScsrInst::GetRef();
+
+	commandList->RSSetViewports(1u, viewportRef->GetViewportRef());
+	commandList->RSSetScissorRects(1u, viewportRef->GetScissorRef());
 
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = swapRef->GetRTVHandle();
 
@@ -135,7 +136,7 @@ void GraphicsEngineDx12::Resize(std::uint32_t width, std::uint32_t height) {
 		DeviceInst::GetRef()->GetDeviceRef(),
 		width, height
 	);
-	m_viewportAndScissor->Resize(width, height);
+	ViewPAndScsrInst::GetRef()->Resize(width, height);
 }
 
 void GraphicsEngineDx12::GetMonitorCoordinates(

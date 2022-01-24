@@ -93,3 +93,9 @@ void IndexBufferInst::Init() {
 		CreateResourceBufferInstance()
 	);
 }
+
+void ViewPAndScsrInst::Init(std::uint32_t width, std::uint32_t height) {
+	Set(
+		CreateViewportAndScissorInstance(width, height)
+	);
+}
