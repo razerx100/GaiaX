@@ -3,6 +3,8 @@
 #include <GraphicsEngine.hpp>
 #include <D3DHeaders.hpp>
 #include <string>
+#include <IViewportAndScissorManager.hpp>
+#include <memory>
 
 class GraphicsEngineDx12 : public GraphicsEngine {
 public:
@@ -30,11 +32,7 @@ public:
 	static constexpr DXGI_FORMAT RENDER_FORMAT = DXGI_FORMAT_R8G8B8A8_UNORM;
 
 private:
-	void InitViewPortAndScissor(std::uint32_t width, std::uint32_t height) noexcept;
-
-private:
-	D3D12_VIEWPORT m_viewport;
-	D3D12_RECT m_scissorRect;
+	std::unique_ptr<IViewportAndScissorManager> m_viewportAndScissor;
 
 	Ceres::VectorF32 m_backgroundColor;
 

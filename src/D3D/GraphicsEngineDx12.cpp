@@ -45,7 +45,9 @@ GraphicsEngineDx12::GraphicsEngineDx12(
 		SwapchainInst::GetRef()->GetCurrentBackBufferIndex()
 	);
 
-	InitViewPortAndScissor(width, height);
+	m_viewportAndScissor = std::unique_ptr<IViewportAndScissorManager>(
+		CreateViewportAndScissorInstance(width, height)
+		);
 
 	CpyQueInst::Init(deviceRef);
 	CpyQueInst::GetRef()->InitSyncObjects(deviceRef);
@@ -91,8 +93,8 @@ void GraphicsEngineDx12::Render() {
 	D3D12_RESOURCE_BARRIER renderBarrier = swapRef->GetRenderStateBarrier();
 	commandList->ResourceBarrier(1u, &renderBarrier);
 
-	commandList->RSSetViewports(1u, &m_viewport);
-	commandList->RSSetScissorRects(1u, &m_scissorRect);
+	commandList->RSSetViewports(1u, m_viewportAndScissor->GetViewportRef());
+	commandList->RSSetScissorRects(1u, m_viewportAndScissor->GetScissorRef());
 
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = swapRef->GetRTVHandle();
 
@@ -133,7 +135,7 @@ void GraphicsEngineDx12::Resize(std::uint32_t width, std::uint32_t height) {
 		DeviceInst::GetRef()->GetDeviceRef(),
 		width, height
 	);
-	InitViewPortAndScissor(width, height);
+	m_viewportAndScissor->Resize(width, height);
 }
 
 void GraphicsEngineDx12::GetMonitorCoordinates(
@@ -150,22 +152,6 @@ void GraphicsEngineDx12::GetMonitorCoordinates(
 
 	monitorWidth = static_cast<std::uint64_t>(desc.DesktopCoordinates.right);
 	monitorHeight = static_cast<std::uint64_t>(desc.DesktopCoordinates.bottom);
-}
-
-void  GraphicsEngineDx12::InitViewPortAndScissor(
-	std::uint32_t width, std::uint32_t height
-) noexcept {
-	m_viewport.TopLeftX = 0.0f;
-	m_viewport.TopLeftY = 0.0f;
-	m_viewport.Width = static_cast<float>(width);
-	m_viewport.Height = static_cast<float>(height);
-	m_viewport.MinDepth = 0.0f;
-	m_viewport.MaxDepth = 1.0f;
-
-	m_scissorRect.left = static_cast<LONG>(m_viewport.TopLeftX);
-	m_scissorRect.right = static_cast<LONG>(m_viewport.TopLeftX + m_viewport.Width);
-	m_scissorRect.top = static_cast<LONG>(m_viewport.TopLeftY);
-	m_scissorRect.bottom = static_cast<LONG>(m_viewport.TopLeftY + m_viewport.Height);
 }
 
 void GraphicsEngineDx12::SetBackgroundColor(const Ceres::VectorF32& color) noexcept {
