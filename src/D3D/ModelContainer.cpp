@@ -4,6 +4,8 @@
 #include <Shader.hpp>
 #include <PipelineObjectGFX.hpp>
 #include <VertexLayout.hpp>
+#include <InstanceManager.hpp>
+#include <VenusInstance.hpp>
 
 ModelContainer::ModelContainer(const char* shaderPath) noexcept
 	: m_coloredInstanceData{}, m_texturedInstanceData{}, m_shaderPath(shaderPath) {}
@@ -23,27 +25,29 @@ void ModelContainer::AddColoredModel(
 	if (!m_coloredInstanceData.available) {
 		InitNewInstance(m_coloredInstanceData, false);
 
-		if (!m_pRootSignature)
-			CreateRootSignature(device);
-
-		m_bindInstances[m_coloredInstanceData.index]->AddRootSignature(m_pRootSignature);
+		std::unique_ptr<RootSignatureDynamic> signature =
+			std::make_unique<RootSignatureDynamic>();
+		signature->CompileSignature(false);
+		signature->CreateSignature(device);
 
 		VertexLayout layout = VertexLayout(modelRef->GetVertexLayout());
 
-		std::shared_ptr<Shader> vs = std::make_shared<Shader>();
+		std::unique_ptr<Shader> vs = std::make_unique<Shader>();
 		vs->LoadBinary(m_shaderPath + "VSColored.cso");
 
-		std::shared_ptr<Shader> ps = std::make_shared<Shader>();
+		std::unique_ptr<Shader> ps = std::make_unique<Shader>();
 		ps->LoadBinary(m_shaderPath + "PSColored.cso");
 
 		std::unique_ptr<PipelineObjectGFX> pso = std::make_unique<PipelineObjectGFX>();
 		pso->CreatePipelineState(
 			device,
 			layout,
-			m_pRootSignature->Get(),
-			vs,
-			ps
+			signature->Get(),
+			vs->GetByteCode(),
+			ps->GetByteCode()
 		);
+
+		m_bindInstances[m_coloredInstanceData.index]->AddRootSignature(std::move(signature));
 
 		m_bindInstances[m_coloredInstanceData.index]->AddPSO(std::move(pso));
 	}
@@ -56,11 +60,6 @@ void ModelContainer::AddTexturedModel(
 ) {
 	if (!m_texturedInstanceData.available) {
 		InitNewInstance(m_texturedInstanceData, true);
-
-		if (!m_pRootSignature)
-			CreateRootSignature(device);
-
-		m_bindInstances[m_texturedInstanceData.index]->AddRootSignature(m_pRootSignature);
 
 		// Init Pipeline Object
 	}
@@ -78,20 +77,48 @@ void ModelContainer::InitNewInstance(InstanceData& instanceData, bool texture) n
 	instanceData = { true, m_bindInstances.size() - 1u };
 }
 
-void ModelContainer::CreateRootSignature(ID3D12Device* device) {
-	std::shared_ptr<RootSignatureDynamic> signature = std::make_shared<RootSignatureDynamic>();
-	signature->CompileSignature(false);
-	signature->CreateSignature(device);
+void ModelContainer::CopyData() {
+	std::atomic_size_t works = 2u;
 
-	m_pRootSignature = signature;
-}
+	GetVenusInstance()->SubmitWork(
+		[&works] {
+			VertexBufferInst::GetRef()->CopyData();
 
-void ModelContainer::CopyBuffers(ID3D12Device* device) {
-	for (auto& bindInstance : m_bindInstances)
-		bindInstance->CopyData(device);
+			--works;
+		}
+	);
+
+	GetVenusInstance()->SubmitWork(
+		[&works] {
+			IndexBufferInst::GetRef()->CopyData();
+
+			--works;
+		}
+	);
+
+	while (works != 0u);
 }
 
 void ModelContainer::RecordUploadBuffers(ID3D12GraphicsCommandList* copyList) {
+	VertexBufferInst::GetRef()->RecordUpload(copyList);
+	IndexBufferInst::GetRef()->RecordUpload(copyList);
+}
+
+void ModelContainer::CreateBuffers(ID3D12Device* device) {
+	IResourceBuffer* vertexBufferRef = VertexBufferInst::GetRef();
+	IResourceBuffer* indexBufferRef = IndexBufferInst::GetRef();
+
+	vertexBufferRef->CreateBuffer(device);
+	indexBufferRef->CreateBuffer(device);
+
 	for (auto& bindInstance : m_bindInstances)
-		bindInstance->RecordUploadBuffers(copyList);
+		bindInstance->UpldateBufferViewAddresses(
+			static_cast<size_t>(vertexBufferRef->GetGPUHandle()),
+			static_cast<size_t>(indexBufferRef->GetGPUHandle())
+		);
+}
+
+void ModelContainer::ReleaseUploadBuffers() {
+	VertexBufferInst::GetRef()->ReleaseUploadBuffer();
+	IndexBufferInst::GetRef()->ReleaseUploadBuffer();
 }

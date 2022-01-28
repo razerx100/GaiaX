@@ -12,12 +12,13 @@ class IResourceBuffer {
 public:
 	virtual ~IResourceBuffer() = default;
 
-	virtual void CreateBuffer(ID3D12Device* device, size_t bufferSize) = 0;
-	virtual void CopyData(const void* source, size_t bufferSize) noexcept = 0;
-	virtual void RecordUpload(ID3D12GraphicsCommandList* copyList, BufferType type) = 0;
+	virtual size_t AddData(const void* source, size_t bufferSize) = 0;
+	virtual void CreateBuffer(ID3D12Device* device) = 0;
+	virtual void CopyData() noexcept = 0;
+	virtual void RecordUpload(ID3D12GraphicsCommandList* copyList) = 0;
 	virtual void ReleaseUploadBuffer() = 0;
 	virtual D3D12_GPU_VIRTUAL_ADDRESS GetGPUHandle() const noexcept = 0;
 };
 
-IResourceBuffer* CreateResourceBufferInstance();
+IResourceBuffer* CreateResourceBufferInstance(BufferType type);
 #endif

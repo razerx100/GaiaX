@@ -9,8 +9,8 @@ void PipelineObjectGFX::CreatePipelineState(
 	ID3D12Device* device,
 	const VertexLayout& vertexLayout,
 	ID3D12RootSignature* rootSignature,
-	std::shared_ptr<IShader> vertexShader,
-	std::shared_ptr<IShader> pixelShader
+	const D3D12_SHADER_BYTECODE& vertexShader,
+	const D3D12_SHADER_BYTECODE& pixelShader
 ) {
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
 	psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
@@ -26,8 +26,8 @@ void PipelineObjectGFX::CreatePipelineState(
 	psoDesc.SampleDesc.Count = 1u;
 	psoDesc.InputLayout = vertexLayout.GetLayout();
 	psoDesc.pRootSignature = rootSignature;
-	psoDesc.VS = vertexShader->GetByteCode();
-	psoDesc.PS = pixelShader->GetByteCode();
+	psoDesc.VS = vertexShader;
+	psoDesc.PS = pixelShader;
 	psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 
 	HRESULT hr;

@@ -11,17 +11,15 @@ public:
 	virtual ~IBindInstanceGFX() = default;
 
 	virtual void AddPSO(std::unique_ptr<IPipelineObject> pso) noexcept = 0;
-	virtual void AddRootSignature(std::shared_ptr<IRootSignature> signature) noexcept = 0;
+	virtual void AddRootSignature(std::unique_ptr<IRootSignature> signature) noexcept = 0;
 	virtual void AddModel(
 		const IModel* const modelRef
 	) noexcept = 0;
 
-	virtual void CopyData(
-		ID3D12Device* device
-	) = 0;
-	virtual void RecordUploadBuffers(
-		ID3D12GraphicsCommandList* copyList
-	) = 0;
+	virtual void UpldateBufferViewAddresses(
+		size_t vertexAddress,
+		size_t indexAddress
+	) noexcept = 0;
 
 	virtual void BindCommands(ID3D12GraphicsCommandList* commandList) noexcept = 0;
 };

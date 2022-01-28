@@ -10,8 +10,8 @@ public:
 		ID3D12Device* device,
 		const class VertexLayout& vertexLayout,
 		ID3D12RootSignature* rootSignature,
-		std::shared_ptr<class IShader> vertexShader,
-		std::shared_ptr<class IShader> pixelShader
+		const D3D12_SHADER_BYTECODE& vertexShader,
+		const D3D12_SHADER_BYTECODE& pixelShader
 	);
 
 	ID3D12PipelineState* Get() const noexcept override;

@@ -12,8 +12,10 @@ public:
 		bool texture
 	) = 0;
 
-	virtual void CopyBuffers(ID3D12Device* device) = 0;
+	virtual void CreateBuffers(ID3D12Device* device) = 0;
+	virtual void CopyData() = 0;
 	virtual void RecordUploadBuffers(ID3D12GraphicsCommandList* copyList) = 0;
+	virtual void ReleaseUploadBuffers() = 0;
 
 	virtual void BindCommands(ID3D12GraphicsCommandList* commandList) noexcept = 0;
 };

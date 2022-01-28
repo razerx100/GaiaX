@@ -175,18 +175,23 @@ void GraphicsEngineDx12::InitResourceBasedObjects() {
 }
 
 void GraphicsEngineDx12::ProcessData() {
-	ModelContainerInst::GetRef()->CopyBuffers(DeviceInst::GetRef()->GetDeviceRef());
+	ID3D12Device* device = DeviceInst::GetRef()->GetDeviceRef();
+	IModelContainer* modelContainerRef = ModelContainerInst::GetRef();
 
-	CpyCmdListInst::GetRef()->Reset(0u);
-	ID3D12GraphicsCommandList* copyList = CpyCmdListInst::GetRef()->GetCommandListRef();
+	modelContainerRef->CreateBuffers(device);
+	modelContainerRef->CopyData();
 
-	ModelContainerInst::GetRef()->RecordUploadBuffers(copyList);
+	ICommandListManager* copyListManager = CpyCmdListInst::GetRef();
+	copyListManager->Reset(0u);
+	ID3D12GraphicsCommandList* copyList = copyListManager->GetCommandListRef();
 
-	CpyCmdListInst::GetRef()->Close();
+	modelContainerRef->RecordUploadBuffers(copyList);
+
+	copyListManager->Close();
+
 	ICopyQueueManager* copyQue = CpyQueInst::GetRef();
 	copyQue->ExecuteCommandLists(copyList);
 	copyQue->WaitForGPU();
 
-	VertexBufferInst::GetRef()->ReleaseUploadBuffer();
-	IndexBufferInst::GetRef()->ReleaseUploadBuffer();
+	modelContainerRef->ReleaseUploadBuffers();
 }

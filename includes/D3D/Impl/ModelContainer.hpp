@@ -15,8 +15,10 @@ public:
 		ID3D12Device* device, const IModel* const modelRef, bool texture
 	) override;
 
-	void CopyBuffers(ID3D12Device* device) override;
+	void CreateBuffers(ID3D12Device* device) override;
+	void CopyData() override;
 	void RecordUploadBuffers(ID3D12GraphicsCommandList* copyList) override;
+	void ReleaseUploadBuffers() override;
 
 	void BindCommands(ID3D12GraphicsCommandList* commandList) noexcept override;
 
@@ -28,7 +30,6 @@ private:
 
 private:
 	void InitNewInstance(InstanceData& instanceData, bool texture) noexcept;
-	void CreateRootSignature(ID3D12Device* device);
 	void AddColoredModel(ID3D12Device* device, const IModel* const modelRef);
 	void AddTexturedModel(ID3D12Device* device, const IModel* const modelRef);
 
@@ -37,7 +38,6 @@ private:
 	InstanceData m_coloredInstanceData;
 	InstanceData m_texturedInstanceData;
 
-	std::shared_ptr<IRootSignature> m_pRootSignature;
 	std::string m_shaderPath;
 };
 #endif

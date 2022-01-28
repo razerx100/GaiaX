@@ -84,13 +84,13 @@ void CpyCmdListInst::Init(
 
 void VertexBufferInst::Init() {
 	Set(
-		CreateResourceBufferInstance()
+		CreateResourceBufferInstance(BufferType::Vertex)
 	);
 }
 
 void IndexBufferInst::Init() {
 	Set(
-		CreateResourceBufferInstance()
+		CreateResourceBufferInstance(BufferType::Index)
 	);
 }
 
