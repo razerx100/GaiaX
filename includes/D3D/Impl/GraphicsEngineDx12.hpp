@@ -13,7 +13,7 @@ public:
 	);
 	~GraphicsEngineDx12() noexcept;
 
-	void SetBackgroundColor(const Ceres::VectorF32& color) noexcept override;
+	void SetBackgroundColor(const Ceres::Float32_4& color) noexcept override;
 	void SubmitModel(const IModel* const modelRef, bool texture = true) override;
 	void Render() override;
 	void Resize(std::uint32_t width, std::uint32_t height) override;
@@ -30,7 +30,7 @@ public:
 	static constexpr DXGI_FORMAT RENDER_FORMAT = DXGI_FORMAT_R8G8B8A8_UNORM;
 
 private:
-	Ceres::VectorF32 m_backgroundColor;
+	Ceres::Float32_4 m_backgroundColor;
 
 	const std::string m_appName;
 	std::string m_shaderPath;

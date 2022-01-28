@@ -100,7 +100,7 @@ void GraphicsEngineDx12::Render() {
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = swapRef->GetRTVHandle();
 
 	swapRef->ClearRTV(
-		commandList, &m_backgroundColor.F32.x, rtvHandle
+		commandList, &m_backgroundColor.x, rtvHandle
 	);
 
 	IDepthBuffer* depthRef = DepthBuffInst::GetRef();
@@ -155,7 +155,7 @@ void GraphicsEngineDx12::GetMonitorCoordinates(
 	monitorHeight = static_cast<std::uint64_t>(desc.DesktopCoordinates.bottom);
 }
 
-void GraphicsEngineDx12::SetBackgroundColor(const Ceres::VectorF32& color) noexcept {
+void GraphicsEngineDx12::SetBackgroundColor(const Ceres::Float32_4& color) noexcept {
 	m_backgroundColor = color;
 }
 

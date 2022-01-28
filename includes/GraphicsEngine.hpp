@@ -3,6 +3,6 @@
 
 #include <IGraphicsEngine.hpp>
 #include <IModel.hpp>
-#include <CRSVector.hpp>
+#include <CRSStructures.hpp>
 
 #endif
