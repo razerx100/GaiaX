@@ -5,6 +5,7 @@
 #include <IRootSignature.hpp>
 #include <vector>
 #include <string>
+#include <memory>
 
 class ModelContainer : public IModelContainer {
 public:

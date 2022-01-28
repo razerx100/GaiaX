@@ -15,9 +15,17 @@ public:
 	virtual ~IModel() = default;
 
 	[[nodiscard]]
-	virtual const std::vector<Ceres::Float32_3>& GetVertices() const noexcept = 0;
+	virtual const void* GetVertexData() const noexcept = 0;
 	[[nodiscard]]
-	virtual const std::vector<std::uint16_t>& GetIndices() const noexcept = 0;
+	virtual size_t GetVertexStrideSize() const noexcept = 0;
+	[[nodiscard]]
+	virtual size_t GetVertexBufferSize() const noexcept = 0;
+	[[nodiscard]]
+	virtual const void* GetIndexData() const noexcept = 0;
+	[[nodiscard]]
+	virtual size_t GetIndexBufferSize() const noexcept = 0;
+	[[nodiscard]]
+	virtual size_t GetIndexCount() const noexcept = 0;
 	[[nodiscard]]
 	virtual const std::vector<VertexElementType>& GetVertexLayout() const noexcept = 0;
 

@@ -50,102 +50,56 @@ void BindInstanceGFX::CopyData(
 	IResourceBuffer* vertexBufferRef = VertexBufferInst::GetRef();
 	IResourceBuffer* indexBufferRef = IndexBufferInst::GetRef();
 
-	if (m_textureAvailable) {
-		ConfigureBuffers(device, vertexBufferSize, indexBufferSize, true);
+	ConfigureBuffers(device, vertexBufferSize, indexBufferSize);
 
-		GetVenusInstance()->SubmitWork([&] {
-			for (auto& modelRaw : m_modelsRaw) {
-				const std::vector<Ceres::Float32_3>& verticesRef =
-					modelRaw->GetModelRef()->GetVertices();
+	GetVenusInstance()->SubmitWork([&] {
+		for (auto& modelRaw : m_modelsRaw) {
+			const IModel* const modelRef = modelRaw->GetModelRef();
 
-				vertexBufferRef->CopyData(
-					verticesRef.data(),
-					verticesRef.size() * sizeof(decltype(verticesRef[0u]))
-				);
-			}
+			vertexBufferRef->CopyData(
+				modelRef->GetVertexData(),
+				modelRef->GetVertexBufferSize()
+			);
+		}
 
-			--works;
-			}
-		);
+		--works;
+		}
+	);
 
-		GetVenusInstance()->SubmitWork([&] {
-			for (auto& modelRaw : m_modelsRaw) {
-				const std::vector<std::uint16_t>& indicesRef =
-					modelRaw->GetModelRef()->GetIndices();
+	GetVenusInstance()->SubmitWork([&] {
+		for (auto& modelRaw : m_modelsRaw) {
+			const IModel* const modelRef = modelRaw->GetModelRef();
 
-				indexBufferRef->CopyData(
-					indicesRef.data(),
-					indicesRef.size() * sizeof(decltype(indicesRef[0u]))
-				);
-			}
+			indexBufferRef->CopyData(
+				modelRef->GetIndexData(),
+				modelRef->GetIndexBufferSize()
+			);
+		}
 
-			--works;
-			}
-		);
-	}
-	else {
-		ConfigureBuffers(device, vertexBufferSize, indexBufferSize, false);
-
-		GetVenusInstance()->SubmitWork([&] {
-			for (auto& modelRaw : m_modelsRaw) {
-				const std::vector<Ceres::Float32_3>& verticesRef =
-					modelRaw->GetModelRef()->GetVertices();
-
-				const Ceres::VectorF32 solidColor = modelRaw->GetModelRef()->GetSolidColor();
-
-				for (auto& vertex : verticesRef) {
-					vertexBufferRef->CopyData(&vertex, sizeof(Ceres::Float32_3));
-					vertexBufferRef->CopyData(&solidColor, sizeof(Ceres::VectorF32));
-				}
-			}
-
-			--works;
-			}
-		);
-
-		GetVenusInstance()->SubmitWork([&] {
-			for (auto& modelRaw : m_modelsRaw) {
-				const std::vector<std::uint16_t>& indicesRef =
-					modelRaw->GetModelRef()->GetIndices();
-
-				indexBufferRef->CopyData(
-					indicesRef.data(),
-					indicesRef.size() * sizeof(decltype(indicesRef[0u]))
-				);
-			}
-
-			--works;
-			}
-		);
-	}
+		--works;
+		}
+	);
 
 	while (works != 0u);
 }
 
 void BindInstanceGFX::RecordUploadBuffers(ID3D12GraphicsCommandList* copyList) {
+	// Bad Logic
 	VertexBufferInst::GetRef()->RecordUpload(copyList, BufferType::Vertex);
 	IndexBufferInst::GetRef()->RecordUpload(copyList, BufferType::Index);
 }
 
 void BindInstanceGFX::ConfigureBuffers(
 	ID3D12Device* device,
-	size_t& vertexBufferSize, size_t& indexBufferSize,
-	bool textured
+	size_t& vertexBufferSize, size_t& indexBufferSize
 ) {
 	for (auto& modelRaw : m_modelsRaw) {
 		const IModel* const modelRef = modelRaw->GetModelRef();
 
-		const std::vector<std::uint16_t>& indicesRef = modelRef->GetIndices();
-		const std::vector<Ceres::Float32_3>& verticesRef = modelRef->GetVertices();
+		size_t currentIndicesSize = modelRef->GetIndexBufferSize();
 
-		size_t currentIndicesSize =
-			indicesRef.size() * sizeof(decltype(indicesRef[0u]));
-
-		size_t vertexStrideSize =
-			textured ? sizeof(decltype(verticesRef[0u]))
-			: sizeof(decltype(verticesRef[0u])) + sizeof(Ceres::VectorF32);
-		size_t currentVerticesSize =
-			verticesRef.size() * vertexStrideSize;
+		size_t vertexStrideSize = modelRef->GetVertexStrideSize();
+		size_t currentVerticesSize = modelRef->GetVertexBufferSize();
 
 		modelRaw->AddIBV(
 			D3D12_INDEX_BUFFER_VIEW{
@@ -153,7 +107,7 @@ void BindInstanceGFX::ConfigureBuffers(
 				static_cast<UINT>(currentIndicesSize),
 				DXGI_FORMAT_R16_UINT
 			},
-			indicesRef.size()
+			modelRef->GetIndexCount()
 		);
 
 		modelRaw->AddVBV(
@@ -185,7 +139,7 @@ BindInstanceGFX::ModelRaw::ModelRaw(const IModel* const modelRef) noexcept
 	:
 	m_vertexBufferView{},
 	m_indexBufferView{},
-	m_indicesCount(0u),
+	m_indexCount(0u),
 	m_modelRef(modelRef) {}
 
 BindInstanceGFX::ModelRaw::ModelRaw(
@@ -197,7 +151,7 @@ BindInstanceGFX::ModelRaw::ModelRaw(
 	:
 	m_vertexBufferView(vertexBufferView),
 	m_indexBufferView(indexBufferView),
-	m_indicesCount(static_cast<UINT>(indicesCount)),
+	m_indexCount(static_cast<UINT>(indicesCount)),
 	m_modelRef(modelRef) {}
 
 BindInstanceGFX::ModelRaw::ModelRaw(
@@ -209,7 +163,7 @@ BindInstanceGFX::ModelRaw::ModelRaw(
 	:
 	m_vertexBufferView(std::move(vertexBufferView)),
 	m_indexBufferView(std::move(indexBufferView)),
-	m_indicesCount(static_cast<UINT>(indicesCount)),
+	m_indexCount(static_cast<UINT>(indicesCount)),
 	m_modelRef(modelRef) {}
 
 void BindInstanceGFX::ModelRaw::AddVBV(const D3D12_VERTEX_BUFFER_VIEW& vertexBufferView) noexcept {
@@ -225,7 +179,7 @@ void BindInstanceGFX::ModelRaw::AddIBV(
 	size_t indicesCount
 ) noexcept {
 	m_indexBufferView = indexBufferView;
-	m_indicesCount = static_cast<UINT>(indicesCount);
+	m_indexCount = static_cast<UINT>(indicesCount);
 }
 
 void BindInstanceGFX::ModelRaw::AddIBV(
@@ -233,14 +187,14 @@ void BindInstanceGFX::ModelRaw::AddIBV(
 	size_t indicesCount
 ) noexcept {
 	m_indexBufferView = std::move(indexBufferView);
-	m_indicesCount = static_cast<UINT>(indicesCount);
+	m_indexCount = static_cast<UINT>(indicesCount);
 }
 
 void BindInstanceGFX::ModelRaw::Draw(ID3D12GraphicsCommandList* commandList) noexcept {
 	commandList->IASetVertexBuffers(0u, 1u, &m_vertexBufferView);
 	commandList->IASetIndexBuffer(&m_indexBufferView);
 
-	commandList->DrawIndexedInstanced(m_indicesCount, 1u, 0u, 0u, 0u);
+	commandList->DrawIndexedInstanced(m_indexCount, 1u, 0u, 0u, 0u);
 }
 
 const IModel* const BindInstanceGFX::ModelRaw::GetModelRef() const noexcept {

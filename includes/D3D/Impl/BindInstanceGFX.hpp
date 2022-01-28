@@ -28,7 +28,7 @@ public:
 private:
 	class ModelRaw {
 	public:
-		ModelRaw(const IModel* const m_modelRef) noexcept;
+		ModelRaw(const IModel* const modelRef) noexcept;
 		ModelRaw(
 			const D3D12_VERTEX_BUFFER_VIEW& vertexBufferView,
 			const D3D12_INDEX_BUFFER_VIEW& indexBufferView,
@@ -50,12 +50,12 @@ private:
 		void AddVBV(const D3D12_VERTEX_BUFFER_VIEW& vertexBufferView) noexcept;
 		void AddIBV(
 			const D3D12_INDEX_BUFFER_VIEW& indexBufferView,
-			size_t indicesCount
+			size_t indexCount
 		) noexcept;
 		void AddVBV(D3D12_VERTEX_BUFFER_VIEW&& vertexBufferView) noexcept;
 		void AddIBV(
 			D3D12_INDEX_BUFFER_VIEW&& indexBufferView,
-			size_t indicesCount
+			size_t indexCount
 		) noexcept;
 
 		void Draw(ID3D12GraphicsCommandList* commandList) noexcept;
@@ -64,14 +64,13 @@ private:
 		D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView;
 		D3D12_INDEX_BUFFER_VIEW m_indexBufferView;
 		const IModel* const m_modelRef;
-		UINT m_indicesCount;
+		UINT m_indexCount;
 	};
 
 private:
 	void ConfigureBuffers(
 		ID3D12Device* device,
-		size_t& vertexBufferSize, size_t& indexBufferSize,
-		bool textured
+		size_t& vertexBufferSize, size_t& indexBufferSize
 	);
 
 private:

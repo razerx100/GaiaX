@@ -2,7 +2,6 @@
 #define __I_MODEL_CONTAINER_HPP__
 #include <D3DHeaders.hpp>
 #include <IModel.hpp>
-#include <memory>
 
 class IModelContainer {
 public:
