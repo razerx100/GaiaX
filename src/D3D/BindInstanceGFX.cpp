@@ -81,45 +81,49 @@ BindInstanceGFX::ModelRaw::ModelRaw() noexcept
 BindInstanceGFX::ModelRaw::ModelRaw(
 	const D3D12_VERTEX_BUFFER_VIEW& vertexBufferView,
 	const D3D12_INDEX_BUFFER_VIEW& indexBufferView,
-	size_t indicesCount
+	size_t indexCount
 ) noexcept
 	:
 	m_vertexBufferView(vertexBufferView),
 	m_indexBufferView(indexBufferView),
-	m_indexCount(static_cast<UINT>(indicesCount)) {}
+	m_indexCount(static_cast<UINT>(indexCount)) {}
 
 BindInstanceGFX::ModelRaw::ModelRaw(
 	D3D12_VERTEX_BUFFER_VIEW&& vertexBufferView,
 	D3D12_INDEX_BUFFER_VIEW&& indexBufferView,
-	size_t indicesCount
+	size_t indexCount
 ) noexcept
 	:
 	m_vertexBufferView(std::move(vertexBufferView)),
 	m_indexBufferView(std::move(indexBufferView)),
-	m_indexCount(static_cast<UINT>(indicesCount)) {}
+	m_indexCount(static_cast<UINT>(indexCount)) {}
 
-void BindInstanceGFX::ModelRaw::AddVBV(const D3D12_VERTEX_BUFFER_VIEW& vertexBufferView) noexcept {
+void BindInstanceGFX::ModelRaw::AddVBV(
+	const D3D12_VERTEX_BUFFER_VIEW& vertexBufferView
+) noexcept {
 	m_vertexBufferView = vertexBufferView;
 }
 
-void BindInstanceGFX::ModelRaw::AddVBV(D3D12_VERTEX_BUFFER_VIEW&& vertexBufferView) noexcept {
+void BindInstanceGFX::ModelRaw::AddVBV(
+	D3D12_VERTEX_BUFFER_VIEW&& vertexBufferView
+) noexcept {
 	m_vertexBufferView = std::move(vertexBufferView);
 }
 
 void BindInstanceGFX::ModelRaw::AddIBV(
 	const D3D12_INDEX_BUFFER_VIEW& indexBufferView,
-	size_t indicesCount
+	size_t indexCount
 ) noexcept {
 	m_indexBufferView = indexBufferView;
-	m_indexCount = static_cast<UINT>(indicesCount);
+	m_indexCount = static_cast<UINT>(indexCount);
 }
 
 void BindInstanceGFX::ModelRaw::AddIBV(
 	D3D12_INDEX_BUFFER_VIEW&& indexBufferView,
-	size_t indicesCount
+	size_t indexCount
 ) noexcept {
 	m_indexBufferView = std::move(indexBufferView);
-	m_indexCount = static_cast<UINT>(indicesCount);
+	m_indexCount = static_cast<UINT>(indexCount);
 }
 
 void BindInstanceGFX::ModelRaw::Draw(ID3D12GraphicsCommandList* commandList) noexcept {

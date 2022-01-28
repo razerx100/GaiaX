@@ -32,12 +32,12 @@ private:
 		ModelRaw(
 			const D3D12_VERTEX_BUFFER_VIEW& vertexBufferView,
 			const D3D12_INDEX_BUFFER_VIEW& indexBufferView,
-			size_t indicesCount
+			size_t indexCount
 		) noexcept;
 		ModelRaw(
 			D3D12_VERTEX_BUFFER_VIEW&& vertexBufferView,
 			D3D12_INDEX_BUFFER_VIEW&& indexBufferView,
-			size_t indicesCount
+			size_t indexCount
 		) noexcept;
 
 		void UpdateVBVGPUOffset(size_t offset) noexcept;
