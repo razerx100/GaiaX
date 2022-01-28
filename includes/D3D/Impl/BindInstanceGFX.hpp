@@ -28,13 +28,15 @@ public:
 private:
 	class ModelRaw {
 	public:
-		ModelRaw() noexcept;
+		ModelRaw(const IModel* const modelRef) noexcept;
 		ModelRaw(
+			const IModel* const modelRef,
 			const D3D12_VERTEX_BUFFER_VIEW& vertexBufferView,
 			const D3D12_INDEX_BUFFER_VIEW& indexBufferView,
 			size_t indexCount
 		) noexcept;
 		ModelRaw(
+			const IModel* const modelRef,
 			D3D12_VERTEX_BUFFER_VIEW&& vertexBufferView,
 			D3D12_INDEX_BUFFER_VIEW&& indexBufferView,
 			size_t indexCount
@@ -57,6 +59,7 @@ private:
 		void Draw(ID3D12GraphicsCommandList* commandList) noexcept;
 
 	private:
+		const IModel* const m_modelRef;
 		D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView;
 		D3D12_INDEX_BUFFER_VIEW m_indexBufferView;
 		UINT m_indexCount;

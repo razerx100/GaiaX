@@ -37,6 +37,7 @@ void BindInstanceGFX::AddModel(
 
 	m_modelsRaw.emplace_back(
 		std::make_unique<ModelRaw>(
+			modelRef,
 			D3D12_VERTEX_BUFFER_VIEW{
 				vertexOffset,
 				static_cast<UINT>(vertexBufferSize),
@@ -72,28 +73,33 @@ void BindInstanceGFX::UpldateBufferViewAddresses(
 }
 
 // Model Raw
-BindInstanceGFX::ModelRaw::ModelRaw() noexcept
+BindInstanceGFX::ModelRaw::ModelRaw(const IModel* const modelRef) noexcept
 	:
+	m_modelRef(modelRef),
 	m_vertexBufferView{},
 	m_indexBufferView{},
 	m_indexCount(0u) {}
 
 BindInstanceGFX::ModelRaw::ModelRaw(
+	const IModel* const modelRef,
 	const D3D12_VERTEX_BUFFER_VIEW& vertexBufferView,
 	const D3D12_INDEX_BUFFER_VIEW& indexBufferView,
 	size_t indexCount
 ) noexcept
 	:
+	m_modelRef(modelRef),
 	m_vertexBufferView(vertexBufferView),
 	m_indexBufferView(indexBufferView),
 	m_indexCount(static_cast<UINT>(indexCount)) {}
 
 BindInstanceGFX::ModelRaw::ModelRaw(
+	const IModel* const modelRef,
 	D3D12_VERTEX_BUFFER_VIEW&& vertexBufferView,
 	D3D12_INDEX_BUFFER_VIEW&& indexBufferView,
 	size_t indexCount
 ) noexcept
 	:
+	m_modelRef(modelRef),
 	m_vertexBufferView(std::move(vertexBufferView)),
 	m_indexBufferView(std::move(indexBufferView)),
 	m_indexCount(static_cast<UINT>(indexCount)) {}
