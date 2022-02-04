@@ -195,3 +195,9 @@ void GraphicsEngineDx12::ProcessData() {
 
 	modelContainerRef->ReleaseUploadBuffers();
 }
+
+size_t GraphicsEngineDx12::RegisterResource(
+	const void* data, size_t size, bool texture
+) {
+	return 0u;
+}

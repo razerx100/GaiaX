@@ -18,6 +18,9 @@ class GAIAX_DLL GraphicsEngine {
 public:
 	virtual ~GraphicsEngine() = default;
 
+	[[nodiscard]] // Returns index of the resource in Resource Heap
+	virtual size_t RegisterResource(const void* data, size_t size, bool texture = true) = 0;
+
 	virtual void SetBackgroundColor(const Ceres::Float32_4& color) noexcept = 0;
 	virtual void SubmitModel(const class IModel* const modelRef, bool texture = true) = 0;
 	virtual void Render() = 0;
