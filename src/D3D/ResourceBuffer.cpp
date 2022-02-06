@@ -99,7 +99,7 @@ std::shared_ptr<D3DBuffer> ResourceBuffer::AddBuffer(
 		source, bufferSize, m_currentMemoryOffset, type
 	);
 	m_gpuBuffers.emplace_back(std::make_shared<D3DBuffer>());
-	m_currentMemoryOffset += bufferSize;
+	m_currentMemoryOffset += Ceres::Math::Align(bufferSize, 64_KB);
 
 	return m_gpuBuffers.back();
 }
