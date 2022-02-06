@@ -16,11 +16,6 @@ public:
 		const IModel* const modelRef
 	) noexcept = 0;
 
-	virtual void UpldateBufferViewAddresses(
-		size_t vertexAddress,
-		size_t indexAddress
-	) noexcept = 0;
-
 	virtual void BindCommands(ID3D12GraphicsCommandList* commandList) noexcept = 0;
 };
 #endif

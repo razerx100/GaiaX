@@ -1,5 +1,7 @@
 #include <BindInstanceGFX.hpp>
 #include <InstanceManager.hpp>
+#include <IndexBufferView.hpp>
+#include <VertexBufferView.hpp>
 #include <CRSMath.hpp>
 
 BindInstanceGFX::BindInstanceGFX(
@@ -28,26 +30,23 @@ void BindInstanceGFX::AddModel(
 	size_t indexBufferSize = modelRef->GetIndexBufferSize();
 	size_t vertexBufferSize = modelRef->GetVertexBufferSize();
 
-	size_t vertexOffset = VertexBufferInst::GetRef()->AddData(
-		modelRef->GetVertexData(), vertexBufferSize
-	);
-	size_t indexOffset = IndexBufferInst::GetRef()->AddData(
-		modelRef->GetIndexData(), indexBufferSize
-	);
-
 	m_modelsRaw.emplace_back(
 		std::make_unique<ModelRaw>(
 			modelRef,
-			D3D12_VERTEX_BUFFER_VIEW{
-				vertexOffset,
-				static_cast<UINT>(vertexBufferSize),
-				static_cast<UINT>(modelRef->GetVertexStrideSize())
-			},
-			D3D12_INDEX_BUFFER_VIEW{
-				indexOffset,
-				static_cast<UINT>(indexBufferSize),
-				DXGI_FORMAT_R16_UINT
-			},
+			std::make_unique<VertexBufferView>(
+				VertexBufferInst::GetRef()->AddBuffer(
+					modelRef->GetVertexData(), vertexBufferSize, BufferType::Vertex
+				),
+				vertexBufferSize,
+				modelRef->GetVertexStrideSize()
+				)
+			,
+			std::make_unique<IndexBufferView>(
+				IndexBufferInst::GetRef()->AddBuffer(
+					modelRef->GetIndexData(), indexBufferSize, BufferType::Index
+				),
+				indexBufferSize
+				),
 			modelRef->GetIndexCount()
 			)
 	);
@@ -62,87 +61,41 @@ void BindInstanceGFX::BindCommands(ID3D12GraphicsCommandList* commandList) noexc
 		model->Draw(commandList);
 }
 
-void BindInstanceGFX::UpldateBufferViewAddresses(
-	size_t vertexAddress,
-	size_t indexAddress
-) noexcept {
-	for (size_t index = 0u; index < m_modelsRaw.size(); ++index) {
-		m_modelsRaw[index]->UpdateVBVGPUOffset(vertexAddress);
-		m_modelsRaw[index]->UpdateIBVGPUOffset(indexAddress);
-	}
-}
-
 // Model Raw
 BindInstanceGFX::ModelRaw::ModelRaw(const IModel* const modelRef) noexcept
 	:
 	m_modelRef(modelRef),
-	m_vertexBufferView{},
-	m_indexBufferView{},
 	m_indexCount(0u) {}
 
 BindInstanceGFX::ModelRaw::ModelRaw(
 	const IModel* const modelRef,
-	const D3D12_VERTEX_BUFFER_VIEW& vertexBufferView,
-	const D3D12_INDEX_BUFFER_VIEW& indexBufferView,
+	std::unique_ptr<IVertexBufferView> vertexBuffer,
+	std::unique_ptr<IIndexBufferView> indexBuffer,
 	size_t indexCount
 ) noexcept
 	:
 	m_modelRef(modelRef),
-	m_vertexBufferView(vertexBufferView),
-	m_indexBufferView(indexBufferView),
+	m_vertexBuffer(std::move(vertexBuffer)),
+	m_indexBuffer(std::move(indexBuffer)),
 	m_indexCount(static_cast<UINT>(indexCount)) {}
 
-BindInstanceGFX::ModelRaw::ModelRaw(
-	const IModel* const modelRef,
-	D3D12_VERTEX_BUFFER_VIEW&& vertexBufferView,
-	D3D12_INDEX_BUFFER_VIEW&& indexBufferView,
-	size_t indexCount
-) noexcept
-	:
-	m_modelRef(modelRef),
-	m_vertexBufferView(std::move(vertexBufferView)),
-	m_indexBufferView(std::move(indexBufferView)),
-	m_indexCount(static_cast<UINT>(indexCount)) {}
-
-void BindInstanceGFX::ModelRaw::AddVBV(
-	const D3D12_VERTEX_BUFFER_VIEW& vertexBufferView
+void BindInstanceGFX::ModelRaw::AddVB(
+	std::unique_ptr<IVertexBufferView> vertexBuffer
 ) noexcept {
-	m_vertexBufferView = vertexBufferView;
+	m_vertexBuffer = std::move(vertexBuffer);
 }
 
-void BindInstanceGFX::ModelRaw::AddVBV(
-	D3D12_VERTEX_BUFFER_VIEW&& vertexBufferView
-) noexcept {
-	m_vertexBufferView = std::move(vertexBufferView);
-}
-
-void BindInstanceGFX::ModelRaw::AddIBV(
-	const D3D12_INDEX_BUFFER_VIEW& indexBufferView,
+void BindInstanceGFX::ModelRaw::AddIB(
+	std::unique_ptr<IIndexBufferView> indexBuffer,
 	size_t indexCount
 ) noexcept {
-	m_indexBufferView = indexBufferView;
-	m_indexCount = static_cast<UINT>(indexCount);
-}
-
-void BindInstanceGFX::ModelRaw::AddIBV(
-	D3D12_INDEX_BUFFER_VIEW&& indexBufferView,
-	size_t indexCount
-) noexcept {
-	m_indexBufferView = std::move(indexBufferView);
+	m_indexBuffer = std::move(indexBuffer);
 	m_indexCount = static_cast<UINT>(indexCount);
 }
 
 void BindInstanceGFX::ModelRaw::Draw(ID3D12GraphicsCommandList* commandList) noexcept {
-	commandList->IASetVertexBuffers(0u, 1u, &m_vertexBufferView);
-	commandList->IASetIndexBuffer(&m_indexBufferView);
+	commandList->IASetVertexBuffers(0u, 1u, m_vertexBuffer->GetBufferViewRef());
+	commandList->IASetIndexBuffer(m_indexBuffer->GetBufferViewRef());
 
 	commandList->DrawIndexedInstanced(m_indexCount, 1u, 0u, 0u, 0u);
-}
-
-void BindInstanceGFX::ModelRaw::UpdateVBVGPUOffset(size_t offset) noexcept {
-	m_vertexBufferView.BufferLocation += offset;
-}
-
-void BindInstanceGFX::ModelRaw::UpdateIBVGPUOffset(size_t offset) noexcept {
-	m_indexBufferView.BufferLocation += offset;
 }

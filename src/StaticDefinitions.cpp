@@ -63,8 +63,8 @@ ICopyQueueManager* CreateCopyQueueInstance(
 	return new CopyQueueManager(device);
 }
 
-IResourceBuffer* CreateResourceBufferInstance(BufferType type) {
-	return new ResourceBuffer(type);
+IResourceBuffer* CreateResourceBufferInstance() {
+	return new ResourceBuffer();
 }
 
 IViewportAndScissorManager* CreateViewportAndScissorInstance(

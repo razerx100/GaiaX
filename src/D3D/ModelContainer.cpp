@@ -105,17 +105,8 @@ void ModelContainer::RecordUploadBuffers(ID3D12GraphicsCommandList* copyList) {
 }
 
 void ModelContainer::CreateBuffers(ID3D12Device* device) {
-	IResourceBuffer* vertexBufferRef = VertexBufferInst::GetRef();
-	IResourceBuffer* indexBufferRef = IndexBufferInst::GetRef();
-
-	vertexBufferRef->CreateBuffer(device);
-	indexBufferRef->CreateBuffer(device);
-
-	for (auto& bindInstance : m_bindInstances)
-		bindInstance->UpldateBufferViewAddresses(
-			static_cast<size_t>(vertexBufferRef->GetGPUHandle()),
-			static_cast<size_t>(indexBufferRef->GetGPUHandle())
-		);
+	VertexBufferInst::GetRef()->CreateBuffers(device);
+	IndexBufferInst::GetRef()->CreateBuffers(device);
 }
 
 void ModelContainer::ReleaseUploadBuffers() {

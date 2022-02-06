@@ -7,9 +7,8 @@ class IUploadBuffer {
 public:
 	virtual ~IUploadBuffer() = default;
 
-	virtual void CreateBuffer(ID3D12Device* device, size_t bufferSize) = 0;
+	virtual void MapBuffer() = 0;
 	virtual std::uint8_t* GetCPUHandle() const noexcept = 0;
-	virtual size_t GetBufferSize() const noexcept = 0;
 	virtual ID3D12Resource* GetBuffer() const noexcept = 0;
 };
 

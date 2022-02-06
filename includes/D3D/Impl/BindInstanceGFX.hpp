@@ -1,6 +1,8 @@
 #ifndef __BIND_INSTANCE_GFX_HPP__
 #define __BIND_INSTANCE_GFX_HPP__
 #include <IBindInstanceGFX.hpp>
+#include <IVertexBufferView.hpp>
+#include <IIndexBufferView.hpp>
 #include <vector>
 
 class BindInstanceGFX : public IBindInstanceGFX {
@@ -18,11 +20,6 @@ public:
 		const IModel* const modelRef
 	) noexcept override;
 
-	void UpldateBufferViewAddresses(
-		size_t vertexAddress,
-		size_t indexAddress
-	) noexcept override;
-
 	void BindCommands(ID3D12GraphicsCommandList* commandList) noexcept override;
 
 private:
@@ -31,28 +28,14 @@ private:
 		ModelRaw(const IModel* const modelRef) noexcept;
 		ModelRaw(
 			const IModel* const modelRef,
-			const D3D12_VERTEX_BUFFER_VIEW& vertexBufferView,
-			const D3D12_INDEX_BUFFER_VIEW& indexBufferView,
-			size_t indexCount
-		) noexcept;
-		ModelRaw(
-			const IModel* const modelRef,
-			D3D12_VERTEX_BUFFER_VIEW&& vertexBufferView,
-			D3D12_INDEX_BUFFER_VIEW&& indexBufferView,
+			std::unique_ptr<IVertexBufferView> vertexBuffer,
+			std::unique_ptr<IIndexBufferView> indexBuffer,
 			size_t indexCount
 		) noexcept;
 
-		void UpdateVBVGPUOffset(size_t offset) noexcept;
-		void UpdateIBVGPUOffset(size_t offset) noexcept;
-
-		void AddVBV(const D3D12_VERTEX_BUFFER_VIEW& vertexBufferView) noexcept;
-		void AddIBV(
-			const D3D12_INDEX_BUFFER_VIEW& indexBufferView,
-			size_t indexCount
-		) noexcept;
-		void AddVBV(D3D12_VERTEX_BUFFER_VIEW&& vertexBufferView) noexcept;
-		void AddIBV(
-			D3D12_INDEX_BUFFER_VIEW&& indexBufferView,
+		void AddVB(std::unique_ptr<IVertexBufferView> vertexBuffer) noexcept;
+		void AddIB(
+			std::unique_ptr<IIndexBufferView> indexBuffer,
 			size_t indexCount
 		) noexcept;
 
@@ -60,8 +43,8 @@ private:
 
 	private:
 		const IModel* const m_modelRef;
-		D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView;
-		D3D12_INDEX_BUFFER_VIEW m_indexBufferView;
+		std::unique_ptr<IVertexBufferView> m_vertexBuffer;
+		std::unique_ptr<IIndexBufferView> m_indexBuffer;
 		UINT m_indexCount;
 	};
 
