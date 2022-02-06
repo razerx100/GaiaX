@@ -4,16 +4,15 @@
 #include <ID3DHeap.hpp>
 #include <IUploadBuffer.hpp>
 #include <vector>
-#include <memory>
 
 class ResourceBuffer : public IResourceBuffer {
 public:
 	ResourceBuffer();
 
-	ComPtr<ID3D12Resource> AddBuffer(
+	std::shared_ptr<D3DBuffer> AddBuffer(
 		const void* source, size_t bufferSize, BufferType type
 	) override;
-	ComPtr<ID3D12Resource> AddTexture(const void* source, size_t bufferSize) override;
+	std::shared_ptr<D3DBuffer> AddTexture(const void* source, size_t bufferSize) override;
 	void CreateBuffers(ID3D12Device* device, bool msaa = false) override;
 	void CopyData() noexcept override;
 	void RecordUpload(ID3D12GraphicsCommandList* copyList) override;
@@ -30,7 +29,7 @@ private:
 
 private:
 	void CreatePlacedResource(
-		ID3D12Device* device, ID3D12Heap* memory, ID3D12Resource* resource,
+		ID3D12Device* device, ID3D12Heap* memory, std::shared_ptr<D3DBuffer> resource,
 		size_t offset, const D3D12_RESOURCE_DESC& desc, bool upload
 	) const;
 
@@ -40,7 +39,7 @@ private:
 private:
 	size_t m_currentMemoryOffset;
 	std::vector<BufferData> m_uploadBufferData;
-	std::vector<ComPtr<ID3D12Resource>> m_gpuBuffers;
+	std::vector<std::shared_ptr<D3DBuffer>> m_gpuBuffers;
 	std::unique_ptr<ID3DHeap> m_uploadHeap;
 	std::unique_ptr<ID3DHeap> m_gpuHeap;
 };

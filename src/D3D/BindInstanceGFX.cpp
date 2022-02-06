@@ -61,6 +61,11 @@ void BindInstanceGFX::BindCommands(ID3D12GraphicsCommandList* commandList) noexc
 		model->Draw(commandList);
 }
 
+void BindInstanceGFX::SetGPUVirtualAddresses() noexcept {
+	for (auto& model : m_modelsRaw)
+		model->SetGPUVirtualAddresses();
+}
+
 // Model Raw
 BindInstanceGFX::ModelRaw::ModelRaw(const IModel* const modelRef) noexcept
 	:
@@ -91,6 +96,11 @@ void BindInstanceGFX::ModelRaw::AddIB(
 ) noexcept {
 	m_indexBuffer = std::move(indexBuffer);
 	m_indexCount = static_cast<UINT>(indexCount);
+}
+
+void BindInstanceGFX::ModelRaw::SetGPUVirtualAddresses() noexcept {
+	m_vertexBuffer->SetGPUVirtualAddress();
+	m_indexBuffer->SetGPUVirtualAddress();
 }
 
 void BindInstanceGFX::ModelRaw::Draw(ID3D12GraphicsCommandList* commandList) noexcept {

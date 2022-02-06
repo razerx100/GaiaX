@@ -4,12 +4,14 @@
 
 class UploadBuffer : public IUploadBuffer {
 public:
+	UploadBuffer();
+
 	void MapBuffer() override;
 	std::uint8_t* GetCPUHandle() const noexcept override;
-	ID3D12Resource* GetBuffer() const noexcept override;
+	std::shared_ptr<D3DBuffer> GetBuffer() const noexcept override;
 
 private:
-	ComPtr<ID3D12Resource> m_uploadBuffer;
+	std::shared_ptr<D3DBuffer> m_uploadBuffer;
 	std::uint8_t* m_cpuHandle;
 };
 #endif

@@ -20,6 +20,8 @@ public:
 		const IModel* const modelRef
 	) noexcept override;
 
+	void SetGPUVirtualAddresses() noexcept override;
+
 	void BindCommands(ID3D12GraphicsCommandList* commandList) noexcept override;
 
 private:
@@ -32,6 +34,8 @@ private:
 			std::unique_ptr<IIndexBufferView> indexBuffer,
 			size_t indexCount
 		) noexcept;
+
+		void SetGPUVirtualAddresses() noexcept;
 
 		void AddVB(std::unique_ptr<IVertexBufferView> vertexBuffer) noexcept;
 		void AddIB(

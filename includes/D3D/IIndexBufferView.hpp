@@ -7,5 +7,7 @@ public:
 	virtual ~IIndexBufferView() = default;
 
 	virtual const D3D12_INDEX_BUFFER_VIEW* GetBufferViewRef() const noexcept = 0;
+
+	virtual void SetGPUVirtualAddress() noexcept = 0;
 };
 #endif
