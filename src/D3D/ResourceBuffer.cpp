@@ -23,7 +23,7 @@ D3D12_GPU_VIRTUAL_ADDRESS ResourceBuffer::GetGPUVirtualAddress() const noexcept 
 	return m_pGPUBuffer->Get()->GetGPUVirtualAddress();
 }
 
-void ResourceBuffer::CreateBuffer() {
+void ResourceBuffer::AcquireBuffers() {
 	auto [gpuBuffer, uploadBuffer] =
 		HeapManagerInst::GetRef()->AddBuffer(m_currentOffset, m_type);
 

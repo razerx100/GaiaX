@@ -17,7 +17,7 @@ public:
 	[[nodiscard]]
 	virtual D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() const noexcept = 0;
 
-	virtual void CreateBuffer() = 0;
+	virtual void AcquireBuffers() = 0;
 	virtual void CopyData() noexcept = 0;
 	virtual void ReleaseUploadBuffer() = 0;
 };

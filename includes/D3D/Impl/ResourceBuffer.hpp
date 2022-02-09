@@ -19,7 +19,7 @@ public:
 	[[nodiscard]]
 	D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() const noexcept override;
 
-	void CreateBuffer() override;
+	void AcquireBuffers() override;
 	void CopyData() noexcept override;
 	void ReleaseUploadBuffer() override;
 
