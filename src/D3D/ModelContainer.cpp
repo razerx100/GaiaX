@@ -104,6 +104,11 @@ void ModelContainer::RecordUploadBuffers(ID3D12GraphicsCommandList* copyList) {
 }
 
 void ModelContainer::CreateBuffers(ID3D12Device* device) {
+	// Setup all buffers first
+	VertexBufferInst::GetRef()->CreateBuffer();
+	IndexBufferInst::GetRef()->CreateBuffer();
+
+	// Now allocate memory and actually create them
 	HeapManagerInst::GetRef()->CreateBuffers(device);
 
 	for (auto& bindInstance : m_bindInstances)
@@ -113,4 +118,6 @@ void ModelContainer::CreateBuffers(ID3D12Device* device) {
 void ModelContainer::ReleaseUploadBuffers() {
 	VertexBufferInst::GetRef()->ReleaseUploadBuffer();
 	IndexBufferInst::GetRef()->ReleaseUploadBuffer();
+
+	HeapManagerInst::GetRef()->ReleaseUploadBuffer();
 }
