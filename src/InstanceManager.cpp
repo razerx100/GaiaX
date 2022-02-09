@@ -84,18 +84,24 @@ void CpyCmdListInst::Init(
 
 void VertexBufferInst::Init() {
 	Set(
-		CreateResourceBufferInstance()
+		CreateResourceBufferInstance(BufferType::Vertex)
 	);
 }
 
 void IndexBufferInst::Init() {
 	Set(
-		CreateResourceBufferInstance()
+		CreateResourceBufferInstance(BufferType::Index)
 	);
 }
 
 void ViewPAndScsrInst::Init(std::uint32_t width, std::uint32_t height) {
 	Set(
 		CreateViewportAndScissorInstance(width, height)
+	);
+}
+
+void HeapManagerInst::Init() {
+	Set(
+		CreateHeapManagerInstance()
 	);
 }

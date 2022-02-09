@@ -51,6 +51,7 @@ GraphicsEngineDx12::GraphicsEngineDx12(
 	CpyQueInst::GetRef()->InitSyncObjects(deviceRef);
 
 	CpyCmdListInst::Init(deviceRef);
+	HeapManagerInst::Init();
 	VertexBufferInst::Init();
 	IndexBufferInst::Init();
 }
@@ -66,6 +67,7 @@ GraphicsEngineDx12::~GraphicsEngineDx12() noexcept {
 	GfxCmdListInst::CleanUp();
 	GfxQueInst::CleanUp();
 	DepthBuffInst::CleanUp();
+	HeapManagerInst::CleanUp();
 	DeviceInst::CleanUp();
 #ifdef _DEBUG
 	DebugInfoInst::CleanUp();

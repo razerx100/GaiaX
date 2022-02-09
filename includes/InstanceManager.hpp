@@ -11,6 +11,7 @@
 #include <ICopyQueueManager.hpp>
 #include <IResourceBuffer.hpp>
 #include <IViewportAndScissorManager.hpp>
+#include <IHeapManager.hpp>
 
 class DeviceInst : public _ObjectManager<IDeviceManager, DeviceInst> {
 public:
@@ -85,5 +86,10 @@ public:
 class ViewPAndScsrInst : public _ObjectManager<IViewportAndScissorManager, ViewPAndScsrInst> {
 public:
 	static void Init(std::uint32_t width, std::uint32_t height);
+};
+
+class HeapManagerInst : public _ObjectManager<IHeapManager, HeapManagerInst> {
+public:
+	static void Init();
 };
 #endif

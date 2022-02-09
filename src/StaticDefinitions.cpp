@@ -6,7 +6,9 @@
 #include <ModelContainer.hpp>
 #include <CopyQueueManager.hpp>
 #include <ResourceBuffer.hpp>
+#include <HeapManager.hpp>
 #include <ViewportAndScissorManager.hpp>
+#include <ResourceBuffer.hpp>
 
 IDeviceManager* CreateD3DDeviceInstance() {
 	return new DeviceManager();
@@ -63,12 +65,16 @@ ICopyQueueManager* CreateCopyQueueInstance(
 	return new CopyQueueManager(device);
 }
 
-IResourceBuffer* CreateResourceBufferInstance() {
-	return new ResourceBuffer();
+IHeapManager* CreateHeapManagerInstance() {
+	return new HeapManager();
 }
 
 IViewportAndScissorManager* CreateViewportAndScissorInstance(
 	std::uint32_t width, std::uint32_t height
 ) {
 	return new ViewportAndScissorManager(width, height);
+}
+
+IResourceBuffer* CreateResourceBufferInstance(BufferType type) {
+	return new ResourceBuffer(type);
 }

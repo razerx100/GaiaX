@@ -100,13 +100,11 @@ void ModelContainer::CopyData() {
 }
 
 void ModelContainer::RecordUploadBuffers(ID3D12GraphicsCommandList* copyList) {
-	VertexBufferInst::GetRef()->RecordUpload(copyList);
-	IndexBufferInst::GetRef()->RecordUpload(copyList);
+	HeapManagerInst::GetRef()->RecordUpload(copyList);
 }
 
 void ModelContainer::CreateBuffers(ID3D12Device* device) {
-	VertexBufferInst::GetRef()->CreateBuffers(device);
-	IndexBufferInst::GetRef()->CreateBuffers(device);
+	HeapManagerInst::GetRef()->CreateBuffers(device);
 
 	for (auto& bindInstance : m_bindInstances)
 		bindInstance->SetGPUVirtualAddresses();
