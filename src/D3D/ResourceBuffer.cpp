@@ -24,8 +24,8 @@ D3DGPUSharedAddress ResourceBuffer::AddDataAndGetSharedAddress(
 void ResourceBuffer::SetGPUVirtualAddressToBuffers() noexcept {
 	D3D12_GPU_VIRTUAL_ADDRESS gpuAddress = m_pGPUBuffer->Get()->GetGPUVirtualAddress();
 
-	for (auto& address : m_sharedGPUAddresses)
-		*address = gpuAddress;
+	for (size_t index = 0u; index < m_sharedGPUAddresses.size(); ++index)
+		*m_sharedGPUAddresses[index] = gpuAddress + m_bufferData[index].offset;
 }
 
 void ResourceBuffer::AcquireBuffers() {
