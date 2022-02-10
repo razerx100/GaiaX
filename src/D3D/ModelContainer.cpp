@@ -111,6 +111,10 @@ void ModelContainer::CreateBuffers(ID3D12Device* device) {
 	// Now allocate memory and actually create them
 	HeapManagerInst::GetRef()->CreateBuffers(device);
 
+	// Set GPU addresses
+	VertexBufferInst::GetRef()->SetGPUVirtualAddressToBuffers();
+	IndexBufferInst::GetRef()->SetGPUVirtualAddressToBuffers();
+
 	for (auto& bindInstance : m_bindInstances)
 		bindInstance->SetGPUVirtualAddresses();
 }

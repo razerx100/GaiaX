@@ -1,6 +1,7 @@
 #ifndef __BIND_INSTANCE_GFX_HPP__
 #define __BIND_INSTANCE_GFX_HPP__
 #include <IBindInstanceGFX.hpp>
+#include <IResourceBuffer.hpp>
 #include <vector>
 
 class BindInstanceGFX : public IBindInstanceGFX {
@@ -28,28 +29,64 @@ private:
 		ModelRaw(const IModel* const modelRef) noexcept;
 		ModelRaw(
 			const IModel* const modelRef,
-			const D3D12_VERTEX_BUFFER_VIEW& vertexBufferView,
-			const D3D12_INDEX_BUFFER_VIEW& indexBufferView,
+			D3D12_VERTEX_BUFFER_VIEW&& vertexBufferView,
+			D3DGPUSharedAddress vbvSharedAddress,
+			D3D12_INDEX_BUFFER_VIEW&& indexBufferView,
+			D3DGPUSharedAddress ibvSharedAddress,
 			size_t indexCount
 		) noexcept;
 
-		void UpdateGPUAddressOffsets(
-			D3D12_GPU_VIRTUAL_ADDRESS vbvAddress,
-			D3D12_GPU_VIRTUAL_ADDRESS ibvAddress
-		);
+		void UpdateGPUAddressOffsets();
 
-		void AddVB(const D3D12_VERTEX_BUFFER_VIEW& vertexBufferView) noexcept;
-		void AddIB(
-			const D3D12_INDEX_BUFFER_VIEW& indexBufferView,
+		void AddVBV(
+			D3D12_VERTEX_BUFFER_VIEW&& vertexBufferView,
+			D3DGPUSharedAddress vbvSharedAddress
+		) noexcept;
+		void AddIBV(
+			D3D12_INDEX_BUFFER_VIEW&& indexBufferView,
+			D3DGPUSharedAddress ibvSharedAddress,
 			size_t indexCount
 		) noexcept;
 
 		void Draw(ID3D12GraphicsCommandList* commandList) noexcept;
 
 	private:
+		template<typename TBufferView>
+		class BufferView {
+		public:
+			BufferView() = default;
+			BufferView(
+				TBufferView&& bufferView,
+				D3DGPUSharedAddress sharedAddress
+			) : m_bufferView(std::move(bufferView)), m_gpuSharedAddress(sharedAddress) {}
+
+			void SetGPUAddress() noexcept {
+				m_bufferView.BufferLocation = *m_gpuSharedAddress;
+			}
+			void AddBufferView(
+				TBufferView&& bufferView
+			) noexcept {
+				m_bufferView = std::move(bufferView);
+			}
+			void AddSharedAddress(
+				D3DGPUSharedAddress sharedAddress
+			) noexcept {
+				m_gpuSharedAddress = sharedAddress;
+			}
+
+			const TBufferView* GetAddress() const noexcept {
+				return &m_bufferView;
+			}
+
+		private:
+			TBufferView m_bufferView;
+			D3DGPUSharedAddress m_gpuSharedAddress;
+		};
+
+	private:
 		const IModel* const m_modelRef;
-		D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView;
-		D3D12_INDEX_BUFFER_VIEW m_indexBufferView;
+		BufferView<D3D12_VERTEX_BUFFER_VIEW> m_vertexBufferView;
+		BufferView<D3D12_INDEX_BUFFER_VIEW> m_indexBufferView;
 		UINT m_indexCount;
 	};
 

@@ -11,14 +11,12 @@ public:
 	ResourceBuffer(BufferType type);
 
 	[[nodiscard]]
-	size_t AddDataAndGetOffset(
+	D3DGPUSharedAddress AddDataAndGetSharedAddress(
 		const void* data, size_t bufferSize,
 		size_t alignment = 4u
 	) noexcept override;
 
-	[[nodiscard]]
-	D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() const noexcept override;
-
+	void SetGPUVirtualAddressToBuffers() noexcept override;
 	void AcquireBuffers() override;
 	void CopyData() noexcept override;
 	void ReleaseUploadBuffer() override;
@@ -34,6 +32,7 @@ private:
 	BufferType m_type;
 	size_t m_currentOffset;
 	std::vector<BufferData> m_bufferData;
+	std::vector<D3DGPUSharedAddress> m_sharedGPUAddresses;
 	std::shared_ptr<D3DBuffer> m_pGPUBuffer;
 	std::shared_ptr<IUploadBuffer> m_pUploadBuffer;
 };

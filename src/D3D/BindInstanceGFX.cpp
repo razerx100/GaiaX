@@ -32,19 +32,21 @@ void BindInstanceGFX::AddModel(
 		std::make_unique<ModelRaw>(
 			modelRef,
 			D3D12_VERTEX_BUFFER_VIEW{
-				VertexBufferInst::GetRef()->AddDataAndGetOffset(
-					modelRef->GetVertexData(), vertexBufferSize
-				),
+				0u,
 				static_cast<UINT>(vertexBufferSize),
 				static_cast<UINT>(modelRef->GetVertexStrideSize())
 			},
+			VertexBufferInst::GetRef()->AddDataAndGetSharedAddress(
+				modelRef->GetVertexData(), vertexBufferSize
+			),
 			D3D12_INDEX_BUFFER_VIEW{
-				IndexBufferInst::GetRef()->AddDataAndGetOffset(
-					modelRef->GetIndexData(), indexBufferSize
-				),
+				0u,
 				static_cast<UINT>(indexBufferSize),
 				DXGI_FORMAT_R16_UINT
 			},
+			IndexBufferInst::GetRef()->AddDataAndGetSharedAddress(
+				modelRef->GetIndexData(), indexBufferSize
+			),
 			modelRef->GetIndexCount()
 			)
 	);
@@ -60,17 +62,8 @@ void BindInstanceGFX::BindCommands(ID3D12GraphicsCommandList* commandList) noexc
 }
 
 void BindInstanceGFX::SetGPUVirtualAddresses() noexcept {
-	D3D12_GPU_VIRTUAL_ADDRESS vertexAddress =
-		VertexBufferInst::GetRef()->GetGPUVirtualAddress();
-
-	D3D12_GPU_VIRTUAL_ADDRESS indexAddress =
-		IndexBufferInst::GetRef()->GetGPUVirtualAddress();
-
 	for (auto& model : m_modelsRaw)
-		model->UpdateGPUAddressOffsets(
-			vertexAddress,
-			indexAddress
-		);
+		model->UpdateGPUAddressOffsets();
 }
 
 // Model Raw
@@ -82,41 +75,43 @@ BindInstanceGFX::ModelRaw::ModelRaw(const IModel* const modelRef) noexcept
 
 BindInstanceGFX::ModelRaw::ModelRaw(
 	const IModel* const modelRef,
-	const D3D12_VERTEX_BUFFER_VIEW& vertexBufferView,
-	const D3D12_INDEX_BUFFER_VIEW& indexBufferView,
+	D3D12_VERTEX_BUFFER_VIEW&& vertexBufferView,
+	D3DGPUSharedAddress vbvSharedAddress,
+	D3D12_INDEX_BUFFER_VIEW&& indexBufferView,
+	D3DGPUSharedAddress ibvSharedAddress,
 	size_t indexCount
 ) noexcept
 	:
 	m_modelRef(modelRef),
-	m_vertexBufferView(vertexBufferView),
-	m_indexBufferView(indexBufferView),
+	m_vertexBufferView(std::move(vertexBufferView), vbvSharedAddress),
+	m_indexBufferView(std::move(indexBufferView), ibvSharedAddress),
 	m_indexCount(static_cast<UINT>(indexCount)) {}
 
-void BindInstanceGFX::ModelRaw::AddVB(
-	const D3D12_VERTEX_BUFFER_VIEW& vertexBufferView
+void BindInstanceGFX::ModelRaw::AddVBV(
+	D3D12_VERTEX_BUFFER_VIEW&& vertexBufferView,
+	D3DGPUSharedAddress vbvSharedAddress
 ) noexcept {
-	m_vertexBufferView = vertexBufferView;
+	D3D12_CONSTANT_BUFFER_VIEW_DESC desc = {};
+	m_vertexBufferView = { std::move(vertexBufferView), vbvSharedAddress };
 }
 
-void BindInstanceGFX::ModelRaw::AddIB(
-	const D3D12_INDEX_BUFFER_VIEW& indexBufferView,
+void BindInstanceGFX::ModelRaw::AddIBV(
+	D3D12_INDEX_BUFFER_VIEW&& indexBufferView,
+	D3DGPUSharedAddress ibvSharedAddress,
 	size_t indexCount
 ) noexcept {
-	m_indexBufferView = indexBufferView;
+	m_indexBufferView = { std::move(indexBufferView), ibvSharedAddress };
 	m_indexCount = static_cast<UINT>(indexCount);
 }
 
-void BindInstanceGFX::ModelRaw::UpdateGPUAddressOffsets(
-	D3D12_GPU_VIRTUAL_ADDRESS vbvAddress,
-	D3D12_GPU_VIRTUAL_ADDRESS ibvAddress
-) {
-	m_indexBufferView.BufferLocation += ibvAddress;
-	m_vertexBufferView.BufferLocation += vbvAddress;
+void BindInstanceGFX::ModelRaw::UpdateGPUAddressOffsets() {
+	m_indexBufferView.SetGPUAddress();
+	m_vertexBufferView.SetGPUAddress();
 }
 
 void BindInstanceGFX::ModelRaw::Draw(ID3D12GraphicsCommandList* commandList) noexcept {
-	commandList->IASetVertexBuffers(0u, 1u, &m_vertexBufferView);
-	commandList->IASetIndexBuffer(&m_indexBufferView);
+	commandList->IASetVertexBuffers(0u, 1u, m_vertexBufferView.GetAddress());
+	commandList->IASetIndexBuffer(m_indexBufferView.GetAddress());
 
 	commandList->DrawIndexedInstanced(m_indexCount, 1u, 0u, 0u, 0u);
 }

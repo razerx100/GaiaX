@@ -6,21 +6,26 @@
 ResourceBuffer::ResourceBuffer(BufferType type)
 	: m_type(type), m_currentOffset(0u) {}
 
-size_t ResourceBuffer::AddDataAndGetOffset(
+D3DGPUSharedAddress ResourceBuffer::AddDataAndGetSharedAddress(
 	const void* data, size_t bufferSize,
 	size_t alignment
 ) noexcept {
 	m_currentOffset = Ceres::Math::Align(m_currentOffset, alignment);
 
+	m_sharedGPUAddresses.emplace_back(
+		std::make_shared<_SharedAddress<D3D12_GPU_VIRTUAL_ADDRESS>>()
+	);
 	m_bufferData.emplace_back(data, bufferSize, m_currentOffset);
-
 	m_currentOffset += bufferSize;
 
-	return m_bufferData.back().offset;
+	return m_sharedGPUAddresses.back();
 }
 
-D3D12_GPU_VIRTUAL_ADDRESS ResourceBuffer::GetGPUVirtualAddress() const noexcept {
-	return m_pGPUBuffer->Get()->GetGPUVirtualAddress();
+void ResourceBuffer::SetGPUVirtualAddressToBuffers() noexcept {
+	D3D12_GPU_VIRTUAL_ADDRESS gpuAddress = m_pGPUBuffer->Get()->GetGPUVirtualAddress();
+
+	for (auto& address : m_sharedGPUAddresses)
+		*address = gpuAddress;
 }
 
 void ResourceBuffer::AcquireBuffers() {
