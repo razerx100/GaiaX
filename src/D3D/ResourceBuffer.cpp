@@ -135,8 +135,6 @@ size_t ResourceBuffer::ConfigureBufferSizeAndAllocations() noexcept {
 		sorted4Data.pop_front();
 	}
 
-	memoryOffset = Ceres::Math::Align(memoryOffset, 256u);
-
 	return memoryOffset;
 }
 
