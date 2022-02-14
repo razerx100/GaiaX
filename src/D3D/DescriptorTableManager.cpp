@@ -7,6 +7,9 @@ DescriptorTableManager::DescriptorTableManager()
 void DescriptorTableManager::CreateDescriptorTable(ID3D12Device* device) {
 	m_descriptorCount += m_sharedColorCPUHandle.size();
 
+	if (!m_descriptorCount)
+		++m_descriptorCount;
+
 	m_uploadDescHeap = CreateDescHeap(device, m_descriptorCount, false);
 
 	size_t descriptorSize = device->GetDescriptorHandleIncrementSize(
