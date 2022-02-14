@@ -105,3 +105,15 @@ void HeapManagerInst::Init() {
 		CreateHeapManagerInstance()
 	);
 }
+
+void DescTableManInst::Init() {
+	Set(
+		CreateDescriptorTableManagerInstance()
+	);
+}
+
+void TexStorInst::Init() {
+	Set(
+		CreateTextureStorageInstance()
+	);
+}

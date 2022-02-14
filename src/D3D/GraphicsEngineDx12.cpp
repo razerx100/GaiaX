@@ -54,9 +54,13 @@ GraphicsEngineDx12::GraphicsEngineDx12(
 	HeapManagerInst::Init();
 	VertexBufferInst::Init();
 	IndexBufferInst::Init();
+	DescTableManInst::Init();
+	TexStorInst::Init();
 }
 
 GraphicsEngineDx12::~GraphicsEngineDx12() noexcept {
+	TexStorInst::CleanUp();
+	DescTableManInst::CleanUp();
 	ViewPAndScsrInst::CleanUp();
 	CpyCmdListInst::CleanUp();
 	CpyQueInst::CleanUp();
@@ -179,9 +183,16 @@ void GraphicsEngineDx12::InitResourceBasedObjects() {
 void GraphicsEngineDx12::ProcessData() {
 	ID3D12Device* device = DeviceInst::GetRef()->GetDeviceRef();
 	IModelContainer* modelContainerRef = ModelContainerInst::GetRef();
+	IDescriptorTableManager* descTableRef = DescTableManInst::GetRef();
+
+	descTableRef->CreateDescriptorTable(device);
 
 	modelContainerRef->CreateBuffers(device);
 	modelContainerRef->CopyData();
+
+	TexStorInst::GetRef()->CreateBufferViews(device);
+
+	descTableRef->CopyUploadHeap(device);
 
 	ICommandListManager* copyListManager = CpyCmdListInst::GetRef();
 	copyListManager->Reset(0u);
@@ -195,11 +206,12 @@ void GraphicsEngineDx12::ProcessData() {
 	copyQue->ExecuteCommandLists(copyList);
 	copyQue->WaitForGPU();
 
+	descTableRef->ReleaseUploadHeap();
 	modelContainerRef->ReleaseUploadBuffers();
 }
 
 size_t GraphicsEngineDx12::RegisterResource(
 	const void* data, size_t size, bool texture
 ) {
-	return 0u;
+	return TexStorInst::GetRef()->AddColor(data, size);
 }

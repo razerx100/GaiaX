@@ -12,6 +12,8 @@
 #include <IResourceBuffer.hpp>
 #include <IViewportAndScissorManager.hpp>
 #include <IHeapManager.hpp>
+#include <IDescriptorTableManager.hpp>
+#include <ITextureStorage.hpp>
 
 class DeviceInst : public _ObjectManager<IDeviceManager, DeviceInst> {
 public:
@@ -89,6 +91,16 @@ public:
 };
 
 class HeapManagerInst : public _ObjectManager<IHeapManager, HeapManagerInst> {
+public:
+	static void Init();
+};
+
+class DescTableManInst : public _ObjectManager<IDescriptorTableManager, DescTableManInst> {
+public:
+	static void Init();
+};
+
+class TexStorInst : public _ObjectManager<ITextureStorage, TexStorInst> {
 public:
 	static void Init();
 };

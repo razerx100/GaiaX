@@ -9,6 +9,8 @@
 #include <HeapManager.hpp>
 #include <ViewportAndScissorManager.hpp>
 #include <ResourceBuffer.hpp>
+#include <DescriptorTableManager.hpp>
+#include <TextureStorage.hpp>
 
 IDeviceManager* CreateD3DDeviceInstance() {
 	return new DeviceManager();
@@ -77,4 +79,12 @@ IViewportAndScissorManager* CreateViewportAndScissorInstance(
 
 IResourceBuffer* CreateResourceBufferInstance(BufferType type) {
 	return new ResourceBuffer(type);
+}
+
+IDescriptorTableManager* CreateDescriptorTableManagerInstance() {
+	return new DescriptorTableManager();
+}
+
+ITextureStorage* CreateTextureStorageInstance() {
+	return new TextureStorage();
 }
