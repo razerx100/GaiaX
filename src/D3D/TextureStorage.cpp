@@ -1,7 +1,10 @@
 #include <TextureStorage.hpp>
 #include <InstanceManager.hpp>
+#include <CRSMath.hpp>
 
 size_t TextureStorage::AddColor(const void* data, size_t bufferSize) noexcept {
+	bufferSize = Ceres::Math::Align(bufferSize, 256u);
+
 	D3DGPUSharedAddress sharedAddress =
 		VertexBufferInst::GetRef()->AddDataAndGetSharedAddress(data, bufferSize, 256u);
 

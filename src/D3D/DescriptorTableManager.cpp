@@ -21,7 +21,8 @@ void DescriptorTableManager::CreateDescriptorTable(ID3D12Device* device) {
 		m_colorRangeStart
 	);
 
-	m_textureRangeStart = static_cast<size_t>(*m_sharedColorIndices.back()) + 1u;
+	if (!m_sharedColorIndices.empty())
+		m_textureRangeStart = static_cast<size_t>(*m_sharedColorIndices.back()) + 1u;
 
 	m_pDescHeap = CreateDescHeap(device, m_descriptorCount);
 }

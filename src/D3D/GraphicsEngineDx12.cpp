@@ -100,6 +100,9 @@ void GraphicsEngineDx12::Render() {
 
 	IViewportAndScissorManager* viewportRef = ViewPAndScsrInst::GetRef();
 
+	ID3D12DescriptorHeap* ppHeap[] = { DescTableManInst::GetRef()->GetDescHeapRef() };
+	commandList->SetDescriptorHeaps(1u, ppHeap);
+
 	commandList->RSSetViewports(1u, viewportRef->GetViewportRef());
 	commandList->RSSetScissorRects(1u, viewportRef->GetScissorRef());
 
