@@ -6,7 +6,10 @@
 
 class VertexLayout {
 public:
-	VertexLayout(const std::vector<VertexElementType>& inputLayout);
+	VertexLayout() = default;
+	VertexLayout(const std::vector<VertexElementType>& inputLayout) noexcept;
+
+	void InitLayout(const std::vector<VertexElementType>& inputLayout) noexcept;
 
 	D3D12_INPUT_LAYOUT_DESC GetLayout() const noexcept;
 

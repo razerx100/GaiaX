@@ -2,17 +2,14 @@
 #include <InstanceManager.hpp>
 #include <CRSMath.hpp>
 
-BindInstanceGFX::BindInstanceGFX(
-bool textureAvailable
-) noexcept : m_textureAvailable(textureAvailable) {}
+BindInstanceGFX::BindInstanceGFX() noexcept : m_vertexLayoutAvailable(false) {}
 
 BindInstanceGFX::BindInstanceGFX(
-	bool textureAvailable,
 	std::unique_ptr<IPipelineObject> pso,
 	std::unique_ptr<IRootSignature> signature
 ) noexcept
 	: m_pso(std::move(pso)),
-	m_rootSignature(std::move(signature)), m_textureAvailable(textureAvailable) {}
+	m_rootSignature(std::move(signature)), m_vertexLayoutAvailable(false) {}
 
 void BindInstanceGFX::AddPSO(std::unique_ptr<IPipelineObject> pso) noexcept {
 	m_pso = std::move(pso);
@@ -50,6 +47,11 @@ void BindInstanceGFX::AddModel(
 			modelRef->GetIndexCount()
 			)
 	);
+
+	if (!m_vertexLayoutAvailable) {
+		m_vertexLayout.InitLayout(modelRef->GetVertexLayout());
+		m_vertexLayoutAvailable = true;
+	}
 }
 
 void BindInstanceGFX::BindCommands(ID3D12GraphicsCommandList* commandList) noexcept {
@@ -64,6 +66,10 @@ void BindInstanceGFX::BindCommands(ID3D12GraphicsCommandList* commandList) noexc
 void BindInstanceGFX::SetGPUVirtualAddresses() noexcept {
 	for (auto& model : m_modelsRaw)
 		model->UpdateGPUAddressOffsets();
+}
+
+VertexLayout BindInstanceGFX::GetVertexLayout() const noexcept {
+	return m_vertexLayout;
 }
 
 // Model Raw

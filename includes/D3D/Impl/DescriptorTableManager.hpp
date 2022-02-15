@@ -16,6 +16,9 @@ public:
 	D3D12_GPU_DESCRIPTOR_HANDLE GetColorRangeStart() const noexcept override;
 	D3D12_GPU_DESCRIPTOR_HANDLE GetTextureRangeStart() const noexcept override;
 
+	size_t GetColorDescriptorCount() const noexcept override;
+	size_t GetTextureDescriptorCount() const noexcept override;
+
 	ID3D12DescriptorHeap* GetDescHeapRef() const noexcept override;
 
 private:

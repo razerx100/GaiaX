@@ -11,58 +11,28 @@ ModelContainer::ModelContainer(const char* shaderPath) noexcept
 	: m_coloredInstanceData{}, m_texturedInstanceData{}, m_shaderPath(shaderPath) {}
 
 void ModelContainer::AddModel(
-	ID3D12Device* device, const IModel* const modelRef, bool texture
+	const IModel* const modelRef, bool texture
 ) {
 	if (texture)
-		AddTexturedModel(device, modelRef);
+		AddTexturedModel(modelRef);
 	else
-		AddColoredModel(device, modelRef);
+		AddColoredModel(modelRef);
 }
 
 void ModelContainer::AddColoredModel(
-	ID3D12Device* device, const IModel* const modelRef
+	const IModel* const modelRef
 ) {
-	if (!m_coloredInstanceData.available) {
-		InitNewInstance(m_coloredInstanceData, false);
-
-		std::unique_ptr<RootSignatureDynamic> signature =
-			std::make_unique<RootSignatureDynamic>();
-		signature->CompileSignature(false);
-		signature->CreateSignature(device);
-
-		VertexLayout layout = VertexLayout(modelRef->GetVertexLayout());
-
-		std::unique_ptr<Shader> vs = std::make_unique<Shader>();
-		vs->LoadBinary(m_shaderPath + "VSColored.cso");
-
-		std::unique_ptr<Shader> ps = std::make_unique<Shader>();
-		ps->LoadBinary(m_shaderPath + "PSColored.cso");
-
-		std::unique_ptr<PipelineObjectGFX> pso = std::make_unique<PipelineObjectGFX>();
-		pso->CreatePipelineState(
-			device,
-			layout,
-			signature->Get(),
-			vs->GetByteCode(),
-			ps->GetByteCode()
-		);
-
-		m_bindInstances[m_coloredInstanceData.index]->AddRootSignature(std::move(signature));
-
-		m_bindInstances[m_coloredInstanceData.index]->AddPSO(std::move(pso));
-	}
+	if (!m_coloredInstanceData.available)
+		InitNewInstance(m_coloredInstanceData);
 
 	m_bindInstances[m_coloredInstanceData.index]->AddModel(modelRef);
 }
 
 void ModelContainer::AddTexturedModel(
-	ID3D12Device* device, const IModel* const modelRef
+	const IModel* const modelRef
 ) {
-	if (!m_texturedInstanceData.available) {
-		InitNewInstance(m_texturedInstanceData, true);
-
-		// Init Pipeline Object
-	}
+	if (!m_texturedInstanceData.available)
+		InitNewInstance(m_texturedInstanceData);
 
 	m_bindInstances[m_texturedInstanceData.index]->AddModel(modelRef);
 }
@@ -72,8 +42,8 @@ void ModelContainer::BindCommands(ID3D12GraphicsCommandList* commandList) noexce
 		bindInstance->BindCommands(commandList);
 }
 
-void ModelContainer::InitNewInstance(InstanceData& instanceData, bool texture) noexcept {
-	m_bindInstances.emplace_back(std::make_unique<BindInstanceGFX>(texture));
+void ModelContainer::InitNewInstance(InstanceData& instanceData) noexcept {
+	m_bindInstances.emplace_back(std::make_unique<BindInstanceGFX>());
 	instanceData = { true, m_bindInstances.size() - 1u };
 }
 
@@ -124,4 +94,68 @@ void ModelContainer::ReleaseUploadBuffers() {
 	IndexBufferInst::GetRef()->ReleaseUploadBuffer();
 
 	HeapManagerInst::GetRef()->ReleaseUploadBuffer();
+}
+
+void ModelContainer::InitPipelines(ID3D12Device* device) {
+	if (m_coloredInstanceData.available) {
+		size_t coloredIndex = m_coloredInstanceData.index;
+
+		auto [pso, signature] = CreateColoredPipeline(
+			device,
+			m_bindInstances[coloredIndex]->GetVertexLayout()
+		);
+
+		m_bindInstances[coloredIndex]->AddRootSignature(std::move(signature));
+		m_bindInstances[coloredIndex]->AddPSO(std::move(pso));
+	}
+
+	if (m_texturedInstanceData.available) {
+		size_t texturedIndex = m_texturedInstanceData.index;
+
+		auto [pso, signature] = CreateColoredPipeline(
+			device,
+			m_bindInstances[texturedIndex]->GetVertexLayout()
+		);
+
+		m_bindInstances[texturedIndex]->AddRootSignature(std::move(signature));
+		m_bindInstances[texturedIndex]->AddPSO(std::move(pso));
+	}
+}
+
+ModelContainer::Pipeline ModelContainer::CreateColoredPipeline(
+	ID3D12Device* device, const VertexLayout& layout
+) const {
+	std::unique_ptr<RootSignatureDynamic> signature =
+		std::make_unique<RootSignatureDynamic>();
+	signature->CompileSignature(false);
+	signature->CreateSignature(device);
+
+	std::unique_ptr<Shader> vs = std::make_unique<Shader>();
+	vs->LoadBinary(m_shaderPath + "VSColored.cso");
+
+	std::unique_ptr<Shader> ps = std::make_unique<Shader>();
+	ps->LoadBinary(m_shaderPath + "PSColored.cso");
+
+	std::unique_ptr<PipelineObjectGFX> pso = std::make_unique<PipelineObjectGFX>();
+	pso->CreatePipelineState(
+		device,
+		layout,
+		signature->Get(),
+		vs->GetByteCode(),
+		ps->GetByteCode()
+	);
+
+	return {
+		std::move(pso),
+		std::move(signature)
+	};
+}
+
+ModelContainer::Pipeline ModelContainer::CreateTexturedPipeline(
+	ID3D12Device* device, const VertexLayout& layout
+) const {
+	return {
+		std::make_unique<PipelineObjectGFX>(),
+		std::make_unique<RootSignatureDynamic>()
+	};
 }

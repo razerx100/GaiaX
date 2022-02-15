@@ -80,7 +80,6 @@ GraphicsEngineDx12::~GraphicsEngineDx12() noexcept {
 
 void GraphicsEngineDx12::SubmitModel(const IModel* const modelRef, bool texture) {
 	ModelContainerInst::GetRef()->AddModel(
-		DeviceInst::GetRef()->GetDeviceRef(),
 		modelRef,
 		texture
 	);
@@ -208,6 +207,8 @@ void GraphicsEngineDx12::ProcessData() {
 	ICopyQueueManager* copyQue = CpyQueInst::GetRef();
 	copyQue->ExecuteCommandLists(copyList);
 	copyQue->WaitForGPU();
+
+	modelContainerRef->InitPipelines(device);
 
 	descTableRef->ReleaseUploadHeap();
 	modelContainerRef->ReleaseUploadBuffers();

@@ -21,6 +21,9 @@ public:
 	virtual D3D12_GPU_DESCRIPTOR_HANDLE GetColorRangeStart() const noexcept = 0;
 	virtual D3D12_GPU_DESCRIPTOR_HANDLE GetTextureRangeStart() const noexcept = 0;
 
+	virtual size_t GetColorDescriptorCount() const noexcept = 0;
+	virtual size_t GetTextureDescriptorCount() const noexcept = 0;
+
 	virtual ID3D12DescriptorHeap* GetDescHeapRef() const noexcept = 0;
 };
 

@@ -101,3 +101,11 @@ void DescriptorTableManager::CopyUploadHeap(ID3D12Device* device) {
 		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV
 	);
 }
+
+size_t DescriptorTableManager::GetColorDescriptorCount() const noexcept {
+	return m_sharedColorIndices.size();
+}
+
+size_t DescriptorTableManager::GetTextureDescriptorCount() const noexcept {
+	return 0u;
+}

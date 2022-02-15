@@ -2,7 +2,6 @@
 #define __MODEL_CONTAINER_HPP__
 #include <IModelContainer.hpp>
 #include <IBindInstanceGFX.hpp>
-#include <IRootSignature.hpp>
 #include <vector>
 #include <string>
 #include <memory>
@@ -12,8 +11,9 @@ public:
 	ModelContainer(const char* shaderPath) noexcept;
 
 	void AddModel(
-		ID3D12Device* device, const IModel* const modelRef, bool texture
+		const IModel* const modelRef, bool texture
 	) override;
+	void InitPipelines(ID3D12Device* device) override;
 
 	void CreateBuffers(ID3D12Device* device) override;
 	void CopyData() override;
@@ -28,10 +28,19 @@ private:
 		size_t index;
 	};
 
+	using Pipeline = std::pair<std::unique_ptr<IPipelineObject>, std::unique_ptr<IRootSignature>>;
+
 private:
-	void InitNewInstance(InstanceData& instanceData, bool texture) noexcept;
-	void AddColoredModel(ID3D12Device* device, const IModel* const modelRef);
-	void AddTexturedModel(ID3D12Device* device, const IModel* const modelRef);
+	void InitNewInstance(InstanceData& instanceData) noexcept;
+	void AddColoredModel(const IModel* const modelRef);
+	void AddTexturedModel(const IModel* const modelRef);
+
+	Pipeline CreateColoredPipeline(
+		ID3D12Device* device, const VertexLayout& layout
+	) const;
+	Pipeline CreateTexturedPipeline(
+		ID3D12Device* device, const VertexLayout& layout
+	) const;
 
 private:
 	std::vector<std::unique_ptr<IBindInstanceGFX>> m_bindInstances;

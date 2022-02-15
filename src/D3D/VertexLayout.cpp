@@ -15,8 +15,18 @@ static const std::vector<size_t> vertexElementTypeSizeMap{
 	16u
 };
 
-VertexLayout::VertexLayout(const std::vector<VertexElementType>& inputLayout) {
+VertexLayout::VertexLayout(const std::vector<VertexElementType>& inputLayout) noexcept {
+	InitLayout(inputLayout);
+}
 
+D3D12_INPUT_LAYOUT_DESC VertexLayout::GetLayout() const noexcept {
+	return {
+		m_inputDescs.data(),
+		static_cast<UINT>(m_inputDescs.size())
+	};
+}
+
+void VertexLayout::InitLayout(const std::vector<VertexElementType>& inputLayout) noexcept {
 	for (size_t inputOffset = 0u; VertexElementType elementType : inputLayout) {
 		size_t elementTypeId = static_cast<size_t>(elementType);
 
@@ -28,11 +38,4 @@ VertexLayout::VertexLayout(const std::vector<VertexElementType>& inputLayout) {
 
 		inputOffset += vertexElementTypeSizeMap[elementTypeId];
 	}
-}
-
-D3D12_INPUT_LAYOUT_DESC VertexLayout::GetLayout() const noexcept {
-	return {
-		m_inputDescs.data(),
-		static_cast<UINT>(m_inputDescs.size())
-	};
 }
