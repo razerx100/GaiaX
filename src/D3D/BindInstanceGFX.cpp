@@ -59,6 +59,10 @@ void BindInstanceGFX::BindCommands(ID3D12GraphicsCommandList* commandList) noexc
 	commandList->SetGraphicsRootSignature(m_rootSignature->Get());
 	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
+	commandList->SetGraphicsRootDescriptorTable(
+		0u, DescTableManInst::GetRef()->GetColorRangeStart()
+	);
+
 	for (auto& model : m_modelsRaw)
 		model->Draw(commandList);
 }
@@ -118,6 +122,7 @@ void BindInstanceGFX::ModelRaw::UpdateGPUAddressOffsets() {
 void BindInstanceGFX::ModelRaw::Draw(ID3D12GraphicsCommandList* commandList) noexcept {
 	commandList->IASetVertexBuffers(0u, 1u, m_vertexBufferView.GetAddress());
 	commandList->IASetIndexBuffer(m_indexBufferView.GetAddress());
+	commandList->SetGraphicsRoot32BitConstant(1u, m_modelRef->GetTextureIndex(), 0u);
 
 	commandList->DrawIndexedInstanced(m_indexCount, 1u, 0u, 0u, 0u);
 }

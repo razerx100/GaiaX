@@ -1,10 +1,13 @@
 #include <DescriptorTableManager.hpp>
 #include <D3DThrowMacros.hpp>
+#include <d3dx12.h>
 
 DescriptorTableManager::DescriptorTableManager()
-	: m_descriptorCount(0u), m_colorRangeStart(0u), m_textureRangeStart(0u) {}
+	: m_descriptorCount(0u), m_colorRangeStart{}, m_textureRangeStart{} {}
 
 void DescriptorTableManager::CreateDescriptorTable(ID3D12Device* device) {
+	size_t colorRangeStart = 0u;
+
 	m_descriptorCount += m_sharedColorCPUHandle.size();
 
 	if (!m_descriptorCount)
@@ -21,13 +24,26 @@ void DescriptorTableManager::CreateDescriptorTable(ID3D12Device* device) {
 	SetSharedAddresses(
 		m_sharedColorCPUHandle, m_sharedColorIndices, cpuHandle.ptr,
 		static_cast<SIZE_T>(descriptorSize),
-		m_colorRangeStart
+		colorRangeStart
 	);
 
+	size_t textureRangeStart = 0u;
 	if (!m_sharedColorIndices.empty())
-		m_textureRangeStart = static_cast<size_t>(*m_sharedColorIndices.back()) + 1u;
+		textureRangeStart = static_cast<size_t>(*m_sharedColorIndices.back()) + 1u;
 
 	m_pDescHeap = CreateDescHeap(device, m_descriptorCount);
+
+	D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle = m_pDescHeap->GetGPUDescriptorHandleForHeapStart();
+
+	m_colorRangeStart = CD3DX12_GPU_DESCRIPTOR_HANDLE(
+		gpuHandle,
+		static_cast<UINT>(colorRangeStart), static_cast<UINT>(descriptorSize)
+	);
+
+	m_textureRangeStart = CD3DX12_GPU_DESCRIPTOR_HANDLE(
+		gpuHandle,
+		static_cast<UINT>(textureRangeStart), static_cast<UINT>(descriptorSize)
+	);
 }
 
 ResourceAddress DescriptorTableManager::GetColorIndex() noexcept {
@@ -41,11 +57,11 @@ ResourceAddress DescriptorTableManager::GetColorIndex() noexcept {
 }
 
 D3D12_GPU_DESCRIPTOR_HANDLE DescriptorTableManager::GetColorRangeStart() const noexcept {
-	return D3D12_GPU_DESCRIPTOR_HANDLE{ static_cast<UINT64>(m_colorRangeStart) };
+	return m_colorRangeStart;
 }
 
 D3D12_GPU_DESCRIPTOR_HANDLE DescriptorTableManager::GetTextureRangeStart() const noexcept {
-	return D3D12_GPU_DESCRIPTOR_HANDLE{ static_cast<UINT64>(m_textureRangeStart) };
+	return m_textureRangeStart;
 }
 
 ID3D12DescriptorHeap* DescriptorTableManager::GetDescHeapRef() const noexcept {

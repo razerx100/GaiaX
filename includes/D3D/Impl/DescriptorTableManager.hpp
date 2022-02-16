@@ -35,8 +35,8 @@ private:
 
 private:
 	size_t m_descriptorCount;
-	size_t m_colorRangeStart;
-	size_t m_textureRangeStart;
+	D3D12_GPU_DESCRIPTOR_HANDLE m_colorRangeStart;
+	D3D12_GPU_DESCRIPTOR_HANDLE m_textureRangeStart;
 	ComPtr<ID3D12DescriptorHeap> m_pDescHeap;
 	ComPtr<ID3D12DescriptorHeap> m_uploadDescHeap;
 	std::vector<SharedCPUHandle> m_sharedColorCPUHandle;

@@ -127,6 +127,12 @@ ModelContainer::Pipeline ModelContainer::CreateColoredPipeline(
 ) const {
 	std::unique_ptr<RootSignatureDynamic> signature =
 		std::make_unique<RootSignatureDynamic>();
+	signature->AddDescriptorTable(
+		D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
+		static_cast<std::uint32_t>(DescTableManInst::GetRef()->GetColorDescriptorCount()),
+		D3D12_SHADER_VISIBILITY_PIXEL, 0u
+	);
+	signature->AddConstants(1u, D3D12_SHADER_VISIBILITY_PIXEL, 0u);
 	signature->CompileSignature(false);
 	signature->CreateSignature(device);
 

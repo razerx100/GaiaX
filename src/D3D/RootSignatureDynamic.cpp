@@ -29,7 +29,7 @@ void RootSignatureDynamic::AddDescriptorTable(
 	CD3DX12_DESCRIPTOR_RANGE1 descRange = {};
 	descRange.Init(
 		descriptorType, descriptorsAmount, registerNumber, registerSpace,
-		D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE
+		D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC
 	);
 
 	// Range's address needs to be preserved till Signature Desc init
