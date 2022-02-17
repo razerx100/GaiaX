@@ -12,8 +12,8 @@ public:
 	void AddModel(
 		const IModel* const modelRef
 	) override;
-	void InitPipelines(ID3D12Device* device) override;
 
+	void InitPipelines(ID3D12Device* device) override;
 	void CreateBuffers(ID3D12Device* device) override;
 	void CopyData() override;
 	void RecordUploadBuffers(ID3D12GraphicsCommandList* copyList) override;
@@ -22,7 +22,8 @@ public:
 	void BindCommands(ID3D12GraphicsCommandList* commandList) noexcept override;
 
 private:
-	using Pipeline = std::pair<std::unique_ptr<IPipelineObject>, std::unique_ptr<IRootSignature>>;
+	using Pipeline =
+		std::pair<std::unique_ptr<IPipelineObject>, std::unique_ptr<IRootSignature>>;
 
 	Pipeline CreatePipeline(
 		ID3D12Device* device, const VertexLayout& layout

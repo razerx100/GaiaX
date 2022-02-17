@@ -3,12 +3,11 @@
 #include <RootSignatureDynamic.hpp>
 #include <Shader.hpp>
 #include <PipelineObjectGFX.hpp>
-#include <VertexLayout.hpp>
 #include <InstanceManager.hpp>
 #include <VenusInstance.hpp>
 
 ModelContainer::ModelContainer(const char* shaderPath) noexcept
-	: m_shaderPath(shaderPath) {}
+	: m_bindInstance(std::make_unique<BindInstanceGFX>()), m_shaderPath(shaderPath) {}
 
 void ModelContainer::AddModel(
 	const IModel* const modelRef

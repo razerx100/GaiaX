@@ -10,8 +10,8 @@ public:
 	virtual void AddModel(
 		const IModel* const modelRef
 	) = 0;
-	virtual void InitPipelines(ID3D12Device* device) = 0;
 
+	virtual void InitPipelines(ID3D12Device* device) = 0;
 	virtual void CreateBuffers(ID3D12Device* device) = 0;
 	virtual void CopyData() = 0;
 	virtual void RecordUploadBuffers(ID3D12GraphicsCommandList* copyList) = 0;
