@@ -8,7 +8,7 @@ public:
 	virtual ~IModelContainer() = default;
 
 	virtual void AddModel(
-		const IModel* const modelRef, bool texture
+		const IModel* const modelRef
 	) = 0;
 	virtual void InitPipelines(ID3D12Device* device) = 0;
 

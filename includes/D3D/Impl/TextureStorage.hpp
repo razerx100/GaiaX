@@ -7,7 +7,7 @@
 
 class TextureStorage : public ITextureStorage {
 public:
-	size_t AddColor(const void* data, size_t bufferSize) noexcept override;
+	size_t AddTexture(const void* data, size_t bufferSize) noexcept override;
 	size_t GetPhysicalIndexFromVirtual(size_t virtualIndex) const noexcept override;
 
 	void CreateBufferViews(ID3D12Device* device) override;
@@ -20,7 +20,7 @@ private:
 	};
 
 private:
-	std::vector<Bufferdata> m_colorData;
-	std::vector<SharedIndex> m_colorIndices;
+	std::vector<Bufferdata> m_textureData;
+	std::vector<SharedIndex> m_textureIndices;
 };
 #endif

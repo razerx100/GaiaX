@@ -11,14 +11,9 @@ public:
 	void CopyUploadHeap(ID3D12Device* device) override;
 	void ReleaseUploadHeap() noexcept override;
 
-	ResourceAddress GetColorIndex() noexcept override;
-
-	D3D12_GPU_DESCRIPTOR_HANDLE GetColorRangeStart() const noexcept override;
+	ResourceAddress GetTextureIndex() noexcept override;
 	D3D12_GPU_DESCRIPTOR_HANDLE GetTextureRangeStart() const noexcept override;
-
-	size_t GetColorDescriptorCount() const noexcept override;
 	size_t GetTextureDescriptorCount() const noexcept override;
-
 	ID3D12DescriptorHeap* GetDescHeapRef() const noexcept override;
 
 private:
@@ -35,11 +30,10 @@ private:
 
 private:
 	size_t m_descriptorCount;
-	D3D12_GPU_DESCRIPTOR_HANDLE m_colorRangeStart;
 	D3D12_GPU_DESCRIPTOR_HANDLE m_textureRangeStart;
 	ComPtr<ID3D12DescriptorHeap> m_pDescHeap;
 	ComPtr<ID3D12DescriptorHeap> m_uploadDescHeap;
-	std::vector<SharedCPUHandle> m_sharedColorCPUHandle;
-	std::vector<SharedIndex> m_sharedColorIndices;
+	std::vector<SharedCPUHandle> m_sharedTextureCPUHandle;
+	std::vector<SharedIndex> m_sharedTextureIndices;
 };
 #endif

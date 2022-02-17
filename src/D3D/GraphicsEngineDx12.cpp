@@ -78,10 +78,9 @@ GraphicsEngineDx12::~GraphicsEngineDx12() noexcept {
 #endif
 }
 
-void GraphicsEngineDx12::SubmitModel(const IModel* const modelRef, bool texture) {
+void GraphicsEngineDx12::SubmitModel(const IModel* const modelRef) {
 	ModelContainerInst::GetRef()->AddModel(
-		modelRef,
-		texture
+		modelRef
 	);
 }
 
@@ -215,7 +214,7 @@ void GraphicsEngineDx12::ProcessData() {
 }
 
 size_t GraphicsEngineDx12::RegisterResource(
-	const void* data, size_t size, bool texture
+	const void* data, size_t size
 ) {
-	return TexStorInst::GetRef()->AddColor(data, size);
+	return TexStorInst::GetRef()->AddTexture(data, size);
 }

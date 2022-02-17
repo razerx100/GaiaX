@@ -3,12 +3,12 @@
 #include <d3dx12.h>
 
 DescriptorTableManager::DescriptorTableManager()
-	: m_descriptorCount(0u), m_colorRangeStart{}, m_textureRangeStart{} {}
+	: m_descriptorCount(0u), m_textureRangeStart{} {}
 
 void DescriptorTableManager::CreateDescriptorTable(ID3D12Device* device) {
-	size_t colorRangeStart = 0u;
+	size_t textureRangeStart = 0u;
 
-	m_descriptorCount += m_sharedColorCPUHandle.size();
+	m_descriptorCount += m_sharedTextureCPUHandle.size();
 
 	if (!m_descriptorCount)
 		++m_descriptorCount;
@@ -22,23 +22,14 @@ void DescriptorTableManager::CreateDescriptorTable(ID3D12Device* device) {
 		m_uploadDescHeap->GetCPUDescriptorHandleForHeapStart();
 
 	SetSharedAddresses(
-		m_sharedColorCPUHandle, m_sharedColorIndices, cpuHandle.ptr,
+		m_sharedTextureCPUHandle, m_sharedTextureIndices, cpuHandle.ptr,
 		static_cast<SIZE_T>(descriptorSize),
-		colorRangeStart
+		textureRangeStart
 	);
-
-	size_t textureRangeStart = 0u;
-	if (!m_sharedColorIndices.empty())
-		textureRangeStart = static_cast<size_t>(*m_sharedColorIndices.back()) + 1u;
 
 	m_pDescHeap = CreateDescHeap(device, m_descriptorCount);
 
 	D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle = m_pDescHeap->GetGPUDescriptorHandleForHeapStart();
-
-	m_colorRangeStart = CD3DX12_GPU_DESCRIPTOR_HANDLE(
-		gpuHandle,
-		static_cast<UINT>(colorRangeStart), static_cast<UINT>(descriptorSize)
-	);
 
 	m_textureRangeStart = CD3DX12_GPU_DESCRIPTOR_HANDLE(
 		gpuHandle,
@@ -46,18 +37,14 @@ void DescriptorTableManager::CreateDescriptorTable(ID3D12Device* device) {
 	);
 }
 
-ResourceAddress DescriptorTableManager::GetColorIndex() noexcept {
-	m_sharedColorIndices.emplace_back(std::make_shared<SharedAddress>());
-	m_sharedColorCPUHandle.emplace_back(std::make_shared<_SharedAddress<SIZE_T>>());
+ResourceAddress DescriptorTableManager::GetTextureIndex() noexcept {
+	m_sharedTextureIndices.emplace_back(std::make_shared<SharedAddress>());
+	m_sharedTextureCPUHandle.emplace_back(std::make_shared<_SharedAddress<SIZE_T>>());
 
 	return {
-		m_sharedColorIndices.back(),
-		m_sharedColorCPUHandle.back()
+		m_sharedTextureIndices.back(),
+		m_sharedTextureCPUHandle.back()
 	};
-}
-
-D3D12_GPU_DESCRIPTOR_HANDLE DescriptorTableManager::GetColorRangeStart() const noexcept {
-	return m_colorRangeStart;
 }
 
 D3D12_GPU_DESCRIPTOR_HANDLE DescriptorTableManager::GetTextureRangeStart() const noexcept {
@@ -91,7 +78,7 @@ ComPtr<ID3D12DescriptorHeap> DescriptorTableManager::CreateDescHeap(
 }
 
 void DescriptorTableManager::ReleaseUploadHeap() noexcept {
-	m_sharedColorCPUHandle = std::vector<SharedCPUHandle>();
+	m_sharedTextureCPUHandle = std::vector<SharedCPUHandle>();
 	m_uploadDescHeap.Reset();
 }
 
@@ -116,10 +103,6 @@ void DescriptorTableManager::CopyUploadHeap(ID3D12Device* device) {
 		m_uploadDescHeap->GetCPUDescriptorHandleForHeapStart(),
 		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV
 	);
-}
-
-size_t DescriptorTableManager::GetColorDescriptorCount() const noexcept {
-	return m_sharedColorIndices.size();
 }
 
 size_t DescriptorTableManager::GetTextureDescriptorCount() const noexcept {

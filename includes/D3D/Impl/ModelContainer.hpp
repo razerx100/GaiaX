@@ -2,7 +2,6 @@
 #define __MODEL_CONTAINER_HPP__
 #include <IModelContainer.hpp>
 #include <IBindInstanceGFX.hpp>
-#include <vector>
 #include <string>
 #include <memory>
 
@@ -11,7 +10,7 @@ public:
 	ModelContainer(const char* shaderPath) noexcept;
 
 	void AddModel(
-		const IModel* const modelRef, bool texture
+		const IModel* const modelRef
 	) override;
 	void InitPipelines(ID3D12Device* device) override;
 
@@ -23,29 +22,14 @@ public:
 	void BindCommands(ID3D12GraphicsCommandList* commandList) noexcept override;
 
 private:
-	struct InstanceData {
-		bool available;
-		size_t index;
-	};
-
 	using Pipeline = std::pair<std::unique_ptr<IPipelineObject>, std::unique_ptr<IRootSignature>>;
 
-private:
-	void InitNewInstance(InstanceData& instanceData) noexcept;
-	void AddColoredModel(const IModel* const modelRef);
-	void AddTexturedModel(const IModel* const modelRef);
-
-	Pipeline CreateColoredPipeline(
-		ID3D12Device* device, const VertexLayout& layout
-	) const;
-	Pipeline CreateTexturedPipeline(
+	Pipeline CreatePipeline(
 		ID3D12Device* device, const VertexLayout& layout
 	) const;
 
 private:
-	std::vector<std::unique_ptr<IBindInstanceGFX>> m_bindInstances;
-	InstanceData m_coloredInstanceData;
-	InstanceData m_texturedInstanceData;
+	std::unique_ptr<IBindInstanceGFX> m_bindInstance;
 
 	std::string m_shaderPath;
 };
