@@ -7,7 +7,7 @@
 
 class TextureStorage : public ITextureStorage {
 public:
-	size_t AddTexture(const void* data, size_t bufferSize) noexcept override;
+	size_t AddTexture(const void* data, size_t rowPitch, size_t rows) noexcept override;
 	size_t GetPhysicalIndexFromVirtual(size_t virtualIndex) const noexcept override;
 
 	void CreateBufferViews(ID3D12Device* device) override;

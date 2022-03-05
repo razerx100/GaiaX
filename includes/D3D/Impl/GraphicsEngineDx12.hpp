@@ -14,9 +14,11 @@ public:
 	~GraphicsEngineDx12() noexcept;
 
 	[[nodiscard]]
-	size_t RegisterResource(const void* data, size_t size) override;
+	size_t RegisterResource(
+		const void* data, size_t rowPitch, size_t rows
+	) override;
 
-	void SetBackgroundColor(const Ceres::Float32_4& color) noexcept override;
+	void SetBackgroundColour(const Ceres::Float32_4& colour) noexcept override;
 	void SubmitModel(const IModel* const modelRef) override;
 	void Render() override;
 	void Resize(std::uint32_t width, std::uint32_t height) override;
@@ -33,7 +35,7 @@ public:
 	static constexpr DXGI_FORMAT RENDER_FORMAT = DXGI_FORMAT_R8G8B8A8_UNORM;
 
 private:
-	Ceres::Float32_4 m_backgroundColor;
+	Ceres::Float32_4 m_backgroundColour;
 
 	const std::string m_appName;
 	std::string m_shaderPath;

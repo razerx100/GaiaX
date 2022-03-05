@@ -2,7 +2,7 @@
 
 static const std::vector<const char*> vertexElementTypeNameMap{
 	"Position",
-	"Color"
+	"Colour"
 };
 
 static const std::vector<DXGI_FORMAT> vertexElementTypeFormatMap{

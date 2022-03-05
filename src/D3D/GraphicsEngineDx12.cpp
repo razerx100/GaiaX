@@ -6,7 +6,7 @@ GraphicsEngineDx12::GraphicsEngineDx12(
 	const char* appName,
 	void* windowHandle, std::uint32_t width, std::uint32_t height,
 	size_t bufferCount
-) : m_backgroundColor{0.1f, 0.1f, 0.1f, 0.1f}, m_appName(appName) {
+) : m_backgroundColour{0.1f, 0.1f, 0.1f, 0.1f}, m_appName(appName) {
 	DeviceInst::Init();
 
 #ifdef _DEBUG
@@ -107,7 +107,7 @@ void GraphicsEngineDx12::Render() {
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = swapRef->GetRTVHandle();
 
 	swapRef->ClearRTV(
-		commandList, &m_backgroundColor.x, rtvHandle
+		commandList, &m_backgroundColour.x, rtvHandle
 	);
 
 	IDepthBuffer* depthRef = DepthBuffInst::GetRef();
@@ -162,8 +162,8 @@ void GraphicsEngineDx12::GetMonitorCoordinates(
 	monitorHeight = static_cast<std::uint64_t>(desc.DesktopCoordinates.bottom);
 }
 
-void GraphicsEngineDx12::SetBackgroundColor(const Ceres::Float32_4& color) noexcept {
-	m_backgroundColor = color;
+void GraphicsEngineDx12::SetBackgroundColour(const Ceres::Float32_4& colour) noexcept {
+	m_backgroundColour = colour;
 }
 
 void GraphicsEngineDx12::WaitForAsyncTasks() {
@@ -214,7 +214,7 @@ void GraphicsEngineDx12::ProcessData() {
 }
 
 size_t GraphicsEngineDx12::RegisterResource(
-	const void* data, size_t size
+	const void* data, size_t rowPitch, size_t rows
 ) {
-	return TexStorInst::GetRef()->AddTexture(data, size);
+	return TexStorInst::GetRef()->AddTexture(data, rowPitch, rows);
 }
