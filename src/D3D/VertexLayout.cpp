@@ -2,17 +2,17 @@
 
 static const std::vector<const char*> vertexElementTypeNameMap{
 	"Position",
-	"Colour"
+	"UV"
 };
 
 static const std::vector<DXGI_FORMAT> vertexElementTypeFormatMap{
 	DXGI_FORMAT_R32G32B32_FLOAT,
-	DXGI_FORMAT_R32G32B32A32_FLOAT
+	DXGI_FORMAT_R32G32_FLOAT
 };
 
 static const std::vector<size_t> vertexElementTypeSizeMap{
 	12u,
-	16u
+	8u
 };
 
 VertexLayout::VertexLayout(const std::vector<VertexElementType>& inputLayout) noexcept {

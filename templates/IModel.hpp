@@ -7,7 +7,7 @@
 
 enum class VertexElementType {
 	Position,
-	Colour
+	UV
 };
 
 class IModel {
