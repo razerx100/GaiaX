@@ -2,6 +2,7 @@
 #define __I_MODEL_CONTAINER_HPP__
 #include <D3DHeaders.hpp>
 #include <IModel.hpp>
+#include <atomic>
 
 class IModelContainer {
 public:
@@ -13,7 +14,7 @@ public:
 
 	virtual void InitPipelines(ID3D12Device* device) = 0;
 	virtual void CreateBuffers(ID3D12Device* device) = 0;
-	virtual void CopyData() = 0;
+	virtual void CopyData(std::atomic_size_t& workCount) = 0;
 	virtual void RecordUploadBuffers(ID3D12GraphicsCommandList* copyList) = 0;
 	virtual void ReleaseUploadBuffers() = 0;
 

@@ -97,7 +97,6 @@ void BindInstanceGFX::ModelRaw::AddVBV(
 	D3D12_VERTEX_BUFFER_VIEW&& vertexBufferView,
 	D3DGPUSharedAddress vbvSharedAddress
 ) noexcept {
-	D3D12_CONSTANT_BUFFER_VIEW_DESC desc = {};
 	m_vertexBufferView = { std::move(vertexBufferView), vbvSharedAddress };
 }
 

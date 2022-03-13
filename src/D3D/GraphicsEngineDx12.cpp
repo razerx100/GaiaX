@@ -185,13 +185,20 @@ void GraphicsEngineDx12::ProcessData() {
 	ID3D12Device* device = DeviceInst::GetRef()->GetDeviceRef();
 	IModelContainer* modelContainerRef = ModelContainerInst::GetRef();
 	IDescriptorTableManager* descTableRef = DescTableManInst::GetRef();
+	ITextureStorage* texStoreRef = TexStorInst::GetRef();
 
 	descTableRef->CreateDescriptorTable(device);
 
 	modelContainerRef->CreateBuffers(device);
-	modelContainerRef->CopyData();
 
-	TexStorInst::GetRef()->CreateBufferViews(device);
+	std::atomic_size_t workCount = 0u;
+
+	modelContainerRef->CopyData(workCount);
+	texStoreRef->CopyData(workCount);
+
+	while (workCount != 0u);
+
+	texStoreRef->CreateBufferViews(device);
 
 	descTableRef->CopyUploadHeap(device);
 
@@ -209,6 +216,7 @@ void GraphicsEngineDx12::ProcessData() {
 
 	modelContainerRef->InitPipelines(device);
 
+	texStoreRef->ReleaseUploadBuffer();
 	descTableRef->ReleaseUploadHeap();
 	modelContainerRef->ReleaseUploadBuffers();
 }
@@ -216,5 +224,7 @@ void GraphicsEngineDx12::ProcessData() {
 size_t GraphicsEngineDx12::RegisterResource(
 	const void* data, size_t rowPitch, size_t rows
 ) {
-	return TexStorInst::GetRef()->AddTexture(data, rowPitch, rows);
+	return TexStorInst::GetRef()->AddTexture(
+		DeviceInst::GetRef()->GetDeviceRef(), data, rowPitch, rows
+	);
 }

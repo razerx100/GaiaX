@@ -25,8 +25,10 @@ void HeapManager::CreateBuffers(ID3D12Device* device, bool msaa) {
 		CreatePlacedResource(
 			device, m_uploadHeap->GetHeap(),
 			m_uploadBuffers[index]->GetBuffer(), m_bufferData[index].offset,
-			m_bufferData[index].type == BufferType::Texture ?
-			GetTextureDesc(0u, 0u) : GetBufferDesc(m_bufferData[index].size),
+			GetResourceDesc(
+				m_bufferData[index],
+				m_bufferData[index].type == BufferType::Texture
+			),
 			true
 		);
 		m_uploadBuffers[index]->MapBuffer();
@@ -34,8 +36,10 @@ void HeapManager::CreateBuffers(ID3D12Device* device, bool msaa) {
 		CreatePlacedResource(
 			device, m_gpuHeap->GetHeap(),
 			m_gpuBuffers[index], m_bufferData[index].offset,
-			m_bufferData[index].type == BufferType::Texture ?
-			GetTextureDesc(0u, 0u) : GetBufferDesc(m_bufferData[index].size),
+			GetResourceDesc(
+				m_bufferData[index],
+				m_bufferData[index].type == BufferType::Texture
+			),
 			false
 		);
 	}
@@ -67,6 +71,8 @@ void HeapManager::RecordUpload(ID3D12GraphicsCommandList* copyList) {
 			afterState = D3D12_RESOURCE_STATE_INDEX_BUFFER;
 		else if (m_bufferData[index].type == BufferType::Vertex)
 			afterState = D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
+		else if (m_bufferData[index].type == BufferType::Texture)
+			afterState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 
 		D3D12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
 			m_gpuBuffers[index]->Get(),
@@ -88,7 +94,7 @@ BufferPair HeapManager::AddBuffer(
 	size_t bufferSize, BufferType type
 ) {
 	m_bufferData.emplace_back(
-		bufferSize, m_currentMemoryOffset, type
+		0u, bufferSize, 64_KB, m_currentMemoryOffset, type
 	);
 	m_gpuBuffers.emplace_back(std::make_shared<D3DBuffer>());
 	m_uploadBuffers.emplace_back(std::make_shared<UploadBuffer>());
@@ -99,10 +105,33 @@ BufferPair HeapManager::AddBuffer(
 }
 
 BufferPair HeapManager::AddTexture(
-	size_t bufferSize
+	ID3D12Device* device,
+	size_t rowPitch, size_t rows, bool msaa
 ) {
-	// 4KB, 64KB or 4MB alignment
-	return { nullptr, nullptr };
+	// Re-write the logic once mip-mapping is introduced
+
+	m_gpuBuffers.emplace_back(std::make_shared<D3DBuffer>());
+	m_uploadBuffers.emplace_back(std::make_shared<UploadBuffer>());
+
+	size_t alignment = 0u;
+
+	if (msaa)
+		alignment = 4_MB;
+	else
+		alignment = alignment <= 4_KB ? 4_KB : 64_KB;
+
+	m_bufferData.emplace_back(
+		rows, rowPitch, alignment, m_currentMemoryOffset, BufferType::Texture
+	);
+
+	D3D12_RESOURCE_DESC texDesc = GetTextureDesc(rows, rowPitch, alignment);
+
+	D3D12_RESOURCE_ALLOCATION_INFO allocInfo =
+		device->GetResourceAllocationInfo(0u, 1u, &texDesc);
+
+	m_currentMemoryOffset += Ceres::Math::Align(allocInfo.SizeInBytes, alignment);
+
+	return { m_gpuBuffers.back(), m_uploadBuffers.back() };
 }
 
 void HeapManager::CreatePlacedResource(
@@ -127,10 +156,30 @@ D3D12_RESOURCE_DESC HeapManager::GetBufferDesc(size_t bufferSize) const noexcept
 }
 
 D3D12_RESOURCE_DESC HeapManager::GetTextureDesc(
-	size_t height, size_t width
+	size_t height, size_t width, size_t alignment
 ) const noexcept {
-	return CD3DX12_RESOURCE_DESC::Tex2D(
-		GraphicsEngineDx12::RENDER_FORMAT,
-		static_cast<UINT64>(width), static_cast<UINT>(height)
-	);
+	D3D12_RESOURCE_DESC texDesc = {};
+
+	texDesc.Format = GraphicsEngineDx12::RENDER_FORMAT;
+	texDesc.Width = static_cast<UINT64>(width);
+	texDesc.Height = static_cast<UINT>(height);
+	texDesc.DepthOrArraySize = 1u;
+	texDesc.MipLevels = 0u;
+	texDesc.SampleDesc.Count = 1u;
+	texDesc.SampleDesc.Quality = 0u;
+	texDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
+	texDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+	texDesc.Alignment = alignment;
+
+	return texDesc;
 }
+
+D3D12_RESOURCE_DESC	HeapManager::GetResourceDesc(
+	const BufferData& bufferData, bool texture
+) const noexcept {
+	return 	texture ? GetTextureDesc(
+		bufferData.height, bufferData.width,
+		bufferData.alignment
+	) : GetBufferDesc(bufferData.width);
+}
+

@@ -21,7 +21,10 @@ public:
 	virtual BufferPair AddBuffer(
 		size_t bufferSize, BufferType type
 	) = 0;
-	virtual BufferPair AddTexture(size_t bufferSize) = 0;
+	virtual BufferPair AddTexture(
+		ID3D12Device* device,
+		size_t rowPitch, size_t rows, bool msaa = false
+	) = 0;
 	virtual void CreateBuffers(ID3D12Device* device, bool msaa = false) = 0;
 	virtual void RecordUpload(ID3D12GraphicsCommandList* copyList) = 0;
 	virtual void ReleaseUploadBuffer() = 0;

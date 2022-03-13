@@ -15,7 +15,7 @@ public:
 
 	void InitPipelines(ID3D12Device* device) override;
 	void CreateBuffers(ID3D12Device* device) override;
-	void CopyData() override;
+	void CopyData(std::atomic_size_t& workCount) override;
 	void RecordUploadBuffers(ID3D12GraphicsCommandList* copyList) override;
 	void ReleaseUploadBuffers() override;
 

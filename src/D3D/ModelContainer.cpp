@@ -19,26 +19,24 @@ void ModelContainer::BindCommands(ID3D12GraphicsCommandList* commandList) noexce
 	m_bindInstance->BindCommands(commandList);
 }
 
-void ModelContainer::CopyData() {
-	std::atomic_size_t works = 2u;
+void ModelContainer::CopyData(std::atomic_size_t& workCount) {
+	workCount += 2u;
 
 	GetVenusInstance()->SubmitWork(
-		[&works] {
+		[&workCount] {
 			VertexBufferInst::GetRef()->CopyData();
 
-			--works;
+			--workCount;
 		}
 	);
 
 	GetVenusInstance()->SubmitWork(
-		[&works] {
+		[&workCount] {
 			IndexBufferInst::GetRef()->CopyData();
 
-			--works;
+			--workCount;
 		}
 	);
-
-	while (works != 0u);
 }
 
 void ModelContainer::RecordUploadBuffers(ID3D12GraphicsCommandList* copyList) {

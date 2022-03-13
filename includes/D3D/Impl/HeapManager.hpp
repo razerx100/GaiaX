@@ -11,14 +11,19 @@ public:
 	BufferPair AddBuffer(
 		size_t bufferSize, BufferType type
 	) override;
-	BufferPair AddTexture(size_t bufferSize) override;
+	BufferPair AddTexture(
+		ID3D12Device* device,
+		size_t rowPitch, size_t rows, bool msaa = false
+	) override;
 	void CreateBuffers(ID3D12Device* device, bool msaa = false) override;
 	void RecordUpload(ID3D12GraphicsCommandList* copyList) override;
 	void ReleaseUploadBuffer() override;
 
 private:
 	struct BufferData {
-		size_t size;
+		size_t width;
+		size_t height;
+		size_t alignment;
 		size_t offset;
 		BufferType type;
 	};
@@ -29,8 +34,13 @@ private:
 		size_t offset, const D3D12_RESOURCE_DESC& desc, bool upload
 	) const;
 
+	D3D12_RESOURCE_DESC	GetResourceDesc(
+		const BufferData& bufferData, bool texture
+	) const noexcept;
 	D3D12_RESOURCE_DESC GetBufferDesc(size_t bufferSize) const noexcept;
-	D3D12_RESOURCE_DESC GetTextureDesc(size_t height, size_t width) const noexcept;
+	D3D12_RESOURCE_DESC GetTextureDesc(
+		size_t height, size_t width, size_t alignment
+	) const noexcept;
 
 private:
 	size_t m_currentMemoryOffset;
