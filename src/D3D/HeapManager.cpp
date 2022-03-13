@@ -25,10 +25,7 @@ void HeapManager::CreateBuffers(ID3D12Device* device, bool msaa) {
 		CreatePlacedResource(
 			device, m_uploadHeap->GetHeap(),
 			m_uploadBuffers[index]->GetBuffer(), m_bufferData[index].offset,
-			GetResourceDesc(
-				m_bufferData[index],
-				m_bufferData[index].type == BufferType::Texture
-			),
+			GetBufferDesc(m_bufferData[index].bufferSize),
 			true
 		);
 		m_uploadBuffers[index]->MapBuffer();
@@ -94,7 +91,7 @@ BufferPair HeapManager::AddBuffer(
 	size_t bufferSize, BufferType type
 ) {
 	m_bufferData.emplace_back(
-		0u, bufferSize, 64_KB, m_currentMemoryOffset, type
+		1u, bufferSize, 64_KB, m_currentMemoryOffset, bufferSize, type
 	);
 	m_gpuBuffers.emplace_back(std::make_shared<D3DBuffer>());
 	m_uploadBuffers.emplace_back(std::make_shared<UploadBuffer>());
@@ -118,17 +115,17 @@ BufferPair HeapManager::AddTexture(
 	if (msaa)
 		alignment = 4_MB;
 	else
-		alignment = alignment <= 4_KB ? 4_KB : 64_KB;
-
-	m_bufferData.emplace_back(
-		rows, rowPitch, alignment, m_currentMemoryOffset, BufferType::Texture
-	);
+		alignment = 64_KB;
 
 	D3D12_RESOURCE_DESC texDesc = GetTextureDesc(rows, rowPitch, alignment);
 
 	D3D12_RESOURCE_ALLOCATION_INFO allocInfo =
 		device->GetResourceAllocationInfo(0u, 1u, &texDesc);
 
+	m_bufferData.emplace_back(
+		rows, rowPitch, alignment, m_currentMemoryOffset,
+		allocInfo.SizeInBytes, BufferType::Texture
+	);
 	m_currentMemoryOffset += Ceres::Math::Align(allocInfo.SizeInBytes, alignment);
 
 	return { m_gpuBuffers.back(), m_uploadBuffers.back() };
@@ -170,6 +167,7 @@ D3D12_RESOURCE_DESC HeapManager::GetTextureDesc(
 	texDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
 	texDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
 	texDesc.Alignment = alignment;
+	texDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
 
 	return texDesc;
 }

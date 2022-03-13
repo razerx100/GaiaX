@@ -25,6 +25,7 @@ private:
 		size_t height;
 		size_t alignment;
 		size_t offset;
+		size_t bufferSize;
 		BufferType type;
 	};
 
