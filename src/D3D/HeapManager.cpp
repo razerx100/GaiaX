@@ -90,13 +90,17 @@ void HeapManager::ReleaseUploadBuffer() {
 BufferPair HeapManager::AddBuffer(
 	size_t bufferSize, BufferType type
 ) {
+	constexpr size_t alignment = 64_KB;
+
+	m_currentMemoryOffset = Ceres::Math::Align(m_currentMemoryOffset, alignment);
+
 	m_bufferData.emplace_back(
-		1u, bufferSize, 64_KB, m_currentMemoryOffset, bufferSize, type
+		1u, bufferSize, alignment, m_currentMemoryOffset, bufferSize, type
 	);
 	m_gpuBuffers.emplace_back(std::make_shared<D3DBuffer>());
 	m_uploadBuffers.emplace_back(std::make_shared<UploadBuffer>());
 
-	m_currentMemoryOffset += Ceres::Math::Align(bufferSize, 64_KB);
+	m_currentMemoryOffset += bufferSize;
 
 	return { m_gpuBuffers.back(), m_uploadBuffers.back() };
 }
@@ -105,28 +109,28 @@ BufferPair HeapManager::AddTexture(
 	ID3D12Device* device,
 	size_t rowPitch, size_t rows, bool msaa
 ) {
-	// Re-write the logic once mip-mapping is introduced
-
 	m_gpuBuffers.emplace_back(std::make_shared<D3DBuffer>());
 	m_uploadBuffers.emplace_back(std::make_shared<UploadBuffer>());
 
 	size_t alignment = 0u;
 
 	if (msaa)
-		alignment = 4_MB;
-	else
 		alignment = 64_KB;
+	else
+		alignment = 4_KB;
 
 	D3D12_RESOURCE_DESC texDesc = GetTextureDesc(rows, rowPitch, alignment);
 
 	D3D12_RESOURCE_ALLOCATION_INFO allocInfo =
 		device->GetResourceAllocationInfo(0u, 1u, &texDesc);
 
+	m_currentMemoryOffset = Ceres::Math::Align(m_currentMemoryOffset, allocInfo.Alignment);
+
 	m_bufferData.emplace_back(
-		rows, rowPitch, alignment, m_currentMemoryOffset,
+		rows, rowPitch, allocInfo.Alignment, m_currentMemoryOffset,
 		allocInfo.SizeInBytes, BufferType::Texture
 	);
-	m_currentMemoryOffset += Ceres::Math::Align(allocInfo.SizeInBytes, alignment);
+	m_currentMemoryOffset += allocInfo.SizeInBytes;
 
 	return { m_gpuBuffers.back(), m_uploadBuffers.back() };
 }
