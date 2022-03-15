@@ -6,7 +6,8 @@
 class SwapChainManager : public ISwapChainManager {
 public:
 	SwapChainManager(
-		IDXGIFactory4* factory, ID3D12CommandQueue* cmdQueue, void* windowHandle,
+		ID3D12Device* device, IDXGIFactory4* factory, ID3D12CommandQueue* cmdQueue,
+		void* windowHandle,
 		size_t bufferCount,
 		std::uint32_t width, std::uint32_t height,
 		bool variableRefreshRateAvailable
@@ -15,7 +16,10 @@ public:
 	void ToggleVSync() noexcept override;
 	void PresentWithTear() override;
 	void PresentWithoutTear() override;
-	void Resize(std::uint32_t width, std::uint32_t height) override;
+	bool Resize(
+		ID3D12Device* device,
+		std::uint32_t width, std::uint32_t height
+	) override;
 
 	void ClearRTV(
 		ID3D12GraphicsCommandList* commandList, float* clearColor,
@@ -30,8 +34,8 @@ public:
 	IDXGISwapChain4* GetRef() const noexcept override;
 
 private:
-	void CreateRTVHeap(size_t bufferCount);
-	void CreateRTVs();
+	void CreateRTVHeap(ID3D12Device* device, size_t bufferCount);
+	void CreateRTVs(ID3D12Device* device);
 
 private:
 	std::uint32_t m_width;

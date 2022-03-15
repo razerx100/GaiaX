@@ -5,7 +5,8 @@
 #include <d3dx12.h>
 
 SwapChainManager::SwapChainManager(
-	IDXGIFactory4* factory, ID3D12CommandQueue* cmdQueue, void* windowHandle,
+	ID3D12Device* device, IDXGIFactory4* factory, ID3D12CommandQueue* cmdQueue,
+	void* windowHandle,
 	size_t bufferCount,
 	std::uint32_t width, std::uint32_t height,
 	bool variableRefreshRateAvailable
@@ -50,19 +51,17 @@ SwapChainManager::SwapChainManager(
 			)
 		);
 
-	CreateRTVHeap(bufferCount);
-	CreateRTVs();
+	CreateRTVHeap(device, bufferCount);
+	CreateRTVs(device);
 }
 
-void SwapChainManager::CreateRTVs() {
+void SwapChainManager::CreateRTVs(ID3D12Device* device) {
 	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(
 		m_pRtvHeap->GetCPUDescriptorHandleForHeapStart()
 	);
 
 	HRESULT hr;
-	ID3D12Device* deviceRef = DeviceInst::GetRef()->GetDeviceRef();
-
-	if (deviceRef) {
+	if (device) {
 		for (size_t index = 0u; index < m_pRenderTargetViews.size(); ++index) {
 			D3D_THROW_FAILED(
 				hr, m_pSwapChain->GetBuffer(
@@ -71,7 +70,7 @@ void SwapChainManager::CreateRTVs() {
 				)
 			);
 
-			deviceRef->CreateRenderTargetView(
+			device->CreateRenderTargetView(
 				m_pRenderTargetViews[index].Get(), nullptr, rtvHandle
 			);
 
@@ -137,15 +136,13 @@ void SwapChainManager::PresentWithoutTear() {
 	);
 }
 
-void SwapChainManager::Resize(std::uint32_t width, std::uint32_t height) {
+bool SwapChainManager::Resize(
+	ID3D12Device* device,
+	std::uint32_t width, std::uint32_t height
+) {
 	if (width != m_width || height != m_height) {
 		for (auto& rt : m_pRenderTargetViews)
 			rt.Reset();
-
-		IGraphicsQueueManager* pGraphicsQueue = GfxQueInst::GetRef();
-
-		if (pGraphicsQueue)
-			pGraphicsQueue->ResetFenceValuesWith(GetCurrentBackBufferIndex());
 
 		DXGI_SWAP_CHAIN_DESC1 desc = {};
 		m_pSwapChain->GetDesc1(&desc);
@@ -163,28 +160,30 @@ void SwapChainManager::Resize(std::uint32_t width, std::uint32_t height) {
 		m_width = width;
 		m_height = height;
 
-		CreateRTVs();
+		CreateRTVs(device);
+
+		return true;
 	}
+	else
+		return false;
 }
 
-void SwapChainManager::CreateRTVHeap(size_t bufferCount) {
+void SwapChainManager::CreateRTVHeap(ID3D12Device* device, size_t bufferCount) {
 	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
 	rtvHeapDesc.NumDescriptors = static_cast<UINT>(bufferCount);
 	rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
 	rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 
-	ID3D12Device5* deviceRef = DeviceInst::GetRef()->GetDeviceRef();
-
 	HRESULT hr;
 	D3D_THROW_FAILED(
-		hr, deviceRef->CreateDescriptorHeap(
+		hr, device->CreateDescriptorHeap(
 			&rtvHeapDesc,
 			__uuidof(ID3D12DescriptorHeap),
 			&m_pRtvHeap
 		)
 	);
 
-	m_rtvDescSize = deviceRef->GetDescriptorHandleIncrementSize(
+	m_rtvDescSize = device->GetDescriptorHandleIncrementSize(
 		D3D12_DESCRIPTOR_HEAP_TYPE_RTV
 	);
 }

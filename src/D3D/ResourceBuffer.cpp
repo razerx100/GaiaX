@@ -9,26 +9,26 @@ ResourceBuffer::ResourceBuffer(BufferType type)
 
 D3DGPUSharedAddress ResourceBuffer::AddDataAndGetSharedAddress(
 	const void* data, size_t bufferSize,
-	size_t alignment
+	bool alignment256
 ) noexcept {
 
 	D3DGPUSharedAddress sharedAddress;
 
-	if (alignment == 4u) {
-		m_sharedGPUAddress4.emplace_back(
-			std::make_shared<_SharedAddress<D3D12_GPU_VIRTUAL_ADDRESS>>()
-		);
-		sharedAddress = m_sharedGPUAddress4.back();
-
-		m_bufferData4.emplace_back(data, bufferSize, 0u);
-	}
-	else {
+	if (alignment256) {
 		m_sharedGPUAddress256.emplace_back(
 			std::make_shared<_SharedAddress<D3D12_GPU_VIRTUAL_ADDRESS>>()
 		);
 		sharedAddress = m_sharedGPUAddress256.back();
 
 		m_bufferData256.emplace_back(data, bufferSize, 0u);
+	}
+	else {
+		m_sharedGPUAddress4.emplace_back(
+			std::make_shared<_SharedAddress<D3D12_GPU_VIRTUAL_ADDRESS>>()
+		);
+		sharedAddress = m_sharedGPUAddress4.back();
+
+		m_bufferData4.emplace_back(data, bufferSize, 0u);
 	}
 
 	return sharedAddress;

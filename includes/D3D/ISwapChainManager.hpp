@@ -11,7 +11,10 @@ public:
 	virtual void PresentWithTear() = 0;
 	virtual void PresentWithoutTear() = 0;
 	// Should be only called when all of the back buffers have finished executing
-	virtual void Resize(std::uint32_t width, std::uint32_t height) = 0;
+	virtual bool Resize(
+		ID3D12Device* device,
+		std::uint32_t width, std::uint32_t height
+	) = 0;
 
 	virtual void ClearRTV(
 		ID3D12GraphicsCommandList* commandList, float* clearColor,
@@ -27,7 +30,8 @@ public:
 };
 
 ISwapChainManager* CreateSwapChainInstance(
-	IDXGIFactory4* factory, ID3D12CommandQueue* cmdQueue, void* windowHandle,
+	ID3D12Device* device, IDXGIFactory4* factory, ID3D12CommandQueue* cmdQueue,
+	void* windowHandle,
 	size_t bufferCount,
 	std::uint32_t width, std::uint32_t height,
 	bool variableRefreshRateAvailable = true

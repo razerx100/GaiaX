@@ -34,6 +34,7 @@ GraphicsEngineDx12::GraphicsEngineDx12(
 	IGraphicsQueueManager* queueRef = GfxQueInst::GetRef();
 
 	SwapchainInst::Init(
+		deviceRef,
 		DeviceInst::GetRef()->GetFactoryRef(),
 		queueRef->GetQueueRef(),
 		windowHandle,
@@ -135,15 +136,25 @@ void GraphicsEngineDx12::Render() {
 
 void GraphicsEngineDx12::Resize(std::uint32_t width, std::uint32_t height) {
 	ISwapChainManager* swapRef = SwapchainInst::GetRef();
-	GfxQueInst::GetRef()->WaitForGPU(
-		swapRef->GetCurrentBackBufferIndex()
+	IGraphicsQueueManager* pGraphicsQueue = GfxQueInst::GetRef();
+	ID3D12Device* deviceRef = DeviceInst::GetRef()->GetDeviceRef();
+
+	size_t backBufferIndex = swapRef->GetCurrentBackBufferIndex();
+
+	pGraphicsQueue->WaitForGPU(
+		backBufferIndex
 	);
-	swapRef->Resize(width, height);
-	DepthBuffInst::GetRef()->CreateDepthBuffer(
-		DeviceInst::GetRef()->GetDeviceRef(),
-		width, height
-	);
-	ViewPAndScsrInst::GetRef()->Resize(width, height);
+
+	if (swapRef->Resize(deviceRef, width, height)) {
+		pGraphicsQueue->ResetFenceValuesWith(
+			backBufferIndex
+		);
+
+		DepthBuffInst::GetRef()->CreateDepthBuffer(
+			deviceRef, width, height
+		);
+		ViewPAndScsrInst::GetRef()->Resize(width, height);
+	}
 }
 
 void GraphicsEngineDx12::GetMonitorCoordinates(

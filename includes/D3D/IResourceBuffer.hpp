@@ -15,7 +15,7 @@ public:
 	[[nodiscard]]
 	virtual D3DGPUSharedAddress AddDataAndGetSharedAddress(
 		const void* data, size_t bufferSize,
-		size_t alignment = 4u
+		bool alignment256 = false
 	) noexcept = 0;
 
 	virtual void SetGPUVirtualAddressToBuffers() noexcept = 0;

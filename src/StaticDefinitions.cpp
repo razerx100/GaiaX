@@ -17,13 +17,14 @@ IDeviceManager* CreateD3DDeviceInstance() {
 }
 
 ISwapChainManager* CreateSwapChainInstance(
-	IDXGIFactory4* factory, ID3D12CommandQueue* cmdQueue, void* windowHandle,
+	ID3D12Device* device, IDXGIFactory4* factory, ID3D12CommandQueue* cmdQueue,
+	void* windowHandle,
 	size_t bufferCount,
 	std::uint32_t width, std::uint32_t height,
 	bool variableRefreshRateAvailable
 ) {
 	return new SwapChainManager(
-		factory, cmdQueue, windowHandle,
+		device, factory, cmdQueue, windowHandle,
 		bufferCount, width, height,
 		variableRefreshRateAvailable
 	);

@@ -23,8 +23,8 @@ public:
 class SwapchainInst : public _ObjectManager<ISwapChainManager, SwapchainInst> {
 public:
 	static void Init(
-		IDXGIFactory4* factory, ID3D12CommandQueue* cmdQueue, void* windowHandle,
-		size_t bufferCount,
+		ID3D12Device* device, IDXGIFactory4* factory, ID3D12CommandQueue* cmdQueue,
+		void* windowHandle, size_t bufferCount,
 		std::uint32_t width, std::uint32_t height,
 		bool variableRefreshRateAvailable = true
 	);
