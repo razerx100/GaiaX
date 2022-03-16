@@ -1,7 +1,6 @@
 #ifndef __TEXTURE_STORAGE_HPP__
 #define __TEXTURE_STORAGE_HPP__
 #include <ITextureStorage.hpp>
-#include <IResourceBuffer.hpp>
 #include <IDescriptorTableManager.hpp>
 #include <vector>
 #include <IUploadBuffer.hpp>
