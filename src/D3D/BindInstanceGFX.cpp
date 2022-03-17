@@ -54,13 +54,15 @@ void BindInstanceGFX::AddModel(
 	}
 }
 
-void BindInstanceGFX::BindCommands(ID3D12GraphicsCommandList* commandList) noexcept {
+void BindInstanceGFX::BindModels(ID3D12GraphicsCommandList* commandList) noexcept {
+	for (auto& model : m_modelsRaw)
+		model->Draw(commandList);
+}
+
+void BindInstanceGFX::BindPipelineObjects(ID3D12GraphicsCommandList* commandList) noexcept {
 	commandList->SetPipelineState(m_pso->Get());
 	commandList->SetGraphicsRootSignature(m_rootSignature->Get());
 	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-	for (auto& model : m_modelsRaw)
-		model->Draw(commandList);
 }
 
 void BindInstanceGFX::SetGPUVirtualAddresses() noexcept {

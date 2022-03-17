@@ -106,5 +106,5 @@ void DescriptorTableManager::CopyUploadHeap(ID3D12Device* device) {
 }
 
 size_t DescriptorTableManager::GetTextureDescriptorCount() const noexcept {
-	return 0u;
+	return m_sharedTextureCPUHandle.size();
 }

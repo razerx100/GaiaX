@@ -16,11 +16,12 @@ void ModelContainer::AddModel(
 }
 
 void ModelContainer::BindCommands(ID3D12GraphicsCommandList* commandList) noexcept {
-	D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle = DescTableManInst::GetRef()->GetTextureRangeStart();
+	m_bindInstance->BindPipelineObjects(commandList);
 
+	D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle = DescTableManInst::GetRef()->GetTextureRangeStart();
 	commandList->SetGraphicsRootDescriptorTable(1u, gpuHandle);
 
-	m_bindInstance->BindCommands(commandList);
+	m_bindInstance->BindModels(commandList);
 }
 
 void ModelContainer::CopyData(std::atomic_size_t& workCount) {
@@ -88,7 +89,7 @@ ModelContainer::Pipeline ModelContainer::CreatePipeline(
 	signature->AddConstants(1u, D3D12_SHADER_VISIBILITY_PIXEL, 0u);
 	signature->AddDescriptorTable(
 		D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
-		DescTableManInst::GetRef()->GetTextureDescriptorCount(),
+		static_cast<std::uint32_t>(DescTableManInst::GetRef()->GetTextureDescriptorCount()),
 		D3D12_SHADER_VISIBILITY_PIXEL, 0u
 	);
 

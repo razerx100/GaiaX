@@ -20,6 +20,7 @@ public:
 	) noexcept = 0;
 
 	virtual void SetGPUVirtualAddresses() noexcept = 0;
-	virtual void BindCommands(ID3D12GraphicsCommandList* commandList) noexcept = 0;
+	virtual void BindModels(ID3D12GraphicsCommandList* commandList) noexcept = 0;
+	virtual void BindPipelineObjects(ID3D12GraphicsCommandList* commandList) noexcept = 0;
 };
 #endif

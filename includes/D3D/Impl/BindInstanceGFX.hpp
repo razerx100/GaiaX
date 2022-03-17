@@ -22,7 +22,8 @@ public:
 
 	void SetGPUVirtualAddresses() noexcept override;
 
-	void BindCommands(ID3D12GraphicsCommandList* commandList) noexcept override;
+	void BindModels(ID3D12GraphicsCommandList* commandList) noexcept override;
+	void BindPipelineObjects(ID3D12GraphicsCommandList* commandList) noexcept override;
 
 private:
 	class ModelRaw {
