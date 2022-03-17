@@ -16,6 +16,10 @@ void ModelContainer::AddModel(
 }
 
 void ModelContainer::BindCommands(ID3D12GraphicsCommandList* commandList) noexcept {
+	D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle = DescTableManInst::GetRef()->GetTextureRangeStart();
+
+	commandList->SetGraphicsRootDescriptorTable(1u, gpuHandle);
+
 	m_bindInstance->BindCommands(commandList);
 }
 
@@ -80,7 +84,15 @@ ModelContainer::Pipeline ModelContainer::CreatePipeline(
 ) const {
 	std::unique_ptr<RootSignatureDynamic> signature =
 		std::make_unique<RootSignatureDynamic>();
-	signature->CompileSignature(false);
+
+	signature->AddConstants(1u, D3D12_SHADER_VISIBILITY_PIXEL, 0u);
+	signature->AddDescriptorTable(
+		D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
+		DescTableManInst::GetRef()->GetTextureDescriptorCount(),
+		D3D12_SHADER_VISIBILITY_PIXEL, 0u
+	);
+
+	signature->CompileSignature();
 	signature->CreateSignature(device);
 
 	std::unique_ptr<Shader> vs = std::make_unique<Shader>();
