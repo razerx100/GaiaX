@@ -61,7 +61,7 @@ void HeapManager::RecordUpload(ID3D12GraphicsCommandList* copyList) {
 		if (m_bufferData[index].type == BufferType::Texture) {
 			D3D12_TEXTURE_COPY_LOCATION dest = {};
 			dest.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
-			dest.pResource = m_uploadBuffers[index]->GetBuffer()->Get();
+			dest.pResource = m_gpuBuffers[index]->Get();
 			dest.SubresourceIndex = 0u;
 
 			D3D12_SUBRESOURCE_FOOTPRINT srcFootprint = {};
@@ -77,7 +77,7 @@ void HeapManager::RecordUpload(ID3D12GraphicsCommandList* copyList) {
 
 			D3D12_TEXTURE_COPY_LOCATION src = {};
 			src.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
-			src.pResource = m_gpuBuffers[index]->Get();
+			src.pResource = m_uploadBuffers[index]->GetBuffer()->Get();
 			src.PlacedFootprint = placedFootprint;
 
 			copyList->CopyTextureRegion(

@@ -91,10 +91,10 @@ void GraphicsEngineDx12::Render() {
 	ICommandListManager* listManRef = GfxCmdListInst::GetRef();
 	ID3D12GraphicsCommandList* commandList = listManRef->GetCommandListRef();
 
-	listManRef->Reset(
-		swapRef->GetCurrentBackBufferIndex()
-	);
-	D3D12_RESOURCE_BARRIER renderBarrier = swapRef->GetRenderStateBarrier();
+	size_t currentBackIndex = swapRef->GetCurrentBackBufferIndex();
+
+	listManRef->Reset(currentBackIndex);
+	D3D12_RESOURCE_BARRIER renderBarrier = swapRef->GetRenderStateBarrier(currentBackIndex);
 	commandList->ResourceBarrier(1u, &renderBarrier);
 
 	IViewportAndScissorManager* viewportRef = ViewPAndScsrInst::GetRef();
@@ -105,7 +105,7 @@ void GraphicsEngineDx12::Render() {
 	commandList->RSSetViewports(1u, viewportRef->GetViewportRef());
 	commandList->RSSetScissorRects(1u, viewportRef->GetScissorRef());
 
-	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = swapRef->GetRTVHandle();
+	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = swapRef->GetRTVHandle(currentBackIndex);
 
 	swapRef->ClearRTV(
 		commandList, &m_backgroundColour.x, rtvHandle
@@ -122,7 +122,7 @@ void GraphicsEngineDx12::Render() {
 	// Record objects
 	ModelContainerInst::GetRef()->BindCommands(commandList);
 
-	D3D12_RESOURCE_BARRIER presentBarrier = swapRef->GetPresentStateBarrier();
+	D3D12_RESOURCE_BARRIER presentBarrier = swapRef->GetPresentStateBarrier(currentBackIndex);
 	commandList->ResourceBarrier(1u, &presentBarrier);
 
 	listManRef->Close();

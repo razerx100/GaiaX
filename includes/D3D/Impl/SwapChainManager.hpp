@@ -25,11 +25,11 @@ public:
 		ID3D12GraphicsCommandList* commandList, float* clearColor,
 		D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle
 	) noexcept override;
-	D3D12_CPU_DESCRIPTOR_HANDLE GetRTVHandle() const noexcept override;
+	D3D12_CPU_DESCRIPTOR_HANDLE GetRTVHandle(size_t index) const noexcept override;
 
 	size_t GetCurrentBackBufferIndex() const noexcept override;
-	D3D12_RESOURCE_BARRIER GetRenderStateBarrier() const noexcept override;
-	D3D12_RESOURCE_BARRIER GetPresentStateBarrier() const noexcept override;
+	D3D12_RESOURCE_BARRIER GetRenderStateBarrier(size_t index) const noexcept override;
+	D3D12_RESOURCE_BARRIER GetPresentStateBarrier(size_t index) const noexcept override;
 
 	IDXGISwapChain4* GetRef() const noexcept override;
 

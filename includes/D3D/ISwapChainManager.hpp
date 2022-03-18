@@ -20,11 +20,11 @@ public:
 		ID3D12GraphicsCommandList* commandList, float* clearColor,
 		D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle
 	) noexcept = 0;
-	virtual D3D12_CPU_DESCRIPTOR_HANDLE GetRTVHandle() const noexcept = 0;
+	virtual D3D12_CPU_DESCRIPTOR_HANDLE GetRTVHandle(size_t index) const noexcept = 0;
 
 	virtual size_t GetCurrentBackBufferIndex() const noexcept = 0;
-	virtual D3D12_RESOURCE_BARRIER GetRenderStateBarrier() const noexcept = 0;
-	virtual D3D12_RESOURCE_BARRIER GetPresentStateBarrier() const noexcept = 0;
+	virtual D3D12_RESOURCE_BARRIER GetRenderStateBarrier(size_t index) const noexcept = 0;
+	virtual D3D12_RESOURCE_BARRIER GetPresentStateBarrier(size_t index) const noexcept = 0;
 
 	virtual IDXGISwapChain4* GetRef() const noexcept = 0;
 };

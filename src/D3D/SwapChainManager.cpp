@@ -90,25 +90,25 @@ void SwapChainManager::ClearRTV(
 	commandList->ClearRenderTargetView(rtvHandle, clearColor, 0u, nullptr);
 }
 
-D3D12_CPU_DESCRIPTOR_HANDLE SwapChainManager::GetRTVHandle() const noexcept {
+D3D12_CPU_DESCRIPTOR_HANDLE SwapChainManager::GetRTVHandle(size_t index) const noexcept {
 	return CD3DX12_CPU_DESCRIPTOR_HANDLE(
 		m_pRtvHeap->GetCPUDescriptorHandleForHeapStart(),
-		static_cast<INT>(GetCurrentBackBufferIndex()),
+		static_cast<INT>(index),
 		static_cast<UINT>(m_rtvDescSize)
 	);
 }
 
-D3D12_RESOURCE_BARRIER SwapChainManager::GetRenderStateBarrier() const noexcept {
+D3D12_RESOURCE_BARRIER SwapChainManager::GetRenderStateBarrier(size_t index) const noexcept {
 	return CD3DX12_RESOURCE_BARRIER::Transition(
-		m_pRenderTargetViews[GetCurrentBackBufferIndex()].Get(),
+		m_pRenderTargetViews[index].Get(),
 		D3D12_RESOURCE_STATE_PRESENT,
 		D3D12_RESOURCE_STATE_RENDER_TARGET
 	);
 }
 
-D3D12_RESOURCE_BARRIER SwapChainManager::GetPresentStateBarrier() const noexcept {
+D3D12_RESOURCE_BARRIER SwapChainManager::GetPresentStateBarrier(size_t index) const noexcept {
 	return CD3DX12_RESOURCE_BARRIER::Transition(
-		m_pRenderTargetViews[GetCurrentBackBufferIndex()].Get(),
+		m_pRenderTargetViews[index].Get(),
 		D3D12_RESOURCE_STATE_RENDER_TARGET,
 		D3D12_RESOURCE_STATE_PRESENT
 	);
