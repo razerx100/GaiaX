@@ -128,10 +128,8 @@ void GraphicsEngineDx12::Render() {
 	listManRef->Close();
 	queueRef->ExecuteCommandLists(commandList);
 
-	size_t backBufferIndex = swapRef->GetCurrentBackBufferIndex();
-
 	swapRef->PresentWithTear();
-	queueRef->MoveToNextFrame(backBufferIndex);
+	queueRef->MoveToNextFrame(currentBackIndex);
 }
 
 void GraphicsEngineDx12::Resize(std::uint32_t width, std::uint32_t height) {

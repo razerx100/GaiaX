@@ -22,20 +22,24 @@ void HeapManager::CreateBuffers(ID3D12Device* device, bool msaa) {
 	m_gpuHeap->CreateHeap(device, alignedSize, msaa);
 
 	for (size_t index = 0u; index < m_bufferData.size(); ++index) {
+		std::shared_ptr<IUploadBuffer>& uploadBuffer = m_uploadBuffers[index];
+		std::shared_ptr<D3DBuffer>& gpuBuffer = m_gpuBuffers[index];
+		BufferData& bufferData = m_bufferData[index];
+
 		CreatePlacedResource(
 			device, m_uploadHeap->GetHeap(),
-			m_uploadBuffers[index]->GetBuffer(), m_bufferData[index].offset,
-			GetBufferDesc(m_bufferData[index].bufferSize),
+			uploadBuffer->GetBuffer(), bufferData.offset,
+			GetBufferDesc(bufferData.bufferSize),
 			true
 		);
-		m_uploadBuffers[index]->MapBuffer();
+		uploadBuffer->MapBuffer();
 
 		CreatePlacedResource(
 			device, m_gpuHeap->GetHeap(),
-			m_gpuBuffers[index], m_bufferData[index].offset,
+			gpuBuffer, bufferData.offset,
 			GetResourceDesc(
-				m_bufferData[index],
-				m_bufferData[index].type == BufferType::Texture
+				bufferData,
+				bufferData.type == BufferType::Texture
 			),
 			false
 		);
@@ -45,31 +49,39 @@ void HeapManager::CreateBuffers(ID3D12Device* device, bool msaa) {
 void HeapManager::RecordUpload(ID3D12GraphicsCommandList* copyList) {
 	for (size_t index = 0u; index < m_bufferData.size(); ++index) {
 		D3D12_RESOURCE_BARRIER activationBarriers[2] = {};
-		activationBarriers[0].Type = D3D12_RESOURCE_BARRIER_TYPE_ALIASING;
-		activationBarriers[0].Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-		activationBarriers[0].Aliasing.pResourceBefore = nullptr;
-		activationBarriers[0].Aliasing.pResourceBefore =
-			m_uploadBuffers[index]->GetBuffer()->Get();
 
-		activationBarriers[1].Type = D3D12_RESOURCE_BARRIER_TYPE_ALIASING;
-		activationBarriers[1].Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-		activationBarriers[1].Aliasing.pResourceBefore = nullptr;
-		activationBarriers[1].Aliasing.pResourceBefore = m_gpuBuffers[index]->Get();
+		D3D12_RESOURCE_BARRIER& barrierUploadBuffer = activationBarriers[0];
+		D3D12_RESOURCE_BARRIER& barrierGPUBuffer = activationBarriers[1];
+
+		ID3D12Resource* uploadBuffer = m_uploadBuffers[index]->GetBuffer()->Get();
+		ID3D12Resource* gpuBuffer = m_gpuBuffers[index]->Get();
+
+		barrierUploadBuffer.Type = D3D12_RESOURCE_BARRIER_TYPE_ALIASING;
+		barrierUploadBuffer.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+		barrierUploadBuffer.Aliasing.pResourceBefore = nullptr;
+		barrierUploadBuffer.Aliasing.pResourceBefore = uploadBuffer;
+
+		barrierGPUBuffer.Type = D3D12_RESOURCE_BARRIER_TYPE_ALIASING;
+		barrierGPUBuffer.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+		barrierGPUBuffer.Aliasing.pResourceBefore = nullptr;
+		barrierGPUBuffer.Aliasing.pResourceBefore = gpuBuffer;
 
 		copyList->ResourceBarrier(2u, activationBarriers);
 
-		if (m_bufferData[index].type == BufferType::Texture) {
+		BufferData& bufferData = m_bufferData[index];
+
+		if (bufferData.type == BufferType::Texture) {
 			D3D12_TEXTURE_COPY_LOCATION dest = {};
 			dest.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
-			dest.pResource = m_gpuBuffers[index]->Get();
+			dest.pResource = gpuBuffer;
 			dest.SubresourceIndex = 0u;
 
 			D3D12_SUBRESOURCE_FOOTPRINT srcFootprint = {};
 			srcFootprint.Depth = 1u;
 			srcFootprint.Format = GraphicsEngineDx12::RENDER_FORMAT;
-			srcFootprint.Width = static_cast<UINT>(m_bufferData[index].width / 4u);
-			srcFootprint.Height = static_cast<UINT>(m_bufferData[index].height);
-			srcFootprint.RowPitch = static_cast<UINT>(m_bufferData[index].width);
+			srcFootprint.Width = static_cast<UINT>(bufferData.width / 4u);
+			srcFootprint.Height = static_cast<UINT>(bufferData.height);
+			srcFootprint.RowPitch = static_cast<UINT>(bufferData.width);
 
 			D3D12_PLACED_SUBRESOURCE_FOOTPRINT placedFootprint = {};
 			placedFootprint.Offset = 0u;
@@ -77,7 +89,7 @@ void HeapManager::RecordUpload(ID3D12GraphicsCommandList* copyList) {
 
 			D3D12_TEXTURE_COPY_LOCATION src = {};
 			src.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
-			src.pResource = m_uploadBuffers[index]->GetBuffer()->Get();
+			src.pResource = uploadBuffer;
 			src.PlacedFootprint = placedFootprint;
 
 			copyList->CopyTextureRegion(
@@ -89,20 +101,20 @@ void HeapManager::RecordUpload(ID3D12GraphicsCommandList* copyList) {
 		}
 		else
 			copyList->CopyResource(
-				m_gpuBuffers[index]->Get(),
-				m_uploadBuffers[index]->GetBuffer()->Get()
+				gpuBuffer,
+				uploadBuffer
 			);
 
 		D3D12_RESOURCE_STATES afterState = D3D12_RESOURCE_STATE_COMMON;
-		if (m_bufferData[index].type == BufferType::Index)
+		if (bufferData.type == BufferType::Index)
 			afterState = D3D12_RESOURCE_STATE_INDEX_BUFFER;
-		else if (m_bufferData[index].type == BufferType::Vertex)
+		else if (bufferData.type == BufferType::Vertex)
 			afterState = D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
-		else if (m_bufferData[index].type == BufferType::Texture)
+		else if (bufferData.type == BufferType::Texture)
 			afterState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 
 		D3D12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
-			m_gpuBuffers[index]->Get(),
+			gpuBuffer,
 			D3D12_RESOURCE_STATE_COPY_DEST,
 			afterState
 		);

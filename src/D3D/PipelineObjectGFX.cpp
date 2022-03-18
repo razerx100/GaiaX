@@ -21,7 +21,7 @@ void PipelineObjectGFX::CreatePipelineState(
 	psoDesc.DepthStencilState.StencilEnable = FALSE;
 	psoDesc.SampleMask = UINT_MAX;
 	psoDesc.NumRenderTargets = 1u;
-	psoDesc.RTVFormats[0u] = GraphicsEngineDx12::RENDER_FORMAT;
+	psoDesc.RTVFormats[0] = GraphicsEngineDx12::RENDER_FORMAT;
 	psoDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
 	psoDesc.SampleDesc.Count = 1u;
 	psoDesc.InputLayout = vertexLayout.GetLayout();

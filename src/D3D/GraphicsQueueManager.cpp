@@ -42,17 +42,23 @@ void GraphicsQueueManager::InitSyncObjects(
 }
 
 void GraphicsQueueManager::WaitForGPU(size_t backBufferIndex) {
+	std::uint64_t& currentFenceValue = m_fenceValues[backBufferIndex];
+
 	HRESULT hr;
-	D3D_THROW_FAILED(hr, m_pCommandQueue->Signal(
-		m_pFence.Get(), m_fenceValues[backBufferIndex])
+	D3D_THROW_FAILED(hr,
+		m_pCommandQueue->Signal(
+			m_pFence.Get(), currentFenceValue
+		)
 	);
 
 	D3D_THROW_FAILED(hr,
 		m_pFence->SetEventOnCompletion(
-			m_fenceValues[backBufferIndex], m_fenceEvent));
+			currentFenceValue, m_fenceEvent
+		)
+	);
 	WaitForSingleObjectEx(m_fenceEvent, INFINITE, FALSE);
 
-	++m_fenceValues[backBufferIndex];
+	++currentFenceValue;
 }
 
 void GraphicsQueueManager::ExecuteCommandLists(
@@ -66,23 +72,28 @@ void GraphicsQueueManager::ExecuteCommandLists(
 }
 
 void GraphicsQueueManager::MoveToNextFrame(size_t backBufferIndex) {
-	const std::uint64_t currentFenceValue = m_fenceValues[backBufferIndex];
+	const std::uint64_t oldFenceValue = m_fenceValues[backBufferIndex];
+
 	HRESULT hr;
 	D3D_THROW_FAILED(hr,
 		m_pCommandQueue->Signal(m_pFence.Get(),
-			currentFenceValue)
+			oldFenceValue
+		)
 	);
 
-	backBufferIndex = SwapchainInst::GetRef()->GetCurrentBackBufferIndex();
+	std::uint64_t& newFenceValue =
+		m_fenceValues[SwapchainInst::GetRef()->GetCurrentBackBufferIndex()];
 
-	if (m_pFence->GetCompletedValue() < m_fenceValues[backBufferIndex]) {
+	if (m_pFence->GetCompletedValue() < newFenceValue) {
 		D3D_THROW_FAILED(hr,
 			m_pFence->SetEventOnCompletion(
-				m_fenceValues[backBufferIndex], m_fenceEvent));
+				newFenceValue, m_fenceEvent
+			)
+		);
 		WaitForSingleObjectEx(m_fenceEvent, INFINITE, FALSE);
 	}
 
-	m_fenceValues[backBufferIndex] = currentFenceValue + 1u;
+	newFenceValue = oldFenceValue + 1u;
 }
 
 void GraphicsQueueManager::ResetFenceValuesWith(size_t valueIndex) {

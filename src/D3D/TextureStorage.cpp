@@ -52,11 +52,14 @@ void TextureStorage::CopyData(std::atomic_size_t& workCount) noexcept {
 
 	GetVenusInstance()->SubmitWork(
 		[&] {
-			for (size_t index = 0u; index < m_textureData.size(); ++index)
+			for (size_t index = 0u; index < m_textureData.size(); ++index) {
+				TextureData& textureData = m_textureData[index];
+
 				std::memcpy(
 					m_uploadBuffers[index]->GetCPUHandle(),
-					m_textureData[index].data, m_textureData[index].textureSize
+					textureData.data, textureData.textureSize
 				);
+			}
 
 			--workCount;
 		}

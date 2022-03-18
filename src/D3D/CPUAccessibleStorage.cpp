@@ -48,7 +48,9 @@ void CPUAccessibleStorage::CreateBuffer(ID3D12Device* device) {
 	}
 
 	for (size_t index = 0u; index < m_sharedOffsets.size(); ++index) {
-		m_sharedOffsets[index].first += cpuStart;
-		m_sharedOffsets[index].second += gpuStart;
+		SharedPair& sharedOffset = m_sharedOffsets[index];
+
+		sharedOffset.first += cpuStart;
+		sharedOffset.second += gpuStart;
 	}
 }
