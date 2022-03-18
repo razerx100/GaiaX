@@ -125,7 +125,7 @@ BufferPair HeapManager::AddBuffer(
 	m_currentMemoryOffset = Ceres::Math::Align(m_currentMemoryOffset, alignment);
 
 	m_bufferData.emplace_back(
-		1u, bufferSize, alignment, m_currentMemoryOffset, bufferSize, type
+		bufferSize, 1u, alignment, m_currentMemoryOffset, bufferSize, type
 	);
 	m_gpuBuffers.emplace_back(std::make_shared<D3DBuffer>());
 	m_uploadBuffers.emplace_back(std::make_shared<UploadBuffer>());
@@ -157,7 +157,7 @@ BufferPair HeapManager::AddTexture(
 	m_currentMemoryOffset = Ceres::Math::Align(m_currentMemoryOffset, allocInfo.Alignment);
 
 	m_bufferData.emplace_back(
-		rows, rowPitch, allocInfo.Alignment, m_currentMemoryOffset,
+		rowPitch, rows, allocInfo.Alignment, m_currentMemoryOffset,
 		allocInfo.SizeInBytes, BufferType::Texture
 	);
 	m_currentMemoryOffset += allocInfo.SizeInBytes;
