@@ -59,31 +59,31 @@ void HeapManager::RecordUpload(ID3D12GraphicsCommandList* copyList) {
 		copyList->ResourceBarrier(2u, activationBarriers);
 
 		if (m_bufferData[index].type == BufferType::Texture) {
-			D3D12_TEXTURE_COPY_LOCATION src = {};
-			src.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
-			src.pResource = m_uploadBuffers[index]->GetBuffer()->Get();
-			src.SubresourceIndex = 0u;
+			D3D12_TEXTURE_COPY_LOCATION dest = {};
+			dest.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
+			dest.pResource = m_uploadBuffers[index]->GetBuffer()->Get();
+			dest.SubresourceIndex = 0u;
 
-			D3D12_SUBRESOURCE_FOOTPRINT destFootprint = {};
-			destFootprint.Depth = 0u;
-			destFootprint.Format = GraphicsEngineDx12::RENDER_FORMAT;
-			destFootprint.Width = static_cast<UINT>(m_bufferData[index].width / 4u);
-			destFootprint.Height = static_cast<UINT>(m_bufferData[index].height);
-			destFootprint.RowPitch = static_cast<UINT>(m_bufferData[index].width);
+			D3D12_SUBRESOURCE_FOOTPRINT srcFootprint = {};
+			srcFootprint.Depth = 1u;
+			srcFootprint.Format = GraphicsEngineDx12::RENDER_FORMAT;
+			srcFootprint.Width = static_cast<UINT>(m_bufferData[index].width / 4u);
+			srcFootprint.Height = static_cast<UINT>(m_bufferData[index].height);
+			srcFootprint.RowPitch = static_cast<UINT>(m_bufferData[index].width);
 
 			D3D12_PLACED_SUBRESOURCE_FOOTPRINT placedFootprint = {};
 			placedFootprint.Offset = 0u;
-			placedFootprint.Footprint = destFootprint;
+			placedFootprint.Footprint = srcFootprint;
 
-			D3D12_TEXTURE_COPY_LOCATION dest = {};
-			dest.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
-			dest.pResource = m_gpuBuffers[index]->Get();
-			dest.PlacedFootprint = placedFootprint;
+			D3D12_TEXTURE_COPY_LOCATION src = {};
+			src.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
+			src.pResource = m_gpuBuffers[index]->Get();
+			src.PlacedFootprint = placedFootprint;
 
 			copyList->CopyTextureRegion(
-				&src,
-				0u, 0u, 0u,
 				&dest,
+				0u, 0u, 0u,
+				&src,
 				nullptr
 			);
 		}
@@ -148,6 +148,8 @@ BufferPair HeapManager::AddTexture(
 		alignment = 64_KB;
 	else
 		alignment = 4_KB;
+
+	rowPitch = Ceres::Math::Align(rowPitch, 256u);
 
 	D3D12_RESOURCE_DESC texDesc = GetTextureDesc(rows, rowPitch, alignment);
 
