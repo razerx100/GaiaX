@@ -10,7 +10,7 @@ public:
 		D3D12_COMMAND_LIST_TYPE type, size_t allocatorsCount
 	);
 
-	void Reset(size_t allocIndex) const override;
+	void Reset(size_t allocIndex) override;
 	void Close() const override;
 
 	ID3D12GraphicsCommandList* GetCommandListRef() const noexcept override;

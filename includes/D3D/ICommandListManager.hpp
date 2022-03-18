@@ -7,7 +7,7 @@ class ICommandListManager {
 public:
 	virtual ~ICommandListManager() = default;
 
-	virtual void Reset(size_t allocIndex) const = 0;
+	virtual void Reset(size_t allocIndex) = 0;
 	virtual void Close() const = 0;
 
 	virtual ID3D12GraphicsCommandList* GetCommandListRef() const noexcept = 0;

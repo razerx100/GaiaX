@@ -37,7 +37,9 @@ void CopyQueueManager::WaitForGPU() {
 
 	D3D_THROW_FAILED(hr,
 		m_pFence->SetEventOnCompletion(
-			m_fenceValue, m_fenceEvent));
+			m_fenceValue, m_fenceEvent
+		)
+	);
 	WaitForSingleObjectEx(m_fenceEvent, INFINITE, FALSE);
 
 	++m_fenceValue;

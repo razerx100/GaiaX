@@ -28,11 +28,13 @@ CommandListManager::CommandListManager(
 	);
 }
 
-void CommandListManager::Reset(size_t allocIndex) const {
+void CommandListManager::Reset(size_t allocIndex) {
+	ComPtr<ID3D12CommandAllocator>& currentAllocator = m_pCommandAllocators[allocIndex];
+
 	HRESULT hr;
-	D3D_THROW_FAILED(hr, m_pCommandAllocators[allocIndex]->Reset());
+	D3D_THROW_FAILED(hr, currentAllocator->Reset());
 	D3D_THROW_FAILED(hr,
-		m_pCommandList->Reset(m_pCommandAllocators[allocIndex].Get(), nullptr)
+		m_pCommandList->Reset(currentAllocator.Get(), nullptr)
 	);
 }
 
