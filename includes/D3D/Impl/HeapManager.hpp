@@ -21,12 +21,13 @@ public:
 
 private:
 	struct BufferData {
+		BufferType type;
 		size_t width;
 		size_t height;
 		size_t alignment;
 		size_t offset;
 		size_t bufferSize;
-		BufferType type;
+		size_t rowPitch;
 	};
 
 private:

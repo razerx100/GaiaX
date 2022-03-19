@@ -79,9 +79,9 @@ void HeapManager::RecordUpload(ID3D12GraphicsCommandList* copyList) {
 			D3D12_SUBRESOURCE_FOOTPRINT srcFootprint = {};
 			srcFootprint.Depth = 1u;
 			srcFootprint.Format = GraphicsEngineDx12::RENDER_FORMAT;
-			srcFootprint.Width = static_cast<UINT>(bufferData.width / 4u);
+			srcFootprint.Width = static_cast<UINT>(bufferData.width);
 			srcFootprint.Height = static_cast<UINT>(bufferData.height);
-			srcFootprint.RowPitch = static_cast<UINT>(bufferData.width);
+			srcFootprint.RowPitch = static_cast<UINT>(bufferData.rowPitch);
 
 			D3D12_PLACED_SUBRESOURCE_FOOTPRINT placedFootprint = {};
 			placedFootprint.Offset = 0u;
@@ -137,7 +137,7 @@ BufferPair HeapManager::AddBuffer(
 	m_currentMemoryOffset = Ceres::Math::Align(m_currentMemoryOffset, alignment);
 
 	m_bufferData.emplace_back(
-		bufferSize, 1u, alignment, m_currentMemoryOffset, bufferSize, type
+		type, bufferSize / 4u, 1u, alignment, m_currentMemoryOffset, bufferSize, bufferSize
 	);
 	m_gpuBuffers.emplace_back(std::make_shared<D3DBuffer>());
 	m_uploadBuffers.emplace_back(std::make_shared<UploadBuffer>());
@@ -155,6 +155,7 @@ BufferPair HeapManager::AddTexture(
 	m_uploadBuffers.emplace_back(std::make_shared<UploadBuffer>());
 
 	size_t alignment = 0u;
+	size_t width = rowPitch / 4u;
 
 	if (msaa)
 		alignment = 64_KB;
@@ -171,8 +172,9 @@ BufferPair HeapManager::AddTexture(
 	m_currentMemoryOffset = Ceres::Math::Align(m_currentMemoryOffset, allocInfo.Alignment);
 
 	m_bufferData.emplace_back(
-		rowPitch, rows, allocInfo.Alignment, m_currentMemoryOffset,
-		allocInfo.SizeInBytes, BufferType::Texture
+		BufferType::Texture,
+		width, rows, allocInfo.Alignment, m_currentMemoryOffset,
+		allocInfo.SizeInBytes, rowPitch
 	);
 	m_currentMemoryOffset += allocInfo.SizeInBytes;
 
