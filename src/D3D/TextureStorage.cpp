@@ -28,7 +28,7 @@ size_t TextureStorage::AddTexture(
 
 void TextureStorage::CreateBufferViews(ID3D12Device* device) {
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-	srvDesc.Format = GraphicsEngineDx12::RENDER_FORMAT;
+	srvDesc.Format = GraphicsEngineDx12::TEXTURE_FORMAT;
 	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
 	srvDesc.Texture2D.MipLevels = 1u;
 	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;

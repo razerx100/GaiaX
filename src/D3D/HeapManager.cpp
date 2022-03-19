@@ -78,7 +78,7 @@ void HeapManager::RecordUpload(ID3D12GraphicsCommandList* copyList) {
 
 			D3D12_SUBRESOURCE_FOOTPRINT srcFootprint = {};
 			srcFootprint.Depth = 1u;
-			srcFootprint.Format = GraphicsEngineDx12::RENDER_FORMAT;
+			srcFootprint.Format = GraphicsEngineDx12::TEXTURE_FORMAT;
 			srcFootprint.Width = static_cast<UINT>(bufferData.width);
 			srcFootprint.Height = static_cast<UINT>(bufferData.height);
 			srcFootprint.RowPitch = static_cast<UINT>(
@@ -207,7 +207,7 @@ D3D12_RESOURCE_DESC HeapManager::GetTextureDesc(
 ) const noexcept {
 	D3D12_RESOURCE_DESC texDesc = {};
 
-	texDesc.Format = GraphicsEngineDx12::RENDER_FORMAT;
+	texDesc.Format = GraphicsEngineDx12::TEXTURE_FORMAT;
 	texDesc.Width = static_cast<UINT64>(width);
 	texDesc.Height = static_cast<UINT>(height);
 	texDesc.DepthOrArraySize = 1u;
