@@ -7,12 +7,13 @@
 
 size_t TextureStorage::AddTexture(
 	ID3D12Device* device,
-	const void* data, size_t rowPitch, size_t rows
+	const void* data,
+	size_t width, size_t height, size_t pixelSizeInBytes
 ) noexcept {
-	m_textureData.emplace_back(data, rowPitch * rows);
+	m_textureData.emplace_back(data, width * pixelSizeInBytes * height);
 
 	auto [gpuBuffer, uploadBuffer] =
-		HeapManagerInst::GetRef()->AddTexture(device, rowPitch, rows);
+		HeapManagerInst::GetRef()->AddTexture(device, width, height, pixelSizeInBytes);
 
 	m_gpuBuffers.emplace_back(gpuBuffer);
 	m_uploadBuffers.emplace_back(uploadBuffer);

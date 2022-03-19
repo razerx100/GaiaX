@@ -231,9 +231,11 @@ void GraphicsEngineDx12::ProcessData() {
 }
 
 size_t GraphicsEngineDx12::RegisterResource(
-	const void* data, size_t rowPitch, size_t rows
+	const void* data,
+	size_t width, size_t height, size_t pixelSizeInBytes
 ) {
 	return TexStorInst::GetRef()->AddTexture(
-		DeviceInst::GetRef()->GetDeviceRef(), data, rowPitch, rows
+		DeviceInst::GetRef()->GetDeviceRef(), data,
+		width, height, pixelSizeInBytes
 	);
 }

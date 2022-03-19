@@ -13,7 +13,9 @@ public:
 	) override;
 	BufferPair AddTexture(
 		ID3D12Device* device,
-		size_t rowPitch, size_t rows, bool msaa = false
+		size_t width, size_t height,
+		size_t pixelSizeInBytes,
+		bool msaa = false
 	) override;
 	void CreateBuffers(ID3D12Device* device, bool msaa = false) override;
 	void RecordUpload(ID3D12GraphicsCommandList* copyList) override;
@@ -26,8 +28,8 @@ private:
 		size_t height;
 		size_t alignment;
 		size_t offset;
-		size_t bufferSize;
 		size_t rowPitch;
+		size_t bufferSize;
 	};
 
 private:

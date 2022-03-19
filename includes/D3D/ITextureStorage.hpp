@@ -9,7 +9,8 @@ public:
 
 	virtual size_t AddTexture(
 		ID3D12Device* device,
-		const void* data, size_t rowPitch, size_t rows
+		const void* data,
+		size_t width, size_t height, size_t pixelSizeInBytes
 	) noexcept = 0;
 	virtual size_t GetPhysicalIndexFromVirtual(size_t virtualIndex) const noexcept = 0;
 

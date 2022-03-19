@@ -15,7 +15,8 @@ public:
 
 	[[nodiscard]]
 	size_t RegisterResource(
-		const void* data, size_t rowPitch, size_t rows
+		const void* data,
+		size_t width, size_t height, size_t pixelSizeInBytes
 	) override;
 
 	void SetBackgroundColour(const Ceres::Float32_4& colour) noexcept override;

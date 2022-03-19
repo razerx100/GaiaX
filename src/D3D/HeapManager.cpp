@@ -81,7 +81,9 @@ void HeapManager::RecordUpload(ID3D12GraphicsCommandList* copyList) {
 			srcFootprint.Format = GraphicsEngineDx12::RENDER_FORMAT;
 			srcFootprint.Width = static_cast<UINT>(bufferData.width);
 			srcFootprint.Height = static_cast<UINT>(bufferData.height);
-			srcFootprint.RowPitch = static_cast<UINT>(bufferData.rowPitch);
+			srcFootprint.RowPitch = static_cast<UINT>(
+				Ceres::Math::Align(bufferData.rowPitch, 256u)
+				);
 
 			D3D12_PLACED_SUBRESOURCE_FOOTPRINT placedFootprint = {};
 			placedFootprint.Offset = 0u;
@@ -149,22 +151,20 @@ BufferPair HeapManager::AddBuffer(
 
 BufferPair HeapManager::AddTexture(
 	ID3D12Device* device,
-	size_t rowPitch, size_t rows, bool msaa
+	size_t width, size_t height, size_t pixelSizeInBytes,
+	bool msaa
 ) {
 	m_gpuBuffers.emplace_back(std::make_shared<D3DBuffer>());
 	m_uploadBuffers.emplace_back(std::make_shared<UploadBuffer>());
 
 	size_t alignment = 0u;
-	size_t width = rowPitch / 4u;
 
 	if (msaa)
 		alignment = 64_KB;
 	else
 		alignment = 4_KB;
 
-	rowPitch = Ceres::Math::Align(rowPitch, 256u);
-
-	D3D12_RESOURCE_DESC texDesc = GetTextureDesc(rows, rowPitch, alignment);
+	D3D12_RESOURCE_DESC texDesc = GetTextureDesc(height, width, alignment);
 
 	D3D12_RESOURCE_ALLOCATION_INFO allocInfo =
 		device->GetResourceAllocationInfo(0u, 1u, &texDesc);
@@ -173,8 +173,8 @@ BufferPair HeapManager::AddTexture(
 
 	m_bufferData.emplace_back(
 		BufferType::Texture,
-		width, rows, allocInfo.Alignment, m_currentMemoryOffset,
-		allocInfo.SizeInBytes, rowPitch
+		width, height, allocInfo.Alignment, m_currentMemoryOffset,
+		width * pixelSizeInBytes, allocInfo.SizeInBytes
 	);
 	m_currentMemoryOffset += allocInfo.SizeInBytes;
 
@@ -228,6 +228,6 @@ D3D12_RESOURCE_DESC	HeapManager::GetResourceDesc(
 	return 	texture ? GetTextureDesc(
 		bufferData.height, bufferData.width,
 		bufferData.alignment
-	) : GetBufferDesc(bufferData.width);
+	) : GetBufferDesc(bufferData.bufferSize);
 }
 
