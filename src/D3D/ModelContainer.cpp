@@ -92,6 +92,7 @@ ModelContainer::Pipeline ModelContainer::CreatePipeline(
 		static_cast<std::uint32_t>(DescTableManInst::GetRef()->GetTextureDescriptorCount()),
 		D3D12_SHADER_VISIBILITY_PIXEL, 0u
 	);
+	signature->AddConstants(6u, D3D12_SHADER_VISIBILITY_VERTEX, 1u);
 
 	signature->CompileSignature();
 	signature->CreateSignature(device);

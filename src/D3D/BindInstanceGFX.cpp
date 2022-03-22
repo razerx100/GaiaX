@@ -121,5 +121,8 @@ void BindInstanceGFX::ModelRaw::Draw(ID3D12GraphicsCommandList* commandList) noe
 	commandList->IASetIndexBuffer(m_indexBufferView.GetAddress());
 	commandList->SetGraphicsRoot32BitConstant(0u, m_modelRef->GetTextureIndex(), 0u);
 
+	const TextureData& texInfo = m_modelRef->GetTextureInfo();
+	commandList->SetGraphicsRoot32BitConstants(2u, 6u, &texInfo, 0u);
+
 	commandList->DrawIndexedInstanced(m_indexCount, 1u, 0u, 0u, 0u);
 }
