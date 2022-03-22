@@ -79,8 +79,9 @@ void RootSignatureDynamic::CompileSignature(bool staticSampler) {
 		D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS |
 		D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS;
 
+	D3D12_STATIC_SAMPLER_DESC staticSamplerDesc = {};
+
 	if (staticSampler) {
-		D3D12_STATIC_SAMPLER_DESC staticSamplerDesc = {};
 		staticSamplerDesc.ShaderRegister = 0u;
 		staticSamplerDesc.RegisterSpace = 0u;
 		staticSamplerDesc.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
