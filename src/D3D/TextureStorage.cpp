@@ -10,7 +10,16 @@ size_t TextureStorage::AddTexture(
 	const void* data,
 	size_t width, size_t height, size_t pixelSizeInBytes
 ) noexcept {
-	m_textureData.emplace_back(data, width * pixelSizeInBytes * height);
+	DXGI_FORMAT textureFormat = DXGI_FORMAT_UNKNOWN;
+
+	if (pixelSizeInBytes == 16u)
+		textureFormat = DXGI_FORMAT_R32G32B32A32_FLOAT;
+	else if(pixelSizeInBytes == 4u)
+		textureFormat = DXGI_FORMAT_R8G8B8A8_UINT;
+
+	m_textureData.emplace_back(
+		data, width * pixelSizeInBytes * height, textureFormat
+	);
 
 	auto [gpuBuffer, uploadBuffer] =
 		HeapManagerInst::GetRef()->AddTexture(device, width, height, pixelSizeInBytes);
@@ -28,7 +37,6 @@ size_t TextureStorage::AddTexture(
 
 void TextureStorage::CreateBufferViews(ID3D12Device* device) {
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-	srvDesc.Format = GraphicsEngineDx12::TEXTURE_FORMAT;
 	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
 	srvDesc.Texture2D.MipLevels = 1u;
 	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
@@ -36,6 +44,8 @@ void TextureStorage::CreateBufferViews(ID3D12Device* device) {
 	D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = {};
 	for (size_t index = 0u; index < m_cpuHandles.size(); ++index) {
 		cpuHandle.ptr = *m_cpuHandles[index];
+
+		srvDesc.Format = m_textureData[index].textureFormat;
 
 		device->CreateShaderResourceView(
 			m_gpuBuffers[index]->Get(), &srvDesc, cpuHandle
@@ -68,6 +78,7 @@ void TextureStorage::CopyData(std::atomic_size_t& workCount) noexcept {
 }
 
 void TextureStorage::ReleaseUploadBuffer() noexcept {
+	m_textureData = std::vector<TextureData>();
 	m_uploadBuffers = std::vector<std::shared_ptr<IUploadBuffer>>();
 	m_cpuHandles = std::vector<SharedCPUHandle>();
 }

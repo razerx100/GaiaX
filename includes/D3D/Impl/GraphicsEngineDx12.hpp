@@ -35,7 +35,6 @@ public:
 
 public:
 	static constexpr DXGI_FORMAT RENDER_FORMAT = DXGI_FORMAT_R8G8B8A8_UNORM;
-	static constexpr DXGI_FORMAT TEXTURE_FORMAT = DXGI_FORMAT_R32G32B32A32_FLOAT;
 
 private:
 	Ceres::Float32_4 m_backgroundColour;

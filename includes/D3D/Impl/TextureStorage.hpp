@@ -22,6 +22,7 @@ private:
 	struct TextureData {
 		const void* data;
 		size_t textureSize;
+		DXGI_FORMAT textureFormat;
 	};
 
 private:

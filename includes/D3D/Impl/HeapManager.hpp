@@ -30,6 +30,7 @@ private:
 		size_t offset;
 		size_t rowPitch;
 		size_t bufferSize;
+		DXGI_FORMAT textureFormat;
 	};
 
 private:
@@ -43,7 +44,8 @@ private:
 	) const noexcept;
 	D3D12_RESOURCE_DESC GetBufferDesc(size_t bufferSize) const noexcept;
 	D3D12_RESOURCE_DESC GetTextureDesc(
-		size_t height, size_t width, size_t alignment
+		size_t height, size_t width, size_t alignment,
+		DXGI_FORMAT textureFormat
 	) const noexcept;
 
 private:

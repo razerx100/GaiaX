@@ -78,7 +78,7 @@ void HeapManager::RecordUpload(ID3D12GraphicsCommandList* copyList) {
 
 			D3D12_SUBRESOURCE_FOOTPRINT srcFootprint = {};
 			srcFootprint.Depth = 1u;
-			srcFootprint.Format = GraphicsEngineDx12::TEXTURE_FORMAT;
+			srcFootprint.Format = bufferData.textureFormat;
 			srcFootprint.Width = static_cast<UINT>(bufferData.width);
 			srcFootprint.Height = static_cast<UINT>(bufferData.height);
 			srcFootprint.RowPitch = static_cast<UINT>(
@@ -139,7 +139,8 @@ BufferPair HeapManager::AddBuffer(
 	m_currentMemoryOffset = Ceres::Math::Align(m_currentMemoryOffset, alignment);
 
 	m_bufferData.emplace_back(
-		type, bufferSize / 4u, 1u, alignment, m_currentMemoryOffset, bufferSize, bufferSize
+		type, bufferSize / 4u, 1u, alignment, m_currentMemoryOffset, bufferSize, bufferSize,
+		DXGI_FORMAT_UNKNOWN
 	);
 	m_gpuBuffers.emplace_back(std::make_shared<D3DBuffer>());
 	m_uploadBuffers.emplace_back(std::make_shared<UploadBuffer>());
@@ -157,6 +158,13 @@ BufferPair HeapManager::AddTexture(
 	m_gpuBuffers.emplace_back(std::make_shared<D3DBuffer>());
 	m_uploadBuffers.emplace_back(std::make_shared<UploadBuffer>());
 
+	DXGI_FORMAT textureFormat = DXGI_FORMAT_UNKNOWN;
+
+	if (pixelSizeInBytes == 16u)
+		textureFormat = DXGI_FORMAT_R32G32B32A32_FLOAT;
+	else if (pixelSizeInBytes == 4u)
+		textureFormat = DXGI_FORMAT_R8G8B8A8_UINT;
+
 	size_t alignment = 0u;
 
 	if (msaa)
@@ -164,7 +172,7 @@ BufferPair HeapManager::AddTexture(
 	else
 		alignment = 4_KB;
 
-	D3D12_RESOURCE_DESC texDesc = GetTextureDesc(height, width, alignment);
+	D3D12_RESOURCE_DESC texDesc = GetTextureDesc(height, width, alignment, textureFormat);
 
 	D3D12_RESOURCE_ALLOCATION_INFO allocInfo =
 		device->GetResourceAllocationInfo(0u, 1u, &texDesc);
@@ -174,8 +182,9 @@ BufferPair HeapManager::AddTexture(
 	m_bufferData.emplace_back(
 		BufferType::Texture,
 		width, height, allocInfo.Alignment, m_currentMemoryOffset,
-		width * pixelSizeInBytes, allocInfo.SizeInBytes
+		width * pixelSizeInBytes, allocInfo.SizeInBytes, textureFormat
 	);
+
 	m_currentMemoryOffset += allocInfo.SizeInBytes;
 
 	return { m_gpuBuffers.back(), m_uploadBuffers.back() };
@@ -203,11 +212,12 @@ D3D12_RESOURCE_DESC HeapManager::GetBufferDesc(size_t bufferSize) const noexcept
 }
 
 D3D12_RESOURCE_DESC HeapManager::GetTextureDesc(
-	size_t height, size_t width, size_t alignment
+	size_t height, size_t width, size_t alignment,
+	DXGI_FORMAT textureFormat
 ) const noexcept {
 	D3D12_RESOURCE_DESC texDesc = {};
 
-	texDesc.Format = GraphicsEngineDx12::TEXTURE_FORMAT;
+	texDesc.Format = textureFormat;
 	texDesc.Width = static_cast<UINT64>(width);
 	texDesc.Height = static_cast<UINT>(height);
 	texDesc.DepthOrArraySize = 1u;
@@ -227,7 +237,7 @@ D3D12_RESOURCE_DESC	HeapManager::GetResourceDesc(
 ) const noexcept {
 	return 	texture ? GetTextureDesc(
 		bufferData.height, bufferData.width,
-		bufferData.alignment
+		bufferData.alignment, bufferData.textureFormat
 	) : GetBufferDesc(bufferData.bufferSize);
 }
 
