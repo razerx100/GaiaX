@@ -15,7 +15,7 @@ size_t TextureStorage::AddTexture(
 	if (pixelSizeInBytes == 16u)
 		textureFormat = DXGI_FORMAT_R32G32B32A32_FLOAT;
 	else if(pixelSizeInBytes == 4u)
-		textureFormat = DXGI_FORMAT_R8G8B8A8_UINT;
+		textureFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 
 	m_textureData.emplace_back(
 		data, width * pixelSizeInBytes * height, textureFormat

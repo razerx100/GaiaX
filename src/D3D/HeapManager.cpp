@@ -163,7 +163,7 @@ BufferPair HeapManager::AddTexture(
 	if (pixelSizeInBytes == 16u)
 		textureFormat = DXGI_FORMAT_R32G32B32A32_FLOAT;
 	else if (pixelSizeInBytes == 4u)
-		textureFormat = DXGI_FORMAT_R8G8B8A8_UINT;
+		textureFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 
 	size_t alignment = 0u;
 
