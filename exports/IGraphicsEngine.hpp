@@ -4,13 +4,7 @@
 #include <IModel.hpp>
 #include <CRSStructures.hpp>
 
-#ifdef BUILD_GAIAX
-#define GAIAX_DLL __declspec(dllexport)
-#else
-#define GAIAX_DLL __declspec(dllimport)
-#endif
-
-class GAIAX_DLL GraphicsEngine {
+class GraphicsEngine {
 public:
 	virtual ~GraphicsEngine() = default;
 

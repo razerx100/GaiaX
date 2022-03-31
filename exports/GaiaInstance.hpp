@@ -2,6 +2,12 @@
 #define __GAIA_INSTANCE_HPP__
 #include <IGraphicsEngine.hpp>
 
+#ifdef BUILD_GAIAX
+#define GAIAX_DLL __declspec(dllexport)
+#else
+#define GAIAX_DLL __declspec(dllimport)
+#endif
+
 GAIAX_DLL GraphicsEngine* __cdecl CreateGaiaInstance(
 	const char* appName,
 	void* windowHandle,
