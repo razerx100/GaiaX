@@ -78,8 +78,8 @@ IViewportAndScissorManager* CreateViewportAndScissorInstance(
 	return new ViewportAndScissorManager(width, height);
 }
 
-IResourceBuffer* CreateResourceBufferInstance(BufferType type) {
-	return new ResourceBuffer(type);
+IResourceBuffer* CreateResourceBufferInstance() {
+	return new ResourceBuffer();
 }
 
 IDescriptorTableManager* CreateDescriptorTableManagerInstance() {

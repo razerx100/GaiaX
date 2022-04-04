@@ -76,7 +76,7 @@ void CpyCmdListInst::Init(
 	Set(
 		CreateCommandListInstance(
 			device,
-			D3D12_COMMAND_LIST_TYPE_DIRECT,
+			D3D12_COMMAND_LIST_TYPE_COPY,
 			1u
 		)
 	);
@@ -84,13 +84,13 @@ void CpyCmdListInst::Init(
 
 void VertexBufferInst::Init() {
 	Set(
-		CreateResourceBufferInstance(BufferType::Vertex)
+		CreateResourceBufferInstance()
 	);
 }
 
 void IndexBufferInst::Init() {
 	Set(
-		CreateResourceBufferInstance(BufferType::Index)
+		CreateResourceBufferInstance()
 	);
 }
 

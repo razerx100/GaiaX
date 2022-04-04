@@ -24,5 +24,5 @@ public:
 	virtual void ReleaseUploadBuffer() = 0;
 };
 
-IResourceBuffer* CreateResourceBufferInstance(BufferType type);
+IResourceBuffer* CreateResourceBufferInstance();
 #endif

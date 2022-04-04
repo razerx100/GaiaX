@@ -6,7 +6,7 @@ CopyQueueManager::CopyQueueManager(ID3D12Device* device)
 
 	D3D12_COMMAND_QUEUE_DESC queueDesc = {};
 	queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
-	queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
+	queueDesc.Type = D3D12_COMMAND_LIST_TYPE_COPY;
 
 	HRESULT hr;
 	D3D_THROW_FAILED(hr, device->CreateCommandQueue(

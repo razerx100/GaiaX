@@ -9,8 +9,6 @@
 
 class ResourceBuffer : public IResourceBuffer {
 public:
-	ResourceBuffer(BufferType type);
-
 	[[nodiscard]]
 	D3DGPUSharedAddress AddDataAndGetSharedAddress(
 		const void* data, size_t bufferSize,
@@ -45,7 +43,6 @@ private:
 	) const noexcept;
 
 private:
-	BufferType m_type;
 	std::vector<BufferData> m_bufferData256;
 	std::vector<BufferData> m_bufferData4;
 	std::vector<D3DGPUSharedAddress> m_sharedGPUAddress256;

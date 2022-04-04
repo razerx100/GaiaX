@@ -39,7 +39,7 @@ void HeapManager::CreateBuffers(ID3D12Device* device, bool msaa) {
 			gpuBuffer, bufferData.offset,
 			GetResourceDesc(
 				bufferData,
-				bufferData.type == BufferType::Texture
+				bufferData.isTexture
 			),
 			false
 		);
@@ -70,7 +70,7 @@ void HeapManager::RecordUpload(ID3D12GraphicsCommandList* copyList) {
 
 		BufferData& bufferData = m_bufferData[index];
 
-		if (bufferData.type == BufferType::Texture) {
+		if (bufferData.isTexture) {
 			D3D12_TEXTURE_COPY_LOCATION dest = {};
 			dest.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
 			dest.pResource = gpuBuffer;
@@ -106,21 +106,6 @@ void HeapManager::RecordUpload(ID3D12GraphicsCommandList* copyList) {
 				gpuBuffer,
 				uploadBuffer
 			);
-
-		D3D12_RESOURCE_STATES afterState = D3D12_RESOURCE_STATE_COMMON;
-		if (bufferData.type == BufferType::Index)
-			afterState = D3D12_RESOURCE_STATE_INDEX_BUFFER;
-		else if (bufferData.type == BufferType::Vertex)
-			afterState = D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
-		else if (bufferData.type == BufferType::Texture)
-			afterState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-
-		D3D12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
-			gpuBuffer,
-			D3D12_RESOURCE_STATE_COPY_DEST,
-			afterState
-		);
-		copyList->ResourceBarrier(1u, &barrier);
 	}
 }
 
@@ -132,14 +117,14 @@ void HeapManager::ReleaseUploadBuffer() {
 }
 
 BufferPair HeapManager::AddBuffer(
-	size_t bufferSize, BufferType type
+	size_t bufferSize
 ) {
 	constexpr size_t alignment = 64_KB;
 
 	m_currentMemoryOffset = Ceres::Math::Align(m_currentMemoryOffset, alignment);
 
 	m_bufferData.emplace_back(
-		type, bufferSize / 4u, 1u, alignment, m_currentMemoryOffset, bufferSize, bufferSize,
+		false, bufferSize / 4u, 1u, alignment, m_currentMemoryOffset, bufferSize, bufferSize,
 		DXGI_FORMAT_UNKNOWN
 	);
 	m_gpuBuffers.emplace_back(std::make_shared<D3DBuffer>());
@@ -180,7 +165,7 @@ BufferPair HeapManager::AddTexture(
 	m_currentMemoryOffset = Ceres::Math::Align(m_currentMemoryOffset, allocInfo.Alignment);
 
 	m_bufferData.emplace_back(
-		BufferType::Texture,
+		true,
 		width, height, allocInfo.Alignment, m_currentMemoryOffset,
 		width * pixelSizeInBytes, allocInfo.SizeInBytes, textureFormat
 	);

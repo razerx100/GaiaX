@@ -8,9 +8,7 @@ class HeapManager : public IHeapManager {
 public:
 	HeapManager();
 
-	BufferPair AddBuffer(
-		size_t bufferSize, BufferType type
-	) override;
+	BufferPair AddBuffer(size_t bufferSize) override;
 	BufferPair AddTexture(
 		ID3D12Device* device,
 		size_t width, size_t height,
@@ -23,7 +21,7 @@ public:
 
 private:
 	struct BufferData {
-		BufferType type;
+		bool isTexture;
 		size_t width;
 		size_t height;
 		size_t alignment;

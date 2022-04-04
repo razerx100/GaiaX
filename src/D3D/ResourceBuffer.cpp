@@ -4,9 +4,6 @@
 #include <InstanceManager.hpp>
 #include <algorithm>
 
-ResourceBuffer::ResourceBuffer(BufferType type)
-	: m_type(type) {}
-
 D3DGPUSharedAddress ResourceBuffer::AddDataAndGetSharedAddress(
 	const void* data, size_t bufferSize,
 	bool alignment256
@@ -46,9 +43,7 @@ void ResourceBuffer::SetGPUVirtualAddressToBuffers() noexcept {
 
 void ResourceBuffer::AcquireBuffers() {
 	auto [gpuBuffer, uploadBuffer] =
-		HeapManagerInst::GetRef()->AddBuffer(
-			ConfigureBufferSizeAndAllocations(), m_type
-		);
+		HeapManagerInst::GetRef()->AddBuffer(ConfigureBufferSizeAndAllocations());
 
 	m_pGPUBuffer = gpuBuffer;
 	m_pUploadBuffer = uploadBuffer;
