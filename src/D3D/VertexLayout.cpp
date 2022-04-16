@@ -28,7 +28,7 @@ D3D12_INPUT_LAYOUT_DESC VertexLayout::GetLayout() const noexcept {
 
 void VertexLayout::InitLayout(const std::vector<VertexElementType>& inputLayout) noexcept {
 	for (size_t inputOffset = 0u; VertexElementType elementType : inputLayout) {
-		size_t elementTypeId = static_cast<size_t>(elementType);
+		auto elementTypeId = static_cast<size_t>(elementType);
 
 		m_inputDescs.emplace_back(
 			vertexElementTypeNameMap[elementTypeId], 0u,

@@ -3,7 +3,7 @@
 
 // CommandList
 CommandListManager::CommandListManager(
-	ID3D12Device5* device,
+	ID3D12Device4* device,
 	D3D12_COMMAND_LIST_TYPE type, size_t allocatorsCount
 ) :
 	m_pCommandAllocators(allocatorsCount) {

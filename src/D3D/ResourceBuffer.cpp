@@ -1,7 +1,7 @@
 #include <ResourceBuffer.hpp>
-#include <IHeapManager.hpp>
+#include <HeapManager.hpp>
 #include <CRSMath.hpp>
-#include <InstanceManager.hpp>
+#include <Gaia.hpp>
 #include <algorithm>
 
 D3DGPUSharedAddress ResourceBuffer::AddDataAndGetSharedAddress(
@@ -43,7 +43,7 @@ void ResourceBuffer::SetGPUVirtualAddressToBuffers() noexcept {
 
 void ResourceBuffer::AcquireBuffers() {
 	auto [gpuBuffer, uploadBuffer] =
-		HeapManagerInst::GetRef()->AddBuffer(ConfigureBufferSizeAndAllocations());
+		Gaia::heapManager->AddBuffer(ConfigureBufferSizeAndAllocations());
 
 	m_pGPUBuffer = gpuBuffer;
 	m_pUploadBuffer = uploadBuffer;

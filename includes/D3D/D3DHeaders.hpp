@@ -1,5 +1,5 @@
-#ifndef __D3D_HEADERS_HPP__
-#define __D3D_HEADERS_HPP__
+#ifndef D3D_HEADERS_HPP_
+#define D3D_HEADERS_HPP_
 
 #define NOMINMAX
 #define STRICT

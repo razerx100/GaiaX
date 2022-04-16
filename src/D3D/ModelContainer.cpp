@@ -3,10 +3,9 @@
 #include <RootSignatureDynamic.hpp>
 #include <Shader.hpp>
 #include <PipelineObjectGFX.hpp>
-#include <InstanceManager.hpp>
-#include <VenusInstance.hpp>
+#include <Gaia.hpp>
 
-ModelContainer::ModelContainer(const char* shaderPath) noexcept
+ModelContainer::ModelContainer(const std::string& shaderPath) noexcept
 	: m_bindInstance(std::make_unique<BindInstanceGFX>()), m_shaderPath(shaderPath) {}
 
 void ModelContainer::AddModel(
@@ -18,7 +17,7 @@ void ModelContainer::AddModel(
 void ModelContainer::BindCommands(ID3D12GraphicsCommandList* commandList) noexcept {
 	m_bindInstance->BindPipelineObjects(commandList);
 
-	D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle = DescTableManInst::GetRef()->GetTextureRangeStart();
+	D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle = Gaia::descriptorTable->GetTextureRangeStart();
 	commandList->SetGraphicsRootDescriptorTable(1u, gpuHandle);
 
 	m_bindInstance->BindModels(commandList);
@@ -27,17 +26,17 @@ void ModelContainer::BindCommands(ID3D12GraphicsCommandList* commandList) noexce
 void ModelContainer::CopyData(std::atomic_size_t& workCount) {
 	workCount += 2u;
 
-	GetVenusInstance()->SubmitWork(
+	Gaia::threadPool->SubmitWork(
 		[&workCount] {
-			VertexBufferInst::GetRef()->CopyData();
+			Gaia::vertexBuffer->CopyData();
 
 			--workCount;
 		}
 	);
 
-	GetVenusInstance()->SubmitWork(
+	Gaia::threadPool->SubmitWork(
 		[&workCount] {
-			IndexBufferInst::GetRef()->CopyData();
+			Gaia::indexBuffer->CopyData();
 
 			--workCount;
 		}
@@ -45,29 +44,29 @@ void ModelContainer::CopyData(std::atomic_size_t& workCount) {
 }
 
 void ModelContainer::RecordUploadBuffers(ID3D12GraphicsCommandList* copyList) {
-	HeapManagerInst::GetRef()->RecordUpload(copyList);
+	Gaia::heapManager->RecordUpload(copyList);
 }
 
 void ModelContainer::CreateBuffers(ID3D12Device* device) {
 	// Acquire all buffers first
-	VertexBufferInst::GetRef()->AcquireBuffers();
-	IndexBufferInst::GetRef()->AcquireBuffers();
+	Gaia::vertexBuffer->AcquireBuffers();
+	Gaia::indexBuffer->AcquireBuffers();
 
 	// Now allocate memory and actually create them
-	HeapManagerInst::GetRef()->CreateBuffers(device);
+	Gaia::heapManager->CreateBuffers(device);
 
 	// Set GPU addresses
-	VertexBufferInst::GetRef()->SetGPUVirtualAddressToBuffers();
-	IndexBufferInst::GetRef()->SetGPUVirtualAddressToBuffers();
+	Gaia::vertexBuffer->SetGPUVirtualAddressToBuffers();
+	Gaia::indexBuffer->SetGPUVirtualAddressToBuffers();
 
 	m_bindInstance->SetGPUVirtualAddresses();
 }
 
 void ModelContainer::ReleaseUploadBuffers() {
-	VertexBufferInst::GetRef()->ReleaseUploadBuffer();
-	IndexBufferInst::GetRef()->ReleaseUploadBuffer();
+	Gaia::vertexBuffer->ReleaseUploadBuffer();
+	Gaia::indexBuffer->ReleaseUploadBuffer();
 
-	HeapManagerInst::GetRef()->ReleaseUploadBuffer();
+	Gaia::heapManager->ReleaseUploadBuffer();
 }
 
 void ModelContainer::InitPipelines(ID3D12Device* device) {
@@ -89,7 +88,9 @@ ModelContainer::Pipeline ModelContainer::CreatePipeline(
 	signature->AddConstants(1u, D3D12_SHADER_VISIBILITY_PIXEL, 0u);
 	signature->AddDescriptorTable(
 		D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
-		static_cast<std::uint32_t>(DescTableManInst::GetRef()->GetTextureDescriptorCount()),
+		static_cast<std::uint32_t>(
+			Gaia::descriptorTable->GetTextureDescriptorCount()
+			),
 		D3D12_SHADER_VISIBILITY_PIXEL, 0u
 	);
 	signature->AddConstants(6u, D3D12_SHADER_VISIBILITY_VERTEX, 1u);

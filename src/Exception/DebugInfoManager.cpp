@@ -14,7 +14,7 @@ DebugInfoManager::DebugInfoManager()
 	if (!hmodDxgiDebug)
 		D3D_GENERIC_THROW("Couldn't load dxgidebug.dll.");
 
-	DXGIGetDebugInterface dxgiGetDebugInterface =
+	auto dxgiGetDebugInterface =
 		reinterpret_cast<DXGIGetDebugInterface>(
 			GetProcAddress(hmodDxgiDebug, "DXGIGetDebugInterface")
 			);
@@ -44,7 +44,7 @@ std::vector<std::string> DebugInfoManager::GetMessages() const {
 		);
 
 		byte* bytes = new byte[messageLength];
-		DXGI_INFO_QUEUE_MESSAGE* pMessage =
+		auto pMessage =
 			reinterpret_cast<DXGI_INFO_QUEUE_MESSAGE*>(bytes);
 
 		m_pDxgiInfoQueue->GetMessageA(

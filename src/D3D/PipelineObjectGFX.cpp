@@ -1,9 +1,8 @@
 #include <PipelineObjectGFX.hpp>
-#include <IShader.hpp>
 #include <VertexLayout.hpp>
 #include <d3dx12.h>
-#include <GraphicsEngineDx12.hpp>
 #include <D3DThrowMacros.hpp>
+#include <Gaia.hpp>
 
 void PipelineObjectGFX::CreatePipelineState(
 	ID3D12Device* device,
@@ -21,7 +20,7 @@ void PipelineObjectGFX::CreatePipelineState(
 	psoDesc.DepthStencilState.StencilEnable = FALSE;
 	psoDesc.SampleMask = UINT_MAX;
 	psoDesc.NumRenderTargets = 1u;
-	psoDesc.RTVFormats[0] = GraphicsEngineDx12::RENDER_FORMAT;
+	psoDesc.RTVFormats[0] = Gaia::RENDER_FORMAT;
 	psoDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
 	psoDesc.SampleDesc.Count = 1u;
 	psoDesc.InputLayout = vertexLayout.GetLayout();

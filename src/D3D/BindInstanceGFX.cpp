@@ -1,21 +1,23 @@
 #include <BindInstanceGFX.hpp>
-#include <InstanceManager.hpp>
 #include <CRSMath.hpp>
+#include <Gaia.hpp>
 
 BindInstanceGFX::BindInstanceGFX() noexcept : m_vertexLayoutAvailable(false) {}
 
 BindInstanceGFX::BindInstanceGFX(
-	std::unique_ptr<IPipelineObject> pso,
-	std::unique_ptr<IRootSignature> signature
+	std::unique_ptr<PipelineObjectGFX> pso,
+	std::unique_ptr<RootSignatureDynamic> signature
 ) noexcept
 	: m_pso(std::move(pso)),
 	m_rootSignature(std::move(signature)), m_vertexLayoutAvailable(false) {}
 
-void BindInstanceGFX::AddPSO(std::unique_ptr<IPipelineObject> pso) noexcept {
+void BindInstanceGFX::AddPSO(std::unique_ptr<PipelineObjectGFX> pso) noexcept {
 	m_pso = std::move(pso);
 }
 
-void BindInstanceGFX::AddRootSignature(std::unique_ptr<IRootSignature> signature) noexcept {
+void BindInstanceGFX::AddRootSignature(
+	std::unique_ptr<RootSignatureDynamic> signature
+) noexcept {
 	m_rootSignature = std::move(signature);
 }
 
@@ -33,7 +35,7 @@ void BindInstanceGFX::AddModel(
 				static_cast<UINT>(vertexBufferSize),
 				static_cast<UINT>(modelRef->GetVertexStrideSize())
 			},
-			VertexBufferInst::GetRef()->AddDataAndGetSharedAddress(
+			Gaia::vertexBuffer->AddDataAndGetSharedAddress(
 				modelRef->GetVertexData(), vertexBufferSize
 			),
 			D3D12_INDEX_BUFFER_VIEW{
@@ -41,7 +43,7 @@ void BindInstanceGFX::AddModel(
 				static_cast<UINT>(indexBufferSize),
 				DXGI_FORMAT_R16_UINT
 			},
-			IndexBufferInst::GetRef()->AddDataAndGetSharedAddress(
+			Gaia::vertexBuffer->AddDataAndGetSharedAddress(
 				modelRef->GetIndexData(), indexBufferSize
 			),
 			modelRef->GetIndexCount()

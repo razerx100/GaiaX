@@ -1,38 +1,31 @@
 #include <SwapChainManager.hpp>
-#include <GraphicsEngineDx12.hpp>
 #include <D3DThrowMacros.hpp>
-#include <InstanceManager.hpp>
 #include <d3dx12.h>
+#include <Gaia.hpp>
 
-SwapChainManager::SwapChainManager(
-	ID3D12Device* device, IDXGIFactory4* factory, ID3D12CommandQueue* cmdQueue,
-	void* windowHandle,
-	size_t bufferCount,
-	std::uint32_t width, std::uint32_t height,
-	bool variableRefreshRateAvailable
-)
+SwapChainManager::SwapChainManager(const SwapChainCreateInfo& createInfo)
 	:
-	m_width(width), m_height(height), m_rtvDescSize(0u)
-	, m_vsyncFlag(false), m_pRenderTargetViews(bufferCount) {
+	m_width(createInfo.width), m_height(createInfo.height), m_rtvDescSize(0u)
+	, m_vsyncFlag(false), m_pRenderTargetViews(createInfo.bufferCount) {
 
 	DXGI_SWAP_CHAIN_DESC1 desc = {};
-	desc.BufferCount = static_cast<UINT>(bufferCount);
+	desc.BufferCount = static_cast<UINT>(createInfo.bufferCount);
 	desc.Width = m_width;
 	desc.Height = m_height;
-	desc.Format = GraphicsEngineDx12::RENDER_FORMAT;
+	desc.Format = Gaia::RENDER_FORMAT;
 	desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 	desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
 	desc.SampleDesc.Count = 1u;
 
-	if (variableRefreshRateAvailable)
+	if (createInfo.variableRefreshRate)
 		desc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
 
 	ComPtr<IDXGISwapChain1> swapChain;
 	HRESULT hr;
 	D3D_THROW_FAILED(
-		hr, factory->CreateSwapChainForHwnd(
-			cmdQueue,
-			reinterpret_cast<HWND>(windowHandle),
+		hr, createInfo.factory->CreateSwapChainForHwnd(
+			createInfo.graphicsQueue,
+			createInfo.windowHandle,
 			&desc,
 			nullptr, nullptr,
 			&swapChain
@@ -43,16 +36,16 @@ SwapChainManager::SwapChainManager(
 		hr, swapChain.As(&m_pSwapChain)
 	);
 
-	if (variableRefreshRateAvailable)
+	if (createInfo.variableRefreshRate)
 		D3D_THROW_FAILED(
-			hr, factory->MakeWindowAssociation(
-				reinterpret_cast<HWND>(windowHandle),
+			hr, createInfo.factory->MakeWindowAssociation(
+				createInfo.windowHandle,
 				DXGI_MWA_NO_ALT_ENTER
 			)
 		);
 
-	CreateRTVHeap(device, bufferCount);
-	CreateRTVs(device);
+	CreateRTVHeap(createInfo.device, createInfo.bufferCount);
+	CreateRTVs(createInfo.device);
 }
 
 void SwapChainManager::CreateRTVs(ID3D12Device* device) {

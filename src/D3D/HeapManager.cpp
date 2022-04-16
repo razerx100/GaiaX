@@ -3,7 +3,6 @@
 #include <CRSMath.hpp>
 #include <D3DHeap.hpp>
 #include <D3DThrowMacros.hpp>
-#include <GraphicsEngineDx12.hpp>
 #include <UploadBuffer.hpp>
 
 HeapManager::HeapManager()
@@ -22,7 +21,7 @@ void HeapManager::CreateBuffers(ID3D12Device* device, bool msaa) {
 	m_gpuHeap->CreateHeap(device, alignedSize, msaa);
 
 	for (size_t index = 0u; index < m_bufferData.size(); ++index) {
-		std::shared_ptr<IUploadBuffer>& uploadBuffer = m_uploadBuffers[index];
+		std::shared_ptr<UploadBuffer>& uploadBuffer = m_uploadBuffers[index];
 		std::shared_ptr<D3DBuffer>& gpuBuffer = m_gpuBuffers[index];
 		BufferData& bufferData = m_bufferData[index];
 
@@ -112,7 +111,7 @@ void HeapManager::RecordUpload(ID3D12GraphicsCommandList* copyList) {
 void HeapManager::ReleaseUploadBuffer() {
 	m_bufferData = std::vector<BufferData>();
 	m_gpuBuffers = std::vector<std::shared_ptr<D3DBuffer>>();
-	m_uploadBuffers = std::vector<std::shared_ptr<IUploadBuffer>>();
+	m_uploadBuffers = std::vector<std::shared_ptr<UploadBuffer>>();
 	m_uploadHeap.reset();
 }
 

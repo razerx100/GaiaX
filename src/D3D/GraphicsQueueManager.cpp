@@ -1,6 +1,6 @@
 #include <GraphicsQueueManager.hpp>
 #include <D3DThrowMacros.hpp>
-#include <InstanceManager.hpp>
+#include <Gaia.hpp>
 
 // Graphics Command Queue
 GraphicsQueueManager::GraphicsQueueManager(
@@ -82,7 +82,7 @@ void GraphicsQueueManager::MoveToNextFrame(size_t backBufferIndex) {
 	);
 
 	std::uint64_t& newFenceValue =
-		m_fenceValues[SwapchainInst::GetRef()->GetCurrentBackBufferIndex()];
+		m_fenceValues[Gaia::swapChain->GetCurrentBackBufferIndex()];
 
 	if (m_pFence->GetCompletedValue() < newFenceValue) {
 		D3D_THROW_FAILED(hr,

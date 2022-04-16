@@ -1,6 +1,6 @@
-#ifndef __GAIA_INSTANCE_HPP__
-#define __GAIA_INSTANCE_HPP__
-#include <IGraphicsEngine.hpp>
+#ifndef GAIA_INSTANCE_HPP_
+#define GAIA_INSTANCE_HPP_
+#include <Renderer.hpp>
 
 #ifdef BUILD_GAIAX
 #define GAIAX_DLL __declspec(dllexport)
@@ -8,10 +8,10 @@
 #define GAIAX_DLL __declspec(dllimport)
 #endif
 
-GAIAX_DLL GraphicsEngine* __cdecl CreateGaiaInstance(
+GAIAX_DLL Renderer* __cdecl CreateGaiaInstance(
 	const char* appName,
 	void* windowHandle,
 	std::uint32_t width, std::uint32_t height,
-	size_t bufferCount = 2u
+	std::uint32_t bufferCount = 2u
 );
 #endif

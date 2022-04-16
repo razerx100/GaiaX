@@ -1,5 +1,5 @@
-#ifndef __SHARED_ADDRESS_HPP__
-#define __SHARED_ADDRESS_HPP__
+#ifndef SHARED_ADDRESS_HPP_
+#define SHARED_ADDRESS_HPP_
 #include <concepts>
 
 template<std::integral T>

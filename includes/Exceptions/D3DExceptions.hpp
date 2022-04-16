@@ -1,5 +1,5 @@
-#ifndef __D3D_EXCEPTIONS_HPP__
-#define __D3D_EXCEPTIONS_HPP__
+#ifndef D3D_EXCEPTIONS_HPP_
+#define D3D_EXCEPTIONS_HPP_
 #include <Exception.hpp>
 #include <vector>
 
@@ -12,12 +12,17 @@ public:
 	) noexcept;
 
 	static std::string TranslateErrorCode(long hr) noexcept;
+	[[nodiscard]]
 	long GetErrorCode() const noexcept;
+	[[nodiscard]]
 	std::string GetErrorString() const noexcept;
 
 	void GenerateWhatBuffer() noexcept override;
+	[[nodiscard]]
 	const char* what() const noexcept override;
+	[[nodiscard]]
 	const char* GetType() const noexcept override;
+	[[nodiscard]]
 	std::string GetErrorInfo() const noexcept;
 
 private:
@@ -29,6 +34,7 @@ class DeviceRemovedException : public HrException {
 public:
 	using HrException::HrException;
 
+	[[nodiscard]]
 	const char* GetType() const noexcept override;
 };
 
@@ -39,8 +45,12 @@ public:
 	) noexcept;
 
 	void GenerateWhatBuffer() noexcept override;
+
+	[[nodiscard]]
 	const char* what() const noexcept override;
+	[[nodiscard]]
 	const char* GetType() const noexcept override;
+	[[nodiscard]]
 	std::string GetErrorInfo() const noexcept;
 
 private:

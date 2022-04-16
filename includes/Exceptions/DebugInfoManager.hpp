@@ -1,5 +1,5 @@
-#ifndef __DXGI_INFO_MANAGER_HPP__
-#define __DXGI_INFO_MANAGER_HPP__
+#ifndef DXGI_INFO_MANAGER_HPP_
+#define DXGI_INFO_MANAGER_HPP_
 #include <D3DHeaders.hpp>
 #include <vector>
 #include <string>
@@ -15,6 +15,8 @@ public:
 	DebugInfoManager& operator=(const DebugInfoManager&) = delete;
 
 	void Set() noexcept;
+
+	[[nodiscard]]
 	std::vector<std::string> GetMessages() const;
 
 private:

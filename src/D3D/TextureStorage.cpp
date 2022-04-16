@@ -1,9 +1,6 @@
 #include <TextureStorage.hpp>
-#include <InstanceManager.hpp>
-#include <CRSMath.hpp>
-#include <VenusInstance.hpp>
+#include <Gaia.hpp>
 #include <cstring>
-#include <GraphicsEngineDx12.hpp>
 
 size_t TextureStorage::AddTexture(
 	ID3D12Device* device,
@@ -22,12 +19,13 @@ size_t TextureStorage::AddTexture(
 	);
 
 	auto [gpuBuffer, uploadBuffer] =
-		HeapManagerInst::GetRef()->AddTexture(device, width, height, pixelSizeInBytes);
+		Gaia::heapManager->AddTexture(device, width, height, pixelSizeInBytes);
 
 	m_gpuBuffers.emplace_back(gpuBuffer);
 	m_uploadBuffers.emplace_back(uploadBuffer);
 
-	auto [sharedIndex, sharedCPUHandle] = DescTableManInst::GetRef()->GetTextureIndex();
+	auto [sharedIndex, sharedCPUHandle] =
+		Gaia::descriptorTable->GetTextureIndex();
 
 	m_cpuHandles.emplace_back(sharedCPUHandle);
 	m_textureIndices.emplace_back(sharedIndex);
@@ -61,10 +59,10 @@ void TextureStorage::CopyData(std::atomic_size_t& workCount) noexcept {
 	// Copy data
 	workCount += 1u;
 
-	GetVenusInstance()->SubmitWork(
+	Gaia::threadPool->SubmitWork(
 		[&] {
 			for (size_t index = 0u; index < m_textureData.size(); ++index) {
-				TextureData& textureData = m_textureData[index];
+				const TextureData& textureData = m_textureData[index];
 
 				std::memcpy(
 					m_uploadBuffers[index]->GetCPUHandle(),
@@ -79,6 +77,6 @@ void TextureStorage::CopyData(std::atomic_size_t& workCount) noexcept {
 
 void TextureStorage::ReleaseUploadBuffer() noexcept {
 	m_textureData = std::vector<TextureData>();
-	m_uploadBuffers = std::vector<std::shared_ptr<IUploadBuffer>>();
+	m_uploadBuffers = std::vector<std::shared_ptr<UploadBuffer>>();
 	m_cpuHandles = std::vector<SharedCPUHandle>();
 }
