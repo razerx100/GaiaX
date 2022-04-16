@@ -43,7 +43,7 @@ void BindInstanceGFX::AddModel(
 				static_cast<UINT>(indexBufferSize),
 				DXGI_FORMAT_R16_UINT
 			},
-			Gaia::vertexBuffer->AddDataAndGetSharedAddress(
+			Gaia::indexBuffer->AddDataAndGetSharedAddress(
 				modelRef->GetIndexData(), indexBufferSize
 			),
 			modelRef->GetIndexCount()

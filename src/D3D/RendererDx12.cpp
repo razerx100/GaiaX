@@ -31,6 +31,7 @@ RendererDx12::RendererDx12(
 	swapChainCreateInfo.factory = Gaia::device->GetFactoryRef();
 	swapChainCreateInfo.graphicsQueue = Gaia::graphicsQueue->GetQueueRef();
 	swapChainCreateInfo.windowHandle = static_cast<HWND>(windowHandle);
+	swapChainCreateInfo.variableRefreshRate = true;
 
 	Gaia::InitSwapChain(swapChainCreateInfo);
 
