@@ -1,5 +1,5 @@
 # GaiaX
-Graphics Engine module based on DirectX12. It needs a Win32 window module handle to draw onto.
+Renderer module based on DirectX12. It needs a Win32 window module handle to draw onto.
 
 # Library used
 1. [Ceres](https://github.com/razerx100/Ceres).

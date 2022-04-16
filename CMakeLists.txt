@@ -43,20 +43,6 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     d3d12.lib dxgi.lib dxguid.lib uuid.lib d3dcompiler.lib
 )
 
-include(FetchContent)
-
-FetchContent_Declare(
-    Venus
-    GIT_REPOSITORY https://github.com/razerx100/Venus.git
-    GIT_TAG master
-)
-
-FetchContent_MakeAvailable(Venus)
-
-target_link_libraries(${PROJECT_NAME} PUBLIC
-    Venus
-)
-
 if(IMGUIFLAG STREQUAL "ENABLE")
     target_include_directories(${PROJECT_NAME} PRIVATE ImGui/includes/)
     target_compile_definitions(${PROJECT_NAME} PRIVATE _IMGUI)
