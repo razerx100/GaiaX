@@ -4,7 +4,7 @@
 #include <vector>
 #include <list>
 
-class RootSignatureDynamic : public RootSignatureBase {
+class RootSignatureDynamic final : public RootSignatureBase {
 public:
 	void AddConstants(
 		std::uint32_t numOfValues,

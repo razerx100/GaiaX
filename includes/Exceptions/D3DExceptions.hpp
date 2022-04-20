@@ -30,7 +30,7 @@ private:
 	std::string m_info;
 };
 
-class DeviceRemovedException : public HrException {
+class DeviceRemovedException final : public HrException {
 public:
 	using HrException::HrException;
 
@@ -38,7 +38,7 @@ public:
 	const char* GetType() const noexcept override;
 };
 
-class InfoException : public Exception {
+class InfoException final : public Exception {
 public:
 	InfoException(int line, const char* file,
 		const std::vector<std::string>& infoMsgs

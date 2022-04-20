@@ -3,7 +3,7 @@
 #include <RootSignatureBase.hpp>
 #include <string>
 
-class RootSignatureStatic : public RootSignatureBase {
+class RootSignatureStatic final : public RootSignatureBase {
 public:
 	void LoadBinary(const std::string& fileName);
 };

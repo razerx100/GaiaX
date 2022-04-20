@@ -3,7 +3,7 @@
 #include <Renderer.hpp>
 #include <string>
 
-class RendererDx12 : public Renderer {
+class RendererDx12 final : public Renderer {
 public:
 	RendererDx12(
 		const char* appName,
