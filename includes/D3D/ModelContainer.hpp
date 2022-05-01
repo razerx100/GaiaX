@@ -18,7 +18,7 @@ public:
 	void RecordUploadBuffers(ID3D12GraphicsCommandList* copyList);
 	void ReleaseUploadBuffers();
 
-	void BindCommands(ID3D12GraphicsCommandList* commandList) noexcept;
+	void BindCommands(ID3D12GraphicsCommandList* commandList) const noexcept;
 
 private:
 	using Pipeline =

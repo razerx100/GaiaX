@@ -56,12 +56,14 @@ void BindInstanceGFX::AddModel(
 	}
 }
 
-void BindInstanceGFX::BindModels(ID3D12GraphicsCommandList* commandList) noexcept {
+void BindInstanceGFX::BindModels(ID3D12GraphicsCommandList* commandList) const noexcept {
 	for (auto& model : m_modelsRaw)
 		model->Draw(commandList);
 }
 
-void BindInstanceGFX::BindPipelineObjects(ID3D12GraphicsCommandList* commandList) noexcept {
+void BindInstanceGFX::BindPipelineObjects(
+	ID3D12GraphicsCommandList* commandList
+) const noexcept {
 	commandList->SetPipelineState(m_pso->Get());
 	commandList->SetGraphicsRootSignature(m_rootSignature->Get());
 	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -118,7 +120,7 @@ void BindInstanceGFX::ModelRaw::UpdateGPUAddressOffsets() {
 	m_vertexBufferView.SetGPUAddress();
 }
 
-void BindInstanceGFX::ModelRaw::Draw(ID3D12GraphicsCommandList* commandList) noexcept {
+void BindInstanceGFX::ModelRaw::Draw(ID3D12GraphicsCommandList* commandList) const noexcept {
 	commandList->IASetVertexBuffers(0u, 1u, m_vertexBufferView.GetAddress());
 	commandList->IASetIndexBuffer(m_indexBufferView.GetAddress());
 	commandList->SetGraphicsRoot32BitConstant(0u, m_modelRef->GetTextureIndex(), 0u);

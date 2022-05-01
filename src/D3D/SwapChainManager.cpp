@@ -1,7 +1,7 @@
 #include <SwapChainManager.hpp>
 #include <D3DThrowMacros.hpp>
-#include <d3dx12.h>
 #include <Gaia.hpp>
+#include <d3dx12.h>
 
 SwapChainManager::SwapChainManager(const SwapChainCreateInfo& createInfo)
 	:

@@ -24,7 +24,7 @@ DeviceManager::DeviceManager() {
 
         D3D12CreateDevice(
             adapter.Get(),
-            D3D_FEATURE_LEVEL_11_0,
+            D3D_FEATURE_LEVEL_12_0,
             __uuidof(ID3D12Device5),
             &m_pDevice
         );
@@ -44,23 +44,47 @@ void DeviceManager::GetHardwareAdapter(
 	IDXGIAdapter1** ppAdapter
 ) {
     ComPtr<IDXGIFactory6> pFactory6;
+    bool found = false;
 
-    if (SUCCEEDED(pFactory->QueryInterface(__uuidof(IDXGIFactory6), &pFactory6)))
-        pFactory6->EnumAdapterByGpuPreference(
-            0u,
-            DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE,
-            __uuidof(IDXGIAdapter1),
-            reinterpret_cast<void**>(ppAdapter)
-        );
-    else
-        pFactory->EnumAdapters1(
-            0u, ppAdapter
-        );
+    if (SUCCEEDED(pFactory->QueryInterface(__uuidof(IDXGIFactory6), &pFactory6))) {
+        for (UINT index = 0u;
+            SUCCEEDED(pFactory6->EnumAdapterByGpuPreference(
+                index,
+                DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE,
+                __uuidof(IDXGIAdapter1),
+                reinterpret_cast<void**>(ppAdapter)
+            ));
+            ++index) {
 
-    if (FAILED(
-        D3D12CreateDevice(
-            *ppAdapter, D3D_FEATURE_LEVEL_11_0,
-            __uuidof(ID3D12Device), nullptr)
-    ))
-        D3D_GENERIC_THROW("GPU doesn't have hardware support for DirectX12.");
+            if (SUCCEEDED(
+                D3D12CreateDevice(
+                    *ppAdapter, D3D_FEATURE_LEVEL_12_0,
+                    __uuidof(ID3D12Device), nullptr)
+            )) {
+                found = true;
+                break;
+            }
+
+        }
+    }
+    else {
+        for (UINT index = 0u;
+            SUCCEEDED(pFactory->EnumAdapters1(
+                index, ppAdapter
+            ));
+            ++index) {
+
+            if (SUCCEEDED(
+                D3D12CreateDevice(
+                    *ppAdapter, D3D_FEATURE_LEVEL_12_0,
+                    __uuidof(ID3D12Device), nullptr)
+            )) {
+                found = true;
+                break;
+            }
+        }
+    }
+
+    if (!found)
+        D3D_GENERIC_THROW("None of the GPUs have required D3D12 feature support.");
 }

@@ -14,7 +14,7 @@ void ModelContainer::AddModel(
 	m_bindInstance->AddModel(modelRef);
 }
 
-void ModelContainer::BindCommands(ID3D12GraphicsCommandList* commandList) noexcept {
+void ModelContainer::BindCommands(ID3D12GraphicsCommandList* commandList) const noexcept {
 	m_bindInstance->BindPipelineObjects(commandList);
 
 	D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle = Gaia::descriptorTable->GetTextureRangeStart();

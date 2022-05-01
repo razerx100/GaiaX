@@ -27,8 +27,8 @@ public:
 
 	void SetGPUVirtualAddresses() noexcept;
 
-	void BindModels(ID3D12GraphicsCommandList* commandList) noexcept;
-	void BindPipelineObjects(ID3D12GraphicsCommandList* commandList) noexcept;
+	void BindModels(ID3D12GraphicsCommandList* commandList) const noexcept;
+	void BindPipelineObjects(ID3D12GraphicsCommandList* commandList) const noexcept;
 
 private:
 	class ModelRaw {
@@ -55,7 +55,7 @@ private:
 			size_t indexCount
 		) noexcept;
 
-		void Draw(ID3D12GraphicsCommandList* commandList) noexcept;
+		void Draw(ID3D12GraphicsCommandList* commandList) const noexcept;
 
 	private:
 		template<typename TBufferView>

@@ -1,6 +1,5 @@
 #include <GraphicsQueueManager.hpp>
 #include <D3DThrowMacros.hpp>
-#include <Gaia.hpp>
 
 // Graphics Command Queue
 GraphicsQueueManager::GraphicsQueueManager(
