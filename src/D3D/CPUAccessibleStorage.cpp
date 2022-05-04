@@ -1,7 +1,7 @@
 #include <CPUAccessibleStorage.hpp>
-#include <CRSMath.hpp>
 #include <D3DThrowMacros.hpp>
 #include <d3dx12.h>
+#include <D3DHelperFunctions.hpp>
 
 CPUAccessibleStorage::CPUAccessibleStorage() noexcept
 	: m_currentOffset(0u) {}
@@ -11,7 +11,7 @@ SharedPair CPUAccessibleStorage::GetSharedAddresses(
 ) noexcept {
 	constexpr size_t alignment = 256u;
 
-	m_currentOffset = Ceres::Math::Align(m_currentOffset, alignment);
+	m_currentOffset = Align(m_currentOffset, alignment);
 
 	m_sharedOffsets.emplace_back(m_currentOffset, m_currentOffset);
 

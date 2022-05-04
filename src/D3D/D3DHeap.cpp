@@ -1,6 +1,6 @@
 #include <D3DHeap.hpp>
 #include <D3DThrowMacros.hpp>
-#include <CRSMath.hpp>
+#include <D3DHelperFunctions.hpp>
 
 void D3DHeap::CreateHeap(
 	ID3D12Device* device, size_t heapSize,
@@ -18,7 +18,7 @@ void D3DHeap::CreateHeap(
 	heapProp.VisibleNodeMask = 1u;
 
 	D3D12_HEAP_DESC desc = {};
-	desc.SizeInBytes = Ceres::Math::Align(heapSize, alignment);
+	desc.SizeInBytes = Align(heapSize, alignment);
 	desc.Alignment = alignment;
 	desc.Flags = D3D12_HEAP_FLAG_NONE;
 	desc.Properties = heapProp;

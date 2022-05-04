@@ -1,9 +1,9 @@
 #include <HeapManager.hpp>
 #include <d3dx12.h>
-#include <CRSMath.hpp>
 #include <D3DHeap.hpp>
 #include <D3DThrowMacros.hpp>
 #include <UploadBuffer.hpp>
+#include <D3DHelperFunctions.hpp>
 
 HeapManager::HeapManager()
 	: m_currentMemoryOffset(0u) {
@@ -13,7 +13,7 @@ HeapManager::HeapManager()
 }
 
 void HeapManager::CreateBuffers(ID3D12Device* device, bool msaa) {
-	size_t alignedSize = Ceres::Math::Align(
+	size_t alignedSize = Align(
 		m_currentMemoryOffset, msaa ? 4_MB : 64_KB
 	);
 
@@ -80,9 +80,7 @@ void HeapManager::RecordUpload(ID3D12GraphicsCommandList* copyList) {
 			srcFootprint.Format = bufferData.textureFormat;
 			srcFootprint.Width = static_cast<UINT>(bufferData.width);
 			srcFootprint.Height = static_cast<UINT>(bufferData.height);
-			srcFootprint.RowPitch = static_cast<UINT>(
-				Ceres::Math::Align(bufferData.rowPitch, 256u)
-				);
+			srcFootprint.RowPitch = static_cast<UINT>(Align(bufferData.rowPitch, 256u));
 
 			D3D12_PLACED_SUBRESOURCE_FOOTPRINT placedFootprint = {};
 			placedFootprint.Offset = 0u;
@@ -120,7 +118,7 @@ BufferPair HeapManager::AddBuffer(
 ) {
 	constexpr size_t alignment = 64_KB;
 
-	m_currentMemoryOffset = Ceres::Math::Align(m_currentMemoryOffset, alignment);
+	m_currentMemoryOffset = Align(m_currentMemoryOffset, alignment);
 
 	m_bufferData.emplace_back(
 		false, bufferSize / 4u, 1u, alignment, m_currentMemoryOffset, bufferSize, bufferSize,
@@ -161,7 +159,7 @@ BufferPair HeapManager::AddTexture(
 	D3D12_RESOURCE_ALLOCATION_INFO allocInfo =
 		device->GetResourceAllocationInfo(0u, 1u, &texDesc);
 
-	m_currentMemoryOffset = Ceres::Math::Align(m_currentMemoryOffset, allocInfo.Alignment);
+	m_currentMemoryOffset = Align(m_currentMemoryOffset, allocInfo.Alignment);
 
 	m_bufferData.emplace_back(
 		true,

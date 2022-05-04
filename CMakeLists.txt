@@ -18,24 +18,17 @@ else()
     set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib/")
 endif()
 
+file(GLOB_RECURSE SRC src/*.cpp includes/*.hpp templates/*.hpp exports/*.hpp)
+
 if(IMGUIFLAG STREQUAL "ENABLE")
-    file(GLOB_RECURSE SRC src/*.cpp includes/*.hpp templates/*.hpp exports/*.hpp ImGui/*.cpp ImGui/*.h)
-else()
-    file(GLOB_RECURSE SRC src/*.cpp includes/*.hpp templates/*.hpp exports/*.hpp)
+    file(GLOB_RECURSE IMGUI ImGui/*.cpp ImGui/*.h)
 endif()
 
 add_library(${PROJECT_NAME} SHARED
-    ${SRC}
+    ${SRC} ${IMGUI}
 )
 
-if(NOT CERES_ADDED)
-    add_subdirectory(Ceres)
-    set(CERES_ADDED "TRUE")
-endif()
-
-target_link_libraries(${PROJECT_NAME} PUBLIC Ceres)
-
-target_include_directories(${PROJECT_NAME} PRIVATE includes/ includes/D3D/ includes/Exceptions/ templates/ exports/)
+target_include_directories(${PROJECT_NAME} PRIVATE includes/ includes/D3D/ includes/Exceptions/ templates/ exports/ DirectXMath/Inc/ DirectXMath/Extensions/)
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE "$<$<CONFIG:DEBUG>:_DEBUG>" "$<$<CONFIG:RELEASE>:NDEBUG>" BUILD_GAIAX)
 

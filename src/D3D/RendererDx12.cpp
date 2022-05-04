@@ -1,6 +1,7 @@
 #include <RendererDx12.hpp>
 #include <D3DThrowMacros.hpp>
 #include <Gaia.hpp>
+#include <D3DHelperFunctions.hpp>
 
 RendererDx12::RendererDx12(
 	const char* appName,
@@ -103,7 +104,7 @@ void RendererDx12::Render() {
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = Gaia::swapChain->GetRTVHandle(currentBackIndex);
 
 	Gaia::swapChain->ClearRTV(
-		commandList, &m_backgroundColour.x, rtvHandle
+		commandList, std::data(m_backgroundColour), rtvHandle
 	);
 
 	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = Gaia::depthBuffer->GetDSVHandle();
@@ -151,23 +152,14 @@ void RendererDx12::Resize(std::uint32_t width, std::uint32_t height) {
 	}
 }
 
-void RendererDx12::GetMonitorCoordinates(
-	std::uint64_t& monitorWidth, std::uint64_t& monitorHeight
-) {
-	ComPtr<IDXGIOutput> pOutput;
-	HRESULT hr;
-	D3D_THROW_FAILED(hr,
-		Gaia::swapChain->GetRef()->GetContainingOutput(&pOutput)
+Renderer::Resolution RendererDx12::GetDisplayCoordinates(std::uint32_t displayIndex) const {
+	return GetDisplayResolution(
+		Gaia::device->GetDeviceRef(), Gaia::device->GetFactoryRef(),
+		displayIndex
 	);
-
-	DXGI_OUTPUT_DESC desc;
-	D3D_THROW_FAILED(hr, pOutput->GetDesc(&desc));
-
-	monitorWidth = static_cast<std::uint64_t>(desc.DesktopCoordinates.right);
-	monitorHeight = static_cast<std::uint64_t>(desc.DesktopCoordinates.bottom);
 }
 
-void RendererDx12::SetBackgroundColour(const Ceres::Float32_4& colour) noexcept {
+void RendererDx12::SetBackgroundColour(const std::array<float, 4>& colour) noexcept {
 	m_backgroundColour = colour;
 }
 

@@ -1,8 +1,8 @@
 #include <ResourceBuffer.hpp>
 #include <HeapManager.hpp>
-#include <CRSMath.hpp>
 #include <Gaia.hpp>
 #include <algorithm>
+#include <D3DHelperFunctions.hpp>
 
 D3DGPUSharedAddress ResourceBuffer::AddDataAndGetSharedAddress(
 	const void* data, size_t bufferSize,
@@ -97,13 +97,13 @@ size_t ResourceBuffer::ConfigureBufferSizeAndAllocations() noexcept {
 	for (BufferData& bufferData = *sorted4Data.back();
 		bufferData.size >= 256u;
 		memoryOffset += bufferData.size, bufferData = *sorted4Data.back()) {
-		memoryOffset = Ceres::Math::Align(memoryOffset, 4u);
+		memoryOffset = Align(memoryOffset, 4u);
 
 		bufferData.offset = memoryOffset;
 		sorted4Data.pop_back();
 	}
 
-	size_t emptySpace = Ceres::Math::Align(memoryOffset, 256u);
+	size_t emptySpace = Align(memoryOffset, 256u);
 	emptySpace = emptySpace - memoryOffset;
 	AllocateSmall4(sorted4Data, memoryOffset, emptySpace);
 
@@ -122,7 +122,7 @@ size_t ResourceBuffer::ConfigureBufferSizeAndAllocations() noexcept {
 	}
 
 	while (!sorted4Data.empty()) {
-		memoryOffset = Ceres::Math::Align(memoryOffset, 4u);
+		memoryOffset = Align(memoryOffset, 4u);
 
 		BufferData& bufferData = *sorted4Data.front();
 		bufferData.offset = memoryOffset;
@@ -143,7 +143,7 @@ void ResourceBuffer::FillWithIterator(
 
 void ResourceBuffer::Align256(size_t& offset, size_t& emptySpace) const noexcept {
 	size_t oldOffset = offset;
-	offset = Ceres::Math::Align(offset, 256u);
+	offset = Align(offset, 256u);
 	emptySpace += offset - oldOffset;
 }
 
@@ -156,7 +156,7 @@ void ResourceBuffer::AllocateSmall4(
 		emptySpace >= static_cast<std::int64_t>(bufferData.size);
 		offset += bufferData.size, emptySpace -= bufferData.size,
 		bufferData = *align4.front()) {
-		offset = Ceres::Math::Align(offset, 4u);
+		offset = Align(offset, 4u);
 
 		bufferData.offset = offset;
 		align4.pop_front();

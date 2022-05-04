@@ -1,5 +1,4 @@
 #include <BindInstanceGFX.hpp>
-#include <CRSMath.hpp>
 #include <Gaia.hpp>
 
 BindInstanceGFX::BindInstanceGFX() noexcept : m_vertexLayoutAvailable(false) {}
