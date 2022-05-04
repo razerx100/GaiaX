@@ -6,7 +6,7 @@ GraphicsQueueManager::GraphicsQueueManager(
 	ID3D12Device* device, size_t bufferCount
 )
 	: m_fenceEvent(nullptr),
-	m_fenceValues(bufferCount, 0u) {
+	m_fenceValues(bufferCount, 0u), m_bufferCount(bufferCount) {
 
 	D3D12_COMMAND_QUEUE_DESC queueDesc = {};
 	queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
@@ -80,8 +80,10 @@ void GraphicsQueueManager::MoveToNextFrame(size_t backBufferIndex) {
 		)
 	);
 
-	std::uint64_t& newFenceValue =
-		m_fenceValues[Gaia::swapChain->GetCurrentBackBufferIndex()];
+	std::size_t newBackBufferIndex =
+		++backBufferIndex >= m_bufferCount ? backBufferIndex % m_bufferCount : backBufferIndex;
+
+	std::uint64_t& newFenceValue = m_fenceValues[newBackBufferIndex];
 
 	if (m_pFence->GetCompletedValue() < newFenceValue) {
 		D3D_THROW_FAILED(hr,

@@ -26,5 +26,6 @@ private:
 	ComPtr<ID3D12Fence> m_pFence;
 	HANDLE m_fenceEvent;
 	std::vector<std::uint64_t> m_fenceValues;
+	const std::size_t m_bufferCount;
 };
 #endif
