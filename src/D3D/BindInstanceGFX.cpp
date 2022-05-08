@@ -1,6 +1,8 @@
 #include <BindInstanceGFX.hpp>
 #include <Gaia.hpp>
 
+#include <DirectXMath.h>
+
 BindInstanceGFX::BindInstanceGFX() noexcept : m_vertexLayoutAvailable(false) {}
 
 BindInstanceGFX::BindInstanceGFX(
@@ -126,6 +128,9 @@ void BindInstanceGFX::ModelRaw::Draw(ID3D12GraphicsCommandList* commandList) con
 
 	const TextureData& texInfo = m_modelRef->GetTextureInfo();
 	commandList->SetGraphicsRoot32BitConstants(2u, 6u, &texInfo, 0u);
+
+	DirectX::XMMATRIX transform = m_modelRef->GetTransform();
+	commandList->SetGraphicsRoot32BitConstants(3u, 16u, &transform, 0u);
 
 	commandList->DrawIndexedInstanced(m_indexCount, 1u, 0u, 0u, 0u);
 }
