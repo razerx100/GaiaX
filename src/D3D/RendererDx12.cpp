@@ -3,6 +3,8 @@
 #include <Gaia.hpp>
 #include <D3DHelperFunctions.hpp>
 
+#include <CameraManager.hpp>
+
 RendererDx12::RendererDx12(
 	const char* appName,
 	void* windowHandle, std::uint32_t width, std::uint32_t height,
@@ -50,8 +52,21 @@ RendererDx12::RendererDx12(
 	Gaia::InitHeapManager();
 	Gaia::InitVertexBuffer();
 	Gaia::InitIndexBuffer();
+	Gaia::InitConstantBuffer();
 	Gaia::InitDescriptorTable();
 	Gaia::InitTextureStorage();
+
+	Gaia::InitCameraManager();
+	Gaia::cameraManager->SetViewMatrix(
+		DirectX::XMMatrixTranslation(0.f, 0.f, 1.f)
+	);
+	Gaia::cameraManager->SetProjectionMatrix(
+		DirectX::XMMatrixPerspectiveFovLH(
+			DirectX::XMConvertToRadians(65.f),
+			static_cast<float>(width) / static_cast<float>(height),
+			0.1f, 100.f
+		)
+	);
 }
 
 RendererDx12::~RendererDx12() noexcept {
@@ -61,6 +76,7 @@ RendererDx12::~RendererDx12() noexcept {
 	Gaia::copyCmdList.reset();
 	Gaia::copyQueue.reset();
 	Gaia::modelContainer.reset();
+	Gaia::constantBuffer.reset();
 	Gaia::vertexBuffer.reset();
 	Gaia::indexBuffer.reset();
 	Gaia::swapChain.reset();

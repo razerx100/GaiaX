@@ -3,6 +3,7 @@
 #include <BindInstanceGFX.hpp>
 #include <string>
 #include <memory>
+#include <PerFrameBuffers.hpp>
 
 class ModelContainer {
 public:
@@ -30,6 +31,7 @@ private:
 
 private:
 	std::unique_ptr<BindInstanceGFX> m_bindInstance;
+	std::unique_ptr<PerFrameBuffers> m_pPerFrameBuffers;
 
 	std::string m_shaderPath;
 };

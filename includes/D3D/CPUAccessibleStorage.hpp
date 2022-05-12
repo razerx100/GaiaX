@@ -3,8 +3,9 @@
 #include <D3DHeaders.hpp>
 #include <SharedAddress.hpp>
 #include <vector>
+#include <memory>
 
-using SharedPair = std::pair<SharedAddress, SharedAddress>;
+using SharedPair = std::pair<std::shared_ptr<SharedAddress>, std::shared_ptr<SharedAddress>>;
 
 class CPUAccessibleStorage {
 public:

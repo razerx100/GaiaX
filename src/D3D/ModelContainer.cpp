@@ -6,7 +6,9 @@
 #include <Gaia.hpp>
 
 ModelContainer::ModelContainer(const std::string& shaderPath) noexcept
-	: m_bindInstance(std::make_unique<BindInstanceGFX>()), m_shaderPath(shaderPath) {}
+	: m_bindInstance(std::make_unique<BindInstanceGFX>()),
+	m_pPerFrameBuffers(std::make_unique<PerFrameBuffers>()),
+	m_shaderPath(shaderPath) {}
 
 void ModelContainer::AddModel(
 	const IModel* const modelRef
@@ -19,6 +21,8 @@ void ModelContainer::BindCommands(ID3D12GraphicsCommandList* commandList) const 
 
 	D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle = Gaia::descriptorTable->GetTextureRangeStart();
 	commandList->SetGraphicsRootDescriptorTable(1u, gpuHandle);
+
+	m_pPerFrameBuffers->BindPerFrameBuffers(commandList);
 
 	m_bindInstance->BindModels(commandList);
 }
@@ -54,11 +58,13 @@ void ModelContainer::CreateBuffers(ID3D12Device* device) {
 
 	// Now allocate memory and actually create them
 	Gaia::heapManager->CreateBuffers(device);
+	Gaia::constantBuffer->CreateBuffer(device);
 
 	// Set GPU addresses
 	Gaia::vertexBuffer->SetGPUVirtualAddressToBuffers();
 	Gaia::indexBuffer->SetGPUVirtualAddressToBuffers();
 
+	m_pPerFrameBuffers->SetMemoryAddresses();
 	m_bindInstance->SetGPUVirtualAddresses();
 }
 
@@ -95,6 +101,7 @@ ModelContainer::Pipeline ModelContainer::CreatePipeline(
 	);
 	signature->AddConstants(6u, D3D12_SHADER_VISIBILITY_VERTEX, 1u);
 	signature->AddConstants(16u, D3D12_SHADER_VISIBILITY_VERTEX, 2u);
+	signature->AddConstantBufferView(D3D12_SHADER_VISIBILITY_VERTEX, 3u);
 
 	signature->CompileSignature();
 	signature->CreateSignature(device);

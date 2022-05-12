@@ -15,6 +15,9 @@
 #include <DescriptorTableManager.hpp>
 #include <TextureStorage.hpp>
 #include <IThreadPool.hpp>
+#include <CPUAccessibleStorage.hpp>
+
+class CameraManager;
 
 namespace Gaia {
 	// Globals
@@ -37,6 +40,8 @@ namespace Gaia {
 	extern std::unique_ptr<DescriptorTableManager> descriptorTable;
 	extern std::unique_ptr<TextureStorage> textureStorage;
 	extern std::shared_ptr<IThreadPool> threadPool;
+	extern std::unique_ptr<CPUAccessibleStorage> constantBuffer;
+	extern std::unique_ptr<CameraManager> cameraManager;
 
 	// Initialization functions
 	void InitDevice();
@@ -55,5 +60,7 @@ namespace Gaia {
 	void InitDescriptorTable();
 	void InitTextureStorage();
 	void SetThreadPool(std::shared_ptr<IThreadPool> threadPoolArg);
+	void InitConstantBuffer();
+	void InitCameraManager();
 }
 #endif

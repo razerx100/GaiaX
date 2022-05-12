@@ -13,7 +13,10 @@ SharedPair CPUAccessibleStorage::GetSharedAddresses(
 
 	m_currentOffset = Align(m_currentOffset, alignment);
 
-	m_sharedOffsets.emplace_back(m_currentOffset, m_currentOffset);
+	m_sharedOffsets.emplace_back(
+		std::make_shared<SharedAddress>(m_currentOffset),
+		std::make_shared<SharedAddress>(m_currentOffset)
+	);
 
 	m_currentOffset += bufferSize;
 
@@ -48,9 +51,11 @@ void CPUAccessibleStorage::CreateBuffer(ID3D12Device* device) {
 	}
 
 	for (size_t index = 0u; index < m_sharedOffsets.size(); ++index) {
-		SharedPair& sharedOffset = m_sharedOffsets[index];
+		auto& [cpuSharedOffset, gpuSharedOffset] = m_sharedOffsets[index];
 
-		sharedOffset.first += cpuStart;
-		sharedOffset.second += gpuStart;
+		*cpuSharedOffset += cpuStart;
+		*gpuSharedOffset += gpuStart;
 	}
+
+	m_sharedOffsets = std::vector<SharedPair>();
 }

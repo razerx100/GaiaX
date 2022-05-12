@@ -1,5 +1,7 @@
 #include <Gaia.hpp>
 
+#include <CameraManager.hpp>
+
 namespace Gaia {
 	std::unique_ptr<DeviceManager> device;
 	std::unique_ptr<SwapChainManager> swapChain;
@@ -17,6 +19,8 @@ namespace Gaia {
 	std::unique_ptr<DescriptorTableManager> descriptorTable;
 	std::unique_ptr<TextureStorage> textureStorage;
 	std::shared_ptr<IThreadPool> threadPool;
+	std::unique_ptr<CPUAccessibleStorage> constantBuffer;
+	std::unique_ptr<CameraManager> cameraManager;
 
 	void InitDevice() {
 		device = std::make_unique<DeviceManager>();
@@ -84,5 +88,13 @@ namespace Gaia {
 
 	void SetThreadPool(std::shared_ptr<IThreadPool> threadPoolArg) {
 		threadPool = std::move(threadPoolArg);
+	}
+
+	void InitConstantBuffer() {
+		constantBuffer = std::make_unique<CPUAccessibleStorage>();
+	}
+
+	void InitCameraManager() {
+		cameraManager = std::make_unique<CameraManager>();
 	}
 }
