@@ -46,7 +46,7 @@ void CPUAccessibleStorage::CreateBuffer(ID3D12Device* device) {
 	{
 		std::uint8_t* pCPUHandle = nullptr;
 
-		m_buffer->Map(1u, nullptr, reinterpret_cast<void**>(&pCPUHandle));
+		m_buffer->Map(0u, nullptr, reinterpret_cast<void**>(&pCPUHandle));
 		cpuStart = static_cast<size_t>(reinterpret_cast<std::uint64_t>(pCPUHandle));
 	}
 
