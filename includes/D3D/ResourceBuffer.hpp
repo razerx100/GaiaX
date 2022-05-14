@@ -33,10 +33,13 @@ private:
 private:
 	size_t ConfigureBufferSizeAndAllocations() noexcept;
 
-	void AllocateSmall4(
-		size_t& offset, size_t allocationBudget,
-		std::int64_t& smallestMemoryIndex, std::int64_t largestMemoryIndex
+	void AllocateSmall4Before256(
+		size_t& offset, std::int64_t& smallestMemoryIndex, std::int64_t largestMemoryIndex
 	) noexcept;
+
+	void AlignAndConfigureOffset(
+		size_t& offset, BufferData& bufferData, size_t alignment
+	) const noexcept;
 
 private:
 	std::vector<AddressAndData> m_align256Data;

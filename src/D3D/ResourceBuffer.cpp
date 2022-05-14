@@ -82,61 +82,57 @@ size_t ResourceBuffer::ConfigureBufferSizeAndAllocations() noexcept {
 		if (align4Data.size < 256u)
 			break;
 
-		memoryOffset = Align(memoryOffset, 4u);
-		align4Data.offset = memoryOffset;
+		AlignAndConfigureOffset(memoryOffset, align4Data, 4u);
 	}
 
 	// Allocate 4bytes aligned buffers between the space left from previous allocation and
 	// next alignment
 	std::int64_t smallestMemoryIndex4 = 0u;
 
-	size_t emptySpace = Align(memoryOffset, 256u);
-	emptySpace = emptySpace - memoryOffset;
-	AllocateSmall4(memoryOffset, emptySpace, smallestMemoryIndex4, largestMemoryIndex4);
+	AllocateSmall4Before256(memoryOffset, smallestMemoryIndex4, largestMemoryIndex4);
 
 	// Allocate Buffers with 256bytes alignments and try to allocate 4bytes aligned buffers
 	// between the remained space and next alignment
 	for (size_t index = 0u; index < std::size(m_align256Data); ++index) {
-		emptySpace = 0u;
-
-		size_t oldOffset = memoryOffset;
-		memoryOffset = Align(memoryOffset, 256u);
-		emptySpace = memoryOffset - oldOffset;
-
 		BufferData& align256Data = m_align256Data[index].second;
-		align256Data.offset = memoryOffset;
-		memoryOffset += align256Data.size;
+		AlignAndConfigureOffset(memoryOffset, align256Data, 256u);
 
 		// Allocate smaller 4bytes aligned buffers in the remained space
-		AllocateSmall4(memoryOffset, emptySpace, smallestMemoryIndex4, largestMemoryIndex4);
+		AllocateSmall4Before256(memoryOffset, smallestMemoryIndex4, largestMemoryIndex4);
 	}
 
 	// Allocate the rest of the 4bytes aligned buffers
 	for (; smallestMemoryIndex4 <= largestMemoryIndex4; ++smallestMemoryIndex4) {
-		memoryOffset = Align(memoryOffset, 4u);
-
 		BufferData& align4Data = m_align4Data[smallestMemoryIndex4].second;
-		align4Data.offset = memoryOffset;
-		memoryOffset += align4Data.size;
+		AlignAndConfigureOffset(memoryOffset, align4Data, 4u);
 	}
 
 	return memoryOffset;
 }
 
-void ResourceBuffer::AllocateSmall4(
-	size_t& offset, size_t allocationBudget,
-	std::int64_t& smallestMemoryIndex, std::int64_t largestMemoryIndex
+void ResourceBuffer::AllocateSmall4Before256(
+	size_t& offset, std::int64_t& smallestMemoryIndex, std::int64_t largestMemoryIndex
 ) noexcept {
-	std::int64_t emptySpace = static_cast<std::int64_t>(allocationBudget);
+	offset = Align(offset, 4u);
+	size_t nextOffset = Align(offset, 256u);
+	size_t emptySpace = nextOffset - offset;
 
 	for (; smallestMemoryIndex <= largestMemoryIndex; ++smallestMemoryIndex) {
 		BufferData& align4Data = m_align4Data[smallestMemoryIndex].second;
 
-		if (emptySpace < static_cast<std::int64_t>(align4Data.size))
+		if (emptySpace < align4Data.size)
 			break;
 
-		offset = Align(offset, 4u);
-		align4Data.offset = offset;
+		AlignAndConfigureOffset(offset, align4Data, 4u);
+
 		emptySpace -= Align(align4Data.size, 4u);
 	}
+}
+
+void ResourceBuffer::AlignAndConfigureOffset(
+	size_t& offset, BufferData& bufferData, size_t alignment
+) const noexcept {
+	offset = Align(offset, alignment);
+	bufferData.offset = offset;
+	offset += bufferData.size;
 }
