@@ -1,6 +1,7 @@
 #include <ResourceBuffer.hpp>
 #include <HeapManager.hpp>
 #include <Gaia.hpp>
+#include <ranges>
 #include <algorithm>
 #include <D3DHelperFunctions.hpp>
 
@@ -9,24 +10,14 @@ D3DGPUSharedAddress ResourceBuffer::AddDataAndGetSharedAddress(
 	bool alignment256
 ) noexcept {
 
-	D3DGPUSharedAddress sharedAddress;
+	D3DGPUSharedAddress sharedAddress =
+		std::make_shared<_SharedAddress<D3D12_GPU_VIRTUAL_ADDRESS>>();
+	BufferData bufferData = { data, bufferSize, 0u };
 
-	if (alignment256) {
-		m_sharedGPUAddress256.emplace_back(
-			std::make_shared<_SharedAddress<D3D12_GPU_VIRTUAL_ADDRESS>>()
-		);
-		sharedAddress = m_sharedGPUAddress256.back();
-
-		m_bufferData256.emplace_back(data, bufferSize, 0u);
-	}
-	else {
-		m_sharedGPUAddress4.emplace_back(
-			std::make_shared<_SharedAddress<D3D12_GPU_VIRTUAL_ADDRESS>>()
-		);
-		sharedAddress = m_sharedGPUAddress4.back();
-
-		m_bufferData4.emplace_back(data, bufferSize, 0u);
-	}
+	if (alignment256)
+		m_align256Data.emplace_back(sharedAddress, bufferData);
+	else
+		m_align4Data.emplace_back(sharedAddress, bufferData);
 
 	return sharedAddress;
 }
@@ -34,11 +25,11 @@ D3DGPUSharedAddress ResourceBuffer::AddDataAndGetSharedAddress(
 void ResourceBuffer::SetGPUVirtualAddressToBuffers() noexcept {
 	D3D12_GPU_VIRTUAL_ADDRESS gpuAddress = m_pGPUBuffer->Get()->GetGPUVirtualAddress();
 
-	for (size_t index = 0u; index < m_sharedGPUAddress256.size(); ++index)
-		*m_sharedGPUAddress256[index] = gpuAddress + m_bufferData256[index].offset;
+	for (auto& [sharedAddress256, bufferData256] : m_align256Data)
+		*sharedAddress256 = gpuAddress + bufferData256.offset;
 
-	for (size_t index = 0u; index < m_sharedGPUAddress4.size(); ++index)
-		*m_sharedGPUAddress4[index] = gpuAddress + m_bufferData4[index].offset;
+	for (auto& [sharedAddress4, bufferData4] : m_align4Data)
+		*sharedAddress4 = gpuAddress + bufferData4.offset;
 }
 
 void ResourceBuffer::AcquireBuffers() {
@@ -50,115 +41,102 @@ void ResourceBuffer::AcquireBuffers() {
 }
 
 void ResourceBuffer::CopyData() noexcept {
-	for (auto& bufferData : m_bufferData256)
+	for (auto& [sharedAddress256, bufferData256] : m_align256Data)
 		memcpy(
-			m_pUploadBuffer->GetCPUHandle() + bufferData.offset,
-			bufferData.data, bufferData.size
+			m_pUploadBuffer->GetCPUHandle() + bufferData256.offset,
+			bufferData256.data, bufferData256.size
 		);
 
-	for (auto& bufferData : m_bufferData4)
+	for (auto& [sharedAddress4, bufferData4] : m_align4Data)
 		memcpy(
-			m_pUploadBuffer->GetCPUHandle() + bufferData.offset,
-			bufferData.data, bufferData.size
+			m_pUploadBuffer->GetCPUHandle() + bufferData4.offset,
+			bufferData4.data, bufferData4.size
 		);
 }
 
 void ResourceBuffer::ReleaseUploadBuffer() {
 	m_pUploadBuffer.reset();
-	m_bufferData256 = std::vector<BufferData>();
-	m_bufferData4 = std::vector<BufferData>();
+	m_align256Data = std::vector<AddressAndData>();
+	m_align4Data = std::vector<AddressAndData>();
 }
 
 size_t ResourceBuffer::ConfigureBufferSizeAndAllocations() noexcept {
 	size_t memoryOffset = 0u;
 
-	std::deque<BufferDataIter> sorted256Data;
-	FillWithIterator(sorted256Data, m_bufferData256);
-
-	auto predicate256 = [](
-		BufferDataIter iter1,
-		BufferDataIter iter2
-		) {
-			return (*iter1).size % 256u < (*iter2).size % 256u;
+	auto predicate256 = [](const AddressAndData& data1, const AddressAndData& data2) {
+		return data1.second.size % 256u < data2.second.size % 256u;
 	};
-	std::sort(sorted256Data.begin(), sorted256Data.end(), predicate256);
+	std::ranges::sort(m_align256Data, predicate256);
 
-	std::deque<BufferDataIter> sorted4Data;
-	FillWithIterator(sorted4Data, m_bufferData4);
-
-	auto predicate4 = [](
-		BufferDataIter iter1,
-		BufferDataIter iter2
-		) {
-			return (*iter1).size < (*iter2).size;
+	auto predicate4 = [](const AddressAndData& data1, const AddressAndData& data2) {
+		return data1.second.size < data2.second.size;
 	};
-	std::sort(sorted4Data.begin(), sorted4Data.end(), predicate4);
+	std::ranges::sort(m_align4Data, predicate4);
 
-	for (BufferData& bufferData = *sorted4Data.back();
-		bufferData.size >= 256u;
-		memoryOffset += bufferData.size, bufferData = *sorted4Data.back()) {
+	std::int64_t largestMemoryIndex4 = static_cast<std::int64_t>(std::size(m_align4Data)) - 1;
+
+	// Allocate Buffers larger than 256bytes with 4bytes alignment
+	for (; largestMemoryIndex4 >= 0u; --largestMemoryIndex4) {
+		BufferData& align4Data = m_align4Data[largestMemoryIndex4].second;
+
+		if (align4Data.size < 256u)
+			break;
+
 		memoryOffset = Align(memoryOffset, 4u);
-
-		bufferData.offset = memoryOffset;
-		sorted4Data.pop_back();
+		align4Data.offset = memoryOffset;
 	}
+
+	// Allocate 4bytes aligned buffers between the space left from previous allocation and
+	// next alignment
+	std::int64_t smallestMemoryIndex4 = 0u;
 
 	size_t emptySpace = Align(memoryOffset, 256u);
 	emptySpace = emptySpace - memoryOffset;
-	AllocateSmall4(sorted4Data, memoryOffset, emptySpace);
+	AllocateSmall4(memoryOffset, emptySpace, smallestMemoryIndex4, largestMemoryIndex4);
 
-	emptySpace = 0u;
-
-	while (!sorted256Data.empty()) {
+	// Allocate Buffers with 256bytes alignments and try to allocate 4bytes aligned buffers
+	// between the remained space and next alignment
+	for (size_t index = 0u; index < std::size(m_align256Data); ++index) {
 		emptySpace = 0u;
-		Align256(memoryOffset, emptySpace);
 
-		BufferData& bufferData = *sorted256Data.front();
-		bufferData.offset = memoryOffset;
-		memoryOffset += bufferData.size;
-		sorted256Data.pop_front();
+		size_t oldOffset = memoryOffset;
+		memoryOffset = Align(memoryOffset, 256u);
+		emptySpace = memoryOffset - oldOffset;
 
-		AllocateSmall4(sorted4Data, memoryOffset, emptySpace);
+		BufferData& align256Data = m_align256Data[index].second;
+		align256Data.offset = memoryOffset;
+		memoryOffset += align256Data.size;
+
+		// Allocate smaller 4bytes aligned buffers in the remained space
+		AllocateSmall4(memoryOffset, emptySpace, smallestMemoryIndex4, largestMemoryIndex4);
 	}
 
-	while (!sorted4Data.empty()) {
+	// Allocate the rest of the 4bytes aligned buffers
+	for (; smallestMemoryIndex4 <= largestMemoryIndex4; ++smallestMemoryIndex4) {
 		memoryOffset = Align(memoryOffset, 4u);
 
-		BufferData& bufferData = *sorted4Data.front();
-		bufferData.offset = memoryOffset;
-		memoryOffset += bufferData.size;
-		sorted4Data.pop_front();
+		BufferData& align4Data = m_align4Data[smallestMemoryIndex4].second;
+		align4Data.offset = memoryOffset;
+		memoryOffset += align4Data.size;
 	}
 
 	return memoryOffset;
 }
 
-void ResourceBuffer::FillWithIterator(
-	std::deque<BufferDataIter>& dest,
-	std::vector<BufferData>& source
-) const noexcept {
-	for (auto iterBegin = source.begin(); iterBegin != source.end(); ++iterBegin)
-		dest.emplace_back(iterBegin);
-}
-
-void ResourceBuffer::Align256(size_t& offset, size_t& emptySpace) const noexcept {
-	size_t oldOffset = offset;
-	offset = Align(offset, 256u);
-	emptySpace += offset - oldOffset;
-}
-
 void ResourceBuffer::AllocateSmall4(
-	std::deque<BufferDataIter>& align4, size_t& offset, size_t allocationBudget
-) const noexcept {
+	size_t& offset, size_t allocationBudget,
+	std::int64_t& smallestMemoryIndex, std::int64_t largestMemoryIndex
+) noexcept {
 	std::int64_t emptySpace = static_cast<std::int64_t>(allocationBudget);
 
-	for (BufferData& bufferData = *align4.front();
-		emptySpace >= static_cast<std::int64_t>(bufferData.size);
-		offset += bufferData.size, emptySpace -= bufferData.size,
-		bufferData = *align4.front()) {
-		offset = Align(offset, 4u);
+	for (; smallestMemoryIndex <= largestMemoryIndex; ++smallestMemoryIndex) {
+		BufferData& align4Data = m_align4Data[smallestMemoryIndex].second;
 
-		bufferData.offset = offset;
-		align4.pop_front();
+		if (emptySpace < static_cast<std::int64_t>(align4Data.size))
+			break;
+
+		offset = Align(offset, 4u);
+		align4Data.offset = offset;
+		emptySpace -= Align(align4Data.size, 4u);
 	}
 }

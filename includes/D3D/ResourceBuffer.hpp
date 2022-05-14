@@ -3,7 +3,6 @@
 #include <D3DBuffer.hpp>
 #include <UploadBuffer.hpp>
 #include <SharedAddress.hpp>
-#include <deque>
 #include <vector>
 #include <memory>
 
@@ -29,26 +28,19 @@ private:
 		size_t offset;
 	};
 
-private:
-	using BufferDataIter = std::vector<BufferData>::iterator;
+	using AddressAndData = std::pair<D3DGPUSharedAddress, BufferData>;
 
+private:
 	size_t ConfigureBufferSizeAndAllocations() noexcept;
 
-	void FillWithIterator(
-		std::deque<BufferDataIter>& dest,
-		std::vector<BufferData>& source
-	) const noexcept;
-	void Align256(size_t& offset, size_t& emptySpace) const noexcept;
 	void AllocateSmall4(
-		std::deque<BufferDataIter>& align4,
-		size_t& offset, size_t allocationBudget
-	) const noexcept;
+		size_t& offset, size_t allocationBudget,
+		std::int64_t& smallestMemoryIndex, std::int64_t largestMemoryIndex
+	) noexcept;
 
 private:
-	std::vector<BufferData> m_bufferData256;
-	std::vector<BufferData> m_bufferData4;
-	std::vector<D3DGPUSharedAddress> m_sharedGPUAddress256;
-	std::vector<D3DGPUSharedAddress> m_sharedGPUAddress4;
+	std::vector<AddressAndData> m_align256Data;
+	std::vector<AddressAndData> m_align4Data;
 	std::shared_ptr<D3DBuffer> m_pGPUBuffer;
 	std::shared_ptr<UploadBuffer> m_pUploadBuffer;
 };
