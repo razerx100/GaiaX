@@ -41,5 +41,7 @@ private:
 
 	const std::string m_appName;
 	std::string m_shaderPath;
+	std::uint32_t m_width;
+	std::uint32_t m_height;
 };
 #endif

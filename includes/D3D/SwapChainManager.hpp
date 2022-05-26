@@ -21,7 +21,7 @@ public:
 	void ToggleVSync() noexcept;
 	void PresentWithTear();
 	void PresentWithoutTear();
-	bool Resize(
+	void Resize(
 		ID3D12Device* device,
 		std::uint32_t width, std::uint32_t height
 	);
@@ -49,8 +49,6 @@ private:
 	void CreateRTVs(ID3D12Device* device);
 
 private:
-	std::uint32_t m_width;
-	std::uint32_t m_height;
 	size_t m_rtvDescSize;
 	bool m_vsyncFlag;
 	ComPtr<IDXGISwapChain4> m_pSwapChain;

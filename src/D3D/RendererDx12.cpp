@@ -9,7 +9,8 @@ RendererDx12::RendererDx12(
 	const char* appName,
 	void* windowHandle, std::uint32_t width, std::uint32_t height,
 	std::uint32_t bufferCount
-) : m_backgroundColour{0.1f, 0.1f, 0.1f, 0.1f}, m_appName(appName) {
+) : m_backgroundColour{0.1f, 0.1f, 0.1f, 0.1f}, m_appName(appName),
+	m_width(width), m_height(height) {
 	Gaia::InitDevice();
 
 #ifdef _DEBUG
@@ -57,7 +58,7 @@ RendererDx12::RendererDx12(
 	Gaia::InitTextureStorage();
 
 	Gaia::InitCameraManager();
-	Gaia::cameraManager->SetProjectionMatrix(width, height);
+	Gaia::cameraManager->SetSceneResolution(width, height);
 }
 
 RendererDx12::~RendererDx12() noexcept {
@@ -140,15 +141,19 @@ void RendererDx12::Render() {
 }
 
 void RendererDx12::Resize(std::uint32_t width, std::uint32_t height) {
-	ID3D12Device* deviceRef = Gaia::device->GetDeviceRef();
+	if (m_width != width || m_height != height) {
+		m_width = width;
+		m_height = height;
 
-	size_t backBufferIndex = Gaia::swapChain->GetCurrentBackBufferIndex();
+		ID3D12Device* deviceRef = Gaia::device->GetDeviceRef();
 
-	Gaia::graphicsQueue->WaitForGPU(
-		backBufferIndex
-	);
+		size_t backBufferIndex = Gaia::swapChain->GetCurrentBackBufferIndex();
 
-	if (Gaia::swapChain->Resize(deviceRef, width, height)) {
+		Gaia::graphicsQueue->WaitForGPU(
+			backBufferIndex
+		);
+
+		Gaia::swapChain->Resize(deviceRef, width, height);
 		Gaia::graphicsQueue->ResetFenceValuesWith(
 			backBufferIndex
 		);
@@ -157,6 +162,8 @@ void RendererDx12::Resize(std::uint32_t width, std::uint32_t height) {
 			deviceRef, width, height
 		);
 		Gaia::viewportAndScissor->Resize(width, height);
+
+		Gaia::cameraManager->SetSceneResolution(width, height);
 	}
 }
 

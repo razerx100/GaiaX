@@ -4,14 +4,12 @@
 #include <d3dx12.h>
 
 SwapChainManager::SwapChainManager(const SwapChainCreateInfo& createInfo)
-	:
-	m_width(createInfo.width), m_height(createInfo.height), m_rtvDescSize(0u)
-	, m_vsyncFlag(false), m_pRenderTargetViews(createInfo.bufferCount) {
+	: m_rtvDescSize(0u), m_vsyncFlag(false), m_pRenderTargetViews(createInfo.bufferCount) {
 
 	DXGI_SWAP_CHAIN_DESC1 desc = {};
 	desc.BufferCount = static_cast<UINT>(createInfo.bufferCount);
-	desc.Width = m_width;
-	desc.Height = m_height;
+	desc.Width = createInfo.width;
+	desc.Height = createInfo.height;
 	desc.Format = Gaia::RENDER_FORMAT;
 	desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 	desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
@@ -129,36 +127,27 @@ void SwapChainManager::PresentWithoutTear() {
 	);
 }
 
-bool SwapChainManager::Resize(
+void SwapChainManager::Resize(
 	ID3D12Device* device,
 	std::uint32_t width, std::uint32_t height
 ) {
-	if (width != m_width || height != m_height) {
-		for (auto& rt : m_pRenderTargetViews)
-			rt.Reset();
+	for (auto& rt : m_pRenderTargetViews)
+		rt.Reset();
 
-		DXGI_SWAP_CHAIN_DESC1 desc = {};
-		m_pSwapChain->GetDesc1(&desc);
+	DXGI_SWAP_CHAIN_DESC1 desc = {};
+	m_pSwapChain->GetDesc1(&desc);
 
-		HRESULT hr;
-		D3D_THROW_FAILED(
-			hr, m_pSwapChain->ResizeBuffers(
-				static_cast<UINT>(m_pRenderTargetViews.size()),
-				width, height,
-				desc.Format,
-				desc.Flags
-			)
-		);
+	HRESULT hr;
+	D3D_THROW_FAILED(
+		hr, m_pSwapChain->ResizeBuffers(
+			static_cast<UINT>(m_pRenderTargetViews.size()),
+			width, height,
+			desc.Format,
+			desc.Flags
+		)
+	);
 
-		m_width = width;
-		m_height = height;
-
-		CreateRTVs(device);
-
-		return true;
-	}
-	else
-		return false;
+	CreateRTVs(device);
 }
 
 void SwapChainManager::CreateRTVHeap(ID3D12Device* device, size_t bufferCount) {
