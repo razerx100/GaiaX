@@ -57,19 +57,11 @@ RendererDx12::RendererDx12(
 	Gaia::InitTextureStorage();
 
 	Gaia::InitCameraManager();
-	Gaia::cameraManager->SetViewMatrix(
-		DirectX::XMMatrixTranslation(0.f, 0.f, 1.f)
-	);
-	Gaia::cameraManager->SetProjectionMatrix(
-		DirectX::XMMatrixPerspectiveFovLH(
-			DirectX::XMConvertToRadians(65.f),
-			static_cast<float>(width) / static_cast<float>(height),
-			0.1f, 100.f
-		)
-	);
+	Gaia::cameraManager->SetProjectionMatrix(width, height);
 }
 
 RendererDx12::~RendererDx12() noexcept {
+	Gaia::cameraManager.reset();
 	Gaia::textureStorage.reset();
 	Gaia::descriptorTable.reset();
 	Gaia::viewportAndScissor.reset();
@@ -243,3 +235,10 @@ void RendererDx12::SetThreadPool(std::shared_ptr<IThreadPool> threadPoolArg) noe
 	Gaia::SetThreadPool(std::move(threadPoolArg));
 }
 
+void RendererDx12::SetViewMatrix(const DirectX::XMMATRIX& viewMatrix) noexcept {
+	Gaia::cameraManager->SetViewMatrix(viewMatrix);
+}
+
+void RendererDx12::SetFov(std::uint32_t fovAngleInDegree) noexcept {
+	Gaia::cameraManager->SetFov(fovAngleInDegree);
+}

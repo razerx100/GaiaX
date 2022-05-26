@@ -10,13 +10,17 @@ struct CameraMatrices {
 
 class CameraManager {
 public:
+	CameraManager() noexcept;
+
 	void CopyData(std::uint8_t* cpuHandle) noexcept;
 
 	void SetViewMatrix(const DirectX::XMMATRIX& view) noexcept;
-	void SetProjectionMatrix(const DirectX::XMMATRIX& projection) noexcept;
+	void SetProjectionMatrix(std::uint32_t width, std::uint32_t height) noexcept;
 	void SetCamera(const CameraMatrices& camera) noexcept;
+	void SetFov(std::uint32_t fovAngleInDegree) noexcept;
 
 private:
 	CameraMatrices m_cameraMatrices;
+	float m_fov;
 };
 #endif
