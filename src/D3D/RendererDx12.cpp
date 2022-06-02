@@ -3,8 +3,6 @@
 #include <Gaia.hpp>
 #include <D3DHelperFunctions.hpp>
 
-#include <CameraManager.hpp>
-
 RendererDx12::RendererDx12(
 	const char* appName,
 	void* windowHandle, std::uint32_t width, std::uint32_t height,
@@ -242,10 +240,8 @@ void RendererDx12::SetThreadPool(std::shared_ptr<IThreadPool> threadPoolArg) noe
 	Gaia::SetThreadPool(std::move(threadPoolArg));
 }
 
-void RendererDx12::SetViewMatrix(const DirectX::XMMATRIX& viewMatrix) noexcept {
-	Gaia::cameraManager->SetViewMatrix(viewMatrix);
-}
-
-void RendererDx12::SetFov(std::uint32_t fovAngleInDegree) noexcept {
-	Gaia::cameraManager->SetFov(fovAngleInDegree);
+void RendererDx12::SetSharedDataContainer(
+	std::shared_ptr<ISharedDataContainer> sharedData
+) noexcept {
+	Gaia::SetSharedData(std::move(sharedData));
 }

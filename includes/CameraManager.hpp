@@ -14,13 +14,12 @@ public:
 
 	void CopyData(std::uint8_t* cpuHandle) noexcept;
 
-	void SetViewMatrix(const DirectX::XMMATRIX& view) noexcept;
 	void SetCamera(const CameraMatrices& camera) noexcept;
-	void SetFov(std::uint32_t fovAngleInDegree) noexcept;
 	void SetSceneResolution(std::uint32_t width, std::uint32_t height) noexcept;
 
 private:
 	void SetProjectionMatrix() noexcept;
+	void FetchCameraData() noexcept;
 
 private:
 	CameraMatrices m_cameraMatrices;

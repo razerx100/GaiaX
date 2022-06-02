@@ -33,8 +33,9 @@ public:
 	void InitResourceBasedObjects() override;
 	void ProcessData() override;
 
-	void SetViewMatrix(const DirectX::XMMATRIX& viewMatrix) noexcept override;
-	void SetFov(std::uint32_t fovAngleInDegree) noexcept override;
+	void SetSharedDataContainer(
+		std::shared_ptr<class ISharedDataContainer> sharedData
+	) noexcept override;
 
 private:
 	std::array<float, 4> m_backgroundColour;
