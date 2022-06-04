@@ -6,8 +6,7 @@
 BindInstanceGFX::BindInstanceGFX() noexcept : m_vertexLayoutAvailable(false) {}
 
 BindInstanceGFX::BindInstanceGFX(
-	std::unique_ptr<PipelineObjectGFX> pso,
-	std::unique_ptr<RootSignatureDynamic> signature
+	std::unique_ptr<PipelineObjectGFX> pso, std::unique_ptr<RootSignatureDynamic> signature
 ) noexcept
 	: m_pso(std::move(pso)),
 	m_rootSignature(std::move(signature)), m_vertexLayoutAvailable(false) {}
@@ -22,39 +21,40 @@ void BindInstanceGFX::AddRootSignature(
 	m_rootSignature = std::move(signature);
 }
 
-void BindInstanceGFX::AddModel(
-	const IModel* const modelRef
-) noexcept {
-	size_t indexBufferSize = modelRef->GetIndexBufferSize();
-	size_t vertexBufferSize = modelRef->GetVertexBufferSize();
+void BindInstanceGFX::AddModel(std::shared_ptr<IModel>&& model) noexcept {
+	if (!m_vertexLayoutAvailable) {
+		m_vertexLayout.InitLayout(model->GetVertexLayout());
+		m_vertexLayoutAvailable = true;
+	}
+
+	size_t indexBufferSize = model->GetIndexBufferSize();
+	size_t vertexBufferSize = model->GetVertexBufferSize();
+
+	size_t vertexStrideSize = model->GetVertexStrideSize();
+
+	D3DGPUSharedAddress vertexBuffer = Gaia::vertexBuffer->AddDataAndGetSharedAddress(
+		model->GetVertexData(), vertexBufferSize
+	);
+
+	D3DGPUSharedAddress indexBuffer = Gaia::indexBuffer->AddDataAndGetSharedAddress(
+		model->GetIndexData(), indexBufferSize
+	);
+
+	size_t indexCount = model->GetIndexCount();
 
 	m_modelsRaw.emplace_back(
 		std::make_unique<ModelRaw>(
-			modelRef,
 			D3D12_VERTEX_BUFFER_VIEW{
-				0u,
-				static_cast<UINT>(vertexBufferSize),
-				static_cast<UINT>(modelRef->GetVertexStrideSize())
+				0u, static_cast<UINT>(vertexBufferSize), static_cast<UINT>(vertexStrideSize)
 			},
-			Gaia::vertexBuffer->AddDataAndGetSharedAddress(
-				modelRef->GetVertexData(), vertexBufferSize
-			),
+			std::move(vertexBuffer),
 			D3D12_INDEX_BUFFER_VIEW{
-				0u,
-				static_cast<UINT>(indexBufferSize),
-				DXGI_FORMAT_R16_UINT
+				0u, static_cast<UINT>(indexBufferSize), DXGI_FORMAT_R16_UINT
 			},
-			Gaia::indexBuffer->AddDataAndGetSharedAddress(
-				modelRef->GetIndexData(), indexBufferSize
-			),
-			modelRef->GetIndexCount()
+			std::move(indexBuffer), indexCount,
+			std::move(model)
 			)
 	);
-
-	if (!m_vertexLayoutAvailable) {
-		m_vertexLayout.InitLayout(modelRef->GetVertexLayout());
-		m_vertexLayoutAvailable = true;
-	}
 }
 
 void BindInstanceGFX::BindModels(ID3D12GraphicsCommandList* commandList) const noexcept {
@@ -80,22 +80,19 @@ VertexLayout BindInstanceGFX::GetVertexLayout() const noexcept {
 }
 
 // Model Raw
-BindInstanceGFX::ModelRaw::ModelRaw(const IModel* const modelRef) noexcept
-	:
-	m_modelRef(modelRef),
+BindInstanceGFX::ModelRaw::ModelRaw(std::shared_ptr<IModel>&& model) noexcept
+	: m_model(std::move(model)),
 	m_indexCount(0u),
 	m_indexBufferView{}, m_vertexBufferView{} {}
 
 BindInstanceGFX::ModelRaw::ModelRaw(
-	const IModel* const modelRef,
 	D3D12_VERTEX_BUFFER_VIEW&& vertexBufferView,
 	D3DGPUSharedAddress vbvSharedAddress,
 	D3D12_INDEX_BUFFER_VIEW&& indexBufferView,
 	D3DGPUSharedAddress ibvSharedAddress,
-	size_t indexCount
-) noexcept
-	:
-	m_modelRef(modelRef),
+	size_t indexCount,
+	std::shared_ptr<IModel>&& model
+) noexcept : m_model(std::move(model)),
 	m_vertexBufferView(std::move(vertexBufferView), vbvSharedAddress),
 	m_indexBufferView(std::move(indexBufferView), ibvSharedAddress),
 	m_indexCount(static_cast<UINT>(indexCount)) {}
@@ -124,12 +121,12 @@ void BindInstanceGFX::ModelRaw::UpdateGPUAddressOffsets() {
 void BindInstanceGFX::ModelRaw::Draw(ID3D12GraphicsCommandList* commandList) const noexcept {
 	commandList->IASetVertexBuffers(0u, 1u, m_vertexBufferView.GetAddress());
 	commandList->IASetIndexBuffer(m_indexBufferView.GetAddress());
-	commandList->SetGraphicsRoot32BitConstant(0u, m_modelRef->GetTextureIndex(), 0u);
+	commandList->SetGraphicsRoot32BitConstant(0u, m_model->GetTextureIndex(), 0u);
 
-	const TextureData& texInfo = m_modelRef->GetTextureInfo();
+	const TextureData& texInfo = m_model->GetTextureInfo();
 	commandList->SetGraphicsRoot32BitConstants(2u, 6u, &texInfo, 0u);
 
-	DirectX::XMMATRIX modelMat = m_modelRef->GetModelMatrix();
+	DirectX::XMMATRIX modelMat = m_model->GetModelMatrix();
 	commandList->SetGraphicsRoot32BitConstants(3u, 16u, &modelMat, 0u);
 
 	commandList->DrawIndexedInstanced(m_indexCount, 1u, 0u, 0u, 0u);

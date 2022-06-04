@@ -25,7 +25,7 @@ public:
 
 	void SetThreadPool(std::shared_ptr<class IThreadPool> threadPoolArg) noexcept override;
 	void SetBackgroundColour(const std::array<float, 4>& colour) noexcept override;
-	void SubmitModel(const IModel* const modelRef) override;
+	void SubmitModel(std::shared_ptr<IModel> model) override;
 	void Render() override;
 	void WaitForAsyncTasks() override;
 

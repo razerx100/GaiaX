@@ -21,9 +21,7 @@ public:
 
 	void AddPSO(std::unique_ptr<PipelineObjectGFX> pso) noexcept;
 	void AddRootSignature(std::unique_ptr<RootSignatureDynamic> signature) noexcept;
-	void AddModel(
-		const IModel* const modelRef
-	) noexcept;
+	void AddModel(std::shared_ptr<IModel>&& model) noexcept;
 
 	void SetGPUVirtualAddresses() noexcept;
 
@@ -33,14 +31,14 @@ public:
 private:
 	class ModelRaw {
 	public:
-		ModelRaw(const IModel* const modelRef) noexcept;
+		ModelRaw(std::shared_ptr<IModel>&& model) noexcept;
 		ModelRaw(
-			const IModel* const modelRef,
 			D3D12_VERTEX_BUFFER_VIEW&& vertexBufferView,
 			D3DGPUSharedAddress vbvSharedAddress,
 			D3D12_INDEX_BUFFER_VIEW&& indexBufferView,
 			D3DGPUSharedAddress ibvSharedAddress,
-			size_t indexCount
+			size_t indexCount,
+			std::shared_ptr<IModel>&& model
 		) noexcept;
 
 		void UpdateGPUAddressOffsets();
@@ -91,7 +89,7 @@ private:
 		};
 
 	private:
-		const IModel* const m_modelRef;
+		std::shared_ptr<IModel> m_model;
 		BufferView<D3D12_VERTEX_BUFFER_VIEW> m_vertexBufferView;
 		BufferView<D3D12_INDEX_BUFFER_VIEW> m_indexBufferView;
 		UINT m_indexCount;

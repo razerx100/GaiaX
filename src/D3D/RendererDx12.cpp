@@ -81,10 +81,8 @@ RendererDx12::~RendererDx12() noexcept {
 #endif
 }
 
-void RendererDx12::SubmitModel(const IModel* const modelRef) {
-	Gaia::modelContainer->AddModel(
-		modelRef
-	);
+void RendererDx12::SubmitModel(std::shared_ptr<IModel> model) {
+	Gaia::modelContainer->AddModel(std::move(model));
 }
 
 void RendererDx12::Render() {

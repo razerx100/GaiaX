@@ -2,16 +2,7 @@
 #define I_MODEL_HPP_
 #include <cstdint>
 #include <vector>
-
-namespace DirectX {
-#ifdef _XM_NO_INTRINSICS_
-	struct XMMATRIX;
-#else
-	struct alignas(16) XMMATRIX;
-#endif
-}
-
-// Include DirectXMath in source files
+#include <DirectXMath.h>
 
 enum class VertexElementType {
 	Position,

@@ -10,10 +10,8 @@ ModelContainer::ModelContainer(const std::string& shaderPath) noexcept
 	m_pPerFrameBuffers(std::make_unique<PerFrameBuffers>()),
 	m_shaderPath(shaderPath) {}
 
-void ModelContainer::AddModel(
-	const IModel* const modelRef
-) {
-	m_bindInstance->AddModel(modelRef);
+void ModelContainer::AddModel(std::shared_ptr<IModel>&& model) {
+	m_bindInstance->AddModel(std::move(model));
 }
 
 void ModelContainer::BindCommands(ID3D12GraphicsCommandList* commandList) const noexcept {
