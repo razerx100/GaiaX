@@ -4,7 +4,7 @@
 
 size_t TextureStorage::AddTexture(
 	ID3D12Device* device,
-	const void* data,
+	std::unique_ptr<std::uint8_t> textureDataHandle,
 	size_t width, size_t height, size_t pixelSizeInBytes
 ) noexcept {
 	DXGI_FORMAT textureFormat = DXGI_FORMAT_UNKNOWN;
@@ -15,8 +15,10 @@ size_t TextureStorage::AddTexture(
 		textureFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 
 	m_textureData.emplace_back(
-		data, width * pixelSizeInBytes * height, textureFormat
+		width * pixelSizeInBytes * height, textureFormat
 	);
+
+	m_dataHandles.emplace_back(std::move(textureDataHandle));
 
 	auto [gpuBuffer, uploadBuffer] =
 		Gaia::heapManager->AddTexture(device, width, height, pixelSizeInBytes);
@@ -30,7 +32,7 @@ size_t TextureStorage::AddTexture(
 	m_cpuHandles.emplace_back(sharedCPUHandle);
 	m_textureIndices.emplace_back(sharedIndex);
 
-	return m_textureIndices.size() - 1u;
+	return std::size(m_textureIndices) - 1u;
 }
 
 void TextureStorage::CreateBufferViews(ID3D12Device* device) {
@@ -40,7 +42,7 @@ void TextureStorage::CreateBufferViews(ID3D12Device* device) {
 	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
 	D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = {};
-	for (size_t index = 0u; index < m_cpuHandles.size(); ++index) {
+	for (size_t index = 0u; index < std::size(m_cpuHandles); ++index) {
 		cpuHandle.ptr = *m_cpuHandles[index];
 
 		srvDesc.Format = m_textureData[index].textureFormat;
@@ -61,14 +63,11 @@ void TextureStorage::CopyData(std::atomic_size_t& workCount) noexcept {
 
 	Gaia::threadPool->SubmitWork(
 		[&] {
-			for (size_t index = 0u; index < m_textureData.size(); ++index) {
-				const TextureData& textureData = m_textureData[index];
-
+			for (size_t index = 0u; index < std::size(m_textureData); ++index)
 				std::memcpy(
 					m_uploadBuffers[index]->GetCPUHandle(),
-					textureData.data, textureData.textureSize
+					m_dataHandles[index].get(), m_textureData[index].textureSize
 				);
-			}
 
 			--workCount;
 		}

@@ -10,41 +10,31 @@ using D3DGPUSharedAddress = std::shared_ptr<_SharedAddress<D3D12_GPU_VIRTUAL_ADD
 
 class ResourceBuffer {
 public:
+	ResourceBuffer(size_t alignment) noexcept;
+
 	[[nodiscard]]
 	D3DGPUSharedAddress AddDataAndGetSharedAddress(
-		const void* data, size_t bufferSize,
-		bool alignment256 = false
+		std::unique_ptr<std::uint8_t> sourceHandle, size_t bufferSize
 	) noexcept;
 
-	void SetGPUVirtualAddressToBuffers() noexcept;
+	void SetGPUVirtualAddressToBuffers() const noexcept;
 	void AcquireBuffers();
 	void CopyData() noexcept;
-	void ReleaseUploadBuffer();
+	void ReleaseUploadBuffer() noexcept;
 
 private:
 	struct BufferData {
-		const void* data;
 		size_t size;
 		size_t offset;
 	};
 
-	using AddressAndData = std::pair<D3DGPUSharedAddress, BufferData>;
-
 private:
-	size_t ConfigureBufferSizeAndAllocations() noexcept;
-
-	void AllocateSmall4Before256(
-		size_t& offset, std::int64_t& smallestMemoryIndex, std::int64_t largestMemoryIndex
-	) noexcept;
-
-	void AlignAndConfigureOffset(
-		size_t& offset, BufferData& bufferData, size_t alignment
-	) const noexcept;
-
-private:
-	std::vector<AddressAndData> m_align256Data;
-	std::vector<AddressAndData> m_align4Data;
+	std::vector<D3DGPUSharedAddress> m_sharedAddresses;
+	std::vector<BufferData> m_bufferData;
+	std::vector<std::unique_ptr<std::uint8_t>> m_sourceHandles;
 	std::shared_ptr<D3DBuffer> m_pGPUBuffer;
 	std::shared_ptr<UploadBuffer> m_pUploadBuffer;
+
+	const size_t m_alignment;
 };
 #endif

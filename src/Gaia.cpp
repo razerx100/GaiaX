@@ -62,11 +62,11 @@ namespace Gaia {
 	}
 
 	void InitVertexBuffer() {
-		vertexBuffer = std::make_unique<ResourceBuffer>();
+		vertexBuffer = std::make_unique<ResourceBuffer>(4u);
 	}
 
 	void InitIndexBuffer() {
-		indexBuffer = std::make_unique<ResourceBuffer>();
+		indexBuffer = std::make_unique<ResourceBuffer>(4u);
 	}
 
 	void InitViewportAndScissor(std::uint32_t width, std::uint32_t height) {

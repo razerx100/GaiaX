@@ -225,11 +225,11 @@ void RendererDx12::ProcessData() {
 }
 
 size_t RendererDx12::RegisterResource(
-	const void* data,
+	std::unique_ptr<std::uint8_t> textureData,
 	size_t width, size_t height, size_t pixelSizeInBytes
 ) {
 	return Gaia::textureStorage->AddTexture(
-		Gaia::device->GetDeviceRef(), data,
+		Gaia::device->GetDeviceRef(), std::move(textureData),
 		width, height, pixelSizeInBytes
 	);
 }

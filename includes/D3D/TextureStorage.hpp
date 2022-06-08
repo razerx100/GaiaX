@@ -10,7 +10,7 @@ class TextureStorage {
 public:
 	size_t AddTexture(
 		ID3D12Device* device,
-		const void* data,
+		std::unique_ptr<std::uint8_t> textureDataHandle,
 		size_t width, size_t height, size_t pixelSizeInBytes
 	) noexcept;
 	[[nodiscard]]
@@ -22,12 +22,12 @@ public:
 
 private:
 	struct TextureData {
-		const void* data;
 		size_t textureSize;
 		DXGI_FORMAT textureFormat;
 	};
 
 private:
+	std::vector<std::unique_ptr<std::uint8_t>> m_dataHandles;
 	std::vector<TextureData> m_textureData;
 	std::vector<SharedIndex> m_textureIndices;
 
