@@ -12,10 +12,12 @@ public:
 	[[nodiscard]]
 	std::uint8_t* GetCPUHandle() const noexcept;
 	[[nodiscard]]
-	std::shared_ptr<D3DBuffer> GetBuffer() const noexcept;
+	D3DBufferShared GetBuffer() const noexcept;
 
 private:
-	std::shared_ptr<D3DBuffer> m_uploadBuffer;
+	D3DBufferShared m_uploadBuffer;
 	std::uint8_t* m_cpuHandle;
 };
+
+using UploadBufferShared = std::shared_ptr<UploadBuffer>;
 #endif

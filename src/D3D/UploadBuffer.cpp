@@ -10,7 +10,7 @@ std::uint8_t* UploadBuffer::GetCPUHandle() const noexcept {
 	return m_cpuHandle;
 }
 
-std::shared_ptr<D3DBuffer> UploadBuffer::GetBuffer() const noexcept {
+D3DBufferShared UploadBuffer::GetBuffer() const noexcept {
 	return m_uploadBuffer;
 }
 

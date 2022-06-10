@@ -8,7 +8,7 @@ DescriptorTableManager::DescriptorTableManager()
 void DescriptorTableManager::CreateDescriptorTable(ID3D12Device* device) {
 	size_t textureRangeStart = 0u;
 
-	m_descriptorCount += m_sharedTextureCPUHandle.size();
+	m_descriptorCount += std::size(m_sharedTextureCPUHandle);
 
 	if (!m_descriptorCount)
 		++m_descriptorCount;
@@ -88,7 +88,7 @@ void DescriptorTableManager::SetSharedAddresses(
 	SIZE_T& cpuHandle, SIZE_T descIncSize,
 	size_t indicesStart
 ) const noexcept {
-	for (size_t index = 0u; index < sharedHandles.size(); ++index) {
+	for (size_t index = 0u; index < std::size(sharedHandles); ++index) {
 		*sharedHandles[index] = cpuHandle;
 		*sharedIndices[index] = indicesStart + index;
 
@@ -106,5 +106,5 @@ void DescriptorTableManager::CopyUploadHeap(ID3D12Device* device) {
 }
 
 size_t DescriptorTableManager::GetTextureDescriptorCount() const noexcept {
-	return m_sharedTextureCPUHandle.size();
+	return std::size(m_sharedTextureCPUHandle);
 }

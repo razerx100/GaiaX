@@ -11,11 +11,26 @@ public:
 	void SetMemoryAddresses() noexcept;
 
 private:
+	class PerFrameEntity {
+	public:
+		void Init(size_t bufferSize) noexcept;
+		void SetMemoryAddresses() noexcept;
+
+		[[nodiscard]]
+		std::uint8_t* GetCpuHandle() const noexcept;
+		[[nodiscard]]
+		D3D12_GPU_VIRTUAL_ADDRESS GetGpuHandle() const noexcept;
+
+	private:
+		SharedPair m_sharedMemoryHandles;
+		std::uint8_t* m_pCpuHandle;
+		D3D12_GPU_VIRTUAL_ADDRESS m_gpuHandle;
+	};
+
+private:
 	void InitBuffers();
 
 private:
-	SharedPair m_sharedMemoryHandles;
-	std::uint8_t* m_pCpuHandle;
-	D3D12_GPU_VIRTUAL_ADDRESS m_gpuHandle;
+	PerFrameEntity m_cameraEntity;
 };
 #endif

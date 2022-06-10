@@ -20,9 +20,9 @@ void HeapManager::CreateBuffers(ID3D12Device* device, bool msaa) {
 	m_uploadHeap->CreateHeap(device, alignedSize, msaa, true);
 	m_gpuHeap->CreateHeap(device, alignedSize, msaa);
 
-	for (size_t index = 0u; index < m_bufferData.size(); ++index) {
-		std::shared_ptr<UploadBuffer>& uploadBuffer = m_uploadBuffers[index];
-		std::shared_ptr<D3DBuffer>& gpuBuffer = m_gpuBuffers[index];
+	for (size_t index = 0u; index < std::size(m_bufferData); ++index) {
+		UploadBufferShared& uploadBuffer = m_uploadBuffers[index];
+		D3DBufferShared& gpuBuffer = m_gpuBuffers[index];
 		BufferData& bufferData = m_bufferData[index];
 
 		CreatePlacedResource(
@@ -46,7 +46,7 @@ void HeapManager::CreateBuffers(ID3D12Device* device, bool msaa) {
 }
 
 void HeapManager::RecordUpload(ID3D12GraphicsCommandList* copyList) {
-	for (size_t index = 0u; index < m_bufferData.size(); ++index) {
+	for (size_t index = 0u; index < std::size(m_bufferData); ++index) {
 		D3D12_RESOURCE_BARRIER activationBarriers[2] = {};
 
 		D3D12_RESOURCE_BARRIER& barrierUploadBuffer = activationBarriers[0];
@@ -108,8 +108,8 @@ void HeapManager::RecordUpload(ID3D12GraphicsCommandList* copyList) {
 
 void HeapManager::ReleaseUploadBuffer() {
 	m_bufferData = std::vector<BufferData>();
-	m_gpuBuffers = std::vector<std::shared_ptr<D3DBuffer>>();
-	m_uploadBuffers = std::vector<std::shared_ptr<UploadBuffer>>();
+	m_gpuBuffers = std::vector<D3DBufferShared>();
+	m_uploadBuffers = std::vector<UploadBufferShared>();
 	m_uploadHeap.reset();
 }
 
@@ -173,7 +173,7 @@ BufferPair HeapManager::AddTexture(
 }
 
 void HeapManager::CreatePlacedResource(
-	ID3D12Device* device, ID3D12Heap* memory, std::shared_ptr<D3DBuffer> resource,
+	ID3D12Device* device, ID3D12Heap* memory, D3DBufferShared resource,
 	size_t offset, const D3D12_RESOURCE_DESC& desc, bool upload
 ) const {
 	HRESULT hr;

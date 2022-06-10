@@ -76,6 +76,6 @@ void TextureStorage::CopyData(std::atomic_size_t& workCount) noexcept {
 
 void TextureStorage::ReleaseUploadBuffer() noexcept {
 	m_textureData = std::vector<TextureData>();
-	m_uploadBuffers = std::vector<std::shared_ptr<UploadBuffer>>();
+	m_uploadBuffers = std::vector<UploadBufferShared>();
 	m_cpuHandles = std::vector<SharedCPUHandle>();
 }

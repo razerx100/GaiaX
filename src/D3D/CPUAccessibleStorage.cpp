@@ -50,7 +50,7 @@ void CPUAccessibleStorage::CreateBuffer(ID3D12Device* device) {
 		cpuStart = static_cast<size_t>(reinterpret_cast<std::uint64_t>(pCPUHandle));
 	}
 
-	for (size_t index = 0u; index < m_sharedOffsets.size(); ++index) {
+	for (size_t index = 0u; index < std::size(m_sharedOffsets); ++index) {
 		auto& [cpuSharedOffset, gpuSharedOffset] = m_sharedOffsets[index];
 
 		*cpuSharedOffset += cpuStart;

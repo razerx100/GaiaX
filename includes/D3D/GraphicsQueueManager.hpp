@@ -5,15 +5,11 @@
 
 class GraphicsQueueManager {
 public:
-	GraphicsQueueManager(
-		ID3D12Device* device, size_t bufferCount
-	);
+	GraphicsQueueManager(ID3D12Device* device, size_t bufferCount);
 
 	void InitSyncObjects(ID3D12Device* device, size_t backBufferIndex);
 	void WaitForGPU(size_t backBufferIndex);
-	void ExecuteCommandLists(
-		ID3D12GraphicsCommandList* commandList
-	) const noexcept;
+	void ExecuteCommandLists(ID3D12GraphicsCommandList* commandList) const noexcept;
 	void MoveToNextFrame(size_t backBufferIndex);
 	void ResetFenceValuesWith(size_t valueIndex);
 

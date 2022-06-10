@@ -47,5 +47,5 @@ private:
 	T m_address;
 };
 
-typedef _SharedAddress<size_t> SharedAddress;
+using SharedAddress = _SharedAddress<size_t>;
 #endif

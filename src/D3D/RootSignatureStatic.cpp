@@ -7,7 +7,7 @@ void RootSignatureStatic::LoadBinary(const std::string& fileName) {
 	D3D_THROW_FAILED(
 		hr,
 		D3DReadFileToBlob(
-			std::wstring(fileName.begin(), fileName.end()).c_str(), &m_pSignatureBinary
+			std::wstring(std::begin(fileName), std::end(fileName)).c_str(), &m_pSignatureBinary
 		)
 	);
 }

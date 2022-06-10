@@ -32,8 +32,8 @@ private:
 	std::vector<D3DGPUSharedAddress> m_sharedAddresses;
 	std::vector<BufferData> m_bufferData;
 	std::vector<std::unique_ptr<std::uint8_t>> m_sourceHandles;
-	std::shared_ptr<D3DBuffer> m_pGPUBuffer;
-	std::shared_ptr<UploadBuffer> m_pUploadBuffer;
+	D3DBufferShared m_pGPUBuffer;
+	UploadBufferShared m_pUploadBuffer;
 
 	const size_t m_alignment;
 };

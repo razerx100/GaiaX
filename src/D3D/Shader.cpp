@@ -41,6 +41,6 @@ D3D12_SHADER_BYTECODE Shader::GetByteCode() const noexcept {
 }
 
 std::wstring Shader::StrToWStr(const std::string& str) const noexcept {
-	return std::wstring(str.begin(), str.end());
+	return std::wstring(std::begin(str), std::end(str));
 }
 

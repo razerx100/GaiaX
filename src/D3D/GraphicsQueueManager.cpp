@@ -98,6 +98,6 @@ void GraphicsQueueManager::MoveToNextFrame(size_t backBufferIndex) {
 }
 
 void GraphicsQueueManager::ResetFenceValuesWith(size_t valueIndex) {
-	for (size_t index = 0; index < m_fenceValues.size(); ++index)
+	for (size_t index = 0; index < std::size(m_fenceValues); ++index)
 		m_fenceValues[index] = m_fenceValues[valueIndex];
 }

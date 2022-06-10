@@ -12,8 +12,7 @@ Resolution GetDisplayResolution(
 
 	bool adapterMatched = false;
 
-	for (UINT index = 0u;
-		factory->EnumAdapters1(index, &adapter) != DXGI_ERROR_NOT_FOUND;) {
+	for (UINT index = 0u; factory->EnumAdapters1(index, &adapter) != DXGI_ERROR_NOT_FOUND;) {
 
 		adapter->GetDesc(&gpuDesc);
 

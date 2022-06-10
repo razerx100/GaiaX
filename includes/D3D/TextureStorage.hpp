@@ -31,8 +31,8 @@ private:
 	std::vector<TextureData> m_textureData;
 	std::vector<SharedIndex> m_textureIndices;
 
-	std::vector<std::shared_ptr<D3DBuffer>> m_gpuBuffers;
-	std::vector<std::shared_ptr<UploadBuffer>> m_uploadBuffers;
+	std::vector<D3DBufferShared> m_gpuBuffers;
+	std::vector<UploadBufferShared> m_uploadBuffers;
 	std::vector<SharedCPUHandle> m_cpuHandles;
 };
 #endif

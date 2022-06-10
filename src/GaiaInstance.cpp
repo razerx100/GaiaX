@@ -1,5 +1,7 @@
 #include <GaiaInstance.hpp>
 #include <RendererDx12.hpp>
+#include <IThreadPool.hpp>
+#include <ISharedDataContainer.hpp>
 
 Renderer* CreateGaiaInstance(
 	const char* appName,

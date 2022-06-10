@@ -6,7 +6,7 @@
 #include <vector>
 #include <memory>
 
-using BufferPair = std::pair<std::shared_ptr<D3DBuffer>, std::shared_ptr<UploadBuffer>>;
+using BufferPair = std::pair<D3DBufferShared, UploadBufferShared>;
 
 class HeapManager {
 public:
@@ -37,7 +37,7 @@ private:
 
 private:
 	void CreatePlacedResource(
-		ID3D12Device* device, ID3D12Heap* memory, std::shared_ptr<D3DBuffer> resource,
+		ID3D12Device* device, ID3D12Heap* memory, D3DBufferShared resource,
 		size_t offset, const D3D12_RESOURCE_DESC& desc, bool upload
 	) const;
 
@@ -56,8 +56,8 @@ private:
 private:
 	size_t m_currentMemoryOffset;
 	std::vector<BufferData> m_bufferData;
-	std::vector<std::shared_ptr<UploadBuffer>> m_uploadBuffers;
-	std::vector<std::shared_ptr<D3DBuffer>> m_gpuBuffers;
+	std::vector<UploadBufferShared> m_uploadBuffers;
+	std::vector<D3DBufferShared> m_gpuBuffers;
 	std::unique_ptr<D3DHeap> m_uploadHeap;
 	std::unique_ptr<D3DHeap> m_gpuHeap;
 };

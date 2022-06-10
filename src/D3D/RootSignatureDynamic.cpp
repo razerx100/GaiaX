@@ -91,8 +91,8 @@ void RootSignatureDynamic::CompileSignature(bool staticSampler) {
 		staticSamplerDesc.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
 
 		rootSigDesc.Init_1_1(
-			static_cast<std::uint32_t>(m_rootParameters.size()),
-			m_rootParameters.data(),
+			static_cast<std::uint32_t>(std::size(m_rootParameters)),
+			std::data(m_rootParameters),
 			1u,
 			&staticSamplerDesc,
 			sigFlags
@@ -100,8 +100,8 @@ void RootSignatureDynamic::CompileSignature(bool staticSampler) {
 	}
 	else
 		rootSigDesc.Init_1_1(
-			static_cast<std::uint32_t>(m_rootParameters.size()),
-			m_rootParameters.data(),
+			static_cast<std::uint32_t>(std::size(m_rootParameters)),
+			std::data(m_rootParameters),
 			0u,
 			nullptr,
 			sigFlags

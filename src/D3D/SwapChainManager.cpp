@@ -53,7 +53,7 @@ void SwapChainManager::CreateRTVs(ID3D12Device* device) {
 
 	HRESULT hr;
 	if (device) {
-		for (size_t index = 0u; index < m_pRenderTargetViews.size(); ++index) {
+		for (size_t index = 0u; index < std::size(m_pRenderTargetViews); ++index) {
 			D3D_THROW_FAILED(
 				hr, m_pSwapChain->GetBuffer(
 					static_cast<UINT>(index),
@@ -128,8 +128,7 @@ void SwapChainManager::PresentWithoutTear() {
 }
 
 void SwapChainManager::Resize(
-	ID3D12Device* device,
-	std::uint32_t width, std::uint32_t height
+	ID3D12Device* device, std::uint32_t width, std::uint32_t height
 ) {
 	for (auto& rt : m_pRenderTargetViews)
 		rt.Reset();
@@ -140,7 +139,7 @@ void SwapChainManager::Resize(
 	HRESULT hr;
 	D3D_THROW_FAILED(
 		hr, m_pSwapChain->ResizeBuffers(
-			static_cast<UINT>(m_pRenderTargetViews.size()),
+			static_cast<UINT>(std::size(m_pRenderTargetViews)),
 			width, height,
 			desc.Format,
 			desc.Flags
