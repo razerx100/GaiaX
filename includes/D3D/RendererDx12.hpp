@@ -23,7 +23,7 @@ public:
 		size_t width, size_t height, size_t pixelSizeInBytes
 	) override;
 
-	void SetThreadPool(std::shared_ptr<class IThreadPool> threadPoolArg) noexcept override;
+	void SetThreadPool(std::shared_ptr<IThreadPool> threadPoolArg) noexcept override;
 	void SetBackgroundColour(const std::array<float, 4>& colour) noexcept override;
 	void SubmitModel(std::shared_ptr<IModel> model) override;
 	void Render() override;
@@ -34,7 +34,7 @@ public:
 	void ProcessData() override;
 
 	void SetSharedDataContainer(
-		std::shared_ptr<class ISharedDataContainer> sharedData
+		std::shared_ptr<ISharedDataContainer> sharedData
 	) noexcept override;
 
 private:

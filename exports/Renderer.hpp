@@ -3,8 +3,10 @@
 #include <cstdint>
 #include <memory>
 #include <array>
+#include <IThreadPool.hpp>
 
 #include <IModel.hpp>
+#include <ISharedDataContainer.hpp>
 
 class Renderer {
 public:
@@ -23,7 +25,7 @@ public:
 		size_t width, size_t height, size_t pixelSizeInBytes
 	) = 0;
 
-	virtual void SetThreadPool(std::shared_ptr<class IThreadPool> threadPoolArg) noexcept = 0;
+	virtual void SetThreadPool(std::shared_ptr<IThreadPool> threadPoolArg) noexcept = 0;
 	virtual void SetBackgroundColour(const std::array<float, 4>& colour) noexcept = 0;
 	virtual void SubmitModel(std::shared_ptr<IModel> model) = 0;
 	virtual void Render() = 0;
@@ -34,7 +36,7 @@ public:
 	virtual void ProcessData() = 0;
 
 	virtual void SetSharedDataContainer(
-		std::shared_ptr<class ISharedDataContainer> sharedData
+		std::shared_ptr<ISharedDataContainer> sharedData
 	) noexcept = 0;
 };
 #endif
