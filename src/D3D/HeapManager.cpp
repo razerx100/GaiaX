@@ -160,7 +160,7 @@ BufferPair HeapManager::AddTexture(
 
 	const auto& [bufferSize, alignment] = allocationInfo;
 
-	m_maxAlignment = std::max(m_maxAlignment, static_cast<size_t>(bufferSize));
+	m_maxAlignment = std::max(m_maxAlignment, static_cast<size_t>(alignment));
 
 	m_currentMemoryOffset = Align(m_currentMemoryOffset, alignment);
 
