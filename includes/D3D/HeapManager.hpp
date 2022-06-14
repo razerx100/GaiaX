@@ -53,6 +53,14 @@ private:
 		DXGI_FORMAT textureFormat
 	) const noexcept;
 
+	[[nodiscard]]
+	D3D12_RESOURCE_ALLOCATION_INFO GetAllocationInfo(
+		ID3D12Device* device,
+		size_t height, size_t width, size_t alignment, DXGI_FORMAT textureFormat
+	) const noexcept;
+	[[nodiscard]]
+	bool CheckIfAlignmentPossible(UINT64 bufferSize) const noexcept;
+
 private:
 	size_t m_currentMemoryOffset;
 	std::vector<BufferData> m_bufferData;
@@ -60,5 +68,6 @@ private:
 	std::vector<D3DBufferShared> m_gpuBuffers;
 	std::unique_ptr<D3DHeap> m_uploadHeap;
 	std::unique_ptr<D3DHeap> m_gpuHeap;
+	size_t m_maxAlignment;
 };
 #endif

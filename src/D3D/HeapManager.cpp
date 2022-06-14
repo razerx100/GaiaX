@@ -6,16 +6,14 @@
 #include <D3DHelperFunctions.hpp>
 
 HeapManager::HeapManager()
-	: m_currentMemoryOffset(0u) {
+	: m_currentMemoryOffset(0u), m_maxAlignment(64_KB) {
 
 	m_uploadHeap = std::make_unique<D3DHeap>();
 	m_gpuHeap = std::make_unique<D3DHeap>();
 }
 
 void HeapManager::CreateBuffers(ID3D12Device* device, bool msaa) {
-	size_t alignedSize = Align(
-		m_currentMemoryOffset, msaa ? 4_MB : 64_KB
-	);
+	size_t alignedSize = Align(m_currentMemoryOffset, m_maxAlignment);
 
 	m_uploadHeap->CreateHeap(device, alignedSize, msaa, true);
 	m_gpuHeap->CreateHeap(device, alignedSize, msaa);
@@ -147,27 +145,32 @@ BufferPair HeapManager::AddTexture(
 	else if (pixelSizeInBytes == 4u)
 		textureFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 
-	size_t alignment = 0u;
+	D3D12_RESOURCE_ALLOCATION_INFO allocationInfo = {};
 
-	if (msaa)
-		alignment = 64_KB;
-	else
-		alignment = 4_KB;
+	if (msaa) {
+		allocationInfo = GetAllocationInfo(device, height, width, 64_KB, textureFormat);
+		if (!CheckIfAlignmentPossible(allocationInfo.SizeInBytes))
+			allocationInfo = GetAllocationInfo(device, height, width, 4_MB, textureFormat);
+	}
+	else {
+		allocationInfo = GetAllocationInfo(device, height, width, 4_KB, textureFormat);
+		if (!CheckIfAlignmentPossible(allocationInfo.SizeInBytes))
+			allocationInfo = GetAllocationInfo(device, height, width, 64_KB, textureFormat);
+	}
 
-	D3D12_RESOURCE_DESC texDesc = GetTextureDesc(height, width, alignment, textureFormat);
+	const auto& [bufferSize, alignment] = allocationInfo;
 
-	D3D12_RESOURCE_ALLOCATION_INFO allocInfo =
-		device->GetResourceAllocationInfo(0u, 1u, &texDesc);
+	m_maxAlignment = std::max(m_maxAlignment, static_cast<size_t>(bufferSize));
 
-	m_currentMemoryOffset = Align(m_currentMemoryOffset, allocInfo.Alignment);
+	m_currentMemoryOffset = Align(m_currentMemoryOffset, alignment);
 
 	m_bufferData.emplace_back(
 		true,
-		width, height, allocInfo.Alignment, m_currentMemoryOffset,
-		width * pixelSizeInBytes, allocInfo.SizeInBytes, textureFormat
+		width, height, alignment, m_currentMemoryOffset,
+		width * pixelSizeInBytes, bufferSize, textureFormat
 	);
 
-	m_currentMemoryOffset += allocInfo.SizeInBytes;
+	m_currentMemoryOffset += bufferSize;
 
 	return { m_gpuBuffers.back(), m_uploadBuffers.back() };
 }
@@ -223,3 +226,18 @@ D3D12_RESOURCE_DESC	HeapManager::GetResourceDesc(
 	) : GetBufferDesc(bufferData.bufferSize);
 }
 
+D3D12_RESOURCE_ALLOCATION_INFO HeapManager::GetAllocationInfo(
+	ID3D12Device* device,
+	size_t height, size_t width, size_t alignment, DXGI_FORMAT textureFormat
+) const noexcept {
+	D3D12_RESOURCE_DESC texDesc = GetTextureDesc(height, width, alignment, textureFormat);
+
+	D3D12_RESOURCE_ALLOCATION_INFO allocInfo =
+		device->GetResourceAllocationInfo(0u, 1u, &texDesc);
+
+	return allocInfo;
+}
+
+bool HeapManager::CheckIfAlignmentPossible(UINT64 bufferSize) const noexcept {
+	return bufferSize == UINT64_MAX ? false : true;
+}
