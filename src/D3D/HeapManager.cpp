@@ -26,7 +26,7 @@ void HeapManager::CreateBuffers(ID3D12Device* device, bool msaa) {
 		CreatePlacedResource(
 			device, m_uploadHeap->GetHeap(),
 			uploadBuffer->GetBuffer(), bufferData.offset,
-			GetBufferDesc(bufferData.bufferSize),
+			GetBufferDesc(bufferData.rowPitch * bufferData.height),
 			true
 		);
 		uploadBuffer->MapBuffer();
@@ -78,7 +78,7 @@ void HeapManager::RecordUpload(ID3D12GraphicsCommandList* copyList) {
 			srcFootprint.Format = bufferData.textureFormat;
 			srcFootprint.Width = static_cast<UINT>(bufferData.width);
 			srcFootprint.Height = static_cast<UINT>(bufferData.height);
-			srcFootprint.RowPitch = static_cast<UINT>(Align(bufferData.rowPitch, 256u));
+			srcFootprint.RowPitch = static_cast<UINT>(bufferData.rowPitch);
 
 			D3D12_PLACED_SUBRESOURCE_FOOTPRINT placedFootprint = {};
 			placedFootprint.Offset = 0u;
@@ -119,7 +119,7 @@ BufferPair HeapManager::AddBuffer(
 	m_currentMemoryOffset = Align(m_currentMemoryOffset, alignment);
 
 	m_bufferData.emplace_back(
-		false, bufferSize / 4u, 1u, alignment, m_currentMemoryOffset, bufferSize, bufferSize,
+		false, bufferSize / 4u, 1u, alignment, m_currentMemoryOffset, bufferSize,
 		DXGI_FORMAT_UNKNOWN
 	);
 	m_gpuBuffers.emplace_back(std::make_shared<D3DBuffer>());
@@ -145,18 +145,19 @@ BufferPair HeapManager::AddTexture(
 	else if (pixelSizeInBytes == 4u)
 		textureFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 
-	D3D12_RESOURCE_ALLOCATION_INFO allocationInfo = {};
+	size_t rowPitch = Align(width * pixelSizeInBytes, 256u);
+	size_t totalTextureSize = rowPitch * height;
+	size_t alignmentto = 64_KB;
 
-	if (msaa) {
-		allocationInfo = GetAllocationInfo(device, height, width, 64_KB, textureFormat);
-		if (!CheckIfAlignmentPossible(allocationInfo.SizeInBytes))
-			allocationInfo = GetAllocationInfo(device, height, width, 4_MB, textureFormat);
-	}
-	else {
-		allocationInfo = GetAllocationInfo(device, height, width, 4_KB, textureFormat);
-		if (!CheckIfAlignmentPossible(allocationInfo.SizeInBytes))
-			allocationInfo = GetAllocationInfo(device, height, width, 64_KB, textureFormat);
-	}
+	if (msaa)
+		alignmentto = totalTextureSize > 4_MB ? 4_MB : 64_KB;
+	else
+		alignmentto = totalTextureSize > 64_KB ? 64_KB : 4_KB;
+
+	D3D12_RESOURCE_DESC texDesc = GetTextureDesc(height, width, alignmentto, textureFormat);
+
+	D3D12_RESOURCE_ALLOCATION_INFO allocationInfo =
+		device->GetResourceAllocationInfo(0u, 1u, &texDesc);
 
 	const auto& [bufferSize, alignment] = allocationInfo;
 
@@ -167,7 +168,7 @@ BufferPair HeapManager::AddTexture(
 	m_bufferData.emplace_back(
 		true,
 		width, height, alignment, m_currentMemoryOffset,
-		width * pixelSizeInBytes, bufferSize, textureFormat
+		rowPitch, textureFormat
 	);
 
 	m_currentMemoryOffset += bufferSize;
@@ -223,21 +224,5 @@ D3D12_RESOURCE_DESC	HeapManager::GetResourceDesc(
 	return 	texture ? GetTextureDesc(
 		bufferData.height, bufferData.width,
 		bufferData.alignment, bufferData.textureFormat
-	) : GetBufferDesc(bufferData.bufferSize);
-}
-
-D3D12_RESOURCE_ALLOCATION_INFO HeapManager::GetAllocationInfo(
-	ID3D12Device* device,
-	size_t height, size_t width, size_t alignment, DXGI_FORMAT textureFormat
-) const noexcept {
-	D3D12_RESOURCE_DESC texDesc = GetTextureDesc(height, width, alignment, textureFormat);
-
-	D3D12_RESOURCE_ALLOCATION_INFO allocInfo =
-		device->GetResourceAllocationInfo(0u, 1u, &texDesc);
-
-	return allocInfo;
-}
-
-bool HeapManager::CheckIfAlignmentPossible(UINT64 bufferSize) const noexcept {
-	return bufferSize == UINT64_MAX ? false : true;
+	) : GetBufferDesc(bufferData.rowPitch * bufferData.height);
 }

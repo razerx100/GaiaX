@@ -22,8 +22,9 @@ public:
 
 private:
 	struct TextureData {
-		size_t textureSize;
 		DXGI_FORMAT textureFormat;
+		size_t rowPitch;
+		size_t height;
 	};
 
 private:

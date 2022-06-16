@@ -31,7 +31,6 @@ private:
 		size_t alignment;
 		size_t offset;
 		size_t rowPitch;
-		size_t bufferSize;
 		DXGI_FORMAT textureFormat;
 	};
 
@@ -52,14 +51,6 @@ private:
 		size_t height, size_t width, size_t alignment,
 		DXGI_FORMAT textureFormat
 	) const noexcept;
-
-	[[nodiscard]]
-	D3D12_RESOURCE_ALLOCATION_INFO GetAllocationInfo(
-		ID3D12Device* device,
-		size_t height, size_t width, size_t alignment, DXGI_FORMAT textureFormat
-	) const noexcept;
-	[[nodiscard]]
-	bool CheckIfAlignmentPossible(UINT64 bufferSize) const noexcept;
 
 private:
 	size_t m_currentMemoryOffset;

@@ -1,6 +1,7 @@
 #include <TextureStorage.hpp>
 #include <Gaia.hpp>
 #include <cstring>
+#include <D3DHelperFunctions.hpp>
 
 size_t TextureStorage::AddTexture(
 	ID3D12Device* device,
@@ -15,7 +16,7 @@ size_t TextureStorage::AddTexture(
 		textureFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 
 	m_textureData.emplace_back(
-		width * pixelSizeInBytes * height, textureFormat
+		textureFormat, width * pixelSizeInBytes, height
 	);
 
 	m_dataHandles.emplace_back(std::move(textureDataHandle));
@@ -63,11 +64,18 @@ void TextureStorage::CopyData(std::atomic_size_t& workCount) noexcept {
 
 	Gaia::threadPool->SubmitWork(
 		[&] {
-			for (size_t index = 0u; index < std::size(m_textureData); ++index)
-				std::memcpy(
-					m_uploadBuffers[index]->GetCPUHandle(),
-					m_dataHandles[index].get(), m_textureData[index].textureSize
-				);
+			for (size_t index = 0u; index < std::size(m_textureData); ++index) {
+				TextureData& texData = m_textureData[index];
+				size_t paddedRowPitch = Align(texData.rowPitch, 256u);
+
+				for (size_t columnIndex = 0u; columnIndex < texData.height; ++columnIndex) {
+					std::memcpy(
+						m_uploadBuffers[index]->GetCPUHandle() + (columnIndex * paddedRowPitch),
+						m_dataHandles[index].get() + (columnIndex * texData.rowPitch),
+						texData.rowPitch
+					);
+				}
+			}
 
 			--workCount;
 		}
