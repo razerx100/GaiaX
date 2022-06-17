@@ -54,7 +54,7 @@ void SwapChainManager::CreateRTVs(ID3D12Device* device) {
 	HRESULT hr;
 	if (device) {
 		D3D12_RENDER_TARGET_VIEW_DESC rtvDesc = {};
-		rtvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+		rtvDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
 		rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
 
 		for (size_t index = 0u; index < std::size(m_pRenderTargetViews); ++index) {
