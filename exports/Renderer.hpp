@@ -22,7 +22,7 @@ public:
 	[[nodiscard]] // Returns index of the resource in Resource Heap
 	virtual size_t RegisterResource(
 		std::unique_ptr<std::uint8_t> textureData,
-		size_t width, size_t height, size_t pixelSizeInBytes
+		size_t width, size_t height, bool components16bits = false
 	) = 0;
 
 	virtual void SetThreadPool(std::shared_ptr<IThreadPool> threadPoolArg) noexcept = 0;

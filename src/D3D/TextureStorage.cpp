@@ -6,23 +6,28 @@
 size_t TextureStorage::AddTexture(
 	ID3D12Device* device,
 	std::unique_ptr<std::uint8_t> textureDataHandle,
-	size_t width, size_t height, size_t pixelSizeInBytes
+	size_t width, size_t height, bool components16bits
 ) noexcept {
 	DXGI_FORMAT textureFormat = DXGI_FORMAT_UNKNOWN;
+	size_t bytesPerPixel = 0u;
 
-	if (pixelSizeInBytes == 16u)
-		textureFormat = DXGI_FORMAT_R32G32B32A32_FLOAT;
-	else if(pixelSizeInBytes == 4u)
-		textureFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
+	if (components16bits) {
+		textureFormat = DXGI_FORMAT_R16G16B16A16_UNORM;
+		bytesPerPixel = 8u;
+	}
+	else {
+		textureFormat = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+		bytesPerPixel = 4u;
+	}
 
 	m_textureData.emplace_back(
-		textureFormat, width * pixelSizeInBytes, height
+		textureFormat, width * bytesPerPixel, height
 	);
 
 	m_dataHandles.emplace_back(std::move(textureDataHandle));
 
 	auto [gpuBuffer, uploadBuffer] =
-		Gaia::heapManager->AddTexture(device, width, height, pixelSizeInBytes);
+		Gaia::heapManager->AddTexture(device, width, height, bytesPerPixel);
 
 	m_gpuBuffers.emplace_back(gpuBuffer);
 	m_uploadBuffers.emplace_back(uploadBuffer);

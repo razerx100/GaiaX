@@ -20,9 +20,6 @@
 #include <CameraManager.hpp>
 
 namespace Gaia {
-	// Globals
-	constexpr DXGI_FORMAT RENDER_FORMAT = DXGI_FORMAT_R8G8B8A8_UNORM;
-
 	// Variables
 	extern std::unique_ptr<DeviceManager> device;
 	extern std::unique_ptr<SwapChainManager> swapChain;

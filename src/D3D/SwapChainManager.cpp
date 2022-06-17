@@ -10,7 +10,7 @@ SwapChainManager::SwapChainManager(const SwapChainCreateInfo& createInfo)
 	desc.BufferCount = static_cast<UINT>(createInfo.bufferCount);
 	desc.Width = createInfo.width;
 	desc.Height = createInfo.height;
-	desc.Format = Gaia::RENDER_FORMAT;
+	desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
 	desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 	desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
 	desc.SampleDesc.Count = 1u;
