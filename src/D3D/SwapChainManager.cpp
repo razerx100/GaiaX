@@ -10,7 +10,7 @@ SwapChainManager::SwapChainManager(const SwapChainCreateInfo& createInfo)
 	desc.BufferCount = static_cast<UINT>(createInfo.bufferCount);
 	desc.Width = createInfo.width;
 	desc.Height = createInfo.height;
-	desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+	desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
 	desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 	desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
 	desc.SampleDesc.Count = 1u;
@@ -53,6 +53,10 @@ void SwapChainManager::CreateRTVs(ID3D12Device* device) {
 
 	HRESULT hr;
 	if (device) {
+		D3D12_RENDER_TARGET_VIEW_DESC rtvDesc = {};
+		rtvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+		rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
+
 		for (size_t index = 0u; index < std::size(m_pRenderTargetViews); ++index) {
 			D3D_THROW_FAILED(
 				hr, m_pSwapChain->GetBuffer(
@@ -62,7 +66,7 @@ void SwapChainManager::CreateRTVs(ID3D12Device* device) {
 			);
 
 			device->CreateRenderTargetView(
-				m_pRenderTargetViews[index].Get(), nullptr, rtvHandle
+				m_pRenderTargetViews[index].Get(), &rtvDesc, rtvHandle
 			);
 
 			rtvHandle.Offset(1u, static_cast<UINT>(m_rtvDescSize));

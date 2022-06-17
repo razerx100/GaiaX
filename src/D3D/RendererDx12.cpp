@@ -7,7 +7,7 @@ RendererDx12::RendererDx12(
 	const char* appName,
 	void* windowHandle, std::uint32_t width, std::uint32_t height,
 	std::uint32_t bufferCount
-) : m_backgroundColour{0.1f, 0.1f, 0.1f, 0.1f}, m_appName(appName),
+) : m_backgroundColour{0.0001f, 0.0001f, 0.0001f, 0.0001f}, m_appName(appName),
 	m_width(width), m_height(height) {
 	Gaia::InitDevice();
 
