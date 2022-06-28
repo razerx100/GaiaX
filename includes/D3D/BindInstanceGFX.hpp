@@ -100,7 +100,6 @@ private:
 	std::unique_ptr<RootSignatureDynamic> m_rootSignature;
 	std::vector<std::unique_ptr<ModelRaw>> m_modelsRaw;
 
-	bool m_vertexLayoutAvailable;
 	VertexLayout m_vertexLayout;
 };
 #endif

@@ -97,7 +97,7 @@ ModelContainer::Pipeline ModelContainer::CreatePipeline(
 			),
 		D3D12_SHADER_VISIBILITY_PIXEL, 0u
 	);
-	signature->AddConstants(6u, D3D12_SHADER_VISIBILITY_VERTEX, 1u);
+	signature->AddConstants(2u, D3D12_SHADER_VISIBILITY_VERTEX, 1u);
 	signature->AddConstants(16u, D3D12_SHADER_VISIBILITY_VERTEX, 2u);
 	signature->AddConstantBufferView(D3D12_SHADER_VISIBILITY_VERTEX, 3u);
 

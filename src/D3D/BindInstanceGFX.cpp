@@ -3,13 +3,13 @@
 
 #include <DirectXMath.h>
 
-BindInstanceGFX::BindInstanceGFX() noexcept : m_vertexLayoutAvailable(false) {}
+BindInstanceGFX::BindInstanceGFX() noexcept : m_vertexLayout() {}
 
 BindInstanceGFX::BindInstanceGFX(
 	std::unique_ptr<PipelineObjectGFX> pso, std::unique_ptr<RootSignatureDynamic> signature
 ) noexcept
 	: m_pso(std::move(pso)),
-	m_rootSignature(std::move(signature)), m_vertexLayoutAvailable(false) {}
+	m_rootSignature(std::move(signature)), m_vertexLayout() {}
 
 void BindInstanceGFX::AddPSO(std::unique_ptr<PipelineObjectGFX> pso) noexcept {
 	m_pso = std::move(pso);
@@ -22,11 +22,6 @@ void BindInstanceGFX::AddRootSignature(
 }
 
 void BindInstanceGFX::AddModel(std::shared_ptr<IModel>&& model) noexcept {
-	if (!m_vertexLayoutAvailable) {
-		m_vertexLayout.InitLayout(model->GetVertexLayout());
-		m_vertexLayoutAvailable = true;
-	}
-
 	size_t indexBufferSize = model->GetIndexBufferSize();
 	size_t vertexBufferSize = model->GetVertexBufferSize();
 
@@ -123,8 +118,8 @@ void BindInstanceGFX::ModelRaw::Draw(ID3D12GraphicsCommandList* commandList) con
 	commandList->IASetIndexBuffer(m_indexBufferView.GetAddress());
 	commandList->SetGraphicsRoot32BitConstant(0u, m_model->GetTextureIndex(), 0u);
 
-	const TextureData& texInfo = m_model->GetTextureInfo();
-	commandList->SetGraphicsRoot32BitConstants(2u, 6u, &texInfo, 0u);
+	TextureOffset texOffset = m_model->GetTextureOffset();
+	commandList->SetGraphicsRoot32BitConstants(2u, 2u, &texOffset, 0u);
 
 	DirectX::XMMATRIX modelMat = m_model->GetModelMatrix();
 	commandList->SetGraphicsRoot32BitConstants(3u, 16u, &modelMat, 0u);
