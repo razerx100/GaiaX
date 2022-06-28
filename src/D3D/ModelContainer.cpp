@@ -86,15 +86,12 @@ void ModelContainer::InitPipelines(ID3D12Device* device) {
 ModelContainer::Pipeline ModelContainer::CreatePipeline(
 	ID3D12Device* device, const VertexLayout& layout
 ) const {
-	std::unique_ptr<RootSignatureDynamic> signature =
-		std::make_unique<RootSignatureDynamic>();
+	std::unique_ptr<RootSignatureDynamic> signature = std::make_unique<RootSignatureDynamic>();
 
 	signature->AddConstants(1u, D3D12_SHADER_VISIBILITY_PIXEL, 0u);
 	signature->AddDescriptorTable(
 		D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
-		static_cast<std::uint32_t>(
-			Gaia::descriptorTable->GetTextureDescriptorCount()
-			),
+		static_cast<std::uint32_t>(Gaia::descriptorTable->GetTextureDescriptorCount()),
 		D3D12_SHADER_VISIBILITY_PIXEL, 0u
 	);
 	signature->AddConstants(2u, D3D12_SHADER_VISIBILITY_VERTEX, 1u);

@@ -7,8 +7,8 @@
 #include <DirectXMath.h>
 
 struct TextureOffset {
-	std::uint32_t u;
-	std::uint32_t v;
+	float u;
+	float v;
 };
 
 class IModel {
