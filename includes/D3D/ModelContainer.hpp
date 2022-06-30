@@ -23,9 +23,7 @@ private:
 	using Pipeline =
 		std::pair<std::unique_ptr<PipelineObjectGFX>, std::unique_ptr<RootSignatureDynamic>>;
 
-	Pipeline CreatePipeline(
-		ID3D12Device* device, const VertexLayout& layout
-	) const;
+	Pipeline CreatePipeline(ID3D12Device* device) const;
 
 private:
 	std::unique_ptr<BindInstanceGFX> m_bindInstance;

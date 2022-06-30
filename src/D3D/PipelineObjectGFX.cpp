@@ -6,7 +6,7 @@
 
 void PipelineObjectGFX::CreatePipelineState(
 	ID3D12Device* device,
-	const VertexLayout& vertexLayout,
+	const D3D12_INPUT_LAYOUT_DESC& vertexLayout,
 	ID3D12RootSignature* rootSignature,
 	const D3D12_SHADER_BYTECODE& vertexShader,
 	const D3D12_SHADER_BYTECODE& pixelShader
@@ -23,7 +23,7 @@ void PipelineObjectGFX::CreatePipelineState(
 	psoDesc.RTVFormats[0] = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
 	psoDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
 	psoDesc.SampleDesc.Count = 1u;
-	psoDesc.InputLayout = vertexLayout.GetLayout();
+	psoDesc.InputLayout = vertexLayout;
 	psoDesc.pRootSignature = rootSignature;
 	psoDesc.VS = vertexShader;
 	psoDesc.PS = pixelShader;

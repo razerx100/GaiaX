@@ -6,7 +6,7 @@ class PipelineObjectGFX {
 public:
 	void CreatePipelineState(
 		ID3D12Device* device,
-		const class VertexLayout& vertexLayout,
+		const D3D12_INPUT_LAYOUT_DESC& vertexLayout,
 		ID3D12RootSignature* rootSignature,
 		const D3D12_SHADER_BYTECODE& vertexShader,
 		const D3D12_SHADER_BYTECODE& pixelShader

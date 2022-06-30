@@ -74,18 +74,13 @@ void ModelContainer::ReleaseUploadBuffers() {
 }
 
 void ModelContainer::InitPipelines(ID3D12Device* device) {
-	auto [pso, signature] = CreatePipeline(
-		device,
-		m_bindInstance->GetVertexLayout()
-	);
+	auto [pso, signature] = CreatePipeline(device);
 
 	m_bindInstance->AddRootSignature(std::move(signature));
 	m_bindInstance->AddPSO(std::move(pso));
 }
 
-ModelContainer::Pipeline ModelContainer::CreatePipeline(
-	ID3D12Device* device, const VertexLayout& layout
-) const {
+ModelContainer::Pipeline ModelContainer::CreatePipeline(ID3D12Device* device) const {
 	std::unique_ptr<RootSignatureDynamic> signature = std::make_unique<RootSignatureDynamic>();
 
 	signature->AddConstants(1u, D3D12_SHADER_VISIBILITY_PIXEL, 0u);
@@ -107,10 +102,14 @@ ModelContainer::Pipeline ModelContainer::CreatePipeline(
 	std::unique_ptr<Shader> ps = std::make_unique<Shader>();
 	ps->LoadBinary(m_shaderPath + "PixelShader.cso");
 
+	VertexLayout vertexLayout{};
+	vertexLayout.AddInputElement("Position", DXGI_FORMAT_R32G32B32_FLOAT, 12u);
+	vertexLayout.AddInputElement("UV", DXGI_FORMAT_R32G32_FLOAT, 8u);
+
 	std::unique_ptr<PipelineObjectGFX> pso = std::make_unique<PipelineObjectGFX>();
 	pso->CreatePipelineState(
 		device,
-		layout,
+		vertexLayout.GetLayoutDesc(),
 		signature->Get(),
 		vs->GetByteCode(),
 		ps->GetByteCode()

@@ -10,14 +10,11 @@
 
 class BindInstanceGFX {
 public:
-	BindInstanceGFX() noexcept;
+	BindInstanceGFX() = default;
 	BindInstanceGFX(
 		std::unique_ptr<PipelineObjectGFX> pso,
 		std::unique_ptr<RootSignatureDynamic> signature
 	) noexcept;
-
-	[[nodiscard]]
-	VertexLayout GetVertexLayout() const noexcept;
 
 	void AddPSO(std::unique_ptr<PipelineObjectGFX> pso) noexcept;
 	void AddRootSignature(std::unique_ptr<RootSignatureDynamic> signature) noexcept;
@@ -44,8 +41,7 @@ private:
 		void UpdateGPUAddressOffsets();
 
 		void AddVBV(
-			D3D12_VERTEX_BUFFER_VIEW&& vertexBufferView,
-			D3DGPUSharedAddress vbvSharedAddress
+			D3D12_VERTEX_BUFFER_VIEW&& vertexBufferView, D3DGPUSharedAddress vbvSharedAddress
 		) noexcept;
 		void AddIBV(
 			D3D12_INDEX_BUFFER_VIEW&& indexBufferView,
@@ -61,21 +57,16 @@ private:
 		public:
 			BufferView() = default;
 			BufferView(
-				TBufferView&& bufferView,
-				D3DGPUSharedAddress sharedAddress
+				TBufferView&& bufferView, D3DGPUSharedAddress sharedAddress
 			) : m_bufferView(std::move(bufferView)), m_gpuSharedAddress(sharedAddress) {}
 
 			void SetGPUAddress() noexcept {
 				m_bufferView.BufferLocation = *m_gpuSharedAddress;
 			}
-			void AddBufferView(
-				TBufferView&& bufferView
-			) noexcept {
+			void AddBufferView(TBufferView&& bufferView) noexcept {
 				m_bufferView = std::move(bufferView);
 			}
-			void AddSharedAddress(
-				D3DGPUSharedAddress sharedAddress
-			) noexcept {
+			void AddSharedAddress(D3DGPUSharedAddress sharedAddress) noexcept {
 				m_gpuSharedAddress = sharedAddress;
 			}
 
@@ -99,7 +90,5 @@ private:
 	std::unique_ptr<PipelineObjectGFX> m_pso;
 	std::unique_ptr<RootSignatureDynamic> m_rootSignature;
 	std::vector<std::unique_ptr<ModelRaw>> m_modelsRaw;
-
-	VertexLayout m_vertexLayout;
 };
 #endif

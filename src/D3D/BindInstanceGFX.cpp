@@ -3,13 +3,9 @@
 
 #include <DirectXMath.h>
 
-BindInstanceGFX::BindInstanceGFX() noexcept : m_vertexLayout() {}
-
 BindInstanceGFX::BindInstanceGFX(
 	std::unique_ptr<PipelineObjectGFX> pso, std::unique_ptr<RootSignatureDynamic> signature
-) noexcept
-	: m_pso(std::move(pso)),
-	m_rootSignature(std::move(signature)), m_vertexLayout() {}
+) noexcept : m_pso(std::move(pso)), m_rootSignature(std::move(signature)) {}
 
 void BindInstanceGFX::AddPSO(std::unique_ptr<PipelineObjectGFX> pso) noexcept {
 	m_pso = std::move(pso);
@@ -68,10 +64,6 @@ void BindInstanceGFX::BindPipelineObjects(
 void BindInstanceGFX::SetGPUVirtualAddresses() noexcept {
 	for (auto& model : m_modelsRaw)
 		model->UpdateGPUAddressOffsets();
-}
-
-VertexLayout BindInstanceGFX::GetVertexLayout() const noexcept {
-	return m_vertexLayout;
 }
 
 // Model Raw

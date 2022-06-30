@@ -1,30 +1,19 @@
 #include <VertexLayout.hpp>
 
-VertexLayout::VertexLayout() {
-	InitLayout();
+VertexLayout::VertexLayout() noexcept : m_vertexOffset(0u) {}
+
+D3D12_INPUT_LAYOUT_DESC VertexLayout::GetLayoutDesc() const noexcept {
+	return { std::data(m_inputDescs), static_cast<UINT>(std::size(m_inputDescs)) };
 }
 
-D3D12_INPUT_LAYOUT_DESC VertexLayout::GetLayout() const noexcept {
-	return {
-		m_inputDescs.data(),
-		static_cast<UINT>(m_inputDescs.size())
-	};
-}
-
-void VertexLayout::InitLayout() noexcept {
-	// Position
-	UINT inputOffset = 12u;
+void VertexLayout::AddInputElement(
+	const std::string& inputName, DXGI_FORMAT format, UINT sizeInBytes
+) noexcept {
 	m_inputDescs.emplace_back(
-		"Position", 0u,
-		DXGI_FORMAT_R32G32B32_FLOAT, 0u,
-		inputOffset, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0u
+		inputName.c_str(), 0u,
+		format, 0u,
+		m_vertexOffset, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0u
 	);
 
-	// UV
-	inputOffset += 8u;
-	m_inputDescs.emplace_back(
-		"UV", 0u,
-		DXGI_FORMAT_R32G32_FLOAT, 0u,
-		inputOffset, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0u
-	);
+	m_vertexOffset += sizeInBytes;
 }
