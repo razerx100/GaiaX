@@ -7,10 +7,10 @@ D3D12_INPUT_LAYOUT_DESC VertexLayout::GetLayoutDesc() const noexcept {
 }
 
 void VertexLayout::AddInputElement(
-	const std::string& inputName, DXGI_FORMAT format, UINT sizeInBytes
+	const char* inputName, DXGI_FORMAT format, UINT sizeInBytes
 ) noexcept {
 	m_inputDescs.emplace_back(
-		inputName.c_str(), 0u,
+		inputName, 0u,
 		format, 0u,
 		m_vertexOffset, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0u
 	);

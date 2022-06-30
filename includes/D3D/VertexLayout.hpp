@@ -9,7 +9,7 @@ public:
 	VertexLayout() noexcept;
 
 	void AddInputElement(
-		const std::string& inputName, DXGI_FORMAT format, UINT sizeInBytes
+		const char* inputName, DXGI_FORMAT format, UINT sizeInBytes
 	) noexcept;
 
 	[[nodiscard]]
