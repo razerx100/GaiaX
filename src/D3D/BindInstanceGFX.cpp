@@ -110,10 +110,10 @@ void BindInstanceGFX::ModelRaw::Draw(ID3D12GraphicsCommandList* commandList) con
 	commandList->IASetIndexBuffer(m_indexBufferView.GetAddress());
 	commandList->SetGraphicsRoot32BitConstant(0u, m_model->GetTextureIndex(), 0u);
 
-	TextureOffset texOffset = m_model->GetTextureOffset();
-	commandList->SetGraphicsRoot32BitConstants(2u, 2u, &texOffset, 0u);
+	const UVInfo uvInfo = m_model->GetUVInfo();
+	commandList->SetGraphicsRoot32BitConstants(2u, 4u, &uvInfo, 0u);
 
-	DirectX::XMMATRIX modelMat = m_model->GetModelMatrix();
+	const DirectX::XMMATRIX modelMat = m_model->GetModelMatrix();
 	commandList->SetGraphicsRoot32BitConstants(3u, 16u, &modelMat, 0u);
 
 	commandList->DrawIndexedInstanced(m_indexCount, 1u, 0u, 0u, 0u);

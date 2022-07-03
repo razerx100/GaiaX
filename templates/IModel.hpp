@@ -6,9 +6,11 @@
 
 #include <DirectXMath.h>
 
-struct TextureOffset {
+struct UVInfo {
 	float u;
 	float v;
+	float uRatio;
+	float vRatio;
 };
 
 class IModel {
@@ -30,7 +32,7 @@ public:
 	[[nodiscard]]
 	virtual std::uint32_t GetTextureIndex() const noexcept = 0;
 	[[nodiscard]]
-	virtual TextureOffset GetTextureOffset() const noexcept = 0;
+	virtual UVInfo GetUVInfo() const noexcept = 0;
 
 	[[nodiscard]]
 	virtual DirectX::XMMATRIX GetModelMatrix() const noexcept = 0;
