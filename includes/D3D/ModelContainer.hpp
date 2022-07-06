@@ -9,7 +9,9 @@ class ModelContainer {
 public:
 	ModelContainer(const std::string& shaderPath) noexcept;
 
-	void AddModel(std::shared_ptr<IModel>&& model);
+	void AddModels(
+		std::vector<std::shared_ptr<IModel>>&& models, std::unique_ptr<IModelInputs> modelInputs
+	);
 
 	void InitPipelines(ID3D12Device* device);
 	void CreateBuffers(ID3D12Device* device);

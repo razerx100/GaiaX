@@ -6,12 +6,14 @@
 #include <Gaia.hpp>
 
 ModelContainer::ModelContainer(const std::string& shaderPath) noexcept
-	: m_bindInstance(std::make_unique<BindInstanceGFX>()),
+	: m_bindInstance(std::make_unique<BindInstancePerVertex>()),
 	m_pPerFrameBuffers(std::make_unique<PerFrameBuffers>()),
 	m_shaderPath(shaderPath) {}
 
-void ModelContainer::AddModel(std::shared_ptr<IModel>&& model) {
-	m_bindInstance->AddModel(std::move(model));
+void ModelContainer::AddModels(
+	std::vector<std::shared_ptr<IModel>>&& models, std::unique_ptr<IModelInputs> modelInputs
+) {
+	m_bindInstance->AddModels(std::move(models), std::move(modelInputs));
 }
 
 void ModelContainer::BindCommands(ID3D12GraphicsCommandList* commandList) const noexcept {
@@ -21,8 +23,7 @@ void ModelContainer::BindCommands(ID3D12GraphicsCommandList* commandList) const 
 	commandList->SetGraphicsRootDescriptorTable(1u, gpuHandle);
 
 	m_pPerFrameBuffers->BindPerFrameBuffers(commandList);
-
-	m_bindInstance->BindModels(commandList);
+	m_bindInstance->DrawModels(commandList);
 }
 
 void ModelContainer::CopyData(std::atomic_size_t& workCount) {
