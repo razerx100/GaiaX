@@ -18,6 +18,7 @@ void HeapManager::CreateBuffers(ID3D12Device* device, bool msaa) {
 	m_uploadHeap->CreateHeap(device, alignedSize, msaa, true);
 	m_gpuHeap->CreateHeap(device, alignedSize, msaa);
 
+	// Buffers with Upload Buffers
 	for (size_t index = 0u; index < std::size(m_bufferData); ++index) {
 		UploadBufferShared& uploadBuffer = m_uploadBuffers[index];
 		D3DBufferShared& gpuBuffer = m_gpuBuffers[index];
@@ -26,7 +27,7 @@ void HeapManager::CreateBuffers(ID3D12Device* device, bool msaa) {
 		CreatePlacedResource(
 			device, m_uploadHeap->GetHeap(),
 			uploadBuffer->GetBuffer(), bufferData.offset,
-			GetBufferDesc(bufferData.rowPitch * bufferData.height),
+			GetBufferDesc(bufferData.rowPitch * bufferData.height, false),
 			true
 		);
 		uploadBuffer->MapBuffer();
@@ -41,9 +42,30 @@ void HeapManager::CreateBuffers(ID3D12Device* device, bool msaa) {
 			false
 		);
 	}
+
+	// GPU Buffers
+	for (size_t index = 0u; index < std::size(m_bufferDataGPUOnly); ++index) {
+		BufferData& bufferData = m_bufferDataGPUOnly[index];
+
+		CreatePlacedResource(
+			device, m_gpuHeap->GetHeap(),
+			m_gpuOnlyBuffers[index], bufferData.offset,
+			GetBufferDesc(bufferData.rowPitch * bufferData.height, bufferData.isUAV),
+			false
+		);
+	}
 }
 
 void HeapManager::RecordUpload(ID3D12GraphicsCommandList* copyList) {
+	for (size_t index = 0u; index < std::size(m_bufferDataGPUOnly); ++index) {
+		D3D12_RESOURCE_BARRIER activationBarrier{};
+		ID3D12Resource* gpuBuffer = m_gpuOnlyBuffers[index]->Get();
+
+		PopulateAliasingBarrier(activationBarrier, gpuBuffer);
+
+		copyList->ResourceBarrier(1u, &activationBarrier);
+	}
+
 	for (size_t index = 0u; index < std::size(m_bufferData); ++index) {
 		D3D12_RESOURCE_BARRIER activationBarriers[2] = {};
 
@@ -53,15 +75,8 @@ void HeapManager::RecordUpload(ID3D12GraphicsCommandList* copyList) {
 		ID3D12Resource* uploadBuffer = m_uploadBuffers[index]->GetBuffer()->Get();
 		ID3D12Resource* gpuBuffer = m_gpuBuffers[index]->Get();
 
-		barrierUploadBuffer.Type = D3D12_RESOURCE_BARRIER_TYPE_ALIASING;
-		barrierUploadBuffer.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-		barrierUploadBuffer.Aliasing.pResourceBefore = nullptr;
-		barrierUploadBuffer.Aliasing.pResourceBefore = uploadBuffer;
-
-		barrierGPUBuffer.Type = D3D12_RESOURCE_BARRIER_TYPE_ALIASING;
-		barrierGPUBuffer.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-		barrierGPUBuffer.Aliasing.pResourceBefore = nullptr;
-		barrierGPUBuffer.Aliasing.pResourceBefore = gpuBuffer;
+		PopulateAliasingBarrier(barrierUploadBuffer, uploadBuffer);
+		PopulateAliasingBarrier(barrierGPUBuffer, gpuBuffer);
 
 		copyList->ResourceBarrier(2u, activationBarriers);
 
@@ -111,33 +126,32 @@ void HeapManager::ReleaseUploadBuffer() {
 	m_uploadHeap.reset();
 }
 
-BufferPair HeapManager::AddBuffer(
-	size_t bufferSize
-) {
+BufferPair HeapManager::AddBufferWithCPUAccess(size_t bufferSize, bool uav) {
 	constexpr size_t alignment = 64_KB;
 
 	m_currentMemoryOffset = Align(m_currentMemoryOffset, alignment);
 
 	m_bufferData.emplace_back(
 		false, bufferSize / 4u, 1u, alignment, m_currentMemoryOffset, bufferSize,
-		DXGI_FORMAT_UNKNOWN
+		DXGI_FORMAT_UNKNOWN, uav
 	);
-	m_gpuBuffers.emplace_back(std::make_shared<D3DBuffer>());
-	m_uploadBuffers.emplace_back(std::make_shared<UploadBuffer>());
 
 	m_currentMemoryOffset += bufferSize;
 
-	return { m_gpuBuffers.back(), m_uploadBuffers.back() };
+	auto gpuBuffer = std::make_shared<D3DBuffer>();
+	auto uploadBuffer = std::make_shared<UploadBuffer>();
+
+	m_gpuBuffers.emplace_back(gpuBuffer);
+	m_uploadBuffers.emplace_back(uploadBuffer);
+
+	return { std::move(gpuBuffer), std::move(uploadBuffer) };
 }
 
 BufferPair HeapManager::AddTexture(
 	ID3D12Device* device,
 	size_t width, size_t height, size_t pixelSizeInBytes,
-	bool msaa
+	bool uav, bool msaa
 ) {
-	m_gpuBuffers.emplace_back(std::make_shared<D3DBuffer>());
-	m_uploadBuffers.emplace_back(std::make_shared<UploadBuffer>());
-
 	DXGI_FORMAT textureFormat = DXGI_FORMAT_UNKNOWN;
 
 	if (pixelSizeInBytes == 16u)
@@ -168,12 +182,18 @@ BufferPair HeapManager::AddTexture(
 	m_bufferData.emplace_back(
 		true,
 		width, height, alignment, m_currentMemoryOffset,
-		rowPitch, textureFormat
+		rowPitch, textureFormat, uav
 	);
 
 	m_currentMemoryOffset += bufferSize;
 
-	return { m_gpuBuffers.back(), m_uploadBuffers.back() };
+	auto gpuBuffer = std::make_shared<D3DBuffer>();
+	auto uploadBuffer = std::make_shared<UploadBuffer>();
+
+	m_gpuBuffers.emplace_back(gpuBuffer);
+	m_uploadBuffers.emplace_back(uploadBuffer);
+
+	return { std::move(gpuBuffer), std::move(uploadBuffer) };
 }
 
 void HeapManager::CreatePlacedResource(
@@ -193,8 +213,11 @@ void HeapManager::CreatePlacedResource(
 	);
 }
 
-D3D12_RESOURCE_DESC HeapManager::GetBufferDesc(size_t bufferSize) const noexcept {
-	return CD3DX12_RESOURCE_DESC::Buffer(static_cast<UINT64>(bufferSize));
+D3D12_RESOURCE_DESC HeapManager::GetBufferDesc(size_t bufferSize, bool uav) const noexcept {
+	return CD3DX12_RESOURCE_DESC::Buffer(
+		static_cast<UINT64>(bufferSize),
+		uav ? D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS : D3D12_RESOURCE_FLAG_NONE
+	);
 }
 
 D3D12_RESOURCE_DESC HeapManager::GetTextureDesc(
@@ -224,5 +247,33 @@ D3D12_RESOURCE_DESC	HeapManager::GetResourceDesc(
 	return 	texture ? GetTextureDesc(
 		bufferData.height, bufferData.width,
 		bufferData.alignment, bufferData.textureFormat
-	) : GetBufferDesc(bufferData.rowPitch * bufferData.height);
+	) : GetBufferDesc(bufferData.rowPitch * bufferData.height, bufferData.isUAV);
+}
+
+D3DBufferShared HeapManager::AddBufferGPUOnly(size_t bufferSize, bool uav) {
+	constexpr size_t alignment = 64_KB;
+
+	m_currentMemoryOffset = Align(m_currentMemoryOffset, alignment);
+
+	m_bufferDataGPUOnly.emplace_back(
+		false, bufferSize / 4u, 1u, alignment, m_currentMemoryOffset, bufferSize,
+		DXGI_FORMAT_UNKNOWN, uav
+	);
+
+	m_currentMemoryOffset += bufferSize;
+
+	auto gpuBuffer = std::make_shared<D3DBuffer>();
+
+	m_gpuOnlyBuffers.emplace_back(gpuBuffer);
+
+	return std::move(gpuBuffer);
+}
+
+void HeapManager::PopulateAliasingBarrier(
+	D3D12_RESOURCE_BARRIER& barrier, ID3D12Resource* buffer
+) const noexcept {
+	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_ALIASING;
+	barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+	barrier.Aliasing.pResourceBefore = nullptr;
+	barrier.Aliasing.pResourceBefore = buffer;
 }

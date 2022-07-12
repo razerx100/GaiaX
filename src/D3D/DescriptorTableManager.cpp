@@ -38,13 +38,13 @@ void DescriptorTableManager::CreateDescriptorTable(ID3D12Device* device) {
 }
 
 ResourceAddress DescriptorTableManager::GetTextureIndex() noexcept {
-	m_sharedTextureIndices.emplace_back(std::make_shared<SharedAddress>());
-	m_sharedTextureCPUHandle.emplace_back(std::make_shared<_SharedAddress<SIZE_T>>());
+	auto sharedTextureIndex = std::make_shared<SharedAddress>();
+	auto sharedTextureCPUHandle = std::make_shared<_SharedAddress<SIZE_T>>();
 
-	return {
-		m_sharedTextureIndices.back(),
-		m_sharedTextureCPUHandle.back()
-	};
+	m_sharedTextureIndices.emplace_back(sharedTextureIndex);
+	m_sharedTextureCPUHandle.emplace_back(sharedTextureCPUHandle);
+
+	return { std::move(sharedTextureIndex), std::move(sharedTextureCPUHandle) };
 }
 
 D3D12_GPU_DESCRIPTOR_HANDLE DescriptorTableManager::GetTextureRangeStart() const noexcept {
