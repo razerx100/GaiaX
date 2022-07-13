@@ -7,7 +7,9 @@
 
 using SharedIndex = std::shared_ptr<SharedAddress>;
 using SharedCPUHandle = std::shared_ptr<_SharedAddress<SIZE_T>>;
+using SharedGPUHandle = std::shared_ptr<_SharedAddress<UINT64>>;
 using ResourceAddress = std::pair<SharedIndex, SharedCPUHandle>;
+using SharedDescriptorHandles = std::pair<SharedCPUHandle, SharedGPUHandle>;
 
 class DescriptorTableManager {
 public:
@@ -17,7 +19,11 @@ public:
 	void CopyUploadHeap(ID3D12Device* device);
 	void ReleaseUploadHeap() noexcept;
 
-	ResourceAddress GetTextureIndex() noexcept;
+	[[nodiscard]]
+	ResourceAddress ReserveDescriptorTexture() noexcept;
+	[[nodiscard]]
+	SharedDescriptorHandles ReserveDescriptor() noexcept;
+
 	[[nodiscard]]
 	D3D12_GPU_DESCRIPTOR_HANDLE GetTextureRangeStart() const noexcept;
 	[[nodiscard]]
@@ -44,5 +50,7 @@ private:
 	ComPtr<ID3D12DescriptorHeap> m_uploadDescHeap;
 	std::vector<SharedCPUHandle> m_sharedTextureCPUHandle;
 	std::vector<SharedIndex> m_sharedTextureIndices;
+	std::vector<SharedCPUHandle> m_genericCPUHandles;
+	std::vector<SharedGPUHandle> m_genericGPUHandles;
 };
 #endif

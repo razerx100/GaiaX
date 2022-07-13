@@ -20,23 +20,21 @@ size_t TextureStorage::AddTexture(
 		bytesPerPixel = 4u;
 	}
 
-	m_textureData.emplace_back(
-		textureFormat, width * bytesPerPixel, height
-	);
+	m_textureData.emplace_back(textureFormat, width * bytesPerPixel, height);
 
 	m_dataHandles.emplace_back(std::move(textureDataHandle));
 
-	auto [gpuBuffer, uploadBuffer] =
-		Gaia::heapManager->AddTexture(device, width, height, bytesPerPixel);
+	auto [gpuBuffer, uploadBuffer] = Gaia::heapManager->AddTexture(
+		device, width, height, bytesPerPixel
+	);
 
 	m_gpuBuffers.emplace_back(gpuBuffer);
 	m_uploadBuffers.emplace_back(uploadBuffer);
 
-	auto [sharedIndex, sharedCPUHandle] =
-		Gaia::descriptorTable->GetTextureIndex();
+	auto [sharedIndex, sharedCPUHandle] = Gaia::descriptorTable->ReserveDescriptorTexture();
 
-	m_cpuHandles.emplace_back(sharedCPUHandle);
-	m_textureIndices.emplace_back(sharedIndex);
+	m_cpuHandles.emplace_back(std::move(sharedCPUHandle));
+	m_textureIndices.emplace_back(std::move(sharedIndex));
 
 	return std::size(m_textureIndices) - 1u;
 }
