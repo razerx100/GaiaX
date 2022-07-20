@@ -25,7 +25,7 @@ void ModelContainer::AddModelInputs(
 }
 
 void ModelContainer::BindCommands(
-	ID3D12GraphicsCommandList* commandList, std::uint32_t frameIndex
+	ID3D12GraphicsCommandList* commandList, size_t frameIndex
 ) const noexcept {
 	m_renderPipeline->BindGraphicsPipeline(commandList);
 
@@ -61,11 +61,14 @@ void ModelContainer::RecordUploadBuffers(ID3D12GraphicsCommandList* copyList) {
 	Gaia::heapManager->RecordUpload(copyList);
 }
 
+void ModelContainer::ReserveBuffers() {
+	m_renderPipeline->ReserveCommandBuffers();
+}
+
 void ModelContainer::CreateBuffers(ID3D12Device* device) {
 	// Acquire all buffers first
 	Gaia::vertexBuffer->AcquireBuffers();
 	Gaia::indexBuffer->AcquireBuffers();
-	m_renderPipeline->ReserveCommandBuffers();
 
 	// Now allocate memory and actually create them
 	Gaia::heapManager->CreateBuffers(device);

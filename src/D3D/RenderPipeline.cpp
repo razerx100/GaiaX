@@ -32,7 +32,7 @@ void RenderPipeline::AddGraphicsRootSignature(
 	m_graphicsRS = std::move(signature);
 }
 
-void RenderPipeline::UpdateModels(std::uint32_t frameIndex) const noexcept {
+void RenderPipeline::UpdateModels(size_t frameIndex) const noexcept {
 	size_t frameOffset = m_modelBufferPerFrameSize * frameIndex;
 	size_t offset = 0u;
 	constexpr size_t bufferStride = sizeof(ModelConstantBuffer);
@@ -80,7 +80,7 @@ void RenderPipeline::CreateCommandSignature(ID3D12Device* device) {
 }
 
 void RenderPipeline::DrawModels(
-	ID3D12GraphicsCommandList* graphicsCommandList, std::uint32_t frameIndex
+	ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex
 ) const noexcept {
 	graphicsCommandList->ExecuteIndirect(
 		m_commandSignature.Get(), m_modelCount, m_commandBuffer->Get(),
