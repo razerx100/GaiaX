@@ -80,8 +80,9 @@ void GraphicsQueueManager::MoveToNextFrame(size_t backBufferIndex) {
 		)
 	);
 
+	++backBufferIndex;
 	std::size_t newBackBufferIndex =
-		++backBufferIndex >= m_bufferCount ? backBufferIndex % m_bufferCount : backBufferIndex;
+		backBufferIndex >= m_bufferCount ? backBufferIndex % m_bufferCount : backBufferIndex;
 
 	std::uint64_t& newFenceValue = m_fenceValues[newBackBufferIndex];
 

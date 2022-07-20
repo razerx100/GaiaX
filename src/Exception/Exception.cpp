@@ -36,8 +36,7 @@ std::string Exception::GetOriginString() const noexcept {
 }
 
 GenericException::GenericException(
-	int line, const char* file,
-	const std::string& errorText
+	int line, const char* file, const std::string& errorText
 ) noexcept
 	: Exception(line, file), m_errorText(errorText) {
 	GenerateWhatBuffer();

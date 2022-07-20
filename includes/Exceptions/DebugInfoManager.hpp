@@ -5,8 +5,6 @@
 #include <string>
 #include <dxgidebug.h>
 
-using Microsoft::WRL::ComPtr;
-
 class DebugInfoManager {
 public:
 	DebugInfoManager();
@@ -25,5 +23,4 @@ private:
 };
 
 DebugInfoManager* CreateDebugInfoManagerInstance();
-
 #endif

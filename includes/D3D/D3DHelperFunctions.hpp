@@ -2,13 +2,11 @@
 #define D3D_HELPER_FUNCTIONS_HPP_
 #include <D3DHeaders.hpp>
 #include <utility>
-
-using Resolution = std::pair<std::uint64_t, std::uint64_t>;
+#include <GaiaDataTypes.hpp>
 
 [[nodiscard]]
 Resolution GetDisplayResolution(
-	ID3D12Device* gpu, IDXGIFactory1* factory,
-	std::uint32_t displayIndex
+	ID3D12Device* gpu, IDXGIFactory1* factory, std::uint32_t displayIndex
 );
 
 [[nodiscard]]

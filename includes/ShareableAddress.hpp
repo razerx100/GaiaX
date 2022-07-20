@@ -1,24 +1,24 @@
-#ifndef SHARED_ADDRESS_HPP_
-#define SHARED_ADDRESS_HPP_
+#ifndef SHAREABLE_ADDRESS_HPP_
+#define SHAREABLE_ADDRESS_HPP_
 #include <concepts>
 
 template<std::integral T>
-class _SharedAddress {
+class _ShareableAddress {
 public:
-	_SharedAddress() = default;
+	_ShareableAddress() = default;
 
 	template<std::integral Q>
-	_SharedAddress(Q address) : m_address(static_cast<T>(address)) {}
+	_ShareableAddress(Q address) : m_address(static_cast<T>(address)) {}
 
 	template<std::integral Q>
-	_SharedAddress<T>& operator=(Q address) noexcept {
+	_ShareableAddress<T>& operator=(Q address) noexcept {
 		Set<Q>(address);
 
 		return *this;
 	}
 
 	template<std::integral Q> requires (sizeof(T) >= sizeof(Q))
-	_SharedAddress<T>& operator+=(Q address) noexcept {
+	_ShareableAddress<T>& operator+=(Q address) noexcept {
 		Offset<Q>(address);
 
 		return *this;
@@ -47,5 +47,5 @@ private:
 	T m_address;
 };
 
-using SharedAddress = _SharedAddress<size_t>;
+using ShareableAddress = _ShareableAddress<size_t>;
 #endif

@@ -80,7 +80,7 @@ void HeapManager::RecordUpload(ID3D12GraphicsCommandList* copyList) {
 
 		copyList->ResourceBarrier(2u, activationBarriers);
 
-		BufferData& bufferData = m_bufferData[index];
+		const BufferData& bufferData = m_bufferData[index];
 
 		if (bufferData.isTexture) {
 			D3D12_TEXTURE_COPY_LOCATION dest = {};
@@ -126,7 +126,7 @@ void HeapManager::ReleaseUploadBuffer() {
 	m_uploadHeap.reset();
 }
 
-BufferPair HeapManager::AddBufferWithCPUAccess(size_t bufferSize, bool uav) {
+SharedBufferPair HeapManager::AddUploadAbleBuffer(size_t bufferSize, bool uav) {
 	constexpr size_t alignment = 64_KB;
 
 	m_currentMemoryOffset = Align(m_currentMemoryOffset, alignment);
@@ -147,7 +147,7 @@ BufferPair HeapManager::AddBufferWithCPUAccess(size_t bufferSize, bool uav) {
 	return { std::move(gpuBuffer), std::move(uploadBuffer) };
 }
 
-BufferPair HeapManager::AddTexture(
+SharedBufferPair HeapManager::AddTexture(
 	ID3D12Device* device,
 	size_t width, size_t height, size_t pixelSizeInBytes,
 	bool uav, bool msaa

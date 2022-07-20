@@ -3,24 +3,21 @@
 #include <d3dx12.h>
 #include <D3DHelperFunctions.hpp>
 
-CPUAccessibleStorage::CPUAccessibleStorage() noexcept
-	: m_currentOffset(0u) {}
+CPUAccessibleStorage::CPUAccessibleStorage() noexcept : m_currentOffset(0u) {}
 
-SharedPair CPUAccessibleStorage::GetSharedAddresses(
-	size_t bufferSize
-) noexcept {
+SharedAddressPair CPUAccessibleStorage::GetSharedAddresses(size_t bufferSize) noexcept {
 	constexpr size_t alignment = 256u;
 
 	m_currentOffset = Align(m_currentOffset, alignment);
 
-	m_sharedOffsets.emplace_back(
-		std::make_shared<SharedAddress>(m_currentOffset),
-		std::make_shared<SharedAddress>(m_currentOffset)
-	);
+	auto cpuAddress = std::make_shared<ShareableAddress>(m_currentOffset);
+	auto gpuAddress = std::make_shared<ShareableAddress>(m_currentOffset);
+
+	m_sharedOffsets.emplace_back(cpuAddress, gpuAddress);
 
 	m_currentOffset += bufferSize;
 
-	return m_sharedOffsets.back();
+	return { std::move(cpuAddress), std::move(gpuAddress) };
 }
 
 void CPUAccessibleStorage::CreateBuffer(ID3D12Device* device) {
@@ -47,7 +44,7 @@ void CPUAccessibleStorage::CreateBuffer(ID3D12Device* device) {
 		std::uint8_t* pCPUHandle = nullptr;
 
 		m_buffer->Map(0u, nullptr, reinterpret_cast<void**>(&pCPUHandle));
-		cpuStart = static_cast<size_t>(reinterpret_cast<std::uint64_t>(pCPUHandle));
+		cpuStart = reinterpret_cast<size_t>(pCPUHandle);
 	}
 
 	for (size_t index = 0u; index < std::size(m_sharedOffsets); ++index) {
@@ -57,5 +54,5 @@ void CPUAccessibleStorage::CreateBuffer(ID3D12Device* device) {
 		*gpuSharedOffset += gpuStart;
 	}
 
-	m_sharedOffsets = std::vector<SharedPair>();
+	m_sharedOffsets = std::vector<SharedAddressPair>();
 }

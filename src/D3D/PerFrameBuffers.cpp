@@ -8,41 +8,50 @@ PerFrameBuffers::PerFrameBuffers() {
 }
 
 void PerFrameBuffers::InitBuffers() {
-	m_cameraEntity.Init(sizeof(DirectX::XMMATRIX) * 2u);
+	m_cameraBuffer.Init(sizeof(DirectX::XMMATRIX) * 2u);
 }
 
 void PerFrameBuffers::SetMemoryAddresses() noexcept {
-	m_cameraEntity.SetMemoryAddresses();
+	m_cameraBuffer.SetMemoryAddresses();
+	m_gVertexBufferView.SetGPUAddress();
+	m_gIndexBufferView.SetGPUAddress();
 }
 
 void PerFrameBuffers::BindPerFrameBuffers(
 	ID3D12GraphicsCommandList* graphicsCmdList
 ) const noexcept {
-	std::uint8_t* cameraCpuHandle = m_cameraEntity.GetCpuHandle();
+	std::uint8_t* cameraCpuHandle = m_cameraBuffer.GetCpuHandle();
 
 	Gaia::cameraManager->CopyData(cameraCpuHandle);
 
-	graphicsCmdList->SetGraphicsRootConstantBufferView(
-		4u, m_cameraEntity.GetGpuHandle()
+	graphicsCmdList->SetGraphicsRootConstantBufferView(2u, m_cameraBuffer.GetGpuHandle());
+
+	graphicsCmdList->IASetVertexBuffers(0u, 1u, m_gVertexBufferView.GetAddress());
+	graphicsCmdList->IASetIndexBuffer(m_gIndexBufferView.GetAddress());
+}
+
+void PerFrameBuffers::AddModelInputs(
+	std::unique_ptr<std::uint8_t> vertices, size_t vertexBufferSize, size_t strideSize,
+	std::unique_ptr<std::uint8_t> indices, size_t indexBufferSize
+) {
+	auto vertexBufferAddress = Gaia::vertexBuffer->AddDataAndGetSharedAddress(
+		std::move(vertices), vertexBufferSize
 	);
-}
+	auto indexBufferAddress = Gaia::indexBuffer->AddDataAndGetSharedAddress(
+		std::move(indices), indexBufferSize
+	);
 
-// Per Frame Entity
-void PerFrameBuffers::PerFrameEntity::Init(size_t bufferSize) noexcept {
-	m_sharedMemoryHandles = Gaia::constantBuffer->GetSharedAddresses(bufferSize);
-}
+	m_gVertexBufferView.AddBufferView(
+		D3D12_VERTEX_BUFFER_VIEW{
+			0u, static_cast<UINT>(vertexBufferSize), static_cast<UINT>(strideSize)
+		}
+	);
+	m_gVertexBufferView.AddSharedAddress(std::move(vertexBufferAddress));
 
-void PerFrameBuffers::PerFrameEntity::SetMemoryAddresses() noexcept {
-	auto& [cpuSharedHandle, gpuSharedHandle] = m_sharedMemoryHandles;
-
-	m_pCpuHandle = reinterpret_cast<std::uint8_t*>(static_cast<std::uint64_t>(*cpuSharedHandle));
-	m_gpuHandle = *gpuSharedHandle;
-}
-
-std::uint8_t* PerFrameBuffers::PerFrameEntity::GetCpuHandle() const noexcept {
-	return m_pCpuHandle;
-}
-
-D3D12_GPU_VIRTUAL_ADDRESS PerFrameBuffers::PerFrameEntity::GetGpuHandle() const noexcept {
-	return m_gpuHandle;
+	m_gIndexBufferView.AddBufferView(
+		D3D12_INDEX_BUFFER_VIEW{
+			0u, static_cast<UINT>(indexBufferSize), DXGI_FORMAT_R32_UINT
+		}
+	);
+	m_gIndexBufferView.AddSharedAddress(std::move(indexBufferAddress));
 }

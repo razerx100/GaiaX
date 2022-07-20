@@ -24,7 +24,7 @@ DeviceManager::DeviceManager() {
 
         D3D12CreateDevice(
             adapter.Get(),
-            D3D_FEATURE_LEVEL_12_0,
+            gaiaFeatureLevel,
             __uuidof(ID3D12Device5),
             &m_pDevice
         );
@@ -39,10 +39,7 @@ IDXGIFactory4* DeviceManager::GetFactoryRef() const noexcept {
     return m_pFactory.Get();
 }
 
-void DeviceManager::GetHardwareAdapter(
-	IDXGIFactory1* pFactory,
-	IDXGIAdapter1** ppAdapter
-) {
+void DeviceManager::GetHardwareAdapter(IDXGIFactory1* pFactory, IDXGIAdapter1** ppAdapter) {
     ComPtr<IDXGIFactory6> pFactory6;
     bool found = false;
 
@@ -58,9 +55,8 @@ void DeviceManager::GetHardwareAdapter(
 
             if (SUCCEEDED(
                 D3D12CreateDevice(
-                    *ppAdapter, D3D_FEATURE_LEVEL_12_0,
-                    __uuidof(ID3D12Device), nullptr)
-            )) {
+                    *ppAdapter, gaiaFeatureLevel, __uuidof(ID3D12Device), nullptr
+                ))) {
                 found = true;
                 break;
             }
@@ -69,16 +65,13 @@ void DeviceManager::GetHardwareAdapter(
     }
     else {
         for (UINT index = 0u;
-            SUCCEEDED(pFactory->EnumAdapters1(
-                index, ppAdapter
-            ));
+            SUCCEEDED(pFactory->EnumAdapters1(index, ppAdapter));
             ++index) {
 
             if (SUCCEEDED(
                 D3D12CreateDevice(
-                    *ppAdapter, D3D_FEATURE_LEVEL_12_0,
-                    __uuidof(ID3D12Device), nullptr)
-            )) {
+                    *ppAdapter, gaiaFeatureLevel,__uuidof(ID3D12Device), nullptr
+                ))) {
                 found = true;
                 break;
             }

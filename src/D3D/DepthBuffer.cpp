@@ -2,9 +2,7 @@
 #include <D3DThrowMacros.hpp>
 #include <d3dx12.h>
 
-DepthBuffer::DepthBuffer(
-    ID3D12Device* device
-) {
+DepthBuffer::DepthBuffer(ID3D12Device* device) {
     D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};
     dsvHeapDesc.NumDescriptors = 1u;
     dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
@@ -17,8 +15,7 @@ DepthBuffer::DepthBuffer(
 }
 
 void DepthBuffer::CreateDepthBuffer(
-    ID3D12Device* device,
-	std::uint32_t width, std::uint32_t height
+    ID3D12Device* device, std::uint32_t width, std::uint32_t height
 ) {
     D3D12_CLEAR_VALUE depthValue = {};
     depthValue.Format = DXGI_FORMAT_D32_FLOAT;
@@ -62,7 +59,6 @@ void DepthBuffer::ClearDSV(
     ID3D12GraphicsCommandList* commandList, D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle
 ) noexcept {
     commandList->ClearDepthStencilView(
-        dsvHandle,
-        D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0u, 0u, nullptr
+        dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0u, 0u, nullptr
     );
 }

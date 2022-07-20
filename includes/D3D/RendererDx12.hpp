@@ -25,8 +25,10 @@ public:
 
 	void SetThreadPool(std::shared_ptr<IThreadPool> threadPoolArg) noexcept override;
 	void SetBackgroundColour(const std::array<float, 4>& colour) noexcept override;
-	void SubmitModels(
-		std::vector<std::shared_ptr<IModel>>&& models, std::unique_ptr<IModelInputs> modelInputs
+	void SubmitModels(std::vector<std::shared_ptr<IModel>>&& models) override;
+	void SubmitModelInputs(
+		std::unique_ptr<std::uint8_t> vertices, size_t vertexBufferSize, size_t strideSize,
+		std::unique_ptr<std::uint8_t> indices, size_t indexBufferSize
 	) override;
 	void Render() override;
 	void WaitForAsyncTasks() override;
@@ -46,5 +48,6 @@ private:
 	std::string m_shaderPath;
 	std::uint32_t m_width;
 	std::uint32_t m_height;
+	std::uint32_t m_bufferCount;
 };
 #endif

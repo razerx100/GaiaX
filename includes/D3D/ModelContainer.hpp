@@ -1,16 +1,22 @@
 #ifndef MODEL_CONTAINER_HPP_
 #define MODEL_CONTAINER_HPP_
-#include <BindInstanceGFX.hpp>
 #include <string>
 #include <memory>
 #include <PerFrameBuffers.hpp>
+#include <RootSignatureDynamic.hpp>
+#include <PipelineObjectGFX.hpp>
+#include <RenderPipeline.hpp>
 
 class ModelContainer {
 public:
-	ModelContainer(const std::string& shaderPath) noexcept;
+	ModelContainer(
+		const std::string& shaderPath, std::uint32_t bufferCount
+	) noexcept;
 
-	void AddModels(
-		std::vector<std::shared_ptr<IModel>>&& models, std::unique_ptr<IModelInputs> modelInputs
+	void AddModels(std::vector<std::shared_ptr<IModel>>&& models);
+	void AddModelInputs(
+		std::unique_ptr<std::uint8_t> vertices, size_t vertexBufferSize, size_t strideSize,
+		std::unique_ptr<std::uint8_t> indices, size_t indexBufferSize
 	);
 
 	void InitPipelines(ID3D12Device* device);
@@ -19,7 +25,9 @@ public:
 	void RecordUploadBuffers(ID3D12GraphicsCommandList* copyList);
 	void ReleaseUploadBuffers();
 
-	void BindCommands(ID3D12GraphicsCommandList* commandList) const noexcept;
+	void BindCommands(
+		ID3D12GraphicsCommandList* commandList, std::uint32_t frameIndex
+	) const noexcept;
 
 private:
 	using Pipeline =
@@ -28,7 +36,7 @@ private:
 	Pipeline CreatePipeline(ID3D12Device* device) const;
 
 private:
-	std::unique_ptr<BindInstanceGFX> m_bindInstance;
+	std::unique_ptr<RenderPipeline> m_renderPipeline;
 	std::unique_ptr<PerFrameBuffers> m_pPerFrameBuffers;
 
 	std::string m_shaderPath;

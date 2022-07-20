@@ -2,6 +2,8 @@
 #define PER_FRAME_BUFFERS_HPP_
 #include <D3DHeaders.hpp>
 #include <CPUAccessibleStorage.hpp>
+#include <BufferView.hpp>
+#include <ConstantBuffer.hpp>
 
 class PerFrameBuffers {
 public:
@@ -10,27 +12,17 @@ public:
 	void BindPerFrameBuffers(ID3D12GraphicsCommandList* graphicsCmdList) const noexcept;
 	void SetMemoryAddresses() noexcept;
 
-private:
-	class PerFrameEntity {
-	public:
-		void Init(size_t bufferSize) noexcept;
-		void SetMemoryAddresses() noexcept;
-
-		[[nodiscard]]
-		std::uint8_t* GetCpuHandle() const noexcept;
-		[[nodiscard]]
-		D3D12_GPU_VIRTUAL_ADDRESS GetGpuHandle() const noexcept;
-
-	private:
-		SharedPair m_sharedMemoryHandles;
-		std::uint8_t* m_pCpuHandle;
-		D3D12_GPU_VIRTUAL_ADDRESS m_gpuHandle;
-	};
+	void AddModelInputs(
+		std::unique_ptr<std::uint8_t> vertices, size_t vertexBufferSize, size_t strideSize,
+		std::unique_ptr<std::uint8_t> indices, size_t indexBufferSize
+	);
 
 private:
 	void InitBuffers();
 
 private:
-	PerFrameEntity m_cameraEntity;
+	CPUConstantBuffer m_cameraBuffer;
+	BufferView<D3D12_VERTEX_BUFFER_VIEW> m_gVertexBufferView;
+	BufferView<D3D12_INDEX_BUFFER_VIEW> m_gIndexBufferView;
 };
 #endif

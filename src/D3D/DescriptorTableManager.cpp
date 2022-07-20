@@ -6,12 +6,6 @@ DescriptorTableManager::DescriptorTableManager()
 	: m_descriptorCount(0u), m_textureRangeStart{} {}
 
 void DescriptorTableManager::CreateDescriptorTable(ID3D12Device* device) {
-	m_descriptorCount += std::size(m_genericCPUHandles);
-
-	size_t textureRangeStart = m_descriptorCount;
-
-	m_descriptorCount += std::size(m_sharedTextureCPUHandle);
-
 	if (!m_descriptorCount)
 		++m_descriptorCount;
 
@@ -32,38 +26,44 @@ void DescriptorTableManager::CreateDescriptorTable(ID3D12Device* device) {
 		*m_genericCPUHandles[index] = cpuHandle.ptr;
 		*m_genericGPUHandles[index] = gpuHandle.ptr;
 
-		cpuHandle.ptr += descriptorSize;
-		gpuHandle.ptr += descriptorSize;
+		cpuHandle.ptr += descriptorSize * m_genericDescriptorCounts[index];
+		gpuHandle.ptr += descriptorSize * m_genericDescriptorCounts[index];
 	}
 
 	// Texture
-	SetSharedAddresses(
-		m_sharedTextureCPUHandle, m_sharedTextureIndices, cpuHandle.ptr,
-		static_cast<SIZE_T>(descriptorSize), textureRangeStart
-	);
+	m_textureRangeStart = gpuHandle;
 
-	m_textureRangeStart = CD3DX12_GPU_DESCRIPTOR_HANDLE(
-		gpuHandle,
-		static_cast<UINT>(textureRangeStart), static_cast<UINT>(descriptorSize)
-	);
+	for (size_t index = 0u; index < std::size(m_sharedTextureCPUHandle); ++index) {
+		*m_sharedTextureCPUHandle[index] = cpuHandle.ptr;
+
+		cpuHandle.ptr += descriptorSize * m_textureDescriptorCounts[index];
+	}
 }
 
-ResourceAddress DescriptorTableManager::ReserveDescriptorTexture() noexcept {
-	auto sharedTextureIndex = std::make_shared<SharedAddress>();
-	auto sharedTextureCPUHandle = std::make_shared<_SharedAddress<SIZE_T>>();
+SharedCPUHandle DescriptorTableManager::ReserveDescriptorsTexture(
+	size_t descriptorCount
+) noexcept {
+	auto sharedTextureCPUHandle = std::make_shared<ShareableCPUHandle>();
 
-	m_sharedTextureIndices.emplace_back(sharedTextureIndex);
 	m_sharedTextureCPUHandle.emplace_back(sharedTextureCPUHandle);
+	m_textureDescriptorCounts.emplace_back(descriptorCount);
 
-	return { std::move(sharedTextureIndex), std::move(sharedTextureCPUHandle) };
+	m_descriptorCount += descriptorCount;
+
+	return sharedTextureCPUHandle;
 }
 
-SharedDescriptorHandles DescriptorTableManager::ReserveDescriptor() noexcept {
-	auto sharedCPUHandle = std::make_shared<_SharedAddress<SIZE_T>>();
-	auto sharedGPUHandle = std::make_shared<_SharedAddress<UINT64>>();
+SharedDescriptorHandles DescriptorTableManager::ReserveDescriptors(
+	size_t descriptorCount
+) noexcept {
+	auto sharedCPUHandle = std::make_shared<ShareableCPUHandle>();
+	auto sharedGPUHandle = std::make_shared<ShareableGPUHandle>();
 
 	m_genericCPUHandles.emplace_back(sharedCPUHandle);
 	m_genericGPUHandles.emplace_back(sharedGPUHandle);
+	m_genericDescriptorCounts.emplace_back(descriptorCount);
+
+	m_descriptorCount += descriptorCount;
 
 	return { std::move(sharedCPUHandle), std::move(sharedGPUHandle) };
 }
@@ -101,20 +101,6 @@ ComPtr<ID3D12DescriptorHeap> DescriptorTableManager::CreateDescHeap(
 void DescriptorTableManager::ReleaseUploadHeap() noexcept {
 	m_sharedTextureCPUHandle = std::vector<SharedCPUHandle>();
 	m_uploadDescHeap.Reset();
-}
-
-void DescriptorTableManager::SetSharedAddresses(
-	std::vector<SharedCPUHandle>& sharedHandles,
-	std::vector<SharedIndex>& sharedIndices,
-	SIZE_T& cpuHandle, SIZE_T descIncSize,
-	size_t indicesStart
-) const noexcept {
-	for (size_t index = 0u; index < std::size(sharedHandles); ++index) {
-		*sharedHandles[index] = cpuHandle;
-		*sharedIndices[index] = indicesStart + index;
-
-		cpuHandle += descIncSize;
-	}
 }
 
 void DescriptorTableManager::CopyUploadHeap(ID3D12Device* device) {

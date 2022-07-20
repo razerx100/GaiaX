@@ -6,16 +6,16 @@
 #include <vector>
 #include <memory>
 
-using BufferPair = std::pair<D3DBufferShared, UploadBufferShared>;
+using SharedBufferPair = std::pair<D3DBufferShared, UploadBufferShared>;
 
 class HeapManager {
 public:
 	HeapManager();
 
 	[[nodiscard]]
-	BufferPair AddBufferWithCPUAccess(size_t bufferSize, bool uav = false);
+	SharedBufferPair AddUploadAbleBuffer(size_t bufferSize, bool uav = false);
 	[[nodiscard]]
-	BufferPair AddTexture(
+	SharedBufferPair AddTexture(
 		ID3D12Device* device,
 		size_t width, size_t height,
 		size_t pixelSizeInBytes,
@@ -55,8 +55,7 @@ private:
 	D3D12_RESOURCE_DESC GetBufferDesc(size_t bufferSize, bool uav) const noexcept;
 	[[nodiscard]]
 	D3D12_RESOURCE_DESC GetTextureDesc(
-		size_t height, size_t width, size_t alignment,
-		DXGI_FORMAT textureFormat
+		size_t height, size_t width, size_t alignment, DXGI_FORMAT textureFormat
 	) const noexcept;
 
 	void PopulateAliasingBarrier(

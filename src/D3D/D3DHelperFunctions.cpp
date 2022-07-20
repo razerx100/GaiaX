@@ -2,8 +2,7 @@
 #include <D3DThrowMacros.hpp>
 
 Resolution GetDisplayResolution(
-	ID3D12Device* gpu, IDXGIFactory1* factory,
-	std::uint32_t displayIndex
+	ID3D12Device* gpu, IDXGIFactory1* factory, std::uint32_t displayIndex
 ) {
 	LUID gpuLUid = gpu->GetAdapterLuid();
 

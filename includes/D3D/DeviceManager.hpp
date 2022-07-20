@@ -12,13 +12,12 @@ public:
 	IDXGIFactory4* GetFactoryRef() const noexcept;
 
 private:
-	void GetHardwareAdapter(
-		IDXGIFactory1* pFactory,
-		IDXGIAdapter1** ppAdapter
-	);
+	void GetHardwareAdapter(IDXGIFactory1* pFactory, IDXGIAdapter1** ppAdapter);
 
 private:
 	ComPtr<ID3D12Device5> m_pDevice;
     ComPtr<IDXGIFactory4> m_pFactory;
 };
+
+constexpr D3D_FEATURE_LEVEL gaiaFeatureLevel = D3D_FEATURE_LEVEL_12_0;
 #endif

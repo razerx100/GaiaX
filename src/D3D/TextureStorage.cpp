@@ -31,12 +31,11 @@ size_t TextureStorage::AddTexture(
 	m_gpuBuffers.emplace_back(gpuBuffer);
 	m_uploadBuffers.emplace_back(uploadBuffer);
 
-	auto [sharedIndex, sharedCPUHandle] = Gaia::descriptorTable->ReserveDescriptorTexture();
+	SharedCPUHandle sharedCPUHandle = Gaia::descriptorTable->ReserveDescriptorsTexture();
 
 	m_cpuHandles.emplace_back(std::move(sharedCPUHandle));
-	m_textureIndices.emplace_back(std::move(sharedIndex));
 
-	return std::size(m_textureIndices) - 1u;
+	return std::size(m_cpuHandles) - 1u;
 }
 
 void TextureStorage::CreateBufferViews(ID3D12Device* device) {
@@ -55,10 +54,6 @@ void TextureStorage::CreateBufferViews(ID3D12Device* device) {
 			m_gpuBuffers[index]->Get(), &srvDesc, cpuHandle
 		);
 	}
-}
-
-size_t TextureStorage::GetPhysicalIndexFromVirtual(size_t virtualIndex) const noexcept {
-	return *m_textureIndices[virtualIndex];
 }
 
 void TextureStorage::CopyData(std::atomic_size_t& workCount) noexcept {

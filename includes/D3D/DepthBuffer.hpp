@@ -8,8 +8,7 @@ public:
 	DepthBuffer(ID3D12Device* device);
 
 	void CreateDepthBuffer(
-		ID3D12Device* device,
-		std::uint32_t width, std::uint32_t height
+		ID3D12Device* device, std::uint32_t width, std::uint32_t height
 	);
 
 	void ClearDSV(

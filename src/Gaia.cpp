@@ -47,8 +47,8 @@ namespace Gaia {
 		depthBuffer = std::make_unique<DepthBuffer>(d3dDevice);
 	}
 
-	void InitModelContainer(const std::string& shaderPath) {
-		modelContainer = std::make_unique<ModelContainer>(shaderPath);
+	void InitModelContainer(const std::string& shaderPath, std::uint32_t bufferCount) {
+		modelContainer = std::make_unique<ModelContainer>(shaderPath, bufferCount);
 	}
 
 	void InitCopyQueue(ID3D12Device* d3dDevice) {

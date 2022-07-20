@@ -2,11 +2,9 @@
 #define RESOURCE_BUFFER_HPP_
 #include <D3DBuffer.hpp>
 #include <UploadBuffer.hpp>
-#include <SharedAddress.hpp>
 #include <vector>
 #include <memory>
-
-using D3DGPUSharedAddress = std::shared_ptr<_SharedAddress<D3D12_GPU_VIRTUAL_ADDRESS>>;
+#include <GaiaDataTypes.hpp>
 
 class ResourceBuffer {
 public:

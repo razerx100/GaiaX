@@ -13,7 +13,7 @@ D3DGPUSharedAddress ResourceBuffer::AddDataAndGetSharedAddress(
 	m_sourceHandles.emplace_back(std::move(sourceHandle));
 	m_bufferData.emplace_back(bufferSize, 0u);
 
-	auto sharedAddress = std::make_shared<_SharedAddress<D3D12_GPU_VIRTUAL_ADDRESS>>();
+	auto sharedAddress = std::make_shared<ShareableGPUAddress>();
 
 	m_sharedAddresses.emplace_back(sharedAddress);
 
@@ -38,7 +38,7 @@ void ResourceBuffer::AcquireBuffers() {
 		offset += bufferData.size;
 	}
 
-	auto [gpuBuffer, uploadBuffer] = Gaia::heapManager->AddBufferWithCPUAccess(offset);
+	auto [gpuBuffer, uploadBuffer] = Gaia::heapManager->AddUploadAbleBuffer(offset);
 
 	m_pGPUBuffer = std::move(gpuBuffer);
 	m_pUploadBuffer = std::move(uploadBuffer);

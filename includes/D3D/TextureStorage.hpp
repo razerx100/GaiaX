@@ -5,6 +5,7 @@
 #include <D3DBuffer.hpp>
 #include <vector>
 #include <UploadBuffer.hpp>
+#include <GaiaDataTypes.hpp>
 
 class TextureStorage {
 public:
@@ -14,7 +15,6 @@ public:
 		size_t width, size_t height, bool components16bits
 	) noexcept;
 	[[nodiscard]]
-	size_t GetPhysicalIndexFromVirtual(size_t virtualIndex) const noexcept;
 
 	void CopyData(std::atomic_size_t& workCount) noexcept;
 	void ReleaseUploadBuffer() noexcept;
@@ -30,7 +30,6 @@ private:
 private:
 	std::vector<std::unique_ptr<std::uint8_t>> m_dataHandles;
 	std::vector<TextureData> m_textureData;
-	std::vector<SharedIndex> m_textureIndices;
 
 	std::vector<D3DBufferShared> m_gpuBuffers;
 	std::vector<UploadBufferShared> m_uploadBuffers;

@@ -31,10 +31,7 @@ protected:
 
 class GenericException final : public Exception {
 public:
-	GenericException(
-		int line, const char* file,
-		const std::string& errorText
-	) noexcept;
+	GenericException(int line, const char* file, const std::string& errorText) noexcept;
 
 	[[nodiscard]]
 	const char* what() const noexcept override;

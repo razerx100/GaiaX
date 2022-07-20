@@ -5,10 +5,9 @@
 
 RendererDx12::RendererDx12(
 	const char* appName,
-	void* windowHandle, std::uint32_t width, std::uint32_t height,
-	std::uint32_t bufferCount
+	void* windowHandle, std::uint32_t width, std::uint32_t height, std::uint32_t bufferCount
 ) : m_backgroundColour{0.0001f, 0.0001f, 0.0001f, 0.0001f}, m_appName(appName),
-	m_width(width), m_height(height) {
+	m_width(width), m_height(height), m_bufferCount{ bufferCount } {
 	Gaia::InitDevice();
 
 #ifdef _DEBUG
@@ -81,10 +80,18 @@ RendererDx12::~RendererDx12() noexcept {
 #endif
 }
 
-void RendererDx12::SubmitModels(
-	std::vector<std::shared_ptr<IModel>>&& models, std::unique_ptr<IModelInputs> modelInputs
+void RendererDx12::SubmitModels(std::vector<std::shared_ptr<IModel>>&& models) {
+	Gaia::modelContainer->AddModels(std::move(models));
+}
+
+void RendererDx12::SubmitModelInputs(
+	std::unique_ptr<std::uint8_t> vertices, size_t vertexBufferSize, size_t strideSize,
+	std::unique_ptr<std::uint8_t> indices, size_t indexBufferSize
 ) {
-	Gaia::modelContainer->AddModels(std::move(models), std::move(modelInputs));
+	Gaia::modelContainer->AddModelInputs(
+		std::move(vertices), vertexBufferSize, strideSize,
+		std::move(indices), indexBufferSize
+	);
 }
 
 void RendererDx12::Render() {
@@ -124,7 +131,7 @@ void RendererDx12::Render() {
 	);
 
 	// Record objects
-	Gaia::modelContainer->BindCommands(commandList);
+	Gaia::modelContainer->BindCommands(commandList, currentBackIndex);
 
 	D3D12_RESOURCE_BARRIER presentBarrier = Gaia::swapChain->GetPresentStateBarrier(
 		currentBackIndex
@@ -166,10 +173,11 @@ void RendererDx12::Resize(std::uint32_t width, std::uint32_t height) {
 }
 
 Renderer::Resolution RendererDx12::GetDisplayCoordinates(std::uint32_t displayIndex) const {
-	return GetDisplayResolution(
-		Gaia::device->GetDeviceRef(), Gaia::device->GetFactoryRef(),
-		displayIndex
+	auto [width, height] = GetDisplayResolution(
+		Gaia::device->GetDeviceRef(), Gaia::device->GetFactoryRef(), displayIndex
 	);
+
+	return { width, height };
 }
 
 void RendererDx12::SetBackgroundColour(const std::array<float, 4>& colour) noexcept {
@@ -188,7 +196,7 @@ void RendererDx12::SetShaderPath(const char* path) noexcept {
 }
 
 void RendererDx12::InitResourceBasedObjects() {
-	Gaia::InitModelContainer(m_shaderPath);
+	Gaia::InitModelContainer(m_shaderPath, m_bufferCount);
 }
 
 void RendererDx12::ProcessData() {

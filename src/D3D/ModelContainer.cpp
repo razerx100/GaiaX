@@ -1,29 +1,40 @@
 #include <ModelContainer.hpp>
-#include <BindInstanceGFX.hpp>
-#include <RootSignatureDynamic.hpp>
 #include <Shader.hpp>
-#include <PipelineObjectGFX.hpp>
 #include <Gaia.hpp>
+#include <VertexLayout.hpp>
 
-ModelContainer::ModelContainer(const std::string& shaderPath) noexcept
-	: m_bindInstance(std::make_unique<BindInstancePerVertex>()),
+ModelContainer::ModelContainer(
+	const std::string& shaderPath, std::uint32_t bufferCount
+) noexcept
+	: m_renderPipeline(std::make_unique<RenderPipeline>(bufferCount)),
 	m_pPerFrameBuffers(std::make_unique<PerFrameBuffers>()),
 	m_shaderPath(shaderPath) {}
 
-void ModelContainer::AddModels(
-	std::vector<std::shared_ptr<IModel>>&& models, std::unique_ptr<IModelInputs> modelInputs
-) {
-	m_bindInstance->AddModels(std::move(models), std::move(modelInputs));
+void ModelContainer::AddModels(std::vector<std::shared_ptr<IModel>>&& models) {
+	m_renderPipeline->AddOpaqueModels(std::move(models));
 }
 
-void ModelContainer::BindCommands(ID3D12GraphicsCommandList* commandList) const noexcept {
-	m_bindInstance->BindPipelineObjects(commandList);
+void ModelContainer::AddModelInputs(
+	std::unique_ptr<std::uint8_t> vertices, size_t vertexBufferSize, size_t strideSize,
+	std::unique_ptr<std::uint8_t> indices, size_t indexBufferSize
+) {
+	m_pPerFrameBuffers->AddModelInputs(
+		std::move(vertices), vertexBufferSize, strideSize,
+		std::move(indices), indexBufferSize
+	);
+}
+
+void ModelContainer::BindCommands(
+	ID3D12GraphicsCommandList* commandList, std::uint32_t frameIndex
+) const noexcept {
+	m_renderPipeline->BindGraphicsPipeline(commandList);
 
 	D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle = Gaia::descriptorTable->GetTextureRangeStart();
-	commandList->SetGraphicsRootDescriptorTable(1u, gpuHandle);
+	commandList->SetGraphicsRootDescriptorTable(0u, gpuHandle);
 
 	m_pPerFrameBuffers->BindPerFrameBuffers(commandList);
-	m_bindInstance->DrawModels(commandList);
+	m_renderPipeline->UpdateModels(frameIndex);
+	m_renderPipeline->DrawModels(commandList, frameIndex);
 }
 
 void ModelContainer::CopyData(std::atomic_size_t& workCount) {
@@ -54,17 +65,18 @@ void ModelContainer::CreateBuffers(ID3D12Device* device) {
 	// Acquire all buffers first
 	Gaia::vertexBuffer->AcquireBuffers();
 	Gaia::indexBuffer->AcquireBuffers();
+	m_renderPipeline->ReserveCommandBuffers();
 
 	// Now allocate memory and actually create them
 	Gaia::heapManager->CreateBuffers(device);
 	Gaia::constantBuffer->CreateBuffer(device);
+	m_renderPipeline->CreateCommandBuffers(device);
 
 	// Set GPU addresses
 	Gaia::vertexBuffer->SetGPUVirtualAddressToBuffers();
 	Gaia::indexBuffer->SetGPUVirtualAddressToBuffers();
 
 	m_pPerFrameBuffers->SetMemoryAddresses();
-	m_bindInstance->SetGPUVirtualAddresses();
 }
 
 void ModelContainer::ReleaseUploadBuffers() {
@@ -77,22 +89,20 @@ void ModelContainer::ReleaseUploadBuffers() {
 void ModelContainer::InitPipelines(ID3D12Device* device) {
 	auto [pso, signature] = CreatePipeline(device);
 
-	m_bindInstance->AddRootSignature(std::move(signature));
-	m_bindInstance->AddPSO(std::move(pso));
+	m_renderPipeline->AddGraphicsRootSignature(std::move(signature));
+	m_renderPipeline->AddGraphicsPipelineObject(std::move(pso));
 }
 
 ModelContainer::Pipeline ModelContainer::CreatePipeline(ID3D12Device* device) const {
 	std::unique_ptr<RootSignatureDynamic> signature = std::make_unique<RootSignatureDynamic>();
 
-	signature->AddConstants(1u, D3D12_SHADER_VISIBILITY_PIXEL, 0u);
 	signature->AddDescriptorTable(
 		D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
 		static_cast<std::uint32_t>(Gaia::descriptorTable->GetTextureDescriptorCount()),
 		D3D12_SHADER_VISIBILITY_PIXEL, 0u
 	);
-	signature->AddConstants(4u, D3D12_SHADER_VISIBILITY_VERTEX, 1u);
-	signature->AddConstants(16u, D3D12_SHADER_VISIBILITY_VERTEX, 2u);
-	signature->AddConstantBufferView(D3D12_SHADER_VISIBILITY_VERTEX, 3u);
+	signature->AddConstantBufferView(D3D12_SHADER_VISIBILITY_VERTEX, 0u);
+	signature->AddConstantBufferView(D3D12_SHADER_VISIBILITY_VERTEX, 1u);
 
 	signature->CompileSignature();
 	signature->CreateSignature(device);

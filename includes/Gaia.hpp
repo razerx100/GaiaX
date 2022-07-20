@@ -48,7 +48,7 @@ namespace Gaia {
 	void InitGraphicsCmdList(ID3D12Device4* d3dDevice, std::uint32_t listCount);
 	void InitDebugInfo();
 	void InitDepthBuffer(ID3D12Device* d3dDevice);
-	void InitModelContainer(const std::string& shaderPath);
+	void InitModelContainer(const std::string& shaderPath, std::uint32_t bufferCount);
 	void InitCopyQueue(ID3D12Device* d3dDevice);
 	void InitCopyCmdList(ID3D12Device4* d3dDevice);
 	void InitVertexBuffer();
