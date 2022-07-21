@@ -94,6 +94,8 @@ void ModelContainer::InitPipelines(ID3D12Device* device) {
 
 	m_renderPipeline->AddGraphicsRootSignature(std::move(signature));
 	m_renderPipeline->AddGraphicsPipelineObject(std::move(pso));
+
+	m_renderPipeline->CreateCommandSignature(device);
 }
 
 ModelContainer::Pipeline ModelContainer::CreatePipeline(ID3D12Device* device) const {

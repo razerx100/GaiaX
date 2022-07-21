@@ -120,11 +120,10 @@ void RenderPipeline::CreateCommandBuffers(ID3D12Device* device) {
 	UINT descriptorSize = device->GetDescriptorHandleIncrementSize(
 		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV
 	);
-	UINT64 commandBufferSize = sizeof(IndirectCommand) * m_modelCount;
 	D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle{ *m_commandDescriptorHandle };
 
 	for (size_t index = 0u; index < m_frameCount; ++index) {
-		srvDesc.Buffer.FirstElement = commandBufferSize * index;
+		srvDesc.Buffer.FirstElement = m_modelCount * index;
 		device->CreateShaderResourceView(m_commandBuffer->Get(), &srvDesc, cpuHandle);
 
 		cpuHandle.ptr += descriptorSize;
