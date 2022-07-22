@@ -21,6 +21,7 @@ struct ModelConstantBuffer {
 	UVInfo uvInfo;
 	DirectX::XMMATRIX modelMatrix;
 	std::uint32_t textureIndex;
+	double padding[20];
 };
 
 class RenderPipeline {

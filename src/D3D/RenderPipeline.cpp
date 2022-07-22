@@ -129,16 +129,17 @@ void RenderPipeline::CreateCommandBuffers(ID3D12Device* device) {
 	}
 
 	m_modelsConstantBuffer.SetMemoryAddresses();
-	D3D12_GPU_VIRTUAL_ADDRESS cbvAddressStart = m_modelsConstantBuffer.GetGpuHandle();
 
 	std::vector<IndirectCommand> commands;
 	constexpr size_t modelBufferSize = sizeof(ModelConstantBuffer);
+
 	for (size_t frame = 0u; frame < m_frameCount; ++frame) {
-		const size_t frameOffset = frame * m_modelCount * modelBufferSize;
+		D3D12_GPU_VIRTUAL_ADDRESS cbvAddressStart = m_modelsConstantBuffer.GetGpuHandle(frame);
+
 		for (size_t index = 0u; index < std::size(m_opaqueModels); ++index) {
 			IndirectCommand command{};
 			command.cbv =
-				cbvAddressStart + frameOffset + modelBufferSize * index;
+				cbvAddressStart + modelBufferSize * index;
 
 			const auto& model = m_opaqueModels[index];
 

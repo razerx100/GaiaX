@@ -1,12 +1,15 @@
 #include <ConstantBuffer.hpp>
+#include <D3DHelperFunctions.hpp>
 #include <Gaia.hpp>
 
 CPUConstantBuffer::CPUConstantBuffer() noexcept
 	: m_pCpuHandle{ nullptr }, m_gpuHandle{}, m_perFrameBufferSize{ 0 } {}
 
 void CPUConstantBuffer::Init(size_t bufferSize, std::uint32_t frameCount) noexcept {
-	m_perFrameBufferSize = bufferSize;
-	m_sharedBufferAddresses = Gaia::constantBuffer->GetSharedAddresses(bufferSize * frameCount);
+	m_perFrameBufferSize = Align(bufferSize, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
+	m_sharedBufferAddresses = Gaia::constantBuffer->GetSharedAddresses(
+		m_perFrameBufferSize * frameCount
+	);
 }
 
 void CPUConstantBuffer::SetMemoryAddresses() noexcept {
