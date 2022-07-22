@@ -7,9 +7,11 @@
 
 class PerFrameBuffers {
 public:
-	PerFrameBuffers();
+	PerFrameBuffers(std::uint32_t frameCount);
 
-	void BindPerFrameBuffers(ID3D12GraphicsCommandList* graphicsCmdList) const noexcept;
+	void BindPerFrameBuffers(
+		ID3D12GraphicsCommandList* graphicsCmdList, size_t frameIndex
+	) const noexcept;
 	void SetMemoryAddresses() noexcept;
 
 	void AddModelInputs(
@@ -18,7 +20,7 @@ public:
 	);
 
 private:
-	void InitBuffers();
+	void InitBuffers(std::uint32_t frameCount);
 
 private:
 	CPUConstantBuffer m_cameraBuffer;

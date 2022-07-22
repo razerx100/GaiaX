@@ -159,7 +159,7 @@ SharedBufferPair HeapManager::AddTexture(
 	else if (pixelSizeInBytes == 4u)
 		textureFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 
-	size_t rowPitch = Align(width * pixelSizeInBytes, 256u);
+	size_t rowPitch = Align(width * pixelSizeInBytes, D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
 	size_t totalTextureSize = rowPitch * height;
 	size_t alignmentto = 64_KB;
 

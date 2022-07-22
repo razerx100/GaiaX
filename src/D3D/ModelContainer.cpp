@@ -7,7 +7,7 @@ ModelContainer::ModelContainer(
 	const std::string& shaderPath, std::uint32_t bufferCount
 ) noexcept
 	: m_renderPipeline(std::make_unique<RenderPipeline>(bufferCount)),
-	m_pPerFrameBuffers(std::make_unique<PerFrameBuffers>()),
+	m_pPerFrameBuffers(std::make_unique<PerFrameBuffers>(bufferCount)),
 	m_shaderPath(shaderPath) {}
 
 void ModelContainer::AddModels(std::vector<std::shared_ptr<IModel>>&& models) {
@@ -32,7 +32,7 @@ void ModelContainer::BindCommands(
 	D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle = Gaia::descriptorTable->GetTextureRangeStart();
 	commandList->SetGraphicsRootDescriptorTable(0u, gpuHandle);
 
-	m_pPerFrameBuffers->BindPerFrameBuffers(commandList);
+	m_pPerFrameBuffers->BindPerFrameBuffers(commandList, frameIndex);
 	m_renderPipeline->UpdateModels(frameIndex);
 	m_renderPipeline->DrawModels(commandList, frameIndex);
 }

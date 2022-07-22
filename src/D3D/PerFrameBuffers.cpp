@@ -3,12 +3,12 @@
 
 #include <CameraManager.hpp>
 
-PerFrameBuffers::PerFrameBuffers() {
-	InitBuffers();
+PerFrameBuffers::PerFrameBuffers(std::uint32_t frameCount) {
+	InitBuffers(frameCount);
 }
 
-void PerFrameBuffers::InitBuffers() {
-	m_cameraBuffer.Init(sizeof(DirectX::XMMATRIX) * 2u);
+void PerFrameBuffers::InitBuffers(std::uint32_t frameCount) {
+	m_cameraBuffer.Init(sizeof(DirectX::XMMATRIX) * 2u, frameCount);
 }
 
 void PerFrameBuffers::SetMemoryAddresses() noexcept {
@@ -18,13 +18,15 @@ void PerFrameBuffers::SetMemoryAddresses() noexcept {
 }
 
 void PerFrameBuffers::BindPerFrameBuffers(
-	ID3D12GraphicsCommandList* graphicsCmdList
+	ID3D12GraphicsCommandList* graphicsCmdList, size_t frameIndex
 ) const noexcept {
-	std::uint8_t* cameraCpuHandle = m_cameraBuffer.GetCpuHandle();
+	std::uint8_t* cameraCpuHandle = m_cameraBuffer.GetCpuHandle(frameIndex);
 
 	Gaia::cameraManager->CopyData(cameraCpuHandle);
 
-	graphicsCmdList->SetGraphicsRootConstantBufferView(2u, m_cameraBuffer.GetGpuHandle());
+	graphicsCmdList->SetGraphicsRootConstantBufferView(
+		2u, m_cameraBuffer.GetGpuHandle(frameIndex)
+	);
 
 	graphicsCmdList->IASetVertexBuffers(0u, 1u, m_gVertexBufferView.GetAddress());
 	graphicsCmdList->IASetIndexBuffer(m_gIndexBufferView.GetAddress());

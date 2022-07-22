@@ -1,8 +1,12 @@
 #include <ConstantBuffer.hpp>
 #include <Gaia.hpp>
 
-void CPUConstantBuffer::Init(size_t bufferSize) noexcept {
-	m_sharedBufferAddresses = Gaia::constantBuffer->GetSharedAddresses(bufferSize);
+CPUConstantBuffer::CPUConstantBuffer() noexcept
+	: m_pCpuHandle{ nullptr }, m_gpuHandle{}, m_perFrameBufferSize{ 0 } {}
+
+void CPUConstantBuffer::Init(size_t bufferSize, std::uint32_t frameCount) noexcept {
+	m_perFrameBufferSize = bufferSize;
+	m_sharedBufferAddresses = Gaia::constantBuffer->GetSharedAddresses(bufferSize * frameCount);
 }
 
 void CPUConstantBuffer::SetMemoryAddresses() noexcept {
@@ -13,11 +17,11 @@ void CPUConstantBuffer::SetMemoryAddresses() noexcept {
 	m_gpuHandle = *gpuSharedAddress;
 }
 
-std::uint8_t* CPUConstantBuffer::GetCpuHandle() const noexcept {
-	return m_pCpuHandle;
+std::uint8_t* CPUConstantBuffer::GetCpuHandle(size_t frameIndex) const noexcept {
+	return m_pCpuHandle + m_perFrameBufferSize * frameIndex;
 }
 
-D3D12_GPU_VIRTUAL_ADDRESS CPUConstantBuffer::GetGpuHandle() const noexcept {
-	return m_gpuHandle;
+D3D12_GPU_VIRTUAL_ADDRESS CPUConstantBuffer::GetGpuHandle(size_t frameIndex) const noexcept {
+	return m_gpuHandle + m_perFrameBufferSize * frameIndex;
 }
 

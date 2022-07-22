@@ -126,8 +126,7 @@ void RendererDx12::Render() {
 	Gaia::depthBuffer->ClearDSV(commandList, dsvHandle);
 
 	commandList->OMSetRenderTargets(
-		1u, &rtvHandle,
-		FALSE, &dsvHandle
+		1u, &rtvHandle, FALSE, &dsvHandle
 	);
 
 	// Record objects

@@ -33,7 +33,6 @@ void RenderPipeline::AddGraphicsRootSignature(
 }
 
 void RenderPipeline::UpdateModels(size_t frameIndex) const noexcept {
-	size_t frameOffset = m_modelBufferPerFrameSize * frameIndex;
 	size_t offset = 0u;
 	constexpr size_t bufferStride = sizeof(ModelConstantBuffer);
 
@@ -44,7 +43,7 @@ void RenderPipeline::UpdateModels(size_t frameIndex) const noexcept {
 		modelBuffer.modelMatrix = model->GetModelMatrix();
 
 		memcpy(
-			m_commandUploadBuffer->GetCPUHandle() + frameOffset + offset,
+			m_modelsConstantBuffer.GetCpuHandle(frameIndex) + offset,
 			&modelBuffer, bufferStride
 		);
 
@@ -105,7 +104,7 @@ void RenderPipeline::ReserveCommandBuffers() {
 	m_commandDescriptorHandle = std::move(cpuDescriptor);
 
 	m_modelBufferPerFrameSize = sizeof(ModelConstantBuffer) * m_modelCount;
-	m_modelsConstantBuffer.Init(m_modelBufferPerFrameSize * m_frameCount);
+	m_modelsConstantBuffer.Init(m_modelBufferPerFrameSize, m_frameCount);
 }
 
 void RenderPipeline::CreateCommandBuffers(ID3D12Device* device) {
@@ -157,8 +156,7 @@ void RenderPipeline::CreateCommandBuffers(ID3D12Device* device) {
 
 	std::uint8_t* commandCPUPtr = m_commandUploadBuffer->GetCPUHandle();
 	memcpy(
-		commandCPUPtr, std::data(commands),
-		sizeof(IndirectCommand) * m_modelCount * m_frameCount
+		commandCPUPtr, std::data(commands), sizeof(IndirectCommand) * std::size(commands)
 	);
 }
 

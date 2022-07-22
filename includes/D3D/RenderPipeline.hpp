@@ -16,10 +16,11 @@ struct IndirectCommand {
 	D3D12_DRAW_INDEXED_ARGUMENTS drawIndexed;
 };
 
+// Need pack stuff in multiple of 16bytes
 struct ModelConstantBuffer {
-	std::uint32_t textureIndex;
 	UVInfo uvInfo;
 	DirectX::XMMATRIX modelMatrix;
+	std::uint32_t textureIndex;
 };
 
 class RenderPipeline {
