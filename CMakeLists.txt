@@ -19,10 +19,13 @@ else()
 endif()
 
 file(GLOB_RECURSE SRC src/*.cpp includes/*.hpp templates/*.hpp exports/*.hpp)
+file(GLOB_RECURSE MODULESS interfaces/*.ixx)
 
 add_library(${PROJECT_NAME} SHARED
-    ${SRC} ${IMGUI}
+    ${SRC} ${MODULESS}
 )
+
+source_group("Interfaces" FILES ${MODULESS})
 
 target_include_directories(${PROJECT_NAME} PRIVATE includes/ includes/D3D/ includes/Exceptions/ templates/ exports/ DirectXMath/Inc/ DirectXMath/Extensions/)
 

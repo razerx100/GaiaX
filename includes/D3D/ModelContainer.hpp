@@ -5,7 +5,9 @@
 #include <PerFrameBuffers.hpp>
 #include <RootSignatureDynamic.hpp>
 #include <PipelineObjectGFX.hpp>
-#include <RenderPipeline.hpp>
+#include <IModel.hpp>
+
+import RenderPipeline;
 
 class ModelContainer {
 public:

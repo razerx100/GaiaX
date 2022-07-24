@@ -1,9 +1,11 @@
-#ifndef CONSTANT_BUFFER_HPP_
-#define CONSTANT_BUFFER_HPP_
+module;
+
 #include <D3DHeaders.hpp>
 #include <GaiaDataTypes.hpp>
 
-class CPUConstantBuffer {
+export module ConstantBuffer;
+
+export class CPUConstantBuffer {
 public:
 	CPUConstantBuffer() noexcept;
 
@@ -21,4 +23,3 @@ private:
 	D3D12_GPU_VIRTUAL_ADDRESS m_gpuHandle;
 	std::size_t m_perFrameBufferSize;
 };
-#endif

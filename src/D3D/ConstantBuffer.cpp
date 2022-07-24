@@ -1,6 +1,7 @@
-#include <ConstantBuffer.hpp>
 #include <D3DHelperFunctions.hpp>
 #include <Gaia.hpp>
+
+import ConstantBuffer;
 
 CPUConstantBuffer::CPUConstantBuffer() noexcept
 	: m_pCpuHandle{ nullptr }, m_gpuHandle{}, m_perFrameBufferSize{ 0 } {}

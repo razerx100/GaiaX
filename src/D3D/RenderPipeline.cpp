@@ -1,9 +1,10 @@
-#include <RenderPipeline.hpp>
 #include <ranges>
 #include <algorithm>
 #include <D3DThrowMacros.hpp>
 #include <array>
 #include <Gaia.hpp>
+
+import RenderPipeline;
 
 RenderPipeline::RenderPipeline(std::uint32_t frameCount) noexcept
 	: m_modelCount(0u), m_frameCount{ frameCount }, m_modelBufferPerFrameSize{ 0u } {}
@@ -138,8 +139,7 @@ void RenderPipeline::CreateCommandBuffers(ID3D12Device* device) {
 
 		for (size_t index = 0u; index < std::size(m_opaqueModels); ++index) {
 			IndirectCommand command{};
-			command.cbv =
-				cbvAddressStart + modelBufferSize * index;
+			command.cbv = cbvAddressStart + modelBufferSize * index;
 
 			const auto& model = m_opaqueModels[index];
 

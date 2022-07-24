@@ -3,7 +3,8 @@
 #include <D3DHeaders.hpp>
 #include <CPUAccessibleStorage.hpp>
 #include <BufferView.hpp>
-#include <ConstantBuffer.hpp>
+
+import ConstantBuffer;
 
 class PerFrameBuffers {
 public:
