@@ -1,57 +1,50 @@
 #include <HeapManager.hpp>
 #include <d3dx12.h>
-#include <D3DHeap.hpp>
 #include <D3DThrowMacros.hpp>
-#include <UploadBuffer.hpp>
 #include <D3DHelperFunctions.hpp>
+#include <Gaia.hpp>
 
 HeapManager::HeapManager()
-	: m_currentMemoryOffset(0u), m_maxAlignment(64_KB) {
+	: m_currentMemoryOffset(0u), m_maxAlignment(64_KB) {}
 
-	m_uploadHeap = std::make_unique<D3DHeap>();
-	m_gpuHeap = std::make_unique<D3DHeap>();
-}
-
-void HeapManager::CreateBuffers(ID3D12Device* device, bool msaa) {
+void HeapManager::CreateBuffers(ID3D12Device* device) {
 	size_t alignedSize = Align(m_currentMemoryOffset, m_maxAlignment);
 
-	m_uploadHeap->CreateHeap(device, alignedSize, msaa, true);
-	m_gpuHeap->CreateHeap(device, alignedSize, msaa);
+	UINT64 heapAlignment = D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
+	if (m_maxAlignment > heapAlignment)
+		heapAlignment = m_maxAlignment;
+
+	Gaia::Resources::uploadHeap->CreateHeap(device, alignedSize, heapAlignment);
+	Gaia::Resources::gpuReadOnlyHeap->CreateHeap(device, alignedSize, heapAlignment);
 
 	// Buffers with Upload Buffers
 	for (size_t index = 0u; index < std::size(m_bufferData); ++index) {
-		UploadBufferShared& uploadBuffer = m_uploadBuffers[index];
-		D3DBufferShared& gpuBuffer = m_gpuBuffers[index];
+		D3DCPUWResourceShared& uploadBuffer = m_uploadBuffers[index];
+		D3DResourceShared& gpuBuffer = m_gpuBuffers[index];
 		BufferData& bufferData = m_bufferData[index];
 
-		CreatePlacedResource(
-			device, m_uploadHeap->GetHeap(),
-			uploadBuffer->GetBuffer(), bufferData.offset,
+		uploadBuffer->CreateResource(
+			device, Gaia::Resources::uploadHeap->GetHeap(), bufferData.offset,
 			GetBufferDesc(bufferData.rowPitch * bufferData.height, false),
-			true
+			D3D12_RESOURCE_STATE_GENERIC_READ
 		);
 		uploadBuffer->MapBuffer();
 
-		CreatePlacedResource(
-			device, m_gpuHeap->GetHeap(),
-			gpuBuffer, bufferData.offset,
-			GetResourceDesc(
-				bufferData,
-				bufferData.isTexture
-			),
-			false
+		gpuBuffer->CreateResource(
+			device, Gaia::Resources::gpuReadOnlyHeap->GetHeap(), bufferData.offset,
+			GetResourceDesc(bufferData, bufferData.isTexture),
+			D3D12_RESOURCE_STATE_COPY_DEST
 		);
 	}
 
-	// GPU Buffers
+	// Useless
 	for (size_t index = 0u; index < std::size(m_bufferDataGPUOnly); ++index) {
 		BufferData& bufferData = m_bufferDataGPUOnly[index];
 
-		CreatePlacedResource(
-			device, m_gpuHeap->GetHeap(),
-			m_gpuOnlyBuffers[index], bufferData.offset,
+		m_gpuOnlyBuffers[index]->CreateResource(
+			device, Gaia::Resources::gpuReadOnlyHeap->GetHeap(), bufferData.offset,
 			GetBufferDesc(bufferData.rowPitch * bufferData.height, bufferData.isUAV),
-			false
+			D3D12_RESOURCE_STATE_COPY_DEST
 		);
 	}
 }
@@ -72,7 +65,7 @@ void HeapManager::RecordUpload(ID3D12GraphicsCommandList* copyList) {
 		D3D12_RESOURCE_BARRIER& barrierUploadBuffer = activationBarriers[0];
 		D3D12_RESOURCE_BARRIER& barrierGPUBuffer = activationBarriers[1];
 
-		ID3D12Resource* uploadBuffer = m_uploadBuffers[index]->GetBuffer()->Get();
+		ID3D12Resource* uploadBuffer = m_uploadBuffers[index]->Get();
 		ID3D12Resource* gpuBuffer = m_gpuBuffers[index]->Get();
 
 		PopulateAliasingBarrier(barrierUploadBuffer, uploadBuffer);
@@ -121,9 +114,8 @@ void HeapManager::RecordUpload(ID3D12GraphicsCommandList* copyList) {
 
 void HeapManager::ReleaseUploadBuffer() {
 	m_bufferData = std::vector<BufferData>();
-	m_gpuBuffers = std::vector<D3DBufferShared>();
-	m_uploadBuffers = std::vector<UploadBufferShared>();
-	m_uploadHeap.reset();
+	m_gpuBuffers = std::vector<D3DResourceShared>();
+	m_uploadBuffers = std::vector<D3DCPUWResourceShared>();
 }
 
 SharedBufferPair HeapManager::AddUploadAbleBuffer(size_t bufferSize, bool uav) {
@@ -138,8 +130,8 @@ SharedBufferPair HeapManager::AddUploadAbleBuffer(size_t bufferSize, bool uav) {
 
 	m_currentMemoryOffset += bufferSize;
 
-	auto gpuBuffer = std::make_shared<D3DBuffer>();
-	auto uploadBuffer = std::make_shared<UploadBuffer>();
+	auto gpuBuffer = std::make_shared<D3DResource>();
+	auto uploadBuffer = std::make_shared<D3DCPUWResource>();
 
 	m_gpuBuffers.emplace_back(gpuBuffer);
 	m_uploadBuffers.emplace_back(uploadBuffer);
@@ -161,12 +153,20 @@ SharedBufferPair HeapManager::AddTexture(
 
 	size_t rowPitch = Align(width * pixelSizeInBytes, D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
 	size_t totalTextureSize = rowPitch * height;
-	size_t alignmentto = 64_KB;
+	size_t alignmentto = D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
 
-	if (msaa)
-		alignmentto = totalTextureSize > 4_MB ? 4_MB : 64_KB;
-	else
-		alignmentto = totalTextureSize > 64_KB ? 64_KB : 4_KB;
+	if (msaa) {
+		if (totalTextureSize > D3D12_DEFAULT_MSAA_RESOURCE_PLACEMENT_ALIGNMENT)
+			alignmentto = D3D12_DEFAULT_MSAA_RESOURCE_PLACEMENT_ALIGNMENT;
+		else
+			alignmentto = D3D12_SMALL_MSAA_RESOURCE_PLACEMENT_ALIGNMENT;
+	}
+	else {
+		if (totalTextureSize > D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT)
+			alignmentto = D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
+		else
+			alignmentto = D3D12_SMALL_RESOURCE_PLACEMENT_ALIGNMENT;
+	}
 
 	D3D12_RESOURCE_DESC texDesc = GetTextureDesc(height, width, alignmentto, textureFormat);
 
@@ -187,30 +187,13 @@ SharedBufferPair HeapManager::AddTexture(
 
 	m_currentMemoryOffset += bufferSize;
 
-	auto gpuBuffer = std::make_shared<D3DBuffer>();
-	auto uploadBuffer = std::make_shared<UploadBuffer>();
+	auto gpuBuffer = std::make_shared<D3DResource>();
+	auto uploadBuffer = std::make_shared<D3DCPUWResource>();
 
 	m_gpuBuffers.emplace_back(gpuBuffer);
 	m_uploadBuffers.emplace_back(uploadBuffer);
 
 	return { std::move(gpuBuffer), std::move(uploadBuffer) };
-}
-
-void HeapManager::CreatePlacedResource(
-	ID3D12Device* device, ID3D12Heap* memory, D3DBufferShared resource,
-	size_t offset, const D3D12_RESOURCE_DESC& desc, bool upload
-) const {
-	HRESULT hr;
-	D3D_THROW_FAILED(hr,
-		device->CreatePlacedResource(
-			memory, offset, &desc,
-			upload ? D3D12_RESOURCE_STATE_GENERIC_READ : D3D12_RESOURCE_STATE_COPY_DEST,
-			nullptr,
-			__uuidof(ID3D12Resource), reinterpret_cast<void**>(
-				resource->ReleaseAndGetAddress()
-				)
-		)
-	);
 }
 
 D3D12_RESOURCE_DESC HeapManager::GetBufferDesc(size_t bufferSize, bool uav) const noexcept {
@@ -250,7 +233,7 @@ D3D12_RESOURCE_DESC	HeapManager::GetResourceDesc(
 	) : GetBufferDesc(bufferData.rowPitch * bufferData.height, bufferData.isUAV);
 }
 
-D3DBufferShared HeapManager::AddBufferGPUOnly(size_t bufferSize, bool uav) {
+D3DResourceShared HeapManager::AddBufferGPUOnly(size_t bufferSize, bool uav) {
 	constexpr size_t alignment = 64_KB;
 
 	m_currentMemoryOffset = Align(m_currentMemoryOffset, alignment);
@@ -262,7 +245,7 @@ D3DBufferShared HeapManager::AddBufferGPUOnly(size_t bufferSize, bool uav) {
 
 	m_currentMemoryOffset += bufferSize;
 
-	auto gpuBuffer = std::make_shared<D3DBuffer>();
+	auto gpuBuffer = std::make_shared<D3DResource>();
 
 	m_gpuOnlyBuffers.emplace_back(gpuBuffer);
 

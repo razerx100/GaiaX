@@ -1,10 +1,10 @@
 #ifndef RESOURCE_BUFFER_HPP_
 #define RESOURCE_BUFFER_HPP_
-#include <D3DBuffer.hpp>
-#include <UploadBuffer.hpp>
 #include <vector>
 #include <memory>
 #include <GaiaDataTypes.hpp>
+
+import D3DResource;
 
 class ResourceBuffer {
 public:
@@ -30,8 +30,8 @@ private:
 	std::vector<D3DGPUSharedAddress> m_sharedAddresses;
 	std::vector<BufferData> m_bufferData;
 	std::vector<std::unique_ptr<std::uint8_t>> m_sourceHandles;
-	D3DBufferShared m_pGPUBuffer;
-	UploadBufferShared m_pUploadBuffer;
+	D3DResourceShared m_pGPUBuffer;
+	D3DCPUWResourceShared m_pUploadBuffer;
 
 	const size_t m_alignment;
 };

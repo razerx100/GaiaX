@@ -9,6 +9,7 @@ RendererDx12::RendererDx12(
 ) : m_backgroundColour{0.0001f, 0.0001f, 0.0001f, 0.0001f}, m_appName(appName),
 	m_width(width), m_height(height), m_bufferCount{ bufferCount } {
 	Gaia::InitDevice();
+	Gaia::InitResources();
 
 #ifdef _DEBUG
 	Gaia::InitDebugInfo();
@@ -74,6 +75,7 @@ RendererDx12::~RendererDx12() noexcept {
 	Gaia::graphicsQueue.reset();
 	Gaia::depthBuffer.reset();
 	Gaia::heapManager.reset();
+	Gaia::CleanUpResources();
 	Gaia::device.reset();
 #ifdef _DEBUG
 	Gaia::debugInfo.reset();

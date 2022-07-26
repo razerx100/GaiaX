@@ -1,10 +1,12 @@
+module;
+
 #include <ranges>
 #include <algorithm>
 #include <D3DThrowMacros.hpp>
 #include <array>
 #include <Gaia.hpp>
 
-import RenderPipeline;
+module RenderPipeline;
 
 RenderPipeline::RenderPipeline(std::uint32_t frameCount) noexcept
 	: m_modelCount(0u), m_frameCount{ frameCount }, m_modelBufferPerFrameSize{ 0u } {}
@@ -155,7 +157,7 @@ void RenderPipeline::CreateCommandBuffers(ID3D12Device* device) {
 
 	m_commandUploadBuffer->MapBuffer();
 
-	std::uint8_t* commandCPUPtr = m_commandUploadBuffer->GetCPUHandle();
+	std::uint8_t* commandCPUPtr = m_commandUploadBuffer->GetCPUWPointer();
 	memcpy(
 		commandCPUPtr, std::data(commands), sizeof(IndirectCommand) * std::size(commands)
 	);

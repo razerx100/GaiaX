@@ -49,7 +49,7 @@ void ResourceBuffer::CopyData() noexcept {
 		auto& [bufferSize, bufferOffset] = m_bufferData[index];
 
 		memcpy(
-			m_pUploadBuffer->GetCPUHandle() + bufferOffset,
+			m_pUploadBuffer->GetCPUWPointer() + bufferOffset,
 			m_sourceHandles[index].get(), bufferSize
 		);
 	}

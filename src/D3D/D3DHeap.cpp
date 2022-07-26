@@ -1,17 +1,17 @@
-#include <D3DHeap.hpp>
+module;
+
 #include <D3DThrowMacros.hpp>
 #include <D3DHelperFunctions.hpp>
 
-void D3DHeap::CreateHeap(
-	ID3D12Device* device, size_t heapSize,
-	bool msaa, bool uploadHeap
-) {
-	UINT64 alignment = msaa ?
-		D3D12_DEFAULT_MSAA_RESOURCE_PLACEMENT_ALIGNMENT
-		: D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
+module D3DHeap;
 
+D3DHeap::D3DHeap(D3D12_HEAP_TYPE type) noexcept : m_heapType(type) {}
+
+void D3DHeap::CreateHeap(
+	ID3D12Device* device, size_t heapSize, UINT64 alignment
+) {
 	D3D12_HEAP_PROPERTIES heapProp = {};
-	heapProp.Type = uploadHeap ? D3D12_HEAP_TYPE_UPLOAD : D3D12_HEAP_TYPE_DEFAULT;
+	heapProp.Type = m_heapType;
 	heapProp.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
 	heapProp.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
 	heapProp.CreationNodeMask = 1u;

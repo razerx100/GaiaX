@@ -64,11 +64,14 @@ void TextureStorage::CopyData(std::atomic_size_t& workCount) noexcept {
 		[&] {
 			for (size_t index = 0u; index < std::size(m_textureData); ++index) {
 				TextureData& texData = m_textureData[index];
-				size_t paddedRowPitch = Align(texData.rowPitch, 256u);
+				size_t paddedRowPitch = Align(
+					texData.rowPitch, D3D12_TEXTURE_DATA_PITCH_ALIGNMENT
+				);
 
 				for (size_t columnIndex = 0u; columnIndex < texData.height; ++columnIndex) {
 					std::memcpy(
-						m_uploadBuffers[index]->GetCPUHandle() + (columnIndex * paddedRowPitch),
+						m_uploadBuffers[index]->GetCPUWPointer()
+						+ (columnIndex * paddedRowPitch),
 						m_dataHandles[index].get() + (columnIndex * texData.rowPitch),
 						texData.rowPitch
 					);
@@ -82,6 +85,6 @@ void TextureStorage::CopyData(std::atomic_size_t& workCount) noexcept {
 
 void TextureStorage::ReleaseUploadBuffer() noexcept {
 	m_textureData = std::vector<TextureData>();
-	m_uploadBuffers = std::vector<UploadBufferShared>();
+	m_uploadBuffers = std::vector<D3DCPUWResourceShared>();
 	m_cpuHandles = std::vector<SharedCPUHandle>();
 }

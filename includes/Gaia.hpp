@@ -41,6 +41,13 @@ namespace Gaia {
 	extern std::unique_ptr<CameraManager> cameraManager;
 	extern std::shared_ptr<ISharedDataContainer> sharedData;
 
+	namespace Resources {
+		extern std::unique_ptr<D3DHeap> uploadHeap;
+		extern std::unique_ptr<D3DHeap> cpuWriteHeap;
+		extern std::unique_ptr<D3DHeap> gpuReadOnlyHeap;
+		extern std::unique_ptr<D3DHeap> cpuReadBackHeap;
+	}
+
 	// Initialization functions
 	void InitDevice();
 	void InitSwapChain(const SwapChainCreateInfo& createInfo);
@@ -61,5 +68,7 @@ namespace Gaia {
 	void InitConstantBuffer();
 	void InitCameraManager();
 	void SetSharedData(std::shared_ptr<ISharedDataContainer>&& sharedDataArg);
+	void InitResources();
+	void CleanUpResources();
 }
 #endif

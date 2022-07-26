@@ -5,13 +5,12 @@ module;
 #include <memory>
 #include <PipelineObjectGFX.hpp>
 #include <RootSignatureBase.hpp>
-#include <D3DBuffer.hpp>
-#include <UploadBuffer.hpp>
 #include <IModel.hpp>
 #include <GaiaDataTypes.hpp>
 
 export module RenderPipeline;
 import ConstantBuffer;
+import D3DResource;
 
 export struct IndirectCommand {
 	D3D12_GPU_VIRTUAL_ADDRESS cbv;
@@ -62,8 +61,8 @@ private:
 	UINT m_modelCount;
 	std::uint32_t m_frameCount;
 	size_t m_modelBufferPerFrameSize;
-	D3DBufferShared m_commandBuffer;
-	UploadBufferShared m_commandUploadBuffer;
+	D3DResourceShared m_commandBuffer;
+	D3DCPUWResourceShared m_commandUploadBuffer;
 	SharedCPUHandle m_commandDescriptorHandle;
 	CPUConstantBuffer m_modelsConstantBuffer;
 };

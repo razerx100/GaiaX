@@ -21,6 +21,13 @@ namespace Gaia {
 	std::unique_ptr<CameraManager> cameraManager;
 	std::shared_ptr<ISharedDataContainer> sharedData;
 
+	namespace Resources {
+		std::unique_ptr<D3DHeap> uploadHeap;
+		std::unique_ptr<D3DHeap> cpuWriteHeap;
+		std::unique_ptr<D3DHeap> gpuReadOnlyHeap;
+		std::unique_ptr<D3DHeap> cpuReadBackHeap;
+	}
+
 	void InitDevice() {
 		device = std::make_unique<DeviceManager>();
 	}
@@ -99,5 +106,18 @@ namespace Gaia {
 
 	void SetSharedData(std::shared_ptr<ISharedDataContainer>&& sharedDataArg) {
 		sharedData = std::move(sharedDataArg);
+	}
+
+	void InitResources() {
+		Resources::uploadHeap = std::make_unique<D3DHeap>(D3D12_HEAP_TYPE_UPLOAD);
+		Resources::cpuWriteHeap = std::make_unique<D3DHeap>(D3D12_HEAP_TYPE_UPLOAD);
+		Resources::gpuReadOnlyHeap = std::make_unique<D3DHeap>(D3D12_HEAP_TYPE_DEFAULT);
+		Resources::cpuReadBackHeap = std::make_unique<D3DHeap>(D3D12_HEAP_TYPE_READBACK);
+	}
+
+	void CleanUpResources() {
+		Resources::cpuWriteHeap.reset();
+		Resources::gpuReadOnlyHeap.reset();
+		Resources::cpuReadBackHeap.reset();
 	}
 }

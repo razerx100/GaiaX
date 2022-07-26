@@ -2,10 +2,10 @@
 #define TEXTURE_STORAGE_HPP_
 #include <D3DHeaders.hpp>
 #include <DescriptorTableManager.hpp>
-#include <D3DBuffer.hpp>
 #include <vector>
-#include <UploadBuffer.hpp>
 #include <GaiaDataTypes.hpp>
+
+import D3DResource;
 
 class TextureStorage {
 public:
@@ -31,8 +31,8 @@ private:
 	std::vector<std::unique_ptr<std::uint8_t>> m_dataHandles;
 	std::vector<TextureData> m_textureData;
 
-	std::vector<D3DBufferShared> m_gpuBuffers;
-	std::vector<UploadBufferShared> m_uploadBuffers;
+	std::vector<D3DResourceShared> m_gpuBuffers;
+	std::vector<D3DCPUWResourceShared> m_uploadBuffers;
 	std::vector<SharedCPUHandle> m_cpuHandles;
 };
 #endif
