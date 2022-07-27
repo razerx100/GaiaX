@@ -207,6 +207,9 @@ void RendererDx12::ProcessData() {
 
 	Gaia::descriptorTable->CreateDescriptorTable(device);
 
+	Gaia::Resources::uploadHeap->CreateHeap(device);
+	Gaia::Resources::gpuReadOnlyHeap->CreateHeap(device);
+
 	Gaia::modelContainer->CreateBuffers(device);
 
 	std::atomic_size_t workCount = 0u;
@@ -235,6 +238,7 @@ void RendererDx12::ProcessData() {
 	Gaia::textureStorage->ReleaseUploadBuffer();
 	Gaia::descriptorTable->ReleaseUploadHeap();
 	Gaia::modelContainer->ReleaseUploadBuffers();
+	Gaia::Resources::uploadHeap.reset();
 }
 
 size_t RendererDx12::RegisterResource(

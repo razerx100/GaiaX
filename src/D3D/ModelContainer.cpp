@@ -63,13 +63,13 @@ void ModelContainer::RecordUploadBuffers(ID3D12GraphicsCommandList* copyList) {
 
 void ModelContainer::ReserveBuffers() {
 	m_renderPipeline->ReserveCommandBuffers();
-}
 
-void ModelContainer::CreateBuffers(ID3D12Device* device) {
 	// Acquire all buffers first
 	Gaia::vertexBuffer->AcquireBuffers();
 	Gaia::indexBuffer->AcquireBuffers();
+}
 
+void ModelContainer::CreateBuffers(ID3D12Device* device) {
 	// Now allocate memory and actually create them
 	Gaia::heapManager->CreateBuffers(device);
 	Gaia::constantBuffer->CreateBuffer(device);

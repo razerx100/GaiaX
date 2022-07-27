@@ -1,15 +1,15 @@
 module;
 
+#include <algorithm>
 #include <D3DThrowMacros.hpp>
 #include <D3DHelperFunctions.hpp>
 
 module D3DHeap;
 
-D3DHeap::D3DHeap(D3D12_HEAP_TYPE type) noexcept : m_heapType(type) {}
+D3DHeap::D3DHeap(D3D12_HEAP_TYPE type) noexcept
+	: m_heapType{ type }, m_maxAlignment{ 0u }, m_totalHeapSize{ 0u } {}
 
-void D3DHeap::CreateHeap(
-	ID3D12Device* device, size_t heapSize, UINT64 alignment
-) {
+void D3DHeap::CreateHeap(ID3D12Device* device) {
 	D3D12_HEAP_PROPERTIES heapProp = {};
 	heapProp.Type = m_heapType;
 	heapProp.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
@@ -18,8 +18,8 @@ void D3DHeap::CreateHeap(
 	heapProp.VisibleNodeMask = 1u;
 
 	D3D12_HEAP_DESC desc = {};
-	desc.SizeInBytes = Align(heapSize, alignment);
-	desc.Alignment = alignment;
+	desc.SizeInBytes = Align(m_totalHeapSize, m_maxAlignment);
+	desc.Alignment = m_maxAlignment;
 	desc.Flags = D3D12_HEAP_FLAG_NONE;
 	desc.Properties = heapProp;
 
@@ -31,4 +31,14 @@ void D3DHeap::CreateHeap(
 
 ID3D12Heap* D3DHeap::GetHeap() const noexcept {
 	return m_pHeap.Get();
+}
+
+size_t D3DHeap::ReserveSizeAndGetOffset(size_t heapSize, UINT64 alignment) noexcept {
+	m_totalHeapSize = Align(m_totalHeapSize, alignment);
+	size_t offset = m_totalHeapSize;
+
+	m_maxAlignment = std::max(m_maxAlignment, alignment);
+	m_totalHeapSize += heapSize;
+
+	return offset;
 }
