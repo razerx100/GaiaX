@@ -1,10 +1,7 @@
-module;
-
+#include <D3DHeap.hpp>
 #include <algorithm>
 #include <D3DThrowMacros.hpp>
 #include <D3DHelperFunctions.hpp>
-
-module D3DHeap;
 
 D3DHeap::D3DHeap(D3D12_HEAP_TYPE type) noexcept
 	: m_heapType{ type }, m_maxAlignment{ 0u }, m_totalHeapSize{ 0u } {}

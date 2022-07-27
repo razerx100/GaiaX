@@ -1,13 +1,12 @@
-module;
+#ifndef CPU_WRITE_ADDRESS_MANAGER_HPP_
+#define CPU_WRITE_ADDRESS_MANAGER_HPP_
 
 #include <D3DHeaders.hpp>
 #include <GaiaDataTypes.hpp>
 
-export module ConstantBuffer;
-
-export class CPUConstantBuffer {
+class CPUWriteAddressManager {
 public:
-	CPUConstantBuffer() noexcept;
+	CPUWriteAddressManager() noexcept;
 
 	void Init(size_t bufferSize, std::uint32_t frameCount = 1u) noexcept;
 	void SetMemoryAddresses() noexcept;
@@ -23,3 +22,4 @@ private:
 	D3D12_GPU_VIRTUAL_ADDRESS m_gpuHandle;
 	std::size_t m_perFrameBufferSize;
 };
+#endif

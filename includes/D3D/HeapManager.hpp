@@ -3,9 +3,8 @@
 #include <vector>
 #include <memory>
 #include <D3DHeaders.hpp>
-
-import D3DHeap;
-import D3DResource;
+#include <D3DHeap.hpp>
+#include <D3DResource.hpp>
 
 using SharedBufferPair = std::pair<D3DResourceShared, D3DCPUWResourceShared>;
 

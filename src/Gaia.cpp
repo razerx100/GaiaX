@@ -17,7 +17,7 @@ namespace Gaia {
 	std::unique_ptr<DescriptorTableManager> descriptorTable;
 	std::unique_ptr<TextureStorage> textureStorage;
 	std::shared_ptr<IThreadPool> threadPool;
-	std::unique_ptr<CPUAccessibleStorage> constantBuffer;
+	std::unique_ptr<CPUAccessibleStorage> cpuWriteBuffer;
 	std::unique_ptr<CameraManager> cameraManager;
 	std::shared_ptr<ISharedDataContainer> sharedData;
 
@@ -96,8 +96,8 @@ namespace Gaia {
 		threadPool = std::move(threadPoolArg);
 	}
 
-	void InitConstantBuffer() {
-		constantBuffer = std::make_unique<CPUAccessibleStorage>();
+	void InitCPUWriteBuffer() {
+		cpuWriteBuffer = std::make_unique<CPUAccessibleStorage>();
 	}
 
 	void InitCameraManager() {

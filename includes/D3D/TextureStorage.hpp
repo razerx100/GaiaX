@@ -4,8 +4,7 @@
 #include <DescriptorTableManager.hpp>
 #include <vector>
 #include <GaiaDataTypes.hpp>
-
-import D3DResource;
+#include <D3DResource.hpp>
 
 class TextureStorage {
 public:

@@ -6,7 +6,6 @@
 #include <GraphicsQueueManager.hpp>
 #include <CommandListManager.hpp>
 #include <DebugInfoManager.hpp>
-#include <DepthBuffer.hpp>
 #include <ModelContainer.hpp>
 #include <CopyQueueManager.hpp>
 #include <ResourceBuffer.hpp>
@@ -18,6 +17,8 @@
 #include <CPUAccessibleStorage.hpp>
 #include <ISharedDataContainer.hpp>
 #include <CameraManager.hpp>
+#include <DepthBuffer.hpp>
+#include <D3DHeap.hpp>
 
 namespace Gaia {
 	// Variables
@@ -37,7 +38,7 @@ namespace Gaia {
 	extern std::unique_ptr<DescriptorTableManager> descriptorTable;
 	extern std::unique_ptr<TextureStorage> textureStorage;
 	extern std::shared_ptr<IThreadPool> threadPool;
-	extern std::unique_ptr<CPUAccessibleStorage> constantBuffer;
+	extern std::unique_ptr<CPUAccessibleStorage> cpuWriteBuffer;
 	extern std::unique_ptr<CameraManager> cameraManager;
 	extern std::shared_ptr<ISharedDataContainer> sharedData;
 
@@ -65,7 +66,7 @@ namespace Gaia {
 	void InitDescriptorTable();
 	void InitTextureStorage();
 	void SetThreadPool(std::shared_ptr<IThreadPool>&& threadPoolArg);
-	void InitConstantBuffer();
+	void InitCPUWriteBuffer();
 	void InitCameraManager();
 	void SetSharedData(std::shared_ptr<ISharedDataContainer>&& sharedDataArg);
 	void InitResources();

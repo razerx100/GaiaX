@@ -1,15 +1,18 @@
 #ifndef DEPTH_BUFFER_HPP_
 #define DEPTH_BUFFER_HPP_
+
 #include <D3DHeaders.hpp>
 #include <cstdint>
+#include <D3DResource.hpp>
 
 class DepthBuffer {
 public:
 	DepthBuffer(ID3D12Device* device);
 
-	void CreateDepthBuffer(
-		ID3D12Device* device, std::uint32_t width, std::uint32_t height
-	);
+	void CreateDepthBuffer(ID3D12Device* device, std::uint32_t width, std::uint32_t height);
+	void ReserveHeapSpace(ID3D12Device* device) noexcept;
+
+	void SetMaxResolution(std::uint32_t width, std::uint32_t height) noexcept;
 
 	void ClearDSV(
 		ID3D12GraphicsCommandList* commandList, D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle
@@ -20,6 +23,9 @@ public:
 
 private:
 	ComPtr<ID3D12DescriptorHeap> m_pDSVHeap;
-	ComPtr<ID3D12Resource> m_pDepthBuffer;
+	D3DResource m_depthBuffer;
+	std::uint32_t m_maxWidth;
+	std::uint32_t m_maxHeight;
+	UINT64 m_heapOffset;
 };
 #endif

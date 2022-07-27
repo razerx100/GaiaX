@@ -18,9 +18,7 @@ RendererDx12::RendererDx12(
 	ID3D12Device4* deviceRef = Gaia::device.get()->GetDeviceRef();
 
 	Gaia::InitDepthBuffer(deviceRef);
-	Gaia::depthBuffer->CreateDepthBuffer(
-		deviceRef, width, height
-	);
+	Gaia::depthBuffer->SetMaxResolution(7680u, 4320u);
 
 	Gaia::InitGraphicsQueue(deviceRef, bufferCount);
 	Gaia::InitGraphicsCmdList(deviceRef, bufferCount);
@@ -51,7 +49,7 @@ RendererDx12::RendererDx12(
 	Gaia::InitHeapManager();
 	Gaia::InitVertexBuffer();
 	Gaia::InitIndexBuffer();
-	Gaia::InitConstantBuffer();
+	Gaia::InitCPUWriteBuffer();
 	Gaia::InitDescriptorTable();
 	Gaia::InitTextureStorage();
 
@@ -67,7 +65,7 @@ RendererDx12::~RendererDx12() noexcept {
 	Gaia::copyCmdList.reset();
 	Gaia::copyQueue.reset();
 	Gaia::modelContainer.reset();
-	Gaia::constantBuffer.reset();
+	Gaia::cpuWriteBuffer.reset();
 	Gaia::vertexBuffer.reset();
 	Gaia::indexBuffer.reset();
 	Gaia::swapChain.reset();
@@ -201,15 +199,18 @@ void RendererDx12::InitResourceBasedObjects() {
 }
 
 void RendererDx12::ProcessData() {
-	Gaia::modelContainer->ReserveBuffers();
-
 	ID3D12Device* device = Gaia::device->GetDeviceRef();
+
+	Gaia::depthBuffer->ReserveHeapSpace(device);
+	Gaia::modelContainer->ReserveBuffers();
 
 	Gaia::descriptorTable->CreateDescriptorTable(device);
 
 	Gaia::Resources::uploadHeap->CreateHeap(device);
 	Gaia::Resources::gpuReadOnlyHeap->CreateHeap(device);
+	Gaia::Resources::cpuWriteHeap->CreateHeap(device);
 
+	Gaia::depthBuffer->CreateDepthBuffer(device, m_width, m_height);
 	Gaia::modelContainer->CreateBuffers(device);
 
 	std::atomic_size_t workCount = 0u;

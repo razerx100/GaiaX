@@ -1,8 +1,5 @@
-module;
-
+#include <D3DResource.hpp>
 #include <D3DThrowMacros.hpp>
-
-module D3DResource;
 
 ID3D12Resource* D3DResource::Get() const noexcept {
 	return m_pBuffer.Get();
@@ -18,12 +15,12 @@ ID3D12Resource** D3DResource::ReleaseAndGetAddress() noexcept {
 
 void D3DResource::CreateResource(
 	ID3D12Device* device, ID3D12Heap* heap, size_t offset, const D3D12_RESOURCE_DESC& desc,
-	D3D12_RESOURCE_STATES initialState
+	D3D12_RESOURCE_STATES initialState, const D3D12_CLEAR_VALUE* clearValue
 ) {
 	HRESULT hr{};
 	D3D_THROW_FAILED(hr,
 		device->CreatePlacedResource(
-			heap, offset, &desc, initialState, nullptr, __uuidof(ID3D12Resource), &m_pBuffer
+			heap, offset, &desc, initialState, clearValue, __uuidof(ID3D12Resource), &m_pBuffer
 		)
 	);
 }

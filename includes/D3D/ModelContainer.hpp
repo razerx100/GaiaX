@@ -6,8 +6,7 @@
 #include <RootSignatureDynamic.hpp>
 #include <PipelineObjectGFX.hpp>
 #include <IModel.hpp>
-
-import RenderPipeline;
+#include <RenderPipeline.hpp>
 
 class ModelContainer {
 public:

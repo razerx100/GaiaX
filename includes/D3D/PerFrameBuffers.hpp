@@ -3,8 +3,7 @@
 #include <D3DHeaders.hpp>
 #include <CPUAccessibleStorage.hpp>
 #include <BufferView.hpp>
-
-import ConstantBuffer;
+#include <CPUWriteAddressManager.hpp>
 
 class PerFrameBuffers {
 public:
@@ -24,7 +23,7 @@ private:
 	void InitBuffers(std::uint32_t frameCount);
 
 private:
-	CPUConstantBuffer m_cameraBuffer;
+	CPUWriteAddressManager m_cameraBuffer;
 	BufferView<D3D12_VERTEX_BUFFER_VIEW> m_gVertexBufferView;
 	BufferView<D3D12_INDEX_BUFFER_VIEW> m_gIndexBufferView;
 };

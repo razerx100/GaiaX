@@ -1,10 +1,9 @@
-module;
+#ifndef D3D_HEAP_HPP_
+#define D3D_HEAP_HPP_
 
 #include <D3DHeaders.hpp>
 
-export module D3DHeap;
-
-export class D3DHeap {
+class D3DHeap {
 public:
 	D3DHeap(D3D12_HEAP_TYPE type) noexcept;
 
@@ -22,3 +21,4 @@ private:
 	UINT64 m_totalHeapSize;
 	ComPtr<ID3D12Heap> m_pHeap;
 };
+#endif

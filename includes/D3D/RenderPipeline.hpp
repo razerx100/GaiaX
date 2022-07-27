@@ -1,4 +1,5 @@
-module;
+#ifndef RENDER_PIPELINE_HPP_
+#define RENDER_PIPELINE_HPP_
 
 #include <D3DHeaders.hpp>
 #include <vector>
@@ -7,26 +8,24 @@ module;
 #include <RootSignatureBase.hpp>
 #include <IModel.hpp>
 #include <GaiaDataTypes.hpp>
+#include <D3DResource.hpp>
+#include <CPUWriteAddressManager.hpp>
 
-export module RenderPipeline;
-import ConstantBuffer;
-import D3DResource;
-
-export struct IndirectCommand {
+struct IndirectCommand {
 	D3D12_GPU_VIRTUAL_ADDRESS cbv;
 	D3D12_DRAW_INDEXED_ARGUMENTS drawIndexed;
 };
 
 // Need to pack stuff in multiple of 16bytes and since the buffers will be allocated
 // contiguously, struct should be multiple of 256bytes as well.
-export struct ModelConstantBuffer {
+struct ModelConstantBuffer {
 	UVInfo uvInfo;
 	DirectX::XMMATRIX modelMatrix;
 	std::uint32_t textureIndex;
 	double padding[20];
 };
 
-export class RenderPipeline {
+class RenderPipeline {
 public:
 	RenderPipeline(std::uint32_t frameCount) noexcept;
 
@@ -64,5 +63,6 @@ private:
 	D3DResourceShared m_commandBuffer;
 	D3DCPUWResourceShared m_commandUploadBuffer;
 	SharedCPUHandle m_commandDescriptorHandle;
-	CPUConstantBuffer m_modelsConstantBuffer;
+	CPUWriteAddressManager m_modelsConstantBuffer;
 };
+#endif

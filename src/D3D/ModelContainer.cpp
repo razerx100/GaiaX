@@ -69,12 +69,13 @@ void ModelContainer::ReserveBuffers() {
 	Gaia::indexBuffer->AcquireBuffers();
 
 	Gaia::heapManager->ReserveHeapSpace();
+	Gaia::cpuWriteBuffer->ReserveHeapSpace();
 }
 
 void ModelContainer::CreateBuffers(ID3D12Device* device) {
 	// Now allocate memory and actually create them
 	Gaia::heapManager->CreateBuffers(device);
-	Gaia::constantBuffer->CreateBuffer(device);
+	Gaia::cpuWriteBuffer->CreateBuffer(device);
 	m_renderPipeline->CreateCommandBuffers(device);
 
 	// Set GPU addresses

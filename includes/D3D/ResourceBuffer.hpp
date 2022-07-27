@@ -3,8 +3,7 @@
 #include <vector>
 #include <memory>
 #include <GaiaDataTypes.hpp>
-
-import D3DResource;
+#include <D3DResource.hpp>
 
 class ResourceBuffer {
 public:

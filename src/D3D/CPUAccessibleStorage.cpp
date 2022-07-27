@@ -2,8 +2,10 @@
 #include <D3DThrowMacros.hpp>
 #include <d3dx12.h>
 #include <D3DHelperFunctions.hpp>
+#include <Gaia.hpp>
 
-CPUAccessibleStorage::CPUAccessibleStorage() noexcept : m_currentOffset(0u) {}
+CPUAccessibleStorage::CPUAccessibleStorage() noexcept
+	: m_currentOffset{ 0u }, m_heapOffset{ 0u } {}
 
 SharedAddressPair CPUAccessibleStorage::GetSharedAddresses(size_t bufferSize) noexcept {
 	constexpr size_t alignment = 256u;
@@ -21,29 +23,20 @@ SharedAddressPair CPUAccessibleStorage::GetSharedAddresses(size_t bufferSize) no
 }
 
 void CPUAccessibleStorage::CreateBuffer(ID3D12Device* device) {
-	D3D12_HEAP_PROPERTIES heapProp = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
 	D3D12_RESOURCE_DESC rsDesc = CD3DX12_RESOURCE_DESC::Buffer(m_currentOffset);
 
-	HRESULT hr;
-	D3D_THROW_FAILED(hr,
-		device->CreateCommittedResource(
-			&heapProp,
-			D3D12_HEAP_FLAG_NONE,
-			&rsDesc,
-			D3D12_RESOURCE_STATE_GENERIC_READ,
-			nullptr,
-			__uuidof(ID3D12Resource),
-			&m_buffer
-		)
+	m_buffer.CreateResource(
+		device, Gaia::Resources::cpuWriteHeap->GetHeap(), m_heapOffset, rsDesc,
+		D3D12_RESOURCE_STATE_GENERIC_READ
 	);
 
 	size_t cpuStart = 0u;
-	size_t gpuStart = static_cast<size_t>(m_buffer->GetGPUVirtualAddress());
+	size_t gpuStart = static_cast<size_t>(m_buffer.Get()->GetGPUVirtualAddress());
 
 	{
-		std::uint8_t* pCPUHandle = nullptr;
+		m_buffer.MapBuffer();
 
-		m_buffer->Map(0u, nullptr, reinterpret_cast<void**>(&pCPUHandle));
+		std::uint8_t* pCPUHandle = m_buffer.GetCPUWPointer();
 		cpuStart = reinterpret_cast<size_t>(pCPUHandle);
 	}
 
@@ -55,4 +48,10 @@ void CPUAccessibleStorage::CreateBuffer(ID3D12Device* device) {
 	}
 
 	m_sharedOffsets = std::vector<SharedAddressPair>();
+}
+
+void CPUAccessibleStorage::ReserveHeapSpace() noexcept {
+	m_heapOffset = Gaia::Resources::cpuWriteHeap->ReserveSizeAndGetOffset(
+		m_currentOffset, D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT
+	);
 }

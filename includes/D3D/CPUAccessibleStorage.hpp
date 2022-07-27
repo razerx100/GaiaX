@@ -3,6 +3,7 @@
 #include <D3DHeaders.hpp>
 #include <vector>
 #include <GaiaDataTypes.hpp>
+#include <D3DResource.hpp>
 
 class CPUAccessibleStorage {
 public:
@@ -12,10 +13,12 @@ public:
 	SharedAddressPair GetSharedAddresses(size_t bufferSize) noexcept;
 
 	void CreateBuffer(ID3D12Device* device);
+	void ReserveHeapSpace() noexcept;
 
 private:
-	ComPtr<ID3D12Resource> m_buffer;
+	D3DCPUWResource m_buffer;
 	std::vector<SharedAddressPair> m_sharedOffsets;
 	size_t m_currentOffset;
+	size_t m_heapOffset;
 };
 #endif

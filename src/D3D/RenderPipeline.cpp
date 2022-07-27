@@ -1,12 +1,9 @@
-module;
-
+#include <RenderPipeline.hpp>
 #include <ranges>
 #include <algorithm>
 #include <D3DThrowMacros.hpp>
 #include <array>
 #include <Gaia.hpp>
-
-module RenderPipeline;
 
 RenderPipeline::RenderPipeline(std::uint32_t frameCount) noexcept
 	: m_modelCount(0u), m_frameCount{ frameCount }, m_modelBufferPerFrameSize{ 0u } {}
