@@ -67,6 +67,8 @@ void ModelContainer::ReserveBuffers() {
 	// Acquire all buffers first
 	Gaia::vertexBuffer->AcquireBuffers();
 	Gaia::indexBuffer->AcquireBuffers();
+
+	Gaia::heapManager->ReserveHeapSpace();
 }
 
 void ModelContainer::CreateBuffers(ID3D12Device* device) {

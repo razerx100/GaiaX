@@ -5,21 +5,26 @@
 #include <Gaia.hpp>
 
 HeapManager::HeapManager()
-	: m_currentMemoryOffset(0u), m_maxAlignment(64_KB) {}
+	: m_currentMemoryOffset(0u), m_maxAlignment(64_KB),
+	m_uploadHeapBaseOffset{ 0u }, m_gpuReadOnlyHeapBaseOffset{ 0u } {}
 
-void HeapManager::CreateBuffers(ID3D12Device* device) {
+
+void HeapManager::ReserveHeapSpace() noexcept {
 	size_t alignedSize = Align(m_currentMemoryOffset, m_maxAlignment);
 
 	UINT64 heapAlignment = D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
 	if (m_maxAlignment > heapAlignment)
 		heapAlignment = m_maxAlignment;
 
-	const size_t uploadHeapOffset = Gaia::Resources::uploadHeap->ReserveSizeAndGetOffset(
+	m_uploadHeapBaseOffset = Gaia::Resources::uploadHeap->ReserveSizeAndGetOffset(
 		alignedSize, heapAlignment
 	);
-	const size_t gpuReadOnlyHeapOffset =
-		Gaia::Resources::gpuReadOnlyHeap->ReserveSizeAndGetOffset(alignedSize, heapAlignment);
+	m_gpuReadOnlyHeapBaseOffset = Gaia::Resources::gpuReadOnlyHeap->ReserveSizeAndGetOffset(
+		alignedSize, heapAlignment
+	);
+}
 
+void HeapManager::CreateBuffers(ID3D12Device* device) {
 	// Buffers with Upload Buffers
 	for (size_t index = 0u; index < std::size(m_bufferData); ++index) {
 		D3DCPUWResourceShared& uploadBuffer = m_uploadBuffers[index];
@@ -28,7 +33,7 @@ void HeapManager::CreateBuffers(ID3D12Device* device) {
 
 		uploadBuffer->CreateResource(
 			device, Gaia::Resources::uploadHeap->GetHeap(),
-			uploadHeapOffset + bufferData.offset,
+			m_uploadHeapBaseOffset + bufferData.offset,
 			GetBufferDesc(bufferData.rowPitch * bufferData.height, false),
 			D3D12_RESOURCE_STATE_GENERIC_READ
 		);
@@ -36,7 +41,7 @@ void HeapManager::CreateBuffers(ID3D12Device* device) {
 
 		gpuBuffer->CreateResource(
 			device, Gaia::Resources::gpuReadOnlyHeap->GetHeap(),
-			gpuReadOnlyHeapOffset + bufferData.offset,
+			m_gpuReadOnlyHeapBaseOffset + bufferData.offset,
 			GetResourceDesc(bufferData, bufferData.isTexture),
 			D3D12_RESOURCE_STATE_COPY_DEST
 		);
@@ -48,7 +53,7 @@ void HeapManager::CreateBuffers(ID3D12Device* device) {
 
 		m_gpuOnlyBuffers[index]->CreateResource(
 			device, Gaia::Resources::gpuReadOnlyHeap->GetHeap(),
-			gpuReadOnlyHeapOffset + bufferData.offset,
+			m_gpuReadOnlyHeapBaseOffset + bufferData.offset,
 			GetBufferDesc(bufferData.rowPitch * bufferData.height, bufferData.isUAV),
 			D3D12_RESOURCE_STATE_COPY_DEST
 		);

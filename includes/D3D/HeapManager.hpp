@@ -27,6 +27,7 @@ public:
 	D3DResourceShared AddBufferGPUOnly(size_t bufferSize, bool uav = false);
 
 	void CreateBuffers(ID3D12Device* device);
+	void ReserveHeapSpace() noexcept;
 	void RecordUpload(ID3D12GraphicsCommandList* copyList);
 	void ReleaseUploadBuffer();
 
@@ -66,5 +67,7 @@ private:
 	std::vector<D3DResourceShared> m_gpuBuffers;
 	std::vector<D3DResourceShared> m_gpuOnlyBuffers;
 	size_t m_maxAlignment;
+	size_t m_uploadHeapBaseOffset;
+	size_t m_gpuReadOnlyHeapBaseOffset;
 };
 #endif
