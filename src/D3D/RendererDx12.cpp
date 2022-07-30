@@ -207,7 +207,7 @@ void RendererDx12::ProcessData() {
 	Gaia::descriptorTable->CreateDescriptorTable(device);
 
 	Gaia::Resources::uploadHeap->CreateHeap(device);
-	Gaia::Resources::gpuReadOnlyHeap->CreateHeap(device);
+	Gaia::Resources::gpuOnlyHeap->CreateHeap(device);
 	Gaia::Resources::cpuWriteHeap->CreateHeap(device);
 
 	Gaia::depthBuffer->CreateDepthBuffer(device, m_width, m_height);

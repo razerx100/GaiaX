@@ -23,9 +23,8 @@ public:
 
 private:
 	ComPtr<ID3D12DescriptorHeap> m_pDSVHeap;
-	D3DResource m_depthBuffer;
+	D3DResourceView m_depthBuffer;
 	std::uint32_t m_maxWidth;
 	std::uint32_t m_maxHeight;
-	UINT64 m_heapOffset;
 };
 #endif

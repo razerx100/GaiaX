@@ -31,7 +31,7 @@ private:
 	std::vector<TextureData> m_textureData;
 
 	std::vector<D3DResourceShared> m_gpuBuffers;
-	std::vector<D3DCPUWResourceShared> m_uploadBuffers;
+	std::vector<D3DResourceShared> m_uploadBuffers;
 	std::vector<SharedCPUHandle> m_cpuHandles;
 };
 #endif

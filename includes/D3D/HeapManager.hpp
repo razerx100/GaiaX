@@ -6,7 +6,7 @@
 #include <D3DHeap.hpp>
 #include <D3DResource.hpp>
 
-using SharedBufferPair = std::pair<D3DResourceShared, D3DCPUWResourceShared>;
+using SharedBufferPair = std::pair<D3DResourceShared, D3DResourceShared>;
 
 class HeapManager {
 public:
@@ -62,7 +62,7 @@ private:
 	size_t m_currentMemoryOffset;
 	std::vector<BufferData> m_bufferData;
 	std::vector<BufferData> m_bufferDataGPUOnly;
-	std::vector<D3DCPUWResourceShared> m_uploadBuffers;
+	std::vector<D3DResourceShared> m_uploadBuffers;
 	std::vector<D3DResourceShared> m_gpuBuffers;
 	std::vector<D3DResourceShared> m_gpuOnlyBuffers;
 	size_t m_maxAlignment;

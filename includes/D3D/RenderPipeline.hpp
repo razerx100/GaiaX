@@ -61,7 +61,7 @@ private:
 	std::uint32_t m_frameCount;
 	size_t m_modelBufferPerFrameSize;
 	D3DResourceShared m_commandBuffer;
-	D3DCPUWResourceShared m_commandUploadBuffer;
+	D3DResourceShared m_commandUploadBuffer;
 	SharedCPUHandle m_commandDescriptorHandle;
 	CPUWriteAddressManager m_modelsConstantBuffer;
 };

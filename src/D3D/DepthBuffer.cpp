@@ -4,13 +4,15 @@
 #include <Gaia.hpp>
 
 DepthBuffer::DepthBuffer(ID3D12Device* device)
-    : m_maxWidth{ 0u }, m_maxHeight{ 0u }, m_heapOffset{0u} {
-    D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};
+    : m_maxWidth{ 0u }, m_maxHeight{ 0u },
+    m_depthBuffer{ ResourceType::gpuOnly, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL } {
+
+    D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc{};
     dsvHeapDesc.NumDescriptors = 1u;
     dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
     dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 
-    HRESULT hr;
+    HRESULT hr{};
     D3D_THROW_FAILED(hr, device->CreateDescriptorHeap(
         &dsvHeapDesc, __uuidof(ID3D12DescriptorHeap), &m_pDSVHeap
     ));
@@ -22,28 +24,21 @@ void DepthBuffer::CreateDepthBuffer(
     if (width > m_maxWidth || height > m_maxHeight)
         D3D_GENERIC_THROW("Depth buffer resolution exceeds max resolution");
 
-    CD3DX12_RESOURCE_DESC rsDesc = CD3DX12_RESOURCE_DESC::Tex2D(
-        DXGI_FORMAT_D32_FLOAT, width, height,
-        1u, 0u, 1u, 0u, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL
+    static D3D12_CLEAR_VALUE depthValue{ DXGI_FORMAT_D32_FLOAT, { 1.0f, 0u } };
+
+    m_depthBuffer.SetTextureInfo(
+        D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT, width, height, DXGI_FORMAT_D32_FLOAT
     );
+    m_depthBuffer.CreateResource(device, D3D12_RESOURCE_STATE_DEPTH_WRITE, &depthValue);
 
-    D3D12_CLEAR_VALUE depthValue{};
-    depthValue.Format = DXGI_FORMAT_D32_FLOAT;
-    depthValue.DepthStencil = { 1.0f, 0u };
-
-    m_depthBuffer.CreateResource(
-        device, Gaia::Resources::gpuReadOnlyHeap->GetHeap(),
-        m_heapOffset, rsDesc, D3D12_RESOURCE_STATE_DEPTH_WRITE, &depthValue
-    );
-
-    D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
+    static D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc{};
     dsvDesc.Format = DXGI_FORMAT_D32_FLOAT;
     dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
     dsvDesc.Texture2D.MipSlice = 0u;
     dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
 
     device->CreateDepthStencilView(
-        m_depthBuffer.Get(), &dsvDesc, m_pDSVHeap->GetCPUDescriptorHandleForHeapStart()
+        m_depthBuffer.GetResource(), &dsvDesc, m_pDSVHeap->GetCPUDescriptorHandleForHeapStart()
     );
 }
 
@@ -56,18 +51,11 @@ void DepthBuffer::ClearDSV(
 }
 
 void DepthBuffer::ReserveHeapSpace(ID3D12Device* device) noexcept {
-    CD3DX12_RESOURCE_DESC rsDesc = CD3DX12_RESOURCE_DESC::Tex2D(
-        DXGI_FORMAT_D32_FLOAT, m_maxWidth, m_maxHeight,
-        1u, 0u, 1u, 0u, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL
+    m_depthBuffer.SetTextureInfo(
+        D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT, m_maxWidth, m_maxHeight,
+        DXGI_FORMAT_D32_FLOAT
     );
-
-    const auto& [bufferSize, alignment] = device->GetResourceAllocationInfo(
-        0u, 1u, &rsDesc
-    );
-
-    m_heapOffset = Gaia::Resources::gpuReadOnlyHeap->ReserveSizeAndGetOffset(
-        bufferSize, alignment
-    );
+    m_depthBuffer.ReserveHeapSpace(device);
 }
 
 void DepthBuffer::SetMaxResolution(std::uint32_t width, std::uint32_t height) noexcept {

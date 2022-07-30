@@ -45,7 +45,7 @@ namespace Gaia {
 	namespace Resources {
 		extern std::unique_ptr<D3DHeap> uploadHeap;
 		extern std::unique_ptr<D3DHeap> cpuWriteHeap;
-		extern std::unique_ptr<D3DHeap> gpuReadOnlyHeap;
+		extern std::unique_ptr<D3DHeap> gpuOnlyHeap;
 		extern std::unique_ptr<D3DHeap> cpuReadBackHeap;
 	}
 

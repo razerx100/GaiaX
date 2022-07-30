@@ -30,7 +30,7 @@ private:
 	std::vector<BufferData> m_bufferData;
 	std::vector<std::unique_ptr<std::uint8_t>> m_sourceHandles;
 	D3DResourceShared m_pGPUBuffer;
-	D3DCPUWResourceShared m_pUploadBuffer;
+	D3DResourceShared m_pUploadBuffer;
 
 	const size_t m_alignment;
 };

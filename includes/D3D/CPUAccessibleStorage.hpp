@@ -16,7 +16,7 @@ public:
 	void ReserveHeapSpace() noexcept;
 
 private:
-	D3DCPUWResource m_buffer;
+	D3DResource m_buffer;
 	std::vector<SharedAddressPair> m_sharedOffsets;
 	size_t m_currentOffset;
 	size_t m_heapOffset;

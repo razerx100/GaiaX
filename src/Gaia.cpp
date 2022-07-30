@@ -24,7 +24,7 @@ namespace Gaia {
 	namespace Resources {
 		std::unique_ptr<D3DHeap> uploadHeap;
 		std::unique_ptr<D3DHeap> cpuWriteHeap;
-		std::unique_ptr<D3DHeap> gpuReadOnlyHeap;
+		std::unique_ptr<D3DHeap> gpuOnlyHeap;
 		std::unique_ptr<D3DHeap> cpuReadBackHeap;
 	}
 
@@ -111,13 +111,13 @@ namespace Gaia {
 	void InitResources() {
 		Resources::uploadHeap = std::make_unique<D3DHeap>(D3D12_HEAP_TYPE_UPLOAD);
 		Resources::cpuWriteHeap = std::make_unique<D3DHeap>(D3D12_HEAP_TYPE_UPLOAD);
-		Resources::gpuReadOnlyHeap = std::make_unique<D3DHeap>(D3D12_HEAP_TYPE_DEFAULT);
+		Resources::gpuOnlyHeap = std::make_unique<D3DHeap>(D3D12_HEAP_TYPE_DEFAULT);
 		Resources::cpuReadBackHeap = std::make_unique<D3DHeap>(D3D12_HEAP_TYPE_READBACK);
 	}
 
 	void CleanUpResources() {
 		Resources::cpuWriteHeap.reset();
-		Resources::gpuReadOnlyHeap.reset();
+		Resources::gpuOnlyHeap.reset();
 		Resources::cpuReadBackHeap.reset();
 	}
 }
