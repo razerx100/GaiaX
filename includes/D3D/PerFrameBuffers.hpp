@@ -1,9 +1,8 @@
 #ifndef PER_FRAME_BUFFERS_HPP_
 #define PER_FRAME_BUFFERS_HPP_
 #include <D3DHeaders.hpp>
-#include <CPUAccessibleStorage.hpp>
 #include <BufferView.hpp>
-#include <CPUWriteAddressManager.hpp>
+#include <D3DDescriptorView.hpp>
 
 class PerFrameBuffers {
 public:
@@ -23,7 +22,7 @@ private:
 	void InitBuffers(std::uint32_t frameCount);
 
 private:
-	CPUWriteAddressManager m_cameraBuffer;
+	D3DRootDescriptorView m_cameraBuffer;
 	BufferView<D3D12_VERTEX_BUFFER_VIEW> m_gVertexBufferView;
 	BufferView<D3D12_INDEX_BUFFER_VIEW> m_gIndexBufferView;
 };

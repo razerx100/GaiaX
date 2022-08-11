@@ -8,11 +8,21 @@ PerFrameBuffers::PerFrameBuffers(std::uint32_t frameCount) {
 }
 
 void PerFrameBuffers::InitBuffers(std::uint32_t frameCount) {
-	m_cameraBuffer.Init(sizeof(DirectX::XMMATRIX) * 2u, frameCount);
+	size_t cameraBufferSize = sizeof(DirectX::XMMATRIX) * 2u;
+	size_t cameraOffset = Gaia::cpuWriteBuffer->ReserveSpaceAndGetOffset(
+		cameraBufferSize * frameCount, 4u
+	);
+
+	m_cameraBuffer.SetAddressesStart(cameraOffset, cameraBufferSize);
 }
 
 void PerFrameBuffers::SetMemoryAddresses() noexcept {
-	m_cameraBuffer.SetMemoryAddresses();
+	std::uint8_t* cpuOffset = Gaia::cpuWriteBuffer->GetCPUStartAddress();
+	D3D12_GPU_VIRTUAL_ADDRESS gpuOffset = Gaia::cpuWriteBuffer->GetGPUStartAddress();
+
+	m_cameraBuffer.UpdateCPUAddressStart(cpuOffset);
+	m_cameraBuffer.UpdateGPUAddressStart(gpuOffset);
+
 	m_gVertexBufferView.SetGPUAddress();
 	m_gIndexBufferView.SetGPUAddress();
 }
@@ -20,12 +30,12 @@ void PerFrameBuffers::SetMemoryAddresses() noexcept {
 void PerFrameBuffers::BindPerFrameBuffers(
 	ID3D12GraphicsCommandList* graphicsCmdList, size_t frameIndex
 ) const noexcept {
-	std::uint8_t* cameraCpuHandle = m_cameraBuffer.GetCpuHandle(frameIndex);
+	std::uint8_t* cameraCpuHandle = m_cameraBuffer.GetCPUAddressStart(frameIndex);
 
 	Gaia::cameraManager->CopyData(cameraCpuHandle);
 
-	graphicsCmdList->SetGraphicsRootConstantBufferView(
-		2u, m_cameraBuffer.GetGpuHandle(frameIndex)
+	graphicsCmdList->SetGraphicsRootShaderResourceView(
+		2u, m_cameraBuffer.GetGPUAddressStart(frameIndex)
 	);
 
 	graphicsCmdList->IASetVertexBuffers(0u, 1u, m_gVertexBufferView.GetAddress());

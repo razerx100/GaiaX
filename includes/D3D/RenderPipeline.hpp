@@ -9,10 +9,10 @@
 #include <IModel.hpp>
 #include <GaiaDataTypes.hpp>
 #include <D3DResource.hpp>
-#include <CPUWriteAddressManager.hpp>
+#include <D3DDescriptorView.hpp>
 
 struct IndirectCommand {
-	D3D12_GPU_VIRTUAL_ADDRESS cbv;
+	std::uint32_t modelIndex;
 	D3D12_DRAW_INDEXED_ARGUMENTS drawIndexed;
 };
 
@@ -46,7 +46,7 @@ public:
 
 	void CreateCommandSignature(ID3D12Device* device);
 	void CreateCommandBuffers(ID3D12Device* device);
-	void ReserveCommandBuffers();
+	void ReserveCommandBuffers(ID3D12Device* device);
 
 private:
 	std::vector<std::shared_ptr<IModel>> m_opaqueModels;
@@ -63,6 +63,6 @@ private:
 	D3DResourceShared m_commandBuffer;
 	D3DResourceShared m_commandUploadBuffer;
 	SharedCPUHandle m_commandDescriptorHandle;
-	CPUWriteAddressManager m_modelsConstantBuffer;
+	D3DRootDescriptorView m_modelBuffers;
 };
 #endif

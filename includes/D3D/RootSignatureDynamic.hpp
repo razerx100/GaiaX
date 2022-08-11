@@ -2,7 +2,7 @@
 #define ROOT_SIGNATURE_DYNAMIC_HPP_
 #include <RootSignatureBase.hpp>
 #include <vector>
-#include <list>
+#include <memory>
 
 class RootSignatureDynamic final : public RootSignatureBase {
 public:
@@ -16,7 +16,7 @@ public:
 	void AddDescriptorTable(
 		D3D12_DESCRIPTOR_RANGE_TYPE descriptorType,
 		std::uint32_t descriptorsAmount,
-		D3D12_SHADER_VISIBILITY visibility,
+		D3D12_SHADER_VISIBILITY visibility, bool buffer, bool bindless,
 		std::uint32_t registerNumber,
 		std::uint32_t registerSpace = 0u
 	) noexcept;
@@ -33,10 +33,16 @@ public:
 		std::uint32_t registerSpace = 0u
 	) noexcept;
 
+	void AddShaderResourceView(
+		D3D12_SHADER_VISIBILITY visibility, bool buffer,
+		std::uint32_t registerNumber,
+		std::uint32_t registerSpace = 0u
+	) noexcept;
+
 	void CompileSignature(bool staticSampler = true);
 
 private:
 	std::vector<D3D12_ROOT_PARAMETER1> m_rootParameters;
-	std::list<D3D12_DESCRIPTOR_RANGE1> m_rangePreserver;
+	std::vector<std::unique_ptr<D3D12_DESCRIPTOR_RANGE1>> m_rangePreserver;
 };
 #endif

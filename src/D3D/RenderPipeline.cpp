@@ -43,7 +43,7 @@ void RenderPipeline::UpdateModels(size_t frameIndex) const noexcept {
 		modelBuffer.modelMatrix = model->GetModelMatrix();
 
 		memcpy(
-			m_modelsConstantBuffer.GetCpuHandle(frameIndex) + offset,
+			m_modelBuffers.GetCPUAddressStart(frameIndex) + offset,
 			&modelBuffer, bufferStride
 		);
 
@@ -61,8 +61,10 @@ void RenderPipeline::BindGraphicsPipeline(
 
 void RenderPipeline::CreateCommandSignature(ID3D12Device* device) {
 	std::array<D3D12_INDIRECT_ARGUMENT_DESC, 2u> arguments{};
-	arguments[0].Type = D3D12_INDIRECT_ARGUMENT_TYPE_CONSTANT_BUFFER_VIEW;
-	arguments[0].ConstantBufferView.RootParameterIndex = 1u;
+	arguments[0].Type = D3D12_INDIRECT_ARGUMENT_TYPE_CONSTANT;
+	arguments[0].Constant.RootParameterIndex = 1u;
+	arguments[0].Constant.DestOffsetIn32BitValues = 0u;
+	arguments[0].Constant.Num32BitValuesToSet = 1u;
 	arguments[1].Type = D3D12_INDIRECT_ARGUMENT_TYPE_DRAW_INDEXED;
 
 	D3D12_COMMAND_SIGNATURE_DESC desc{};
@@ -87,7 +89,7 @@ void RenderPipeline::DrawModels(
 	);
 }
 
-void RenderPipeline::ReserveCommandBuffers() {
+void RenderPipeline::ReserveCommandBuffers(ID3D12Device* device) {
 	m_modelCount = static_cast<UINT>(std::size(m_opaqueModels));
 
 	auto [gpuBuffer, uploadBuffer] = Gaia::heapManager->AddUploadAbleBuffer(
@@ -104,7 +106,10 @@ void RenderPipeline::ReserveCommandBuffers() {
 	m_commandDescriptorHandle = std::move(cpuDescriptor);
 
 	m_modelBufferPerFrameSize = sizeof(ModelConstantBuffer) * m_modelCount;
-	m_modelsConstantBuffer.Init(m_modelBufferPerFrameSize, m_frameCount);
+	size_t memoryOffset = Gaia::cpuWriteBuffer->ReserveSpaceAndGetOffset(
+		m_modelBufferPerFrameSize * m_modelCount, 4u
+	);
+	m_modelBuffers.SetAddressesStart(memoryOffset, m_modelBufferPerFrameSize);
 }
 
 void RenderPipeline::CreateCommandBuffers(ID3D12Device* device) {
@@ -128,17 +133,19 @@ void RenderPipeline::CreateCommandBuffers(ID3D12Device* device) {
 		cpuHandle.ptr += descriptorSize;
 	}
 
-	m_modelsConstantBuffer.SetMemoryAddresses();
+	std::uint8_t* cpuPtr = Gaia::cpuWriteBuffer->GetCPUStartAddress();
+	D3D12_GPU_VIRTUAL_ADDRESS gpuPtr = Gaia::cpuWriteBuffer->GetGPUStartAddress();
+
+	m_modelBuffers.UpdateCPUAddressStart(cpuPtr);
+	m_modelBuffers.UpdateGPUAddressStart(gpuPtr);
 
 	std::vector<IndirectCommand> commands;
 	constexpr size_t modelBufferSize = sizeof(ModelConstantBuffer);
 
 	for (size_t frame = 0u; frame < m_frameCount; ++frame) {
-		D3D12_GPU_VIRTUAL_ADDRESS cbvAddressStart = m_modelsConstantBuffer.GetGpuHandle(frame);
-
 		for (size_t index = 0u; index < std::size(m_opaqueModels); ++index) {
 			IndirectCommand command{};
-			command.cbv = cbvAddressStart + modelBufferSize * index;
+			command.modelIndex = static_cast<std::uint32_t>(index);
 
 			const auto& model = m_opaqueModels[index];
 

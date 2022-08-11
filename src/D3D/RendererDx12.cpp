@@ -202,7 +202,7 @@ void RendererDx12::ProcessData() {
 	ID3D12Device* device = Gaia::device->GetDeviceRef();
 
 	Gaia::depthBuffer->ReserveHeapSpace(device);
-	Gaia::modelContainer->ReserveBuffers();
+	Gaia::modelContainer->ReserveBuffers(device);
 
 	Gaia::descriptorTable->CreateDescriptorTable(device);
 

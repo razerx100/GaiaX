@@ -60,6 +60,8 @@ public:
 	D3D12_GPU_VIRTUAL_ADDRESS GetGPUAddress() const noexcept;
 	[[nodiscard]]
 	std::uint8_t* GetCPUWPointer() const;
+	[[nodiscard]]
+	ResourceType GetResourceType() const noexcept;
 
 private:
 	D3DResource m_resource;

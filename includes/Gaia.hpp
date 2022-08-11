@@ -14,11 +14,11 @@
 #include <DescriptorTableManager.hpp>
 #include <TextureStorage.hpp>
 #include <IThreadPool.hpp>
-#include <CPUAccessibleStorage.hpp>
 #include <ISharedDataContainer.hpp>
 #include <CameraManager.hpp>
 #include <DepthBuffer.hpp>
 #include <D3DHeap.hpp>
+#include <D3DSingleResourceManager.hpp>
 
 namespace Gaia {
 	// Variables
@@ -38,7 +38,7 @@ namespace Gaia {
 	extern std::unique_ptr<DescriptorTableManager> descriptorTable;
 	extern std::unique_ptr<TextureStorage> textureStorage;
 	extern std::shared_ptr<IThreadPool> threadPool;
-	extern std::unique_ptr<CPUAccessibleStorage> cpuWriteBuffer;
+	extern std::unique_ptr<D3DSingleResourceManager> cpuWriteBuffer;
 	extern std::unique_ptr<CameraManager> cameraManager;
 	extern std::shared_ptr<ISharedDataContainer> sharedData;
 

@@ -22,21 +22,35 @@ void RootSignatureDynamic::AddConstants(
 void RootSignatureDynamic::AddDescriptorTable(
 	D3D12_DESCRIPTOR_RANGE_TYPE descriptorType,
 	std::uint32_t descriptorsAmount,
-	D3D12_SHADER_VISIBILITY visibility,
+	D3D12_SHADER_VISIBILITY visibility, bool buffer, bool bindless,
 	std::uint32_t registerNumber,
 	std::uint32_t registerSpace
 ) noexcept {
-	CD3DX12_DESCRIPTOR_RANGE1 descRange = {};
-	descRange.Init(
-		descriptorType, descriptorsAmount, registerNumber, registerSpace,
-		D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC
+	D3D12_DESCRIPTOR_RANGE_FLAGS descFlag = D3D12_DESCRIPTOR_RANGE_FLAG_NONE;
+
+	if (descriptorType == D3D12_DESCRIPTOR_RANGE_TYPE_SRV) {
+		if (buffer)
+			descFlag = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE;
+		else
+			descFlag = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC;
+	}
+	else if (descriptorType == D3D12_DESCRIPTOR_RANGE_TYPE_UAV)
+		descFlag = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_VOLATILE;
+	else if (descriptorType == D3D12_DESCRIPTOR_RANGE_TYPE_CBV)
+		descFlag = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE;
+
+	if (bindless)
+		descFlag |= D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE;
+
+	auto descRange = std::make_unique<CD3DX12_DESCRIPTOR_RANGE1>();
+	descRange->Init(
+		descriptorType, descriptorsAmount, registerNumber, registerSpace, descFlag
 	);
 
-	// Range's address needs to be preserved till Signature Desc init
-	m_rangePreserver.emplace_back(descRange);
-
 	CD3DX12_ROOT_PARAMETER1 descTableParam = {};
-	descTableParam.InitAsDescriptorTable(1u, &m_rangePreserver.back(), visibility);
+	descTableParam.InitAsDescriptorTable(1u, descRange.get(), visibility);
+
+	m_rangePreserver.emplace_back(std::move(descRange));
 
 	m_rootParameters.emplace_back(descTableParam);
 }
@@ -69,6 +83,25 @@ void RootSignatureDynamic::AddUnorderedAccessView(
 	);
 
 	m_rootParameters.emplace_back(uavParam);
+}
+
+void RootSignatureDynamic::AddShaderResourceView(
+	D3D12_SHADER_VISIBILITY visibility, bool buffer,
+	std::uint32_t registerNumber, std::uint32_t registerSpace
+) noexcept {
+	D3D12_ROOT_DESCRIPTOR_FLAGS srvFlag = D3D12_ROOT_DESCRIPTOR_FLAG_NONE;
+
+	if (buffer)
+		srvFlag = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE;
+	else
+		srvFlag = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC;
+
+	CD3DX12_ROOT_PARAMETER1 srvParam{};
+	srvParam.InitAsShaderResourceView(
+		registerNumber, registerSpace, srvFlag, visibility
+	);
+
+	m_rootParameters.emplace_back(srvParam);
 }
 
 void RootSignatureDynamic::CompileSignature(bool staticSampler) {
@@ -107,7 +140,7 @@ void RootSignatureDynamic::CompileSignature(bool staticSampler) {
 			sigFlags
 		);
 
-	HRESULT hr;
+	HRESULT hr{};
 	D3D_THROW_FAILED(hr,
 		D3DX12SerializeVersionedRootSignature(
 			&rootSigDesc,
@@ -116,5 +149,7 @@ void RootSignatureDynamic::CompileSignature(bool staticSampler) {
 			nullptr
 		)
 	);
+
+	m_rangePreserver = std::vector<std::unique_ptr<D3D12_DESCRIPTOR_RANGE1>>();
 }
 

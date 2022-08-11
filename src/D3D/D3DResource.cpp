@@ -134,3 +134,7 @@ std::uint8_t* D3DResourceView::GetCPUWPointer() const {
 
 	return m_resource.GetCPUWPointer();
 }
+
+ResourceType D3DResourceView::GetResourceType() const noexcept {
+	return m_type;
+}

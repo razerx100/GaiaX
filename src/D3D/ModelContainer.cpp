@@ -61,21 +61,22 @@ void ModelContainer::RecordUploadBuffers(ID3D12GraphicsCommandList* copyList) {
 	Gaia::heapManager->RecordUpload(copyList);
 }
 
-void ModelContainer::ReserveBuffers() {
-	m_renderPipeline->ReserveCommandBuffers();
+void ModelContainer::ReserveBuffers(ID3D12Device* device) {
+	m_renderPipeline->ReserveCommandBuffers(device);
 
 	// Acquire all buffers first
 	Gaia::vertexBuffer->AcquireBuffers();
 	Gaia::indexBuffer->AcquireBuffers();
 
 	Gaia::heapManager->ReserveHeapSpace();
-	Gaia::cpuWriteBuffer->ReserveHeapSpace();
+	Gaia::cpuWriteBuffer->ReserveHeapSpace(device);
 }
 
 void ModelContainer::CreateBuffers(ID3D12Device* device) {
 	// Now allocate memory and actually create them
 	Gaia::heapManager->CreateBuffers(device);
-	Gaia::cpuWriteBuffer->CreateBuffer(device);
+
+	Gaia::cpuWriteBuffer->CreateResource(device);
 	m_renderPipeline->CreateCommandBuffers(device);
 
 	// Set GPU addresses
@@ -105,12 +106,12 @@ ModelContainer::Pipeline ModelContainer::CreatePipeline(ID3D12Device* device) co
 	std::unique_ptr<RootSignatureDynamic> signature = std::make_unique<RootSignatureDynamic>();
 
 	signature->AddDescriptorTable(
-		D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
-		static_cast<std::uint32_t>(Gaia::descriptorTable->GetTextureDescriptorCount()),
-		D3D12_SHADER_VISIBILITY_PIXEL, 0u
+		D3D12_DESCRIPTOR_RANGE_TYPE_SRV, UINT_MAX, D3D12_SHADER_VISIBILITY_PIXEL, false, true,
+		0u
 	);
-	signature->AddConstantBufferView(D3D12_SHADER_VISIBILITY_VERTEX, 0u);
-	signature->AddConstantBufferView(D3D12_SHADER_VISIBILITY_VERTEX, 1u);
+	signature->AddShaderResourceView(D3D12_SHADER_VISIBILITY_VERTEX, true, 0u);
+	signature->AddConstants(1u, D3D12_SHADER_VISIBILITY_VERTEX, 2u);
+	signature->AddShaderResourceView(D3D12_SHADER_VISIBILITY_VERTEX, true, 1u);
 
 	signature->CompileSignature();
 	signature->CreateSignature(device);
