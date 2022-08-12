@@ -17,13 +17,7 @@ void D3DSingleResourceManager::CreateResource(ID3D12Device* device) {
 }
 
 void D3DSingleResourceManager::ReserveHeapSpace(ID3D12Device* device) {
-	// 256 bytes alignment is only required if the first bufferView is a constant buffer. But
-	// it wouldn't cause problem with other types of resources either as it's also 4 bytes
-	// aligned. And as it's only the starting address there won't be much memory wastage either
-	// if the first bufferView isn't even a Constant Buffer.
-	constexpr size_t bufferAlignment = 256u;
-
-	m_resourceView.SetBufferInfo(bufferAlignment, m_linearAllocator.GetTotalSize());
+	m_resourceView.SetBufferInfo(m_linearAllocator.GetTotalSize());
 	m_resourceView.ReserveHeapSpace(device);
 }
 

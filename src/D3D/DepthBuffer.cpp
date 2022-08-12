@@ -26,9 +26,7 @@ void DepthBuffer::CreateDepthBuffer(
 
     static D3D12_CLEAR_VALUE depthValue{ DXGI_FORMAT_D32_FLOAT, { 1.0f, 0u } };
 
-    m_depthBuffer.SetTextureInfo(
-        D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT, width, height, DXGI_FORMAT_D32_FLOAT
-    );
+    m_depthBuffer.SetTextureInfo(width, height, DXGI_FORMAT_D32_FLOAT, false);
     m_depthBuffer.CreateResource(device, D3D12_RESOURCE_STATE_DEPTH_WRITE, &depthValue);
 
     static D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc{};
@@ -51,10 +49,7 @@ void DepthBuffer::ClearDSV(
 }
 
 void DepthBuffer::ReserveHeapSpace(ID3D12Device* device) noexcept {
-    m_depthBuffer.SetTextureInfo(
-        D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT, m_maxWidth, m_maxHeight,
-        DXGI_FORMAT_D32_FLOAT
-    );
+    m_depthBuffer.SetTextureInfo(m_maxWidth, m_maxHeight,DXGI_FORMAT_D32_FLOAT, false);
     m_depthBuffer.ReserveHeapSpace(device);
 }
 

@@ -51,19 +51,35 @@ D3DResourceView::D3DResourceView(ResourceType type, D3D12_RESOURCE_FLAGS flags) 
 	m_resourceDescription.Flags = flags;
 }
 
-void D3DResourceView::SetBufferInfo(UINT64 alignment, UINT64 bufferSize) noexcept {
+void D3DResourceView::SetBufferInfo(UINT64 bufferSize) noexcept {
 	m_resourceDescription.Format = DXGI_FORMAT_UNKNOWN;
 	m_resourceDescription.Width = bufferSize;
 	m_resourceDescription.Height = 1u;
 	m_resourceDescription.MipLevels = 1u;
 	m_resourceDescription.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-	m_resourceDescription.Alignment = alignment;
+	m_resourceDescription.Alignment = D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
 	m_resourceDescription.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
 }
 
 void D3DResourceView::SetTextureInfo(
-	UINT64 alignment, UINT64 width, UINT height, DXGI_FORMAT format
+	UINT64 width, UINT height, DXGI_FORMAT format, bool msaa
 ) noexcept {
+	size_t estimatedSize = width * height;
+	size_t alignment = 0u;
+
+	if (msaa) {
+		if (estimatedSize <= D3D12_DEFAULT_MSAA_RESOURCE_PLACEMENT_ALIGNMENT)
+			alignment = D3D12_SMALL_MSAA_RESOURCE_PLACEMENT_ALIGNMENT;
+		else
+			alignment = D3D12_DEFAULT_MSAA_RESOURCE_PLACEMENT_ALIGNMENT;
+	}
+	else {
+		if (estimatedSize <= D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT)
+			alignment = D3D12_SMALL_RESOURCE_PLACEMENT_ALIGNMENT;
+		else
+			alignment = D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
+	}
+
 	m_resourceDescription.Format = format;
 	m_resourceDescription.Width = width;
 	m_resourceDescription.Height = height;

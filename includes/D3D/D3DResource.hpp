@@ -44,10 +44,8 @@ public:
 		ResourceType type, D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE
 	) noexcept;
 
-	void SetBufferInfo(UINT64 alignment, UINT64 bufferSize) noexcept;
-	void SetTextureInfo(
-		UINT64 alignment, UINT64 width, UINT height, DXGI_FORMAT format
-	) noexcept;
+	void SetBufferInfo(UINT64 bufferSize) noexcept;
+	void SetTextureInfo(UINT64 width, UINT height, DXGI_FORMAT format, bool msaa) noexcept;
 	void ReserveHeapSpace(ID3D12Device* device) noexcept;
 	void CreateResource(
 		ID3D12Device* device, D3D12_RESOURCE_STATES initialState,

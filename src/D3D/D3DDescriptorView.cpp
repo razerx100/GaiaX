@@ -88,7 +88,7 @@ void D3DDescriptorView::SetBufferInfo(
 		m_subAllocationSize = bufferSizePerAllocation;
 	}
 
-	m_resourceBuffer.SetBufferInfo(4u, bufferSize);
+	m_resourceBuffer.SetBufferInfo(bufferSize);
 	m_resourceBuffer.ReserveHeapSpace(device);
 }
 
@@ -117,6 +117,8 @@ void D3DDescriptorView::CreateDescriptorView(ID3D12Device* device) {
 	m_cpuHandleStart.ptr = *m_sharedCPUHandle;
 	m_gpuHandleStart.ptr = *m_sharedGPUHandle;
 
+	m_resourceBuffer.CreateResource(device, D3D12_RESOURCE_STATE_COPY_DEST);
+
 	if (m_isUAV) {
 		D3D12_UNORDERED_ACCESS_VIEW_DESC desc{};
 		desc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
@@ -139,6 +141,7 @@ void D3DDescriptorView::CreateDescriptorView(ID3D12Device* device) {
 		D3D12_SHADER_RESOURCE_VIEW_DESC desc{};
 		desc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
 		desc.Format = DXGI_FORMAT_UNKNOWN;
+		desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
 		D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = m_cpuHandleStart;
 
