@@ -34,8 +34,8 @@ void PerFrameBuffers::BindPerFrameBuffers(
 
 	Gaia::cameraManager->CopyData(cameraCpuHandle);
 
-	graphicsCmdList->SetGraphicsRootShaderResourceView(
-		2u, m_cameraBuffer.GetGPUAddressStart(frameIndex)
+	graphicsCmdList->SetGraphicsRootConstantBufferView(
+		3u, m_cameraBuffer.GetGPUAddressStart(frameIndex)
 	);
 
 	graphicsCmdList->IASetVertexBuffers(0u, 1u, m_gVertexBufferView.GetAddress());

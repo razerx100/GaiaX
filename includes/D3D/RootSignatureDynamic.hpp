@@ -16,7 +16,7 @@ public:
 	void AddDescriptorTable(
 		D3D12_DESCRIPTOR_RANGE_TYPE descriptorType,
 		std::uint32_t descriptorsAmount,
-		D3D12_SHADER_VISIBILITY visibility, bool buffer, bool bindless,
+		D3D12_SHADER_VISIBILITY visibility, bool bindless,
 		std::uint32_t registerNumber,
 		std::uint32_t registerSpace = 0u
 	) noexcept;
@@ -34,7 +34,7 @@ public:
 	) noexcept;
 
 	void AddShaderResourceView(
-		D3D12_SHADER_VISIBILITY visibility, bool buffer,
+		D3D12_SHADER_VISIBILITY visibility,
 		std::uint32_t registerNumber,
 		std::uint32_t registerSpace = 0u
 	) noexcept;

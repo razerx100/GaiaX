@@ -22,18 +22,14 @@ void RootSignatureDynamic::AddConstants(
 void RootSignatureDynamic::AddDescriptorTable(
 	D3D12_DESCRIPTOR_RANGE_TYPE descriptorType,
 	std::uint32_t descriptorsAmount,
-	D3D12_SHADER_VISIBILITY visibility, bool buffer, bool bindless,
+	D3D12_SHADER_VISIBILITY visibility, bool bindless,
 	std::uint32_t registerNumber,
 	std::uint32_t registerSpace
 ) noexcept {
 	D3D12_DESCRIPTOR_RANGE_FLAGS descFlag = D3D12_DESCRIPTOR_RANGE_FLAG_NONE;
 
-	if (descriptorType == D3D12_DESCRIPTOR_RANGE_TYPE_SRV) {
-		if (buffer)
+	if (descriptorType == D3D12_DESCRIPTOR_RANGE_TYPE_SRV)
 			descFlag = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE;
-		else
-			descFlag = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC;
-	}
 	else if (descriptorType == D3D12_DESCRIPTOR_RANGE_TYPE_UAV)
 		descFlag = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_VOLATILE;
 	else if (descriptorType == D3D12_DESCRIPTOR_RANGE_TYPE_CBV)
@@ -86,15 +82,12 @@ void RootSignatureDynamic::AddUnorderedAccessView(
 }
 
 void RootSignatureDynamic::AddShaderResourceView(
-	D3D12_SHADER_VISIBILITY visibility, bool buffer,
+	D3D12_SHADER_VISIBILITY visibility,
 	std::uint32_t registerNumber, std::uint32_t registerSpace
 ) noexcept {
 	D3D12_ROOT_DESCRIPTOR_FLAGS srvFlag = D3D12_ROOT_DESCRIPTOR_FLAG_NONE;
 
-	if (buffer)
-		srvFlag = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE;
-	else
-		srvFlag = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC;
+	srvFlag = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE;
 
 	CD3DX12_ROOT_PARAMETER1 srvParam{};
 	srvParam.InitAsShaderResourceView(
@@ -140,15 +133,16 @@ void RootSignatureDynamic::CompileSignature(bool staticSampler) {
 			sigFlags
 		);
 
-	HRESULT hr{};
-	D3D_THROW_FAILED(hr,
-		D3DX12SerializeVersionedRootSignature(
-			&rootSigDesc,
-			D3D_ROOT_SIGNATURE_VERSION_1_1,
-			&m_pSignatureBinary,
-			nullptr
-		)
+	ComPtr<ID3DBlob> error;
+	D3DX12SerializeVersionedRootSignature(
+		&rootSigDesc,
+		D3D_ROOT_SIGNATURE_VERSION_1_1,
+		&m_pSignatureBinary,
+		&error
 	);
+
+	if (error)
+		D3D_GENERIC_THROW(reinterpret_cast<char*>(error->GetBufferPointer()));
 
 	m_rangePreserver = std::vector<std::unique_ptr<D3D12_DESCRIPTOR_RANGE1>>();
 }

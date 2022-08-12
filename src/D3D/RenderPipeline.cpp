@@ -63,7 +63,7 @@ void RenderPipeline::BindGraphicsPipeline(
 void RenderPipeline::CreateCommandSignature(ID3D12Device* device) {
 	std::array<D3D12_INDIRECT_ARGUMENT_DESC, 2u> arguments{};
 	arguments[0].Type = D3D12_INDIRECT_ARGUMENT_TYPE_CONSTANT;
-	arguments[0].Constant.RootParameterIndex = 1u;
+	arguments[0].Constant.RootParameterIndex = 2u;
 	arguments[0].Constant.DestOffsetIn32BitValues = 0u;
 	arguments[0].Constant.Num32BitValuesToSet = 1u;
 	arguments[1].Type = D3D12_INDIRECT_ARGUMENT_TYPE_DRAW_INDEXED;

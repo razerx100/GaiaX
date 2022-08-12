@@ -106,14 +106,14 @@ ModelContainer::Pipeline ModelContainer::CreatePipeline(ID3D12Device* device) co
 	std::unique_ptr<RootSignatureDynamic> signature = std::make_unique<RootSignatureDynamic>();
 
 	signature->AddDescriptorTable(
-		D3D12_DESCRIPTOR_RANGE_TYPE_SRV, UINT_MAX, D3D12_SHADER_VISIBILITY_PIXEL, false, true,
+		D3D12_DESCRIPTOR_RANGE_TYPE_SRV, UINT_MAX, D3D12_SHADER_VISIBILITY_PIXEL, true,
 		1u
 	);
 	signature->AddDescriptorTable(
-		D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1u, D3D12_SHADER_VISIBILITY_VERTEX, true, false, 0u
+		D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1u, D3D12_SHADER_VISIBILITY_VERTEX, false, 0u
 	);
 	signature->AddConstants(1u, D3D12_SHADER_VISIBILITY_VERTEX, 0u);
-	signature->AddShaderResourceView(D3D12_SHADER_VISIBILITY_VERTEX, true, 1u);
+	signature->AddConstantBufferView(D3D12_SHADER_VISIBILITY_VERTEX, 1u);
 
 	signature->CompileSignature();
 	signature->CreateSignature(device);
