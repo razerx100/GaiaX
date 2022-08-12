@@ -63,6 +63,6 @@ private:
 	D3DResourceShared m_commandBuffer;
 	D3DResourceShared m_commandUploadBuffer;
 	SharedCPUHandle m_commandDescriptorHandle;
-	D3DRootDescriptorView m_modelBuffers;
+	D3DDescriptorView m_modelBuffers;
 };
 #endif

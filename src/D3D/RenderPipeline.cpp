@@ -6,7 +6,8 @@
 #include <Gaia.hpp>
 
 RenderPipeline::RenderPipeline(std::uint32_t frameCount) noexcept
-	: m_modelCount(0u), m_frameCount{ frameCount }, m_modelBufferPerFrameSize{ 0u } {}
+	: m_modelCount(0u), m_frameCount{ frameCount }, m_modelBufferPerFrameSize{ 0u },
+	m_modelBuffers{ ResourceType::cpuWrite } {}
 
 void RenderPipeline::AddOpaqueModels(std::vector<std::shared_ptr<IModel>>&& models) noexcept {
 	std::ranges::move(models, std::back_inserter(m_opaqueModels));
@@ -43,7 +44,7 @@ void RenderPipeline::UpdateModels(size_t frameIndex) const noexcept {
 		modelBuffer.modelMatrix = model->GetModelMatrix();
 
 		memcpy(
-			m_modelBuffers.GetCPUAddressStart(frameIndex) + offset,
+			m_modelBuffers.GetCPUWPointer(frameIndex) + offset,
 			&modelBuffer, bufferStride
 		);
 
@@ -83,6 +84,10 @@ void RenderPipeline::CreateCommandSignature(ID3D12Device* device) {
 void RenderPipeline::DrawModels(
 	ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex
 ) const noexcept {
+	graphicsCommandList->SetGraphicsRootDescriptorTable(
+		1u, m_modelBuffers.GetGPUDescriptorHandle(frameIndex)
+	);
+
 	graphicsCommandList->ExecuteIndirect(
 		m_commandSignature.Get(), m_modelCount, m_commandBuffer->Get(),
 		sizeof(IndirectCommand) * m_modelCount * frameIndex, nullptr, 0u
@@ -99,17 +104,21 @@ void RenderPipeline::ReserveCommandBuffers(ID3D12Device* device) {
 	m_commandBuffer = std::move(gpuBuffer);
 	m_commandUploadBuffer = std::move(uploadBuffer);
 
-	auto [cpuDescriptor, gpuDescriptor] = Gaia::descriptorTable->ReserveDescriptors(
-		m_frameCount
-	);
+	auto [cmdBufferCpuDescriptor, cmdBufferGpuDescriptor] =
+		Gaia::descriptorTable->ReserveDescriptors(m_frameCount);
 
-	m_commandDescriptorHandle = std::move(cpuDescriptor);
+	m_commandDescriptorHandle = std::move(cmdBufferCpuDescriptor);
 
-	m_modelBufferPerFrameSize = sizeof(ModelConstantBuffer) * m_modelCount;
-	size_t memoryOffset = Gaia::cpuWriteBuffer->ReserveSpaceAndGetOffset(
-		m_modelBufferPerFrameSize * m_modelCount, 4u
+	auto [modelBufferCpuDescriptor, modelBufferGpuDescriptor] =
+		Gaia::descriptorTable->ReserveDescriptors(m_frameCount);
+
+	m_modelBuffers.SetDescriptorHandles(
+		std::move(modelBufferCpuDescriptor), std::move(modelBufferGpuDescriptor),
+		device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)
 	);
-	m_modelBuffers.SetAddressesStart(memoryOffset, m_modelBufferPerFrameSize);
+	m_modelBuffers.SetBufferInfo(
+		device, static_cast<UINT>(sizeof(ModelConstantBuffer)), m_modelCount, m_frameCount
+	);
 }
 
 void RenderPipeline::CreateCommandBuffers(ID3D12Device* device) {
@@ -136,8 +145,7 @@ void RenderPipeline::CreateCommandBuffers(ID3D12Device* device) {
 	std::uint8_t* cpuPtr = Gaia::cpuWriteBuffer->GetCPUStartAddress();
 	D3D12_GPU_VIRTUAL_ADDRESS gpuPtr = Gaia::cpuWriteBuffer->GetGPUStartAddress();
 
-	m_modelBuffers.UpdateCPUAddressStart(cpuPtr);
-	m_modelBuffers.UpdateGPUAddressStart(gpuPtr);
+	m_modelBuffers.CreateDescriptorView(device);
 
 	std::vector<IndirectCommand> commands;
 	constexpr size_t modelBufferSize = sizeof(ModelConstantBuffer);
