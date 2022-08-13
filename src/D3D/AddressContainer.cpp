@@ -1,16 +1,18 @@
 #include <AddressContainer.hpp>
+#include <D3DHelperFunctions.hpp>
 
-void SingleAddressContainer::_setAddressStart(
-	size_t addressStart, size_t subAllocationSize
+void SingleAddressContainer::_setAddress(
+	size_t addressStart, size_t subAllocationSize, size_t alignment
 ) noexcept {
 	m_addressStart = addressStart;
-	m_subAllocationSize = subAllocationSize;
+	// Subsequent allocations needs to be aligned as well
+	m_subAllocationSize = Align(subAllocationSize, alignment);
 }
 
-void SingleAddressContainer::SetAddressStart(
-	void* addressStart, size_t subAllocationSize
+void SingleAddressContainer::SetAddress(
+	void* addressStart, size_t subAllocationSize, size_t alignment
 ) noexcept {
-	_setAddressStart(reinterpret_cast<size_t>(addressStart), subAllocationSize);
+	_setAddress(reinterpret_cast<size_t>(addressStart), subAllocationSize, alignment);
 }
 
 void SingleAddressContainer::UpdateAddressStart(void* offset) noexcept {

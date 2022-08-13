@@ -6,7 +6,9 @@ public:
     LinearAllocator() noexcept;
 
     [[nodiscard]]
-    size_t SubAllocate(size_t size, size_t alignment) noexcept;
+    size_t SubAllocate(
+        size_t subAllocationSize, size_t subAllocationCount, size_t alignment
+    ) noexcept;
 
     [[nodiscard]]
     size_t GetTotalSize() const noexcept;

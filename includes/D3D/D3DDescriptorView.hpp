@@ -7,7 +7,9 @@
 
 class D3DRootDescriptorView {
 public:
-	void SetAddressesStart(size_t addressesStart, size_t subAllocationSize) noexcept;
+	void SetAddressesStart(
+		size_t addressesStart, size_t subAllocationSize, size_t alignment
+	) noexcept;
 
 	void UpdateCPUAddressStart(std::uint8_t* offset) noexcept;
 	void UpdateGPUAddressStart(D3D12_GPU_VIRTUAL_ADDRESS offset) noexcept;

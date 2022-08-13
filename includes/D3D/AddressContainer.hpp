@@ -6,10 +6,14 @@
 class SingleAddressContainer {
 public:
 	template<std::integral AddressType>
-	void SetAddressStart(AddressType addressStart, size_t subAllocationSize) noexcept {
-		_setAddressStart(static_cast<size_t>(addressStart), subAllocationSize);
+	void SetAddress(
+		AddressType addressStart, size_t subAllocationSize, size_t alignment
+	) noexcept {
+		_setAddress(static_cast<size_t>(addressStart), subAllocationSize, alignment);
 	}
-	void SetAddressStart(void* addressStart, size_t subAllocationSize) noexcept;
+	void SetAddress(
+		void* addressStart, size_t subAllocationSize, size_t alignment
+	) noexcept;
 
 	template<std::integral AddressType>
 	void UpdateAddressStart(AddressType offset) noexcept {
@@ -30,7 +34,9 @@ public:
 	}
 
 private:
-	void _setAddressStart(size_t addressStart, size_t subAllocationSize) noexcept;
+	void _setAddress(
+		size_t addressStart, size_t subAllocationSize, size_t alignment
+	) noexcept;
 
 	[[nodiscard]]
 	size_t _getAddressStart(size_t index) const noexcept;

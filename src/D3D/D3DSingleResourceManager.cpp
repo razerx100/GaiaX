@@ -22,9 +22,9 @@ void D3DSingleResourceManager::ReserveHeapSpace(ID3D12Device* device) {
 }
 
 size_t D3DSingleResourceManager::ReserveSpaceAndGetOffset(
-	size_t size, size_t alignment
+	size_t subAllocationSize, size_t subAllocationCount, size_t alignment
 ) noexcept {
-	return m_linearAllocator.SubAllocate(size, alignment);
+	return m_linearAllocator.SubAllocate(subAllocationSize, subAllocationCount, alignment);
 }
 
 D3D12_GPU_VIRTUAL_ADDRESS D3DSingleResourceManager::GetGPUStartAddress() const noexcept {

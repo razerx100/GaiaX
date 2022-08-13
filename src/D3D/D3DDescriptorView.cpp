@@ -3,10 +3,10 @@
 
 // D3D Root Descriptor View
 void D3DRootDescriptorView::SetAddressesStart(
-	size_t addressesStart, size_t subAllocationSize
+	size_t addressesStart, size_t subAllocationSize, size_t alignment
 ) noexcept {
-	m_cpuAddress.SetAddressStart(addressesStart, subAllocationSize);
-	m_gpuAddress.SetAddressStart(addressesStart, subAllocationSize);
+	m_cpuAddress.SetAddress(addressesStart, subAllocationSize, alignment);
+	m_gpuAddress.SetAddress(addressesStart, subAllocationSize, alignment);
 }
 
 void D3DRootDescriptorView::UpdateCPUAddressStart(std::uint8_t* offset) noexcept {

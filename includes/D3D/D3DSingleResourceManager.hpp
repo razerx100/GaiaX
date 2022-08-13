@@ -13,7 +13,9 @@ public:
 	void ReserveHeapSpace(ID3D12Device* device);
 
 	[[nodiscard]]
-	size_t ReserveSpaceAndGetOffset(size_t size, size_t alignment) noexcept;
+	size_t ReserveSpaceAndGetOffset(
+		size_t subAllocationSize, size_t subAllocationCount, size_t alignment
+	) noexcept;
 	[[nodiscard]]
 	D3D12_GPU_VIRTUAL_ADDRESS GetGPUStartAddress() const noexcept;
 	[[nodiscard]]

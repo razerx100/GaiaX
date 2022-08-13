@@ -9,11 +9,12 @@ PerFrameBuffers::PerFrameBuffers(std::uint32_t frameCount) {
 
 void PerFrameBuffers::InitBuffers(std::uint32_t frameCount) {
 	size_t cameraBufferSize = sizeof(DirectX::XMMATRIX) * 2u;
+	constexpr size_t cameraBufferAlignment = 256u;
 	size_t cameraOffset = Gaia::cpuWriteBuffer->ReserveSpaceAndGetOffset(
-		cameraBufferSize * frameCount, 4u
+		cameraBufferSize, frameCount, cameraBufferAlignment
 	);
 
-	m_cameraBuffer.SetAddressesStart(cameraOffset, cameraBufferSize);
+	m_cameraBuffer.SetAddressesStart(cameraOffset, cameraBufferSize, cameraBufferAlignment);
 }
 
 void PerFrameBuffers::SetMemoryAddresses() noexcept {
