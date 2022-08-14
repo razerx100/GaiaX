@@ -117,12 +117,16 @@ void D3DDescriptorView::CreateDescriptorView(ID3D12Device* device) {
 	m_cpuHandleStart.ptr = *m_sharedCPUHandle;
 	m_gpuHandleStart.ptr = *m_sharedGPUHandle;
 
-	m_resourceBuffer.CreateResource(device, D3D12_RESOURCE_STATE_COPY_DEST);
+	D3D12_RESOURCE_STATES initialState =
+		m_isUAV ? D3D12_RESOURCE_STATE_COPY_DEST : D3D12_RESOURCE_STATE_GENERIC_READ;
+
+	m_resourceBuffer.CreateResource(device, initialState);
 
 	if (m_isUAV) {
 		D3D12_UNORDERED_ACCESS_VIEW_DESC desc{};
 		desc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
 		desc.Format = DXGI_FORMAT_UNKNOWN;
+		desc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
 
 		D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = m_cpuHandleStart;
 
@@ -142,6 +146,7 @@ void D3DDescriptorView::CreateDescriptorView(ID3D12Device* device) {
 		desc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
 		desc.Format = DXGI_FORMAT_UNKNOWN;
 		desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+		desc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
 
 		D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = m_cpuHandleStart;
 

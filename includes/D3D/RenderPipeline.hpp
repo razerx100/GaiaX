@@ -17,12 +17,12 @@ struct IndirectCommand {
 };
 
 // Need to pack stuff in multiple of 16bytes and since the buffers will be allocated
-// contiguously, struct should be multiple of 256bytes as well.
+// contiguously.
 struct ModelConstantBuffer {
 	UVInfo uvInfo;
 	DirectX::XMMATRIX modelMatrix;
 	std::uint32_t textureIndex;
-	double padding[20];
+	float padding[3];
 };
 
 class RenderPipeline {
