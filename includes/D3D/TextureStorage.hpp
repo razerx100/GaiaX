@@ -8,6 +8,8 @@
 
 class TextureStorage {
 public:
+	TextureStorage() noexcept;
+
 	size_t AddTexture(
 		ID3D12Device* device,
 		std::unique_ptr<std::uint8_t> textureDataHandle,
@@ -18,6 +20,9 @@ public:
 	void CopyData(std::atomic_size_t& workCount) noexcept;
 	void ReleaseUploadBuffer() noexcept;
 	void CreateBufferViews(ID3D12Device* device);
+
+	[[nodiscard]]
+	D3D12_GPU_DESCRIPTOR_HANDLE GetTextureDescriptorStart() const noexcept;
 
 private:
 	struct TextureData {
@@ -32,6 +37,7 @@ private:
 
 	std::vector<D3DResourceShared> m_gpuBuffers;
 	std::vector<D3DResourceShared> m_uploadBuffers;
-	std::vector<SharedCPUHandle> m_cpuHandles;
+	std::vector<size_t> m_textureDescriptorRelativeOffsets;
+	D3D12_GPU_DESCRIPTOR_HANDLE m_textureDescriptorStart;
 };
 #endif

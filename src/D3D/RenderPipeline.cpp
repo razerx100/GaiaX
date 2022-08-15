@@ -104,16 +104,16 @@ void RenderPipeline::ReserveCommandBuffers(ID3D12Device* device) {
 	m_commandBuffer = std::move(gpuBuffer);
 	m_commandUploadBuffer = std::move(uploadBuffer);
 
-	auto [cmdBufferCpuDescriptor, cmdBufferGpuDescriptor] =
-		Gaia::descriptorTable->ReserveDescriptors(m_frameCount);
+	m_commandDescriptorOffset = Gaia::descriptorTable->ReserveDescriptorsAndGetOffset(
+		m_frameCount
+	);
 
-	m_commandDescriptorHandle = std::move(cmdBufferCpuDescriptor);
+	size_t modelBufferDescriptorOffset = Gaia::descriptorTable->ReserveDescriptorsAndGetOffset(
+		m_frameCount
+	);
 
-	auto [modelBufferCpuDescriptor, modelBufferGpuDescriptor] =
-		Gaia::descriptorTable->ReserveDescriptors(m_frameCount);
-
-	m_modelBuffers.SetDescriptorHandles(
-		std::move(modelBufferCpuDescriptor), std::move(modelBufferGpuDescriptor),
+	m_modelBuffers.SetDescriptorOffset(
+		modelBufferDescriptorOffset,
 		device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)
 	);
 	m_modelBuffers.SetBufferInfo(
@@ -130,10 +130,15 @@ void RenderPipeline::CreateCommandBuffers(ID3D12Device* device) {
 	srvDesc.Buffer.StructureByteStride = static_cast<UINT>(sizeof(IndirectCommand));
 	srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
 
-	UINT descriptorSize = device->GetDescriptorHandleIncrementSize(
+	const UINT descriptorSize = device->GetDescriptorHandleIncrementSize(
 		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV
 	);
-	D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle{ *m_commandDescriptorHandle };
+	D3D12_CPU_DESCRIPTOR_HANDLE uploadDescriptorStart =
+		Gaia::descriptorTable->GetUploadDescriptorStart();
+
+	D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle{
+		uploadDescriptorStart.ptr + m_commandDescriptorOffset * descriptorSize
+	};
 
 	for (size_t index = 0u; index < m_frameCount; ++index) {
 		srvDesc.Buffer.FirstElement = m_modelCount * index;
@@ -145,7 +150,9 @@ void RenderPipeline::CreateCommandBuffers(ID3D12Device* device) {
 	std::uint8_t* cpuPtr = Gaia::cpuWriteBuffer->GetCPUStartAddress();
 	D3D12_GPU_VIRTUAL_ADDRESS gpuPtr = Gaia::cpuWriteBuffer->GetGPUStartAddress();
 
-	m_modelBuffers.CreateDescriptorView(device);
+	const D3D12_GPU_DESCRIPTOR_HANDLE gpuDescriptorStart =
+		Gaia::descriptorTable->GetGPUDescriptorStart();
+	m_modelBuffers.CreateDescriptorView(device, uploadDescriptorStart, gpuDescriptorStart);
 
 	std::vector<IndirectCommand> commands;
 	constexpr size_t modelBufferSize = sizeof(ModelConstantBuffer);

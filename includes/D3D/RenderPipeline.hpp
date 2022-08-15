@@ -7,7 +7,6 @@
 #include <PipelineObjectGFX.hpp>
 #include <RootSignatureBase.hpp>
 #include <IModel.hpp>
-#include <GaiaDataTypes.hpp>
 #include <D3DResource.hpp>
 #include <D3DDescriptorView.hpp>
 
@@ -62,7 +61,7 @@ private:
 	size_t m_modelBufferPerFrameSize;
 	D3DResourceShared m_commandBuffer;
 	D3DResourceShared m_commandUploadBuffer;
-	SharedCPUHandle m_commandDescriptorHandle;
+	size_t m_commandDescriptorOffset;
 	D3DDescriptorView m_modelBuffers;
 };
 #endif

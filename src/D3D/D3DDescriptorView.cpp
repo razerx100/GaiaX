@@ -1,5 +1,6 @@
 #include <D3DDescriptorView.hpp>
 #include <D3DHelperFunctions.hpp>
+#include <Gaia.hpp>
 
 // D3D Root Descriptor View
 void D3DRootDescriptorView::SetAddressesStart(
@@ -32,13 +33,12 @@ D3DDescriptorView::D3DDescriptorView(ResourceType type, D3D12_RESOURCE_FLAGS fla
 	: m_resourceBuffer{ type, flags }, m_gpuHandleStart{}, m_cpuHandleStart{},
 	m_descriptorSize{ 0u },
 	m_isUAV{ flags == D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS }, m_subAllocationSize{ 0u },
-	m_strideSize{ 0u }{}
+	m_strideSize{ 0u }, m_descriptorOffset{ 0u } {}
 
-void D3DDescriptorView::SetDescriptorHandles(
-	SharedCPUHandle cpuHandle, SharedGPUHandle gpuHandle, size_t descriptorSize
+void D3DDescriptorView::SetDescriptorOffset(
+	size_t descriptorOffset, size_t descriptorSize
 ) noexcept {
-	m_sharedCPUHandle = cpuHandle;
-	m_sharedGPUHandle = gpuHandle;
+	m_descriptorOffset = descriptorOffset;
 	m_descriptorSize = descriptorSize;
 }
 
@@ -113,9 +113,17 @@ std::uint8_t* D3DDescriptorView::GetCPUWPointer(size_t index) const noexcept {
 		+ index * m_subAllocationSize + m_isUAV * m_strideSize;
 }
 
-void D3DDescriptorView::CreateDescriptorView(ID3D12Device* device) {
-	m_cpuHandleStart.ptr = *m_sharedCPUHandle;
-	m_gpuHandleStart.ptr = *m_sharedGPUHandle;
+void D3DDescriptorView::CreateDescriptorView(
+	ID3D12Device* device,
+	D3D12_CPU_DESCRIPTOR_HANDLE uploadDescriptorStart,
+	D3D12_GPU_DESCRIPTOR_HANDLE gpuDescriptorStart
+) {
+	const size_t descriptorSize = device->GetDescriptorHandleIncrementSize(
+		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV
+	);
+
+	m_cpuHandleStart.ptr = { uploadDescriptorStart.ptr + descriptorSize * m_descriptorOffset };
+	m_gpuHandleStart.ptr = { gpuDescriptorStart.ptr + descriptorSize * m_descriptorOffset };
 
 	D3D12_RESOURCE_STATES initialState =
 		m_isUAV ? D3D12_RESOURCE_STATE_COPY_DEST : D3D12_RESOURCE_STATE_GENERIC_READ;

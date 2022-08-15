@@ -3,73 +3,43 @@
 #include <d3dx12.h>
 
 DescriptorTableManager::DescriptorTableManager()
-	: m_descriptorCount(0u), m_textureRangeStart{} {}
+	: m_genericDescriptorCount{0u}, m_textureDescriptorCount{0u} {}
 
 void DescriptorTableManager::CreateDescriptorTable(ID3D12Device* device) {
-	if (!m_descriptorCount)
-		++m_descriptorCount;
+	size_t totalDescriptorCount = m_genericDescriptorCount + m_textureDescriptorCount;
 
-	m_uploadDescHeap = CreateDescHeap(device, m_descriptorCount, false);
+	if (!totalDescriptorCount)
+		++totalDescriptorCount;
 
-	D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle =
-		m_uploadDescHeap->GetCPUDescriptorHandleForHeapStart();
+	m_uploadDescHeap = CreateDescHeap(device, totalDescriptorCount, false);
 
-	m_pDescHeap = CreateDescHeap(device, m_descriptorCount);
-
-	D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle = m_pDescHeap->GetGPUDescriptorHandleForHeapStart();
-
-	const size_t descriptorSize = device->GetDescriptorHandleIncrementSize(
-		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV
-	);
-
-	for (size_t index = 0u; index < std::size(m_genericCPUHandles); ++index) {
-		*m_genericCPUHandles[index] = cpuHandle.ptr;
-		*m_genericGPUHandles[index] = gpuHandle.ptr;
-
-		cpuHandle.ptr += descriptorSize * m_genericDescriptorCounts[index];
-		gpuHandle.ptr += descriptorSize * m_genericDescriptorCounts[index];
-	}
-
-	// Texture
-	m_textureRangeStart = gpuHandle;
-
-	for (size_t index = 0u; index < std::size(m_sharedTextureCPUHandle); ++index) {
-		*m_sharedTextureCPUHandle[index] = cpuHandle.ptr;
-
-		cpuHandle.ptr += descriptorSize * m_textureDescriptorCounts[index];
-	}
+	m_pDescHeap = CreateDescHeap(device, totalDescriptorCount);
 }
 
-SharedCPUHandle DescriptorTableManager::ReserveDescriptorsTexture(
+size_t DescriptorTableManager::ReserveDescriptorsTextureAndGetRelativeOffset(
 	size_t descriptorCount
 ) noexcept {
-	auto sharedTextureCPUHandle = std::make_shared<ShareableCPUHandle>();
+	m_textureDescriptorSet.emplace_back(descriptorCount);
 
-	m_sharedTextureCPUHandle.emplace_back(sharedTextureCPUHandle);
-	m_textureDescriptorCounts.emplace_back(descriptorCount);
+	const size_t descriptorOffset = m_textureDescriptorCount;
+	m_textureDescriptorCount += descriptorCount;
 
-	m_descriptorCount += descriptorCount;
-
-	return sharedTextureCPUHandle;
+	return descriptorOffset;
 }
 
-SharedDescriptorHandles DescriptorTableManager::ReserveDescriptors(
+size_t DescriptorTableManager::ReserveDescriptorsAndGetOffset(
 	size_t descriptorCount
 ) noexcept {
-	auto sharedCPUHandle = std::make_shared<ShareableCPUHandle>();
-	auto sharedGPUHandle = std::make_shared<ShareableGPUHandle>();
+	m_genericDescriptorSet.emplace_back(descriptorCount);
 
-	m_genericCPUHandles.emplace_back(sharedCPUHandle);
-	m_genericGPUHandles.emplace_back(sharedGPUHandle);
-	m_genericDescriptorCounts.emplace_back(descriptorCount);
+	const size_t descriptorOffset = m_genericDescriptorCount;
+	m_genericDescriptorCount += descriptorCount;
 
-	m_descriptorCount += descriptorCount;
-
-	return { std::move(sharedCPUHandle), std::move(sharedGPUHandle) };
+	return descriptorOffset;
 }
 
-D3D12_GPU_DESCRIPTOR_HANDLE DescriptorTableManager::GetTextureRangeStart() const noexcept {
-	return m_textureRangeStart;
+size_t DescriptorTableManager::GetTextureRangeStart() const noexcept {
+	return m_genericDescriptorCount;
 }
 
 ID3D12DescriptorHeap* DescriptorTableManager::GetDescHeapRef() const noexcept {
@@ -99,13 +69,17 @@ ComPtr<ID3D12DescriptorHeap> DescriptorTableManager::CreateDescHeap(
 }
 
 void DescriptorTableManager::ReleaseUploadHeap() noexcept {
-	m_sharedTextureCPUHandle = std::vector<SharedCPUHandle>();
 	m_uploadDescHeap.Reset();
 }
 
 void DescriptorTableManager::CopyUploadHeap(ID3D12Device* device) {
+	size_t totalDescriptorCount = m_genericDescriptorCount + m_textureDescriptorCount;
+
+	if (!totalDescriptorCount)
+		++totalDescriptorCount;
+
 	device->CopyDescriptorsSimple(
-		static_cast<UINT>(m_descriptorCount),
+		static_cast<UINT>(totalDescriptorCount),
 		m_pDescHeap->GetCPUDescriptorHandleForHeapStart(),
 		m_uploadDescHeap->GetCPUDescriptorHandleForHeapStart(),
 		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV
@@ -113,5 +87,13 @@ void DescriptorTableManager::CopyUploadHeap(ID3D12Device* device) {
 }
 
 size_t DescriptorTableManager::GetTextureDescriptorCount() const noexcept {
-	return std::size(m_sharedTextureCPUHandle);
+	return m_textureDescriptorCount;
+}
+
+D3D12_CPU_DESCRIPTOR_HANDLE DescriptorTableManager::GetUploadDescriptorStart() const noexcept {
+	return m_uploadDescHeap->GetCPUDescriptorHandleForHeapStart();
+}
+
+D3D12_GPU_DESCRIPTOR_HANDLE DescriptorTableManager::GetGPUDescriptorStart() const noexcept {
+	return m_pDescHeap->GetGPUDescriptorHandleForHeapStart();
 }

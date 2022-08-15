@@ -29,7 +29,7 @@ void ModelContainer::BindCommands(
 ) const noexcept {
 	m_renderPipeline->BindGraphicsPipeline(commandList);
 
-	D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle = Gaia::descriptorTable->GetTextureRangeStart();
+	D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle = Gaia::textureStorage->GetTextureDescriptorStart();
 	commandList->SetGraphicsRootDescriptorTable(0u, gpuHandle);
 
 	m_pPerFrameBuffers->BindPerFrameBuffers(commandList, frameIndex);

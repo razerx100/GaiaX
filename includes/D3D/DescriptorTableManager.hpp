@@ -2,9 +2,6 @@
 #define DESCRIPTOR_TABLE_MANAGER_HPP_
 #include <D3DHeaders.hpp>
 #include <vector>
-#include <GaiaDataTypes.hpp>
-
-using SharedDescriptorHandles = std::pair<SharedCPUHandle, SharedGPUHandle>;
 
 class DescriptorTableManager {
 public:
@@ -15,16 +12,20 @@ public:
 	void ReleaseUploadHeap() noexcept;
 
 	[[nodiscard]]
-	SharedCPUHandle ReserveDescriptorsTexture(size_t descriptorCount = 1u) noexcept;
+	size_t ReserveDescriptorsTextureAndGetRelativeOffset(size_t descriptorCount = 1u) noexcept;
 	[[nodiscard]]
-	SharedDescriptorHandles ReserveDescriptors(size_t descriptorCount = 1u) noexcept;
+	size_t ReserveDescriptorsAndGetOffset(size_t descriptorCount = 1u) noexcept;
 
 	[[nodiscard]]
-	D3D12_GPU_DESCRIPTOR_HANDLE GetTextureRangeStart() const noexcept;
+	size_t GetTextureRangeStart() const noexcept;
 	[[nodiscard]]
 	size_t GetTextureDescriptorCount() const noexcept;
 	[[nodiscard]]
 	ID3D12DescriptorHeap* GetDescHeapRef() const noexcept;
+	[[nodiscard]]
+	D3D12_CPU_DESCRIPTOR_HANDLE GetUploadDescriptorStart() const noexcept;
+	[[nodiscard]]
+	D3D12_GPU_DESCRIPTOR_HANDLE GetGPUDescriptorStart() const noexcept;
 
 private:
 	ComPtr<ID3D12DescriptorHeap> CreateDescHeap(
@@ -32,14 +33,11 @@ private:
 	) const;
 
 private:
-	size_t m_descriptorCount;
-	D3D12_GPU_DESCRIPTOR_HANDLE m_textureRangeStart;
+	size_t m_genericDescriptorCount;
+	size_t m_textureDescriptorCount;
 	ComPtr<ID3D12DescriptorHeap> m_pDescHeap;
 	ComPtr<ID3D12DescriptorHeap> m_uploadDescHeap;
-	std::vector<SharedCPUHandle> m_sharedTextureCPUHandle;
-	std::vector<size_t> m_textureDescriptorCounts;
-	std::vector<SharedCPUHandle> m_genericCPUHandles;
-	std::vector<SharedGPUHandle> m_genericGPUHandles;
-	std::vector<size_t> m_genericDescriptorCounts;
+	std::vector<size_t> m_textureDescriptorSet;
+	std::vector<size_t> m_genericDescriptorSet;
 };
 #endif

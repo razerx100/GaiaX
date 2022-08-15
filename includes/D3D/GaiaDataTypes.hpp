@@ -2,6 +2,7 @@
 #define GAIA_DATA_TYPES_HPP_
 #include <memory>
 #include <D3DHeaders.hpp>
+#include <cstdint>
 #include <ShareableAddress.hpp>
 
 using ShareableGPUAddress = _ShareableAddress<D3D12_GPU_VIRTUAL_ADDRESS>;
