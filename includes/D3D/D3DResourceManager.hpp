@@ -17,10 +17,6 @@ public:
 		m_resourceView.ReserveHeapSpace(device);
 	}
 
-	void UnlockCPUMutex() noexcept {
-		m_cpuMemoryMutex.unlock();
-	}
-
 	[[nodiscard]]
 	size_t ReserveSpaceAndGetOffset(
 		size_t subAllocationSize, size_t subAllocationCount = 1u, size_t alignment = 4u
@@ -32,12 +28,6 @@ public:
 		return m_resourceView.GetGPUAddress();
 	}
 	[[nodiscard]]
-	std::uint8_t* GetCPUStartAddressAndLockMutex() {
-		m_cpuMemoryMutex.lock();
-
-		return m_resourceView.GetCPUWPointer();
-	}
-
 	std::uint8_t* GetCPUStartAddress() const {
 		return m_resourceView.GetCPUWPointer();
 	}
@@ -45,6 +35,5 @@ public:
 protected:
 	ResourceView m_resourceView;
 	LinearAllocator m_allocator;
-	std::mutex m_cpuMemoryMutex;
 };
 #endif

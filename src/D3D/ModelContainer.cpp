@@ -38,7 +38,7 @@ void ModelContainer::BindCommands(
 }
 
 void ModelContainer::CopyData(std::atomic_size_t& workCount) {
-	workCount += 2u;
+	workCount += 1u;
 
 	Gaia::threadPool->SubmitWork(
 		[&workCount, &perFrameBuffer = m_pPerFrameBuffers] {

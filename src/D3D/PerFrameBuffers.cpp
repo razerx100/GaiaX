@@ -78,11 +78,8 @@ void PerFrameBuffers::AddModelInputs(
 
 // Potential Race
 void PerFrameBuffers::CopyData() noexcept {
-	std::uint8_t* vertexCPUStart =
-		Gaia::Resources::vertexBuffer->GetCPUStartAddressAndLockMutex();
+	std::uint8_t* vertexCPUStart = Gaia::Resources::vertexBuffer->GetCPUStartAddress();
 
 	m_gVertexData->CopyData(vertexCPUStart + m_vertexOffset);
 	m_gIndexData->CopyData(vertexCPUStart + m_indexOffset);
-
-	Gaia::Resources::vertexBuffer->UnlockCPUMutex();
 }
