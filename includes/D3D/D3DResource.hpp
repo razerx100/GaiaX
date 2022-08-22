@@ -14,6 +14,7 @@ public:
 		D3D12_RESOURCE_STATES initialState, const D3D12_CLEAR_VALUE* clearValue = nullptr
 	);
 	void MapBuffer();
+	void Release() noexcept;
 
 	[[nodiscard]]
 	ID3D12Resource* Get() const noexcept;
@@ -51,6 +52,12 @@ public:
 		ID3D12Device* device, D3D12_RESOURCE_STATES initialState,
 		const D3D12_CLEAR_VALUE* clearValue = nullptr
 	);
+	void ReleaseResource() noexcept;
+
+	static UINT64 QueryTextureBufferSize(
+		ID3D12Device* device, UINT64 width, UINT height, DXGI_FORMAT format, bool msaa
+	) noexcept;
+	static UINT64 CalculateRowPitch(UINT64 width) noexcept;
 
 	[[nodiscard]]
 	ID3D12Resource* GetResource() const noexcept;
@@ -60,11 +67,51 @@ public:
 	std::uint8_t* GetCPUWPointer() const;
 	[[nodiscard]]
 	ResourceType GetResourceType() const noexcept;
+	[[nodiscard]]
+	D3D12_RESOURCE_DESC GetResourceDesc() const noexcept;
+
+private:
+	static void _setTextureInfo(
+		UINT64 width, UINT height, DXGI_FORMAT format, bool msaa,
+		D3D12_RESOURCE_DESC& resourceDesc
+	) noexcept;
+	static void _setBufferInfo(
+		UINT64 bufferSize, D3D12_RESOURCE_DESC& resourceDesc
+	) noexcept;
 
 private:
 	D3DResource m_resource;
 	D3D12_RESOURCE_DESC m_resourceDescription;
 	size_t m_heapOffset;
 	ResourceType m_type;
+};
+
+class D3DUploadableResourceView {
+public:
+	D3DUploadableResourceView(
+		ResourceType mainType = ResourceType::gpuOnly,
+		D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE
+	) noexcept;
+
+	void SetBufferInfo(UINT64 bufferSize) noexcept;
+	void SetTextureInfo(
+		ID3D12Device* device, UINT64 width, UINT height, DXGI_FORMAT format, bool msaa
+	) noexcept;
+	void ReserveHeapSpace(ID3D12Device* device) noexcept;
+	void CreateResource(ID3D12Device* device);
+	void RecordResourceUpload(ID3D12GraphicsCommandList* copyList) noexcept;
+	void ReleaseUploadResource() noexcept;
+
+	[[nodiscard]]
+	std::uint8_t* GetCPUWPointer() const noexcept;
+	[[nodiscard]]
+	ID3D12Resource* GetGPUResource() const noexcept;
+	[[nodiscard]]
+	D3D12_GPU_VIRTUAL_ADDRESS GetGPUAddress() const noexcept;
+
+private:
+	D3DResourceView m_uploadResource;
+	D3DResourceView m_gpuResource;
+	bool m_texture;
 };
 #endif

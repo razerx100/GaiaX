@@ -7,7 +7,7 @@
 
 RenderPipeline::RenderPipeline(std::uint32_t frameCount) noexcept
 	: m_modelCount(0u), m_frameCount{ frameCount }, m_modelBufferPerFrameSize{ 0u },
-	m_modelBuffers{ ResourceType::cpuWrite } {}
+	m_commandDescriptorOffset{ 0u }, m_modelBuffers{ ResourceType::cpuWrite } {}
 
 void RenderPipeline::AddOpaqueModels(std::vector<std::shared_ptr<IModel>>&& models) noexcept {
 	std::ranges::move(models, std::back_inserter(m_opaqueModels));
@@ -147,8 +147,8 @@ void RenderPipeline::CreateCommandBuffers(ID3D12Device* device) {
 		cpuHandle.ptr += descriptorSize;
 	}
 
-	std::uint8_t* cpuPtr = Gaia::cpuWriteBuffer->GetCPUStartAddress();
-	D3D12_GPU_VIRTUAL_ADDRESS gpuPtr = Gaia::cpuWriteBuffer->GetGPUStartAddress();
+	std::uint8_t* cpuPtr = Gaia::Resources::cpuWriteBuffer->GetCPUStartAddress();
+	D3D12_GPU_VIRTUAL_ADDRESS gpuPtr = Gaia::Resources::cpuWriteBuffer->GetGPUStartAddress();
 
 	const D3D12_GPU_DESCRIPTOR_HANDLE gpuDescriptorStart =
 		Gaia::descriptorTable->GetGPUDescriptorStart();

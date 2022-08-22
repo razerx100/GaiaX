@@ -32,7 +32,7 @@ D3D12_GPU_VIRTUAL_ADDRESS D3DRootDescriptorView::GetGPUAddressStart(
 D3DDescriptorView::D3DDescriptorView(ResourceType type, D3D12_RESOURCE_FLAGS flags)
 	: m_resourceBuffer{ type, flags }, m_gpuHandleStart{}, m_cpuHandleStart{},
 	m_descriptorSize{ 0u },
-	m_isUAV{ flags == D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS }, m_subAllocationSize{ 0u },
+	m_uav{ flags == D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS }, m_subAllocationSize{ 0u },
 	m_strideSize{ 0u }, m_descriptorOffset{ 0u } {}
 
 void D3DDescriptorView::SetDescriptorOffset(
@@ -55,7 +55,7 @@ void D3DDescriptorView::SetBufferInfo(
 
 	size_t bufferSizePerAllocation = static_cast<size_t>(strideSize) * elementsPerAllocation;
 
-	if (m_isUAV) {
+	if (m_uav) {
 		UINT64 counterOffset = 0u;
 		UINT64 firstElement = 1u;
 		UINT64 alignedSubAllocationSize = Align(
@@ -110,7 +110,7 @@ UINT64 D3DDescriptorView::GetCounterOffset(size_t index) const noexcept {
 
 std::uint8_t* D3DDescriptorView::GetCPUWPointer(size_t index) const noexcept {
 	return m_resourceBuffer.GetCPUWPointer()
-		+ index * m_subAllocationSize + m_isUAV * m_strideSize;
+		+ index * m_subAllocationSize + m_uav * m_strideSize;
 }
 
 void D3DDescriptorView::CreateDescriptorView(
@@ -126,11 +126,11 @@ void D3DDescriptorView::CreateDescriptorView(
 	m_gpuHandleStart.ptr = { gpuDescriptorStart.ptr + descriptorSize * m_descriptorOffset };
 
 	D3D12_RESOURCE_STATES initialState =
-		m_isUAV ? D3D12_RESOURCE_STATE_COPY_DEST : D3D12_RESOURCE_STATE_GENERIC_READ;
+		m_uav ? D3D12_RESOURCE_STATE_COPY_DEST : D3D12_RESOURCE_STATE_GENERIC_READ;
 
 	m_resourceBuffer.CreateResource(device, initialState);
 
-	if (m_isUAV) {
+	if (m_uav) {
 		D3D12_UNORDERED_ACCESS_VIEW_DESC desc{};
 		desc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
 		desc.Format = DXGI_FORMAT_UNKNOWN;

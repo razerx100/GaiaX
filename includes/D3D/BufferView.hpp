@@ -1,23 +1,20 @@
 #ifndef BUFFER_VIEW_HPP_
 #define BUFFER_VIEW_HPP_
-#include <GaiaDataTypes.hpp>
+#include <D3DHeaders.hpp>
 
 template<typename TBufferView>
 class BufferView {
 public:
 	BufferView() = default;
-	BufferView(
-		TBufferView&& bufferView, D3DGPUSharedAddress sharedAddress
-	) : m_bufferView(std::move(bufferView)), m_gpuSharedAddress(sharedAddress) {}
+	BufferView(const TBufferView& bufferView)
+		: m_bufferView{ bufferView } {}
 
-	void SetGPUAddress() noexcept {
-		m_bufferView.BufferLocation = *m_gpuSharedAddress;
+	void AddBufferView(const TBufferView& bufferView) noexcept {
+		m_bufferView = bufferView;
 	}
-	void AddBufferView(TBufferView&& bufferView) noexcept {
-		m_bufferView = std::move(bufferView);
-	}
-	void AddSharedAddress(D3DGPUSharedAddress sharedAddress) noexcept {
-		m_gpuSharedAddress = sharedAddress;
+
+	void OffsetGPUAddress(D3D12_GPU_VIRTUAL_ADDRESS offset) noexcept {
+		m_bufferView.BufferLocation += offset;
 	}
 
 	const TBufferView* GetAddress() const noexcept {
@@ -26,6 +23,5 @@ public:
 
 private:
 	TBufferView m_bufferView;
-	D3DGPUSharedAddress m_gpuSharedAddress;
 };
 #endif

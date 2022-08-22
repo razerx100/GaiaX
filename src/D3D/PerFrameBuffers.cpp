@@ -3,14 +3,15 @@
 
 #include <CameraManager.hpp>
 
-PerFrameBuffers::PerFrameBuffers(std::uint32_t frameCount) {
+PerFrameBuffers::PerFrameBuffers(std::uint32_t frameCount)
+	: m_vertexOffset{ 0u }, m_indexOffset{ 0u } {
 	InitBuffers(frameCount);
 }
 
 void PerFrameBuffers::InitBuffers(std::uint32_t frameCount) {
 	size_t cameraBufferSize = sizeof(DirectX::XMMATRIX) * 2u;
 	constexpr size_t cameraBufferAlignment = 256u;
-	size_t cameraOffset = Gaia::cpuWriteBuffer->ReserveSpaceAndGetOffset(
+	size_t cameraOffset = Gaia::Resources::cpuWriteBuffer->ReserveSpaceAndGetOffset(
 		cameraBufferSize, frameCount, cameraBufferAlignment
 	);
 
@@ -18,14 +19,17 @@ void PerFrameBuffers::InitBuffers(std::uint32_t frameCount) {
 }
 
 void PerFrameBuffers::SetMemoryAddresses() noexcept {
-	std::uint8_t* cpuOffset = Gaia::cpuWriteBuffer->GetCPUStartAddress();
-	D3D12_GPU_VIRTUAL_ADDRESS gpuOffset = Gaia::cpuWriteBuffer->GetGPUStartAddress();
+	std::uint8_t* cpuOffset = Gaia::Resources::cpuWriteBuffer->GetCPUStartAddress();
+	D3D12_GPU_VIRTUAL_ADDRESS gpuOffset = Gaia::Resources::cpuWriteBuffer->GetGPUStartAddress();
 
 	m_cameraBuffer.UpdateCPUAddressStart(cpuOffset);
 	m_cameraBuffer.UpdateGPUAddressStart(gpuOffset);
 
-	m_gVertexBufferView.SetGPUAddress();
-	m_gIndexBufferView.SetGPUAddress();
+	const D3D12_GPU_VIRTUAL_ADDRESS vertexGpuStart =
+		Gaia::Resources::vertexBuffer->GetGPUStartAddress();
+
+	m_gVertexBufferView.OffsetGPUAddress(vertexGpuStart);
+	m_gIndexBufferView.OffsetGPUAddress(vertexGpuStart);
 }
 
 void PerFrameBuffers::BindPerFrameBuffers(
@@ -47,24 +51,38 @@ void PerFrameBuffers::AddModelInputs(
 	std::unique_ptr<std::uint8_t> vertices, size_t vertexBufferSize, size_t strideSize,
 	std::unique_ptr<std::uint8_t> indices, size_t indexBufferSize
 ) {
-	auto vertexBufferAddress = Gaia::vertexBuffer->AddDataAndGetSharedAddress(
-		std::move(vertices), vertexBufferSize
+	m_gVertexData = std::make_unique<MemoryContainer>(std::move(vertices), vertexBufferSize);
+	m_gIndexData = std::make_unique<MemoryContainer>(std::move(indices), indexBufferSize);
+
+	m_vertexOffset = Gaia::Resources::vertexBuffer->ReserveSpaceAndGetOffset(
+		vertexBufferSize
 	);
-	auto indexBufferAddress = Gaia::indexBuffer->AddDataAndGetSharedAddress(
-		std::move(indices), indexBufferSize
+	m_indexOffset = Gaia::Resources::vertexBuffer->ReserveSpaceAndGetOffset(
+		indexBufferSize
 	);
 
 	m_gVertexBufferView.AddBufferView(
 		D3D12_VERTEX_BUFFER_VIEW{
-			0u, static_cast<UINT>(vertexBufferSize), static_cast<UINT>(strideSize)
+			static_cast<D3D12_GPU_VIRTUAL_ADDRESS>(m_vertexOffset),
+			static_cast<UINT>(vertexBufferSize), static_cast<UINT>(strideSize)
 		}
 	);
-	m_gVertexBufferView.AddSharedAddress(std::move(vertexBufferAddress));
 
 	m_gIndexBufferView.AddBufferView(
 		D3D12_INDEX_BUFFER_VIEW{
-			0u, static_cast<UINT>(indexBufferSize), DXGI_FORMAT_R32_UINT
+			static_cast<D3D12_GPU_VIRTUAL_ADDRESS>(m_indexOffset),
+			static_cast<UINT>(indexBufferSize), DXGI_FORMAT_R32_UINT
 		}
 	);
-	m_gIndexBufferView.AddSharedAddress(std::move(indexBufferAddress));
+}
+
+// Potential Race
+void PerFrameBuffers::CopyData() noexcept {
+	std::uint8_t* vertexCPUStart =
+		Gaia::Resources::vertexBuffer->GetCPUStartAddressAndLockMutex();
+
+	m_gVertexData->CopyData(vertexCPUStart + m_vertexOffset);
+	m_gIndexData->CopyData(vertexCPUStart + m_indexOffset);
+
+	Gaia::Resources::vertexBuffer->UnlockCPUMutex();
 }

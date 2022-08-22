@@ -58,7 +58,7 @@ private:
 	D3D12_GPU_DESCRIPTOR_HANDLE m_gpuHandleStart;
 	D3D12_CPU_DESCRIPTOR_HANDLE m_cpuHandleStart;
 	size_t m_descriptorSize;
-	bool m_isUAV;
+	bool m_uav;
 	size_t m_subAllocationSize;
 	size_t m_strideSize;
 	size_t m_descriptorOffset;

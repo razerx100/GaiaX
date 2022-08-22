@@ -1,5 +1,6 @@
 #include <D3DResource.hpp>
 #include <D3DThrowMacros.hpp>
+#include <D3DHelperFunctions.hpp>
 #include <Gaia.hpp>
 
 // D3DResource
@@ -29,6 +30,10 @@ void D3DResource::CreateResource(
 	);
 }
 
+void D3DResource::Release() noexcept {
+	m_pBuffer.Reset();
+}
+
 void D3DResource::MapBuffer() {
 	HRESULT hr{};
 	D3D_THROW_FAILED(
@@ -51,20 +56,33 @@ D3DResourceView::D3DResourceView(ResourceType type, D3D12_RESOURCE_FLAGS flags) 
 	m_resourceDescription.Flags = flags;
 }
 
-void D3DResourceView::SetBufferInfo(UINT64 bufferSize) noexcept {
-	m_resourceDescription.Format = DXGI_FORMAT_UNKNOWN;
-	m_resourceDescription.Width = bufferSize;
-	m_resourceDescription.Height = 1u;
-	m_resourceDescription.MipLevels = 1u;
-	m_resourceDescription.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-	m_resourceDescription.Alignment = D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
-	m_resourceDescription.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+void D3DResourceView::_setBufferInfo(
+	UINT64 bufferSize, D3D12_RESOURCE_DESC& resourceDesc
+) noexcept {
+	resourceDesc.Format = DXGI_FORMAT_UNKNOWN;
+	resourceDesc.Width = bufferSize;
+	resourceDesc.Height = 1u;
+	resourceDesc.MipLevels = 1u;
+	resourceDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+	resourceDesc.Alignment = D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
+	resourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
 }
 
-void D3DResourceView::SetTextureInfo(
-	UINT64 width, UINT height, DXGI_FORMAT format, bool msaa
+void D3DResourceView::SetBufferInfo(UINT64 bufferSize) noexcept {
+	_setBufferInfo(bufferSize, m_resourceDescription);
+}
+
+UINT64 D3DResourceView::CalculateRowPitch(UINT64 width) noexcept {
+	size_t rowPitch = width * 4u;
+
+	return Align(rowPitch, D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
+}
+
+void D3DResourceView::_setTextureInfo(
+	UINT64 width, UINT height, DXGI_FORMAT format, bool msaa,
+	D3D12_RESOURCE_DESC& resourceDesc
 ) noexcept {
-	size_t estimatedSize = width * height;
+	size_t estimatedSize = static_cast<size_t>(CalculateRowPitch(width)) * height;
 	size_t alignment = 0u;
 
 	if (msaa) {
@@ -80,13 +98,19 @@ void D3DResourceView::SetTextureInfo(
 			alignment = D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
 	}
 
-	m_resourceDescription.Format = format;
-	m_resourceDescription.Width = width;
-	m_resourceDescription.Height = height;
-	m_resourceDescription.MipLevels = 0u;
-	m_resourceDescription.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
-	m_resourceDescription.Alignment = alignment;
-	m_resourceDescription.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+	resourceDesc.Format = format;
+	resourceDesc.Width = width;
+	resourceDesc.Height = height;
+	resourceDesc.MipLevels = 0u;
+	resourceDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+	resourceDesc.Alignment = alignment;
+	resourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+}
+
+void D3DResourceView::SetTextureInfo(
+	UINT64 width, UINT height, DXGI_FORMAT format, bool msaa
+) noexcept {
+	_setTextureInfo(width, height, format, msaa, m_resourceDescription);
 }
 
 void D3DResourceView::ReserveHeapSpace(ID3D12Device* device) noexcept {
@@ -153,4 +177,118 @@ std::uint8_t* D3DResourceView::GetCPUWPointer() const {
 
 ResourceType D3DResourceView::GetResourceType() const noexcept {
 	return m_type;
+}
+
+UINT64 D3DResourceView::QueryTextureBufferSize(
+	ID3D12Device* device, UINT64 width, UINT height, DXGI_FORMAT format, bool msaa
+) noexcept {
+	D3D12_RESOURCE_DESC	resourceDesc{};
+	_setTextureInfo(width, height, format, msaa, resourceDesc);
+
+	const auto& [bufferSize, alignment] = device->GetResourceAllocationInfo(
+		0u, 1u, &resourceDesc
+	);
+
+	return bufferSize;
+}
+
+void D3DResourceView::ReleaseResource() noexcept {
+	m_resource.Release();
+}
+
+D3D12_RESOURCE_DESC D3DResourceView::GetResourceDesc() const noexcept {
+	return m_resourceDescription;
+}
+
+// D3D Upload Resource View
+D3DUploadableResourceView::D3DUploadableResourceView(
+	ResourceType type, D3D12_RESOURCE_FLAGS flags
+) noexcept : m_uploadResource{ ResourceType::upload }, m_gpuResource{ type, flags },
+	m_texture{ false } {}
+
+void D3DUploadableResourceView::SetBufferInfo(UINT64 bufferSize) noexcept {
+	m_uploadResource.SetBufferInfo(bufferSize);
+	m_gpuResource.SetBufferInfo(bufferSize);
+}
+
+void D3DUploadableResourceView::SetTextureInfo(
+	ID3D12Device* device, UINT64 width, UINT height, DXGI_FORMAT format, bool msaa
+) noexcept {
+	const UINT64 textureBufferSize = D3DResourceView::QueryTextureBufferSize(
+		device, width, height, format, msaa
+	);
+
+	m_uploadResource.SetBufferInfo(textureBufferSize);
+	m_gpuResource.SetTextureInfo(width, height, format, msaa);
+
+	m_texture = true;
+}
+
+void D3DUploadableResourceView::ReserveHeapSpace(ID3D12Device* device) noexcept {
+	m_uploadResource.ReserveHeapSpace(device);
+	m_gpuResource.ReserveHeapSpace(device);
+}
+
+void D3DUploadableResourceView::CreateResource(ID3D12Device* device) {
+	m_uploadResource.CreateResource(device, D3D12_RESOURCE_STATE_GENERIC_READ);
+	m_gpuResource.CreateResource(device, D3D12_RESOURCE_STATE_COPY_DEST);
+}
+
+void D3DUploadableResourceView::RecordResourceUpload(
+	ID3D12GraphicsCommandList* copyList
+) noexcept {
+	if (m_texture) {
+		D3D12_TEXTURE_COPY_LOCATION dest = {};
+		dest.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
+		dest.pResource = m_gpuResource.GetResource();
+		dest.SubresourceIndex = 0u;
+
+		D3D12_RESOURCE_DESC gpuDesc = m_gpuResource.GetResourceDesc();
+
+		D3D12_SUBRESOURCE_FOOTPRINT srcFootprint = {};
+		srcFootprint.Depth = 1u;
+		srcFootprint.Format = gpuDesc.Format;
+		srcFootprint.Width = static_cast<UINT>(gpuDesc.Width);
+		srcFootprint.Height = gpuDesc.Height;
+		srcFootprint.RowPitch = static_cast<UINT>(D3DResourceView::CalculateRowPitch(
+			gpuDesc.Width
+		));
+
+		D3D12_PLACED_SUBRESOURCE_FOOTPRINT placedFootprint = {};
+		placedFootprint.Offset = 0u;
+		placedFootprint.Footprint = srcFootprint;
+
+		D3D12_TEXTURE_COPY_LOCATION src = {};
+		src.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
+		src.pResource = m_uploadResource.GetResource();
+		src.PlacedFootprint = placedFootprint;
+
+		copyList->CopyTextureRegion(
+			&dest,
+			0u, 0u, 0u,
+			&src,
+			nullptr
+		);
+	}
+	else
+		copyList->CopyResource(
+			m_gpuResource.GetResource(),
+			m_uploadResource.GetResource()
+		);
+}
+
+void D3DUploadableResourceView::ReleaseUploadResource() noexcept {
+	m_uploadResource.ReleaseResource();
+}
+
+std::uint8_t* D3DUploadableResourceView::GetCPUWPointer() const noexcept {
+	return m_uploadResource.GetCPUWPointer();
+}
+
+ID3D12Resource* D3DUploadableResourceView::GetGPUResource() const noexcept {
+	return m_gpuResource.GetResource();
+}
+
+D3D12_GPU_VIRTUAL_ADDRESS D3DUploadableResourceView::GetGPUAddress() const noexcept {
+	return m_gpuResource.GetGPUAddress();
 }

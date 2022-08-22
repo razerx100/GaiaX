@@ -6,18 +6,14 @@ namespace Gaia {
 	std::unique_ptr<GraphicsQueueManager> graphicsQueue;
 	std::unique_ptr<CommandListManager> graphicsCmdList;
 	std::unique_ptr<DebugInfoManager> debugInfo;
-	std::unique_ptr<DepthBuffer> depthBuffer;
 	std::unique_ptr<ModelContainer> modelContainer;
 	std::unique_ptr<CopyQueueManager> copyQueue;
 	std::unique_ptr<CommandListManager> copyCmdList;
-	std::unique_ptr<ResourceBuffer> vertexBuffer;
-	std::unique_ptr<ResourceBuffer> indexBuffer;
 	std::unique_ptr<ViewportAndScissorManager> viewportAndScissor;
 	std::unique_ptr<HeapManager> heapManager;
 	std::unique_ptr<DescriptorTableManager> descriptorTable;
 	std::unique_ptr<TextureStorage> textureStorage;
 	std::shared_ptr<IThreadPool> threadPool;
-	std::unique_ptr<D3DSingleResourceManager> cpuWriteBuffer;
 	std::unique_ptr<CameraManager> cameraManager;
 	std::shared_ptr<ISharedDataContainer> sharedData;
 
@@ -26,6 +22,9 @@ namespace Gaia {
 		std::unique_ptr<D3DHeap> cpuWriteHeap;
 		std::unique_ptr<D3DHeap> gpuOnlyHeap;
 		std::unique_ptr<D3DHeap> cpuReadBackHeap;
+		std::unique_ptr<DepthBuffer> depthBuffer;
+		std::unique_ptr<D3DUploadableResourceManager> vertexBuffer;
+		std::unique_ptr<D3DSingleResourceManager> cpuWriteBuffer;
 	}
 
 	void InitDevice() {
@@ -51,7 +50,7 @@ namespace Gaia {
 	}
 
 	void InitDepthBuffer(ID3D12Device* d3dDevice) {
-		depthBuffer = std::make_unique<DepthBuffer>(d3dDevice);
+		Resources::depthBuffer = std::make_unique<DepthBuffer>(d3dDevice);
 	}
 
 	void InitModelContainer(const std::string& shaderPath, std::uint32_t bufferCount) {
@@ -66,14 +65,6 @@ namespace Gaia {
 		copyCmdList = std::make_unique<CommandListManager>(
 			d3dDevice, D3D12_COMMAND_LIST_TYPE_COPY, 1u
 			);
-	}
-
-	void InitVertexBuffer() {
-		vertexBuffer = std::make_unique<ResourceBuffer>(4u);
-	}
-
-	void InitIndexBuffer() {
-		indexBuffer = std::make_unique<ResourceBuffer>(4u);
 	}
 
 	void InitViewportAndScissor(std::uint32_t width, std::uint32_t height) {
@@ -96,10 +87,6 @@ namespace Gaia {
 		threadPool = std::move(threadPoolArg);
 	}
 
-	void InitCPUWriteBuffer() {
-		cpuWriteBuffer = std::make_unique<D3DSingleResourceManager>(ResourceType::cpuWrite);
-	}
-
 	void InitCameraManager() {
 		cameraManager = std::make_unique<CameraManager>();
 	}
@@ -113,9 +100,16 @@ namespace Gaia {
 		Resources::cpuWriteHeap = std::make_unique<D3DHeap>(D3D12_HEAP_TYPE_UPLOAD);
 		Resources::gpuOnlyHeap = std::make_unique<D3DHeap>(D3D12_HEAP_TYPE_DEFAULT);
 		Resources::cpuReadBackHeap = std::make_unique<D3DHeap>(D3D12_HEAP_TYPE_READBACK);
+		Resources::vertexBuffer = std::make_unique<D3DUploadableResourceManager>();
+		Resources::cpuWriteBuffer = std::make_unique<D3DSingleResourceManager>(
+			ResourceType::cpuWrite
+			);
 	}
 
 	void CleanUpResources() {
+		Resources::depthBuffer.reset();
+		Resources::cpuWriteBuffer.reset();
+		Resources::vertexBuffer.reset();
 		Resources::cpuWriteHeap.reset();
 		Resources::gpuOnlyHeap.reset();
 		Resources::cpuReadBackHeap.reset();
