@@ -37,49 +37,14 @@ void ModelContainer::BindCommands(
 	m_renderPipeline->DrawModels(commandList, frameIndex);
 }
 
-void ModelContainer::CopyData(std::atomic_size_t& workCount) {
-	workCount += 1u;
-
-	Gaia::threadPool->SubmitWork(
-		[&workCount, &perFrameBuffer = m_pPerFrameBuffers] {
-			perFrameBuffer->CopyData();
-
-			--workCount;
-		}
-	);
-}
-
-void ModelContainer::RecordUploadBuffers(ID3D12GraphicsCommandList* copyList) {
-	Gaia::Resources::vertexBuffer->RecordResourceUpload(copyList);
-	Gaia::heapManager->RecordUpload(copyList);
-}
-
 void ModelContainer::ReserveBuffers(ID3D12Device* device) {
 	m_renderPipeline->ReserveCommandBuffers(device);
-
-	// Acquire all buffers first
-	Gaia::Resources::vertexBuffer->ReserveHeapSpace(device);
-
-	Gaia::heapManager->ReserveHeapSpace();
-	Gaia::Resources::cpuWriteBuffer->ReserveHeapSpace(device);
 }
 
 void ModelContainer::CreateBuffers(ID3D12Device* device) {
-	// Now allocate memory and actually create them
-	Gaia::heapManager->CreateBuffers(device);
-
-	Gaia::Resources::cpuWriteBuffer->CreateResource(device);
 	m_renderPipeline->CreateCommandBuffers(device);
 
-	Gaia::Resources::vertexBuffer->CreateResource(device);
-
 	m_pPerFrameBuffers->SetMemoryAddresses();
-}
-
-void ModelContainer::ReleaseUploadBuffers() {
-	Gaia::Resources::vertexBuffer->ReleaseUploadResource();
-
-	Gaia::heapManager->ReleaseUploadBuffer();
 }
 
 void ModelContainer::InitPipelines(ID3D12Device* device) {

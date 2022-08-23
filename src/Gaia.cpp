@@ -24,6 +24,7 @@ namespace Gaia {
 		std::unique_ptr<D3DHeap> cpuReadBackHeap;
 		std::unique_ptr<DepthBuffer> depthBuffer;
 		std::unique_ptr<D3DUploadableResourceManager> vertexBuffer;
+		std::unique_ptr<UploadContainer> vertexUploadContainer;
 		std::unique_ptr<D3DSingleResourceManager> cpuWriteBuffer;
 	}
 
@@ -101,9 +102,14 @@ namespace Gaia {
 		Resources::gpuOnlyHeap = std::make_unique<D3DHeap>(D3D12_HEAP_TYPE_DEFAULT);
 		Resources::cpuReadBackHeap = std::make_unique<D3DHeap>(D3D12_HEAP_TYPE_READBACK);
 		Resources::vertexBuffer = std::make_unique<D3DUploadableResourceManager>();
+		Resources::vertexUploadContainer = std::make_unique<UploadContainer>();
 		Resources::cpuWriteBuffer = std::make_unique<D3DSingleResourceManager>(
 			ResourceType::cpuWrite
 			);
+	}
+
+	void CleanUpUploadResources() {
+		Resources::vertexUploadContainer.reset();
 	}
 
 	void CleanUpResources() {

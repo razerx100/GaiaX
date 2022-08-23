@@ -23,9 +23,6 @@ public:
 	void InitPipelines(ID3D12Device* device);
 	void ReserveBuffers(ID3D12Device* device);
 	void CreateBuffers(ID3D12Device* device);
-	void CopyData(std::atomic_size_t& workCount);
-	void RecordUploadBuffers(ID3D12GraphicsCommandList* copyList);
-	void ReleaseUploadBuffers();
 
 	void BindCommands(
 		ID3D12GraphicsCommandList* commandList, size_t frameIndex

@@ -194,45 +194,73 @@ void RendererDx12::InitResourceBasedObjects() {
 void RendererDx12::ProcessData() {
 	ID3D12Device* device = Gaia::device->GetDeviceRef();
 
+	// Reserve Heap Space start
 	Gaia::Resources::depthBuffer->ReserveHeapSpace(device);
 	Gaia::modelContainer->ReserveBuffers(device);
+	Gaia::Resources::vertexBuffer->ReserveHeapSpace(device);
+	Gaia::Resources::cpuWriteBuffer->ReserveHeapSpace(device);
 
-	Gaia::descriptorTable->CreateDescriptorTable(device);
+	Gaia::heapManager->ReserveHeapSpace();
+	// Reserve Heap Space end
 
+	// Create heaps start
 	Gaia::Resources::uploadHeap->CreateHeap(device);
 	Gaia::Resources::gpuOnlyHeap->CreateHeap(device);
 	Gaia::Resources::cpuWriteHeap->CreateHeap(device);
+	// Create heaps end
 
+	Gaia::descriptorTable->CreateDescriptorTable(device);
+
+	// Create Buffers start
 	Gaia::Resources::depthBuffer->CreateDepthBuffer(device, m_width, m_height);
+	Gaia::heapManager->CreateBuffers(device);
+	Gaia::Resources::cpuWriteBuffer->CreateResource(device);
+	Gaia::Resources::vertexBuffer->CreateResource(device);
 	Gaia::modelContainer->CreateBuffers(device);
+	// Create Buffers end
 
+	// Set Buffer Start Address start
+	std::uint8_t* vertexBufferUploadStartAddress =
+		Gaia::Resources::vertexBuffer->GetCPUStartAddress();
+	Gaia::Resources::vertexUploadContainer->SetStartingAddress(vertexBufferUploadStartAddress);
+	// Set Buffer Start Address start
+
+	// Async copy start
 	std::atomic_size_t workCount = 0u;
 
-	Gaia::modelContainer->CopyData(workCount);
+	Gaia::Resources::vertexUploadContainer->CopyData(workCount);
 	Gaia::textureStorage->CopyData(workCount);
 
 	while (workCount != 0u);
+	// Async copy end
 
 	Gaia::textureStorage->CreateBufferViews(device);
 
 	Gaia::descriptorTable->CopyUploadHeap(device);
 
+	// GPU upload start
 	Gaia::copyCmdList->Reset(0u);
 	ID3D12GraphicsCommandList* copyList = Gaia::copyCmdList->GetCommandListRef();
 
-	Gaia::modelContainer->RecordUploadBuffers(copyList);
+	Gaia::Resources::vertexBuffer->RecordResourceUpload(copyList);
+	Gaia::heapManager->RecordUpload(copyList);
 
 	Gaia::copyCmdList->Close();
 
 	Gaia::copyQueue->ExecuteCommandLists(copyList);
 	Gaia::copyQueue->WaitForGPU();
+	// GPU upload end
 
 	Gaia::modelContainer->InitPipelines(device);
 
+	// Release Upload Resource start
 	Gaia::textureStorage->ReleaseUploadBuffer();
 	Gaia::descriptorTable->ReleaseUploadHeap();
-	Gaia::modelContainer->ReleaseUploadBuffers();
+	Gaia::Resources::vertexBuffer->ReleaseUploadResource();
+	Gaia::heapManager->ReleaseUploadBuffer();
+	Gaia::CleanUpUploadResources();
 	Gaia::Resources::uploadHeap.reset();
+	// Release Upload Resource end
 }
 
 size_t RendererDx12::RegisterResource(

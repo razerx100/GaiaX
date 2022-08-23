@@ -19,6 +19,7 @@
 #include <D3DHeap.hpp>
 #include <D3DSingleResourceManager.hpp>
 #include <D3DUploadableResourceManager.hpp>
+#include <UploadContainer.hpp>
 
 namespace Gaia {
 	// Variables
@@ -45,6 +46,7 @@ namespace Gaia {
 		extern std::unique_ptr<D3DHeap> cpuReadBackHeap;
 		extern std::unique_ptr<DepthBuffer> depthBuffer;
 		extern std::unique_ptr<D3DUploadableResourceManager> vertexBuffer;
+		extern std::unique_ptr<UploadContainer> vertexUploadContainer;
 		extern std::unique_ptr<D3DSingleResourceManager> cpuWriteBuffer;
 	}
 
@@ -67,5 +69,6 @@ namespace Gaia {
 	void SetSharedData(std::shared_ptr<ISharedDataContainer>&& sharedDataArg);
 	void InitResources();
 	void CleanUpResources();
+	void CleanUpUploadResources();
 }
 #endif

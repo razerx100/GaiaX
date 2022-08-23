@@ -3,7 +3,6 @@
 #include <D3DHeaders.hpp>
 #include <BufferView.hpp>
 #include <D3DDescriptorView.hpp>
-#include <MemoryContainer.hpp>
 
 class PerFrameBuffers {
 public:
@@ -19,8 +18,6 @@ public:
 		std::unique_ptr<std::uint8_t> indices, size_t indexBufferSize
 	);
 
-	void CopyData() noexcept;
-
 private:
 	void InitBuffers(std::uint32_t frameCount);
 
@@ -28,9 +25,5 @@ private:
 	D3DRootDescriptorView m_cameraBuffer;
 	BufferView<D3D12_VERTEX_BUFFER_VIEW> m_gVertexBufferView;
 	BufferView<D3D12_INDEX_BUFFER_VIEW> m_gIndexBufferView;
-	std::unique_ptr<MemoryContainer> m_gVertexData;
-	std::unique_ptr<MemoryContainer> m_gIndexData;
-	size_t m_vertexOffset;
-	size_t m_indexOffset;
 };
 #endif

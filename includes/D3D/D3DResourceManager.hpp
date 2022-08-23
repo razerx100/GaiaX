@@ -2,7 +2,6 @@
 #define D3D_RESOURCE_MANAGER_HPP_
 #include <D3DResource.hpp>
 #include <LinearAllocator.hpp>
-#include <mutex>
 
 template<class ResourceView>
 class _D3DResourceManager {
