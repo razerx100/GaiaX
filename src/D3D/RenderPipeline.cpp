@@ -104,11 +104,11 @@ void RenderPipeline::ReserveCommandBuffers(ID3D12Device* device) {
 		device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 	m_commandBuffer.SetDescriptorOffset(commandDescriptorOffset, descriptorSize);
-	m_modelBuffers.SetBufferInfo(
+	m_commandBuffer.SetBufferInfo(
 		device, static_cast<UINT>(sizeof(IndirectCommand)), m_modelCount, m_frameCount
 	);
 
-	size_t modelBufferDescriptorOffset = Gaia::descriptorTable->ReserveDescriptorsAndGetOffset(
+	const size_t modelBufferDescriptorOffset = Gaia::descriptorTable->ReserveDescriptorsAndGetOffset(
 		m_frameCount
 	);
 
