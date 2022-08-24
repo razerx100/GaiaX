@@ -184,6 +184,11 @@ public:
 		return m_resourceBuffer.GetResource();
 	}
 
+	[[nodiscard]]
+	D3D12_RESOURCE_DESC GetResourceDesc() const noexcept {
+		return m_resourceBuffer.GetResourceDesc();
+	}
+
 protected:
 	ResourceView m_resourceBuffer;
 	D3D12_GPU_DESCRIPTOR_HANDLE m_gpuHandleStart;
@@ -210,7 +215,5 @@ public:
 
 	[[nodiscard]]
 	D3D12_GPU_VIRTUAL_ADDRESS GetGPUAddress() const noexcept;
-	[[nodiscard]]
-	D3D12_RESOURCE_DESC GetUploadResourceDesc() const noexcept;
 };
 #endif

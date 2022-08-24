@@ -45,7 +45,7 @@ namespace Gaia {
 		extern std::unique_ptr<DepthBuffer> depthBuffer;
 		extern std::unique_ptr<D3DUploadableResourceManager> vertexBuffer;
 		extern std::unique_ptr<UploadContainer> vertexUploadContainer;
-		extern std::unique_ptr<UploadContainer> textureUploadContainer;
+		extern std::unique_ptr<UploadContainerTexture> textureUploadContainer;
 		extern std::unique_ptr<D3DSingleResourceManager> cpuWriteBuffer;
 	}
 

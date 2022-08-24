@@ -295,6 +295,6 @@ D3D12_GPU_VIRTUAL_ADDRESS D3DUploadableResourceView::GetGPUAddress() const noexc
 	return m_gpuResource.GetGPUAddress();
 }
 
-D3D12_RESOURCE_DESC D3DUploadableResourceView::GetUploadResourceDesc() const noexcept {
-	return m_uploadResource.GetResourceDesc();
+D3D12_RESOURCE_DESC D3DUploadableResourceView::GetResourceDesc() const noexcept {
+	return m_gpuResource.GetResourceDesc();
 }

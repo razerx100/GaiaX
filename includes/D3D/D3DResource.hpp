@@ -109,7 +109,7 @@ public:
 	[[nodiscard]]
 	D3D12_GPU_VIRTUAL_ADDRESS GetGPUAddress() const noexcept;
 	[[nodiscard]]
-	D3D12_RESOURCE_DESC GetUploadResourceDesc() const noexcept;
+	D3D12_RESOURCE_DESC GetResourceDesc() const noexcept;
 
 private:
 	D3DResourceView m_uploadResource;
