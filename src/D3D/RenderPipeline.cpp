@@ -89,7 +89,7 @@ void RenderPipeline::DrawModels(
 	);
 
 	graphicsCommandList->ExecuteIndirect(
-		m_commandSignature.Get(), m_modelCount, m_commandBuffer->Get(),
+		m_commandSignature.Get(), m_modelCount, m_commandBuffer.GetResource(),
 		sizeof(IndirectCommand) * m_modelCount * frameIndex, nullptr, 0u
 	);
 }
@@ -97,89 +97,67 @@ void RenderPipeline::DrawModels(
 void RenderPipeline::ReserveCommandBuffers(ID3D12Device* device) {
 	m_modelCount = static_cast<UINT>(std::size(m_opaqueModels));
 
-	auto [gpuBuffer, uploadBuffer] = Gaia::heapManager->AddUploadAbleBuffer(
-		m_modelCount * sizeof(IndirectCommand) * m_frameCount
-	);
+	const size_t commandDescriptorOffset =
+		Gaia::descriptorTable->ReserveDescriptorsAndGetOffset(m_frameCount);
 
-	m_commandBuffer = std::move(gpuBuffer);
-	m_commandUploadBuffer = std::move(uploadBuffer);
+	const UINT descriptorSize =
+		device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-	m_commandDescriptorOffset = Gaia::descriptorTable->ReserveDescriptorsAndGetOffset(
-		m_frameCount
+	m_commandBuffer.SetDescriptorOffset(commandDescriptorOffset, descriptorSize);
+	m_modelBuffers.SetBufferInfo(
+		device, static_cast<UINT>(sizeof(IndirectCommand)), m_modelCount, m_frameCount
 	);
 
 	size_t modelBufferDescriptorOffset = Gaia::descriptorTable->ReserveDescriptorsAndGetOffset(
 		m_frameCount
 	);
 
-	m_modelBuffers.SetDescriptorOffset(
-		modelBufferDescriptorOffset,
-		device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)
-	);
+	m_modelBuffers.SetDescriptorOffset(modelBufferDescriptorOffset, descriptorSize);
 	m_modelBuffers.SetBufferInfo(
 		device, static_cast<UINT>(sizeof(ModelConstantBuffer)), m_modelCount, m_frameCount
 	);
 }
 
 void RenderPipeline::CreateCommandBuffers(ID3D12Device* device) {
-	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
-	srvDesc.Format = DXGI_FORMAT_UNKNOWN;
-	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
-	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	srvDesc.Buffer.NumElements = m_modelCount;
-	srvDesc.Buffer.StructureByteStride = static_cast<UINT>(sizeof(IndirectCommand));
-	srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
-
-	const UINT descriptorSize = device->GetDescriptorHandleIncrementSize(
-		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV
-	);
-	D3D12_CPU_DESCRIPTOR_HANDLE uploadDescriptorStart =
+	const D3D12_CPU_DESCRIPTOR_HANDLE uploadDescriptorStart =
 		Gaia::descriptorTable->GetUploadDescriptorStart();
-
-	D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle{
-		uploadDescriptorStart.ptr + m_commandDescriptorOffset * descriptorSize
-	};
-
-	for (size_t index = 0u; index < m_frameCount; ++index) {
-		srvDesc.Buffer.FirstElement = m_modelCount * index;
-		device->CreateShaderResourceView(m_commandBuffer->Get(), &srvDesc, cpuHandle);
-
-		cpuHandle.ptr += descriptorSize;
-	}
-
-	std::uint8_t* cpuPtr = Gaia::Resources::cpuWriteBuffer->GetCPUStartAddress();
-	D3D12_GPU_VIRTUAL_ADDRESS gpuPtr = Gaia::Resources::cpuWriteBuffer->GetGPUStartAddress();
 
 	const D3D12_GPU_DESCRIPTOR_HANDLE gpuDescriptorStart =
 		Gaia::descriptorTable->GetGPUDescriptorStart();
-	m_modelBuffers.CreateDescriptorView(device, uploadDescriptorStart, gpuDescriptorStart);
+
+	m_modelBuffers.CreateDescriptorView(
+		device, uploadDescriptorStart, gpuDescriptorStart,
+		D3D12_RESOURCE_STATE_GENERIC_READ
+	);
+	m_commandBuffer.CreateDescriptorView(
+		device, uploadDescriptorStart, gpuDescriptorStart,
+		D3D12_RESOURCE_STATE_COPY_DEST
+	);
 
 	std::vector<IndirectCommand> commands;
 	constexpr size_t modelBufferSize = sizeof(ModelConstantBuffer);
 
-	for (size_t frame = 0u; frame < m_frameCount; ++frame) {
-		for (size_t index = 0u; index < std::size(m_opaqueModels); ++index) {
-			IndirectCommand command{};
-			command.modelIndex = static_cast<std::uint32_t>(index);
+	for (size_t index = 0u; index < std::size(m_opaqueModels); ++index) {
+		IndirectCommand command{};
+		command.modelIndex = static_cast<std::uint32_t>(index);
 
-			const auto& model = m_opaqueModels[index];
+		const auto& model = m_opaqueModels[index];
 
-			command.drawIndexed.BaseVertexLocation = 0u;
-			command.drawIndexed.IndexCountPerInstance = model->GetIndexCount();
-			command.drawIndexed.StartIndexLocation = model->GetIndexOffset();
-			command.drawIndexed.InstanceCount = 1u;
-			command.drawIndexed.StartInstanceLocation = 0u;
+		command.drawIndexed.BaseVertexLocation = 0u;
+		command.drawIndexed.IndexCountPerInstance = model->GetIndexCount();
+		command.drawIndexed.StartIndexLocation = model->GetIndexOffset();
+		command.drawIndexed.InstanceCount = 1u;
+		command.drawIndexed.StartInstanceLocation = 0u;
 
-			commands.emplace_back(command);
-		}
+		commands.emplace_back(command);
 	}
 
-	m_commandUploadBuffer->MapBuffer();
-
-	std::uint8_t* commandCPUPtr = m_commandUploadBuffer->GetCPUWPointer();
-	memcpy(
-		commandCPUPtr, std::data(commands), sizeof(IndirectCommand) * std::size(commands)
-	);
+	for (size_t frame = 0u; frame < m_frameCount; ++frame) {
+		std::uint8_t* commandCPUPtr = m_commandBuffer.GetCPUWPointer(frame);
+		memcpy(
+			commandCPUPtr, std::data(commands), sizeof(IndirectCommand) * std::size(commands)
+		);
+	}
 }
 
 void RenderPipeline::BindComputePipeline(
@@ -189,3 +167,11 @@ void RenderPipeline::BindComputePipeline(
 void RenderPipeline::DispatchCompute(
 	ID3D12GraphicsCommandList* computeCommandList
 ) const noexcept {}
+
+void RenderPipeline::RecordResourceUpload(ID3D12GraphicsCommandList* copyList) noexcept {
+	m_commandBuffer.RecordResourceUpload(copyList);
+}
+
+void RenderPipeline::ReleaseUploadResource() noexcept {
+	m_commandBuffer.ReleaseUploadResource();
+}

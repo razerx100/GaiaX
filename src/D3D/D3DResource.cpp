@@ -229,9 +229,11 @@ void D3DUploadableResourceView::ReserveHeapSpace(ID3D12Device* device) noexcept 
 	m_gpuResource.ReserveHeapSpace(device);
 }
 
-void D3DUploadableResourceView::CreateResource(ID3D12Device* device) {
+void D3DUploadableResourceView::CreateResource(
+	ID3D12Device* device, D3D12_RESOURCE_STATES initialState
+) {
 	m_uploadResource.CreateResource(device, D3D12_RESOURCE_STATE_GENERIC_READ);
-	m_gpuResource.CreateResource(device, D3D12_RESOURCE_STATE_COPY_DEST);
+	m_gpuResource.CreateResource(device, initialState);
 }
 
 void D3DUploadableResourceView::RecordResourceUpload(
@@ -285,7 +287,7 @@ std::uint8_t* D3DUploadableResourceView::GetCPUWPointer() const noexcept {
 	return m_uploadResource.GetCPUWPointer();
 }
 
-ID3D12Resource* D3DUploadableResourceView::GetGPUResource() const noexcept {
+ID3D12Resource* D3DUploadableResourceView::GetResource() const noexcept {
 	return m_gpuResource.GetResource();
 }
 

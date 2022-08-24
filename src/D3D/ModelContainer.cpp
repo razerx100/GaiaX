@@ -47,6 +47,14 @@ void ModelContainer::CreateBuffers(ID3D12Device* device) {
 	m_pPerFrameBuffers->SetMemoryAddresses();
 }
 
+void ModelContainer::RecordResourceUpload(ID3D12GraphicsCommandList* copyList) noexcept {
+	m_renderPipeline->RecordResourceUpload(copyList);
+}
+
+void ModelContainer::ReleaseUploadResource() noexcept {
+	m_renderPipeline->ReleaseUploadResource();
+}
+
 void ModelContainer::InitPipelines(ID3D12Device* device) {
 	auto [pso, signature] = CreatePipeline(device);
 

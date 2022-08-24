@@ -243,6 +243,7 @@ void RendererDx12::ProcessData() {
 	ID3D12GraphicsCommandList* copyList = Gaia::copyCmdList->GetCommandListRef();
 
 	Gaia::Resources::vertexBuffer->RecordResourceUpload(copyList);
+	Gaia::modelContainer->RecordResourceUpload(copyList);
 	Gaia::heapManager->RecordUpload(copyList);
 
 	Gaia::copyCmdList->Close();
@@ -254,6 +255,7 @@ void RendererDx12::ProcessData() {
 	Gaia::modelContainer->InitPipelines(device);
 
 	// Release Upload Resource start
+	Gaia::modelContainer->ReleaseUploadResource();
 	Gaia::textureStorage->ReleaseUploadBuffer();
 	Gaia::descriptorTable->ReleaseUploadHeap();
 	Gaia::Resources::vertexBuffer->ReleaseUploadResource();

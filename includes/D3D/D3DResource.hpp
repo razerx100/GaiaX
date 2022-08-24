@@ -98,14 +98,17 @@ public:
 		ID3D12Device* device, UINT64 width, UINT height, DXGI_FORMAT format, bool msaa
 	) noexcept;
 	void ReserveHeapSpace(ID3D12Device* device) noexcept;
-	void CreateResource(ID3D12Device* device);
+	void CreateResource(
+		ID3D12Device* device,
+		D3D12_RESOURCE_STATES initialState = D3D12_RESOURCE_STATE_COPY_DEST
+	);
 	void RecordResourceUpload(ID3D12GraphicsCommandList* copyList) noexcept;
 	void ReleaseUploadResource() noexcept;
 
 	[[nodiscard]]
 	std::uint8_t* GetCPUWPointer() const noexcept;
 	[[nodiscard]]
-	ID3D12Resource* GetGPUResource() const noexcept;
+	ID3D12Resource* GetResource() const noexcept;
 	[[nodiscard]]
 	D3D12_GPU_VIRTUAL_ADDRESS GetGPUAddress() const noexcept;
 

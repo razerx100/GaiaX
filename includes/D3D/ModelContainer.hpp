@@ -24,6 +24,9 @@ public:
 	void ReserveBuffers(ID3D12Device* device);
 	void CreateBuffers(ID3D12Device* device);
 
+	void RecordResourceUpload(ID3D12GraphicsCommandList* copyList) noexcept;
+	void ReleaseUploadResource() noexcept;
+
 	void BindCommands(
 		ID3D12GraphicsCommandList* commandList, size_t frameIndex
 	) const noexcept;

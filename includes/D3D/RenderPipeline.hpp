@@ -47,6 +47,9 @@ public:
 	void CreateCommandBuffers(ID3D12Device* device);
 	void ReserveCommandBuffers(ID3D12Device* device);
 
+	void RecordResourceUpload(ID3D12GraphicsCommandList* copyList) noexcept;
+	void ReleaseUploadResource() noexcept;
+
 private:
 	std::vector<std::shared_ptr<IModel>> m_opaqueModels;
 
@@ -59,9 +62,8 @@ private:
 	UINT m_modelCount;
 	std::uint32_t m_frameCount;
 	size_t m_modelBufferPerFrameSize;
-	D3DResourceShared m_commandBuffer;
-	D3DResourceShared m_commandUploadBuffer;
+	D3DUploadResourceDescriptorView m_commandBuffer;
 	size_t m_commandDescriptorOffset;
-	D3DDescriptorView m_modelBuffers;
+	D3DSingleDescriptorView m_modelBuffers;
 };
 #endif
