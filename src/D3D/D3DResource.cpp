@@ -183,6 +183,10 @@ UINT64 D3DResourceView::QueryTextureBufferSize(
 	ID3D12Device* device, UINT64 width, UINT height, DXGI_FORMAT format, bool msaa
 ) noexcept {
 	D3D12_RESOURCE_DESC	resourceDesc{};
+	resourceDesc.DepthOrArraySize = 1u;
+	resourceDesc.SampleDesc.Count = 1u;
+	resourceDesc.SampleDesc.Quality = 0u;
+
 	_setTextureInfo(width, height, format, msaa, resourceDesc);
 
 	const auto& [bufferSize, alignment] = device->GetResourceAllocationInfo(

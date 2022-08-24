@@ -43,6 +43,10 @@ public:
 		m_descriptorSize = descriptorSize;
 	}
 
+	void UpdateDescriptorOffset(size_t descriptorOffset) noexcept {
+		m_descriptorOffset += descriptorOffset;
+	}
+
 	void SetTextureInfo(
 		ID3D12Device* device, UINT64 width, UINT height, DXGI_FORMAT format, bool msaa
 	) {

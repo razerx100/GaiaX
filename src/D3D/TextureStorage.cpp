@@ -22,6 +22,7 @@ size_t TextureStorage::AddTexture(
 	);
 
 	m_textureHandles.emplace_back(std::move(textureDataHandle));
+	m_textureDescriptors.emplace_back(std::move(textureDescriptor));
 
 	return relativeTextureOffset;
 }
@@ -34,8 +35,14 @@ void TextureStorage::CreateBufferViews(ID3D12Device* device) {
 
 	const size_t textureRangeStart = Gaia::descriptorTable->GetTextureRangeStart();
 
+	const size_t descSize =
+		device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	m_textureDescriptorStart.ptr = gpuDescriptorStart.ptr + (descSize * textureRangeStart);
+
 	for (size_t index = 0u; index < std::size(m_textureDescriptors); ++index) {
 		auto& textureDescriptor = m_textureDescriptors[index];
+
+		textureDescriptor->UpdateDescriptorOffset(textureRangeStart);
 		textureDescriptor->CreateDescriptorView(
 			device, { uploadDescriptorStart.ptr + textureRangeStart },
 			{ gpuDescriptorStart.ptr + textureRangeStart }, D3D12_RESOURCE_STATE_COPY_DEST
