@@ -3,6 +3,7 @@
 #include <D3DHeaders.hpp>
 #include <BufferView.hpp>
 #include <D3DDescriptorView.hpp>
+#include <memory>
 
 class PerFrameBuffers {
 public:

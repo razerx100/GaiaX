@@ -10,7 +10,6 @@ namespace Gaia {
 	std::unique_ptr<CopyQueueManager> copyQueue;
 	std::unique_ptr<CommandListManager> copyCmdList;
 	std::unique_ptr<ViewportAndScissorManager> viewportAndScissor;
-	std::unique_ptr<HeapManager> heapManager;
 	std::unique_ptr<DescriptorTableManager> descriptorTable;
 	std::unique_ptr<TextureStorage> textureStorage;
 	std::shared_ptr<IThreadPool> threadPool;
@@ -25,6 +24,7 @@ namespace Gaia {
 		std::unique_ptr<DepthBuffer> depthBuffer;
 		std::unique_ptr<D3DUploadableResourceManager> vertexBuffer;
 		std::unique_ptr<UploadContainer> vertexUploadContainer;
+		std::unique_ptr<UploadContainer> textureUploadContainer;
 		std::unique_ptr<D3DSingleResourceManager> cpuWriteBuffer;
 	}
 
@@ -72,10 +72,6 @@ namespace Gaia {
 		viewportAndScissor = std::make_unique<ViewportAndScissorManager>(width, height);
 	}
 
-	void InitHeapManager() {
-		heapManager = std::make_unique<HeapManager>();
-	}
-
 	void InitDescriptorTable() {
 		descriptorTable = std::make_unique<DescriptorTableManager>();
 	}
@@ -103,6 +99,7 @@ namespace Gaia {
 		Resources::cpuReadBackHeap = std::make_unique<D3DHeap>(D3D12_HEAP_TYPE_READBACK);
 		Resources::vertexBuffer = std::make_unique<D3DUploadableResourceManager>();
 		Resources::vertexUploadContainer = std::make_unique<UploadContainer>();
+		Resources::textureUploadContainer = std::make_unique<UploadContainer>();
 		Resources::cpuWriteBuffer = std::make_unique<D3DSingleResourceManager>(
 			ResourceType::cpuWrite
 			);
@@ -110,6 +107,7 @@ namespace Gaia {
 
 	void CleanUpUploadResources() {
 		Resources::vertexUploadContainer.reset();
+		Resources::textureUploadContainer.reset();
 	}
 
 	void CleanUpResources() {

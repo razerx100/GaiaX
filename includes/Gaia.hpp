@@ -9,7 +9,6 @@
 #include <ModelContainer.hpp>
 #include <CopyQueueManager.hpp>
 #include <ViewportAndScissorManager.hpp>
-#include <HeapManager.hpp>
 #include <DescriptorTableManager.hpp>
 #include <TextureStorage.hpp>
 #include <IThreadPool.hpp>
@@ -32,7 +31,6 @@ namespace Gaia {
 	extern std::unique_ptr<CopyQueueManager> copyQueue;
 	extern std::unique_ptr<CommandListManager> copyCmdList;
 	extern std::unique_ptr<ViewportAndScissorManager> viewportAndScissor;
-	extern std::unique_ptr<HeapManager> heapManager;
 	extern std::unique_ptr<DescriptorTableManager> descriptorTable;
 	extern std::unique_ptr<TextureStorage> textureStorage;
 	extern std::shared_ptr<IThreadPool> threadPool;
@@ -47,6 +45,7 @@ namespace Gaia {
 		extern std::unique_ptr<DepthBuffer> depthBuffer;
 		extern std::unique_ptr<D3DUploadableResourceManager> vertexBuffer;
 		extern std::unique_ptr<UploadContainer> vertexUploadContainer;
+		extern std::unique_ptr<UploadContainer> textureUploadContainer;
 		extern std::unique_ptr<D3DSingleResourceManager> cpuWriteBuffer;
 	}
 
@@ -61,7 +60,6 @@ namespace Gaia {
 	void InitCopyQueue(ID3D12Device* d3dDevice);
 	void InitCopyCmdList(ID3D12Device4* d3dDevice);
 	void InitViewportAndScissor(std::uint32_t width, std::uint32_t height);
-	void InitHeapManager();
 	void InitDescriptorTable();
 	void InitTextureStorage();
 	void SetThreadPool(std::shared_ptr<IThreadPool>&& threadPoolArg);

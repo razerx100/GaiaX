@@ -41,3 +41,7 @@ void D3DUploadResourceDescriptorView::ReleaseUploadResource() noexcept {
 D3D12_GPU_VIRTUAL_ADDRESS D3DUploadResourceDescriptorView::GetGPUAddress() const noexcept {
 	return m_resourceBuffer.GetGPUAddress();
 }
+
+D3D12_RESOURCE_DESC D3DUploadResourceDescriptorView::GetUploadResourceDesc() const noexcept {
+	return m_resourceBuffer.GetUploadResourceDesc();
+}

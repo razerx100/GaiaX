@@ -1,8 +1,7 @@
 #ifndef D3D_RESOURCE_HPP_
 #define D3D_RESOURCE_HPP_
-
+#include <cstdint>
 #include <D3DHeaders.hpp>
-#include <memory>
 
 class D3DResource {
 public:
@@ -29,8 +28,6 @@ private:
 	ComPtr<ID3D12Resource> m_pBuffer;
 	std::uint8_t* m_cpuHandle;
 };
-
-using D3DResourceShared = std::shared_ptr<D3DResource>;
 
 enum class ResourceType {
 	upload,
@@ -111,6 +108,8 @@ public:
 	ID3D12Resource* GetResource() const noexcept;
 	[[nodiscard]]
 	D3D12_GPU_VIRTUAL_ADDRESS GetGPUAddress() const noexcept;
+	[[nodiscard]]
+	D3D12_RESOURCE_DESC GetUploadResourceDesc() const noexcept;
 
 private:
 	D3DResourceView m_uploadResource;

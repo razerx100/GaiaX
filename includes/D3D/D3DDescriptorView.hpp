@@ -36,12 +36,18 @@ public:
 		m_uav{ flags == D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS }, m_subAllocationSize{ 0u },
 		m_strideSize{ 0u }, m_descriptorOffset{ 0u } {}
 
-
 	void SetDescriptorOffset(
 		size_t descriptorOffset, size_t descriptorSize
 	) noexcept {
 		m_descriptorOffset = descriptorOffset;
 		m_descriptorSize = descriptorSize;
+	}
+
+	void SetTextureInfo(
+		ID3D12Device* device, UINT64 width, UINT height, DXGI_FORMAT format, bool msaa
+	) {
+		m_resourceBuffer.SetTextureInfo(device, width, height, format, msaa);
+		m_resourceBuffer.ReserveHeapSpace(device);
 	}
 
 	void SetBufferInfo(
@@ -204,5 +210,7 @@ public:
 
 	[[nodiscard]]
 	D3D12_GPU_VIRTUAL_ADDRESS GetGPUAddress() const noexcept;
+	[[nodiscard]]
+	D3D12_RESOURCE_DESC GetUploadResourceDesc() const noexcept;
 };
 #endif

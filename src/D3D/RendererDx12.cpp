@@ -46,7 +46,6 @@ RendererDx12::RendererDx12(
 	Gaia::copyQueue->InitSyncObjects(deviceRef);
 
 	Gaia::InitCopyCmdList(deviceRef);
-	Gaia::InitHeapManager();
 	Gaia::InitDescriptorTable();
 	Gaia::InitTextureStorage();
 
@@ -65,7 +64,6 @@ RendererDx12::~RendererDx12() noexcept {
 	Gaia::swapChain.reset();
 	Gaia::graphicsCmdList.reset();
 	Gaia::graphicsQueue.reset();
-	Gaia::heapManager.reset();
 	Gaia::CleanUpResources();
 	Gaia::device.reset();
 #ifdef _DEBUG
@@ -199,8 +197,6 @@ void RendererDx12::ProcessData() {
 	Gaia::modelContainer->ReserveBuffers(device);
 	Gaia::Resources::vertexBuffer->ReserveHeapSpace(device);
 	Gaia::Resources::cpuWriteBuffer->ReserveHeapSpace(device);
-
-	Gaia::heapManager->ReserveHeapSpace();
 	// Reserve Heap Space end
 
 	// Create heaps start
@@ -213,10 +209,10 @@ void RendererDx12::ProcessData() {
 
 	// Create Buffers start
 	Gaia::Resources::depthBuffer->CreateDepthBuffer(device, m_width, m_height);
-	Gaia::heapManager->CreateBuffers(device);
 	Gaia::Resources::cpuWriteBuffer->CreateResource(device);
 	Gaia::Resources::vertexBuffer->CreateResource(device);
 	Gaia::modelContainer->CreateBuffers(device);
+	Gaia::textureStorage->CreateBufferViews(device);
 	// Create Buffers end
 
 	// Set Buffer Start Address start
@@ -229,14 +225,12 @@ void RendererDx12::ProcessData() {
 	std::atomic_size_t workCount = 0u;
 
 	Gaia::Resources::vertexUploadContainer->CopyData(workCount);
-	Gaia::textureStorage->CopyData(workCount);
+	Gaia::Resources::textureUploadContainer->CopyData(workCount);
+
+	Gaia::descriptorTable->CopyUploadHeap(device);
 
 	while (workCount != 0u);
 	// Async copy end
-
-	Gaia::textureStorage->CreateBufferViews(device);
-
-	Gaia::descriptorTable->CopyUploadHeap(device);
 
 	// GPU upload start
 	Gaia::copyCmdList->Reset(0u);
@@ -244,7 +238,7 @@ void RendererDx12::ProcessData() {
 
 	Gaia::Resources::vertexBuffer->RecordResourceUpload(copyList);
 	Gaia::modelContainer->RecordResourceUpload(copyList);
-	Gaia::heapManager->RecordUpload(copyList);
+	Gaia::textureStorage->RecordResourceUpload(copyList);
 
 	Gaia::copyCmdList->Close();
 
@@ -256,10 +250,9 @@ void RendererDx12::ProcessData() {
 
 	// Release Upload Resource start
 	Gaia::modelContainer->ReleaseUploadResource();
-	Gaia::textureStorage->ReleaseUploadBuffer();
+	Gaia::textureStorage->ReleaseUploadResource();
 	Gaia::descriptorTable->ReleaseUploadHeap();
 	Gaia::Resources::vertexBuffer->ReleaseUploadResource();
-	Gaia::heapManager->ReleaseUploadBuffer();
 	Gaia::CleanUpUploadResources();
 	Gaia::Resources::uploadHeap.reset();
 	// Release Upload Resource end
@@ -271,7 +264,7 @@ size_t RendererDx12::RegisterResource(
 ) {
 	return Gaia::textureStorage->AddTexture(
 		Gaia::device->GetDeviceRef(), std::move(textureData),
-		width, height, components16bits
+		width, height
 	);
 }
 
