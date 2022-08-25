@@ -33,8 +33,9 @@ public:
 	)
 		: m_resourceBuffer{ type, flags }, m_gpuHandleStart{}, m_cpuHandleStart{},
 		m_descriptorSize{ 0u },
-		m_uav{ flags == D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS }, m_subAllocationSize{ 0u },
-		m_strideSize{ 0u }, m_descriptorOffset{ 0u } {}
+		m_uav{ flags == D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS },
+		m_subAllocationSize{ 0u }, m_strideSize{ 0u }, m_descriptorOffset{ 0u },
+		m_texture{ false } {}
 
 	void SetDescriptorOffset(
 		size_t descriptorOffset, size_t descriptorSize
@@ -52,6 +53,8 @@ public:
 	) {
 		m_resourceBuffer.SetTextureInfo(device, width, height, format, msaa);
 		m_resourceBuffer.ReserveHeapSpace(device);
+
+		m_texture = true;
 	}
 
 	void SetBufferInfo(
@@ -111,55 +114,17 @@ public:
 		D3D12_GPU_DESCRIPTOR_HANDLE gpuDescriptorStart,
 		D3D12_RESOURCE_STATES initialState
 	) {
-		const size_t descriptorSize = device->GetDescriptorHandleIncrementSize(
-			D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV
-		);
-
-		m_cpuHandleStart.ptr = { uploadDescriptorStart.ptr + descriptorSize * m_descriptorOffset };
-		m_gpuHandleStart.ptr = { gpuDescriptorStart.ptr + descriptorSize * m_descriptorOffset };
+		m_cpuHandleStart.ptr =
+		{ uploadDescriptorStart.ptr + m_descriptorSize * m_descriptorOffset };
+		m_gpuHandleStart.ptr =
+		{ gpuDescriptorStart.ptr + m_descriptorSize * m_descriptorOffset };
 
 		m_resourceBuffer.CreateResource(device, initialState);
 
-		if (m_uav) {
-			D3D12_UNORDERED_ACCESS_VIEW_DESC desc{};
-			desc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
-			desc.Format = DXGI_FORMAT_UNKNOWN;
-			desc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
-
-			D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = m_cpuHandleStart;
-
-			for (auto& bufferInfo : m_bufferInfos) {
-				desc.Buffer = bufferInfo;
-
-				device->CreateUnorderedAccessView(
-					m_resourceBuffer.GetResource(), m_resourceBuffer.GetResource(),
-					&desc, cpuHandle
-				);
-
-				cpuHandle.ptr += m_descriptorSize;
-			}
-		}
-		else {
-			D3D12_SHADER_RESOURCE_VIEW_DESC desc{};
-			desc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
-			desc.Format = DXGI_FORMAT_UNKNOWN;
-			desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-			desc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
-
-			D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = m_cpuHandleStart;
-
-			for (auto& bufferInfo : m_bufferInfos) {
-				desc.Buffer.FirstElement = bufferInfo.FirstElement;
-				desc.Buffer.NumElements = bufferInfo.NumElements;
-				desc.Buffer.StructureByteStride = bufferInfo.StructureByteStride;
-
-				device->CreateShaderResourceView(
-					m_resourceBuffer.GetResource(), &desc, cpuHandle
-				);
-
-				cpuHandle.ptr += m_descriptorSize;
-			}
-		}
+		if (m_texture)
+			CreateTextureDescriptors(device);
+		else
+			CreateBufferDescriptors(device);
 	}
 
 	[[nodiscard]]
@@ -193,6 +158,74 @@ public:
 		return m_resourceBuffer.GetResourceDesc();
 	}
 
+private:
+	void CreateBufferDescriptors(ID3D12Device* device) {
+		D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = m_cpuHandleStart;
+
+		if (m_uav) {
+			D3D12_UNORDERED_ACCESS_VIEW_DESC desc{};
+			desc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
+			desc.Format = DXGI_FORMAT_UNKNOWN;
+			desc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
+
+			for (auto& bufferInfo : m_bufferInfos) {
+				desc.Buffer = bufferInfo;
+
+				device->CreateUnorderedAccessView(
+					m_resourceBuffer.GetResource(), m_resourceBuffer.GetResource(),
+					&desc, cpuHandle
+				);
+
+				cpuHandle.ptr += m_descriptorSize;
+			}
+		}
+		else {
+			D3D12_SHADER_RESOURCE_VIEW_DESC desc{};
+			desc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
+			desc.Format = DXGI_FORMAT_UNKNOWN;
+			desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+			desc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
+
+			for (auto& bufferInfo : m_bufferInfos) {
+				desc.Buffer.FirstElement = bufferInfo.FirstElement;
+				desc.Buffer.NumElements = bufferInfo.NumElements;
+				desc.Buffer.StructureByteStride = bufferInfo.StructureByteStride;
+
+				device->CreateShaderResourceView(
+					m_resourceBuffer.GetResource(), &desc, cpuHandle
+				);
+
+				cpuHandle.ptr += m_descriptorSize;
+			}
+		}
+	}
+
+	void CreateTextureDescriptors(ID3D12Device* device) {
+		const D3D12_RESOURCE_DESC textureDesc = m_resourceBuffer.GetResourceDesc();
+
+		if (m_uav) {
+			D3D12_UNORDERED_ACCESS_VIEW_DESC desc{};
+			desc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
+			desc.Format = textureDesc.Format;
+
+			device->CreateUnorderedAccessView(
+				m_resourceBuffer.GetResource(), m_resourceBuffer.GetResource(),
+				&desc, m_cpuHandleStart
+			);
+		}
+		else {
+			D3D12_SHADER_RESOURCE_VIEW_DESC desc{};
+			desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+			desc.Format = textureDesc.Format;
+			desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+			desc.Texture2D.MipLevels = textureDesc.MipLevels;
+
+			device->CreateShaderResourceView(
+				m_resourceBuffer.GetResource(), &desc, m_cpuHandleStart
+			);
+		}
+	}
+
 protected:
 	ResourceView m_resourceBuffer;
 	D3D12_GPU_DESCRIPTOR_HANDLE m_gpuHandleStart;
@@ -202,6 +235,7 @@ protected:
 	size_t m_subAllocationSize;
 	size_t m_strideSize;
 	size_t m_descriptorOffset;
+	bool m_texture;
 	std::vector<D3D12_BUFFER_UAV> m_bufferInfos;
 };
 
