@@ -19,8 +19,7 @@ public:
 
 	[[nodiscard]]
 	size_t RegisterResource(
-		std::unique_ptr<std::uint8_t> textureData,
-		size_t width, size_t height, bool components16bits = false
+		std::unique_ptr<std::uint8_t> textureData, size_t width, size_t height
 	) override;
 
 	void SetThreadPool(std::shared_ptr<IThreadPool> threadPoolArg) noexcept override;
