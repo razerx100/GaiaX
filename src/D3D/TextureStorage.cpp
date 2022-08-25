@@ -44,8 +44,8 @@ void TextureStorage::CreateBufferViews(ID3D12Device* device) {
 
 		textureDescriptor->UpdateDescriptorOffset(textureRangeStart);
 		textureDescriptor->CreateDescriptorView(
-			device, { uploadDescriptorStart.ptr + textureRangeStart },
-			{ gpuDescriptorStart.ptr + textureRangeStart }, D3D12_RESOURCE_STATE_COPY_DEST
+			device, uploadDescriptorStart, gpuDescriptorStart,
+			D3D12_RESOURCE_STATE_COPY_DEST
 		);
 
 		const D3D12_RESOURCE_DESC textureDesc = textureDescriptor->GetResourceDesc();

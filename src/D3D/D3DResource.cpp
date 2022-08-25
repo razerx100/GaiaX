@@ -101,7 +101,7 @@ void D3DResourceView::_setTextureInfo(
 	resourceDesc.Format = format;
 	resourceDesc.Width = width;
 	resourceDesc.Height = height;
-	resourceDesc.MipLevels = 0u;
+	resourceDesc.MipLevels = 1u;
 	resourceDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
 	resourceDesc.Alignment = alignment;
 	resourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
