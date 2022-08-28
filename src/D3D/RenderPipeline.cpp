@@ -33,7 +33,7 @@ void RenderPipeline::AddGraphicsRootSignature(
 	m_graphicsRS = std::move(signature);
 }
 
-void RenderPipeline::UpdateModels(size_t frameIndex) const noexcept {
+void RenderPipeline::UpdateModelData(size_t frameIndex) const noexcept {
 	size_t offset = 0u;
 	constexpr size_t bufferStride = sizeof(ModelConstantBuffer);
 
@@ -135,7 +135,6 @@ void RenderPipeline::CreateCommandBuffers(ID3D12Device* device) {
 	);
 
 	std::vector<IndirectCommand> commands;
-	constexpr size_t modelBufferSize = sizeof(ModelConstantBuffer);
 
 	for (size_t index = 0u; index < std::size(m_opaqueModels); ++index) {
 		IndirectCommand command{};

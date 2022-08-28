@@ -6,19 +6,18 @@
 ModelContainer::ModelContainer(
 	const std::string& shaderPath, std::uint32_t bufferCount
 ) noexcept
-	: m_renderPipeline(std::make_unique<RenderPipeline>(bufferCount)),
-	m_pPerFrameBuffers(std::make_unique<PerFrameBuffers>(bufferCount)),
-	m_shaderPath(shaderPath) {}
+	: m_renderPipeline{ bufferCount }, m_pPerFrameBuffers{ bufferCount },
+	m_shaderPath{ shaderPath } {}
 
 void ModelContainer::AddModels(std::vector<std::shared_ptr<IModel>>&& models) {
-	m_renderPipeline->AddOpaqueModels(std::move(models));
+	m_renderPipeline.AddOpaqueModels(std::move(models));
 }
 
 void ModelContainer::AddModelInputs(
 	std::unique_ptr<std::uint8_t> vertices, size_t vertexBufferSize, size_t strideSize,
 	std::unique_ptr<std::uint8_t> indices, size_t indexBufferSize
 ) {
-	m_pPerFrameBuffers->AddModelInputs(
+	m_pPerFrameBuffers.AddModelInputs(
 		std::move(vertices), vertexBufferSize, strideSize,
 		std::move(indices), indexBufferSize
 	);
@@ -27,41 +26,41 @@ void ModelContainer::AddModelInputs(
 void ModelContainer::BindCommands(
 	ID3D12GraphicsCommandList* commandList, size_t frameIndex
 ) const noexcept {
-	m_renderPipeline->BindGraphicsPipeline(commandList);
+	m_renderPipeline.BindGraphicsPipeline(commandList);
 
 	D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle = Gaia::textureStorage->GetTextureDescriptorStart();
 	commandList->SetGraphicsRootDescriptorTable(0u, gpuHandle);
 
-	m_pPerFrameBuffers->BindPerFrameBuffers(commandList, frameIndex);
-	m_renderPipeline->UpdateModels(frameIndex);
-	m_renderPipeline->DrawModels(commandList, frameIndex);
+	m_pPerFrameBuffers.BindPerFrameBuffers(commandList, frameIndex);
+	m_renderPipeline.UpdateModelData(frameIndex);
+	m_renderPipeline.DrawModels(commandList, frameIndex);
 }
 
 void ModelContainer::ReserveBuffers(ID3D12Device* device) {
-	m_renderPipeline->ReserveCommandBuffers(device);
+	m_renderPipeline.ReserveCommandBuffers(device);
 }
 
 void ModelContainer::CreateBuffers(ID3D12Device* device) {
-	m_renderPipeline->CreateCommandBuffers(device);
+	m_renderPipeline.CreateCommandBuffers(device);
 
-	m_pPerFrameBuffers->SetMemoryAddresses();
+	m_pPerFrameBuffers.SetMemoryAddresses();
 }
 
 void ModelContainer::RecordResourceUpload(ID3D12GraphicsCommandList* copyList) noexcept {
-	m_renderPipeline->RecordResourceUpload(copyList);
+	m_renderPipeline.RecordResourceUpload(copyList);
 }
 
 void ModelContainer::ReleaseUploadResource() noexcept {
-	m_renderPipeline->ReleaseUploadResource();
+	m_renderPipeline.ReleaseUploadResource();
 }
 
 void ModelContainer::InitPipelines(ID3D12Device* device) {
 	auto [pso, signature] = CreatePipeline(device);
 
-	m_renderPipeline->AddGraphicsRootSignature(std::move(signature));
-	m_renderPipeline->AddGraphicsPipelineObject(std::move(pso));
+	m_renderPipeline.AddGraphicsRootSignature(std::move(signature));
+	m_renderPipeline.AddGraphicsPipelineObject(std::move(pso));
 
-	m_renderPipeline->CreateCommandSignature(device);
+	m_renderPipeline.CreateCommandSignature(device);
 }
 
 ModelContainer::Pipeline ModelContainer::CreatePipeline(ID3D12Device* device) const {

@@ -38,8 +38,8 @@ private:
 	Pipeline CreatePipeline(ID3D12Device* device) const;
 
 private:
-	std::unique_ptr<RenderPipeline> m_renderPipeline;
-	std::unique_ptr<PerFrameBuffers> m_pPerFrameBuffers;
+	RenderPipeline m_renderPipeline;
+	PerFrameBuffers m_pPerFrameBuffers;
 
 	std::string m_shaderPath;
 };

@@ -34,7 +34,7 @@ public:
 	void AddComputeRootSignature(std::unique_ptr<RootSignatureBase> signature) noexcept;
 
 	void AddOpaqueModels(std::vector<std::shared_ptr<IModel>>&& models) noexcept;
-	void UpdateModels(size_t frameIndex) const noexcept;
+	void UpdateModelData(size_t frameIndex) const noexcept;
 	void BindGraphicsPipeline(ID3D12GraphicsCommandList* graphicsCommandList) const noexcept;
 	void DrawModels(
 		ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex
