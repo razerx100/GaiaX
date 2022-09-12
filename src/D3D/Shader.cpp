@@ -2,13 +2,13 @@
 #include <D3DThrowMacros.hpp>
 #include <d3dcompiler.h>
 
-void Shader::LoadBinary(const std::string& fileName) {
-	HRESULT hr;
-	D3D_THROW_FAILED(hr, D3DReadFileToBlob(StrToWStr(fileName).c_str(), &m_pBinary));
+void Shader::LoadBinary(const std::wstring& fileName) {
+	HRESULT hr{};
+	D3D_THROW_FAILED(hr, D3DReadFileToBlob(fileName.c_str(), &m_pBinary));
 }
 
 void Shader::CompileBinary(
-	const std::string& fileName, const char* target,
+	const std::wstring& fileName, const char* target,
 	const char* entryPoint
 ) {
 #if defined(_DEBUG)
@@ -19,7 +19,7 @@ void Shader::CompileBinary(
 
 	HRESULT hr;
 	D3D_THROW_FAILED(hr, D3DCompileFromFile(
-		StrToWStr(fileName).c_str(),
+		fileName.c_str(),
 		nullptr,
 		nullptr,
 		entryPoint,
@@ -39,8 +39,3 @@ D3D12_SHADER_BYTECODE Shader::GetByteCode() const noexcept {
 
 	return byteCode;
 }
-
-std::wstring Shader::StrToWStr(const std::string& str) const noexcept {
-	return std::wstring(std::begin(str), std::end(str));
-}
-

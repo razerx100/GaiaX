@@ -6,7 +6,7 @@
 #include <GraphicsQueueManager.hpp>
 #include <CommandListManager.hpp>
 #include <DebugInfoManager.hpp>
-#include <ModelContainer.hpp>
+#include <ModelManager.hpp>
 #include <CopyQueueManager.hpp>
 #include <ViewportAndScissorManager.hpp>
 #include <DescriptorTableManager.hpp>
@@ -27,7 +27,7 @@ namespace Gaia {
 	extern std::unique_ptr<GraphicsQueueManager> graphicsQueue;
 	extern std::unique_ptr<CommandListManager> graphicsCmdList;
 	extern std::unique_ptr<DebugInfoManager> debugInfo;
-	extern std::unique_ptr<ModelContainer> modelContainer;
+	extern std::unique_ptr<ModelManager> modelManager;
 	extern std::unique_ptr<CopyQueueManager> copyQueue;
 	extern std::unique_ptr<CommandListManager> copyCmdList;
 	extern std::unique_ptr<ViewportAndScissorManager> viewportAndScissor;
@@ -56,7 +56,7 @@ namespace Gaia {
 	void InitGraphicsCmdList(ID3D12Device4* d3dDevice, std::uint32_t listCount);
 	void InitDebugInfo();
 	void InitDepthBuffer(ID3D12Device* d3dDevice);
-	void InitModelContainer(const std::string& shaderPath, std::uint32_t bufferCount);
+	void InitModelManager(std::uint32_t bufferCount);
 	void InitCopyQueue(ID3D12Device* d3dDevice);
 	void InitCopyCmdList(ID3D12Device4* d3dDevice);
 	void InitViewportAndScissor(std::uint32_t width, std::uint32_t height);

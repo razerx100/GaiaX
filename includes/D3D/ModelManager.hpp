@@ -1,5 +1,5 @@
-#ifndef MODEL_CONTAINER_HPP_
-#define MODEL_CONTAINER_HPP_
+#ifndef MODEL_MANAGER_HPP_
+#define MODEL_MANAGER_HPP_
 #include <string>
 #include <memory>
 #include <PerFrameBuffers.hpp>
@@ -8,12 +8,11 @@
 #include <IModel.hpp>
 #include <RenderPipeline.hpp>
 
-class ModelContainer {
+class ModelManager {
 public:
-	ModelContainer(
-		const std::string& shaderPath, std::uint32_t bufferCount
-	) noexcept;
+	ModelManager(std::uint32_t bufferCount) noexcept;
 
+	void SetShaderPath(std::wstring path) noexcept;
 	void AddModels(std::vector<std::shared_ptr<IModel>>&& models);
 	void AddModelInputs(
 		std::unique_ptr<std::uint8_t> vertices, size_t vertexBufferSize, size_t strideSize,
@@ -41,6 +40,6 @@ private:
 	RenderPipeline m_renderPipeline;
 	PerFrameBuffers m_pPerFrameBuffers;
 
-	std::string m_shaderPath;
+	std::wstring m_shaderPath;
 };
 #endif

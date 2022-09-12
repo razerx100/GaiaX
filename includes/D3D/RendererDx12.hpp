@@ -32,8 +32,7 @@ public:
 	void Render() override;
 	void WaitForAsyncTasks() override;
 
-	void SetShaderPath(const char* path) noexcept override;
-	void InitResourceBasedObjects() override;
+	void SetShaderPath(const wchar_t* path) noexcept override;
 	void ProcessData() override;
 
 	void SetSharedDataContainer(
@@ -44,7 +43,6 @@ private:
 	std::array<float, 4> m_backgroundColour;
 
 	const std::string m_appName;
-	std::string m_shaderPath;
 	std::uint32_t m_width;
 	std::uint32_t m_height;
 	std::uint32_t m_bufferCount;

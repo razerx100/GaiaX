@@ -5,18 +5,14 @@
 
 class Shader {
 public:
-	void LoadBinary(const std::string& fileName);
+	void LoadBinary(const std::wstring& fileName);
 	void CompileBinary(
-		const std::string& fileName, const char* target,
+		const std::wstring& fileName, const char* target,
 		const char* entryPoint = "main"
 	);
 
 	[[nodiscard]]
 	D3D12_SHADER_BYTECODE GetByteCode() const noexcept;
-
-private:
-	[[nodiscard]]
-	std::wstring StrToWStr(const std::string& str) const noexcept;
 
 private:
 	ComPtr<ID3DBlob> m_pBinary;

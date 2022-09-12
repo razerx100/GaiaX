@@ -1,19 +1,20 @@
-#include <ModelContainer.hpp>
+#include <ModelManager.hpp>
 #include <Shader.hpp>
 #include <Gaia.hpp>
 #include <VertexLayout.hpp>
 
-ModelContainer::ModelContainer(
-	const std::string& shaderPath, std::uint32_t bufferCount
-) noexcept
-	: m_renderPipeline{ bufferCount }, m_pPerFrameBuffers{ bufferCount },
-	m_shaderPath{ shaderPath } {}
+ModelManager::ModelManager(std::uint32_t bufferCount) noexcept :
+	m_renderPipeline{ bufferCount }, m_pPerFrameBuffers{ bufferCount } {}
 
-void ModelContainer::AddModels(std::vector<std::shared_ptr<IModel>>&& models) {
+void ModelManager::SetShaderPath(std::wstring path) noexcept {
+	m_shaderPath = std::move(path);
+}
+
+void ModelManager::AddModels(std::vector<std::shared_ptr<IModel>>&& models) {
 	m_renderPipeline.AddOpaqueModels(std::move(models));
 }
 
-void ModelContainer::AddModelInputs(
+void ModelManager::AddModelInputs(
 	std::unique_ptr<std::uint8_t> vertices, size_t vertexBufferSize, size_t strideSize,
 	std::unique_ptr<std::uint8_t> indices, size_t indexBufferSize
 ) {
@@ -23,7 +24,7 @@ void ModelContainer::AddModelInputs(
 	);
 }
 
-void ModelContainer::BindCommands(
+void ModelManager::BindCommands(
 	ID3D12GraphicsCommandList* commandList, size_t frameIndex
 ) const noexcept {
 	m_renderPipeline.BindGraphicsPipeline(commandList);
@@ -36,25 +37,25 @@ void ModelContainer::BindCommands(
 	m_renderPipeline.DrawModels(commandList, frameIndex);
 }
 
-void ModelContainer::ReserveBuffers(ID3D12Device* device) {
+void ModelManager::ReserveBuffers(ID3D12Device* device) {
 	m_renderPipeline.ReserveCommandBuffers(device);
 }
 
-void ModelContainer::CreateBuffers(ID3D12Device* device) {
+void ModelManager::CreateBuffers(ID3D12Device* device) {
 	m_renderPipeline.CreateCommandBuffers(device);
 
 	m_pPerFrameBuffers.SetMemoryAddresses();
 }
 
-void ModelContainer::RecordResourceUpload(ID3D12GraphicsCommandList* copyList) noexcept {
+void ModelManager::RecordResourceUpload(ID3D12GraphicsCommandList* copyList) noexcept {
 	m_renderPipeline.RecordResourceUpload(copyList);
 }
 
-void ModelContainer::ReleaseUploadResource() noexcept {
+void ModelManager::ReleaseUploadResource() noexcept {
 	m_renderPipeline.ReleaseUploadResource();
 }
 
-void ModelContainer::InitPipelines(ID3D12Device* device) {
+void ModelManager::InitPipelines(ID3D12Device* device) {
 	auto [pso, signature] = CreatePipeline(device);
 
 	m_renderPipeline.AddGraphicsRootSignature(std::move(signature));
@@ -63,7 +64,7 @@ void ModelContainer::InitPipelines(ID3D12Device* device) {
 	m_renderPipeline.CreateCommandSignature(device);
 }
 
-ModelContainer::Pipeline ModelContainer::CreatePipeline(ID3D12Device* device) const {
+ModelManager::Pipeline ModelManager::CreatePipeline(ID3D12Device* device) const {
 	std::unique_ptr<RootSignatureDynamic> signature = std::make_unique<RootSignatureDynamic>();
 
 	signature->AddDescriptorTable(
@@ -80,10 +81,10 @@ ModelContainer::Pipeline ModelContainer::CreatePipeline(ID3D12Device* device) co
 	signature->CreateSignature(device);
 
 	std::unique_ptr<Shader> vs = std::make_unique<Shader>();
-	vs->LoadBinary(m_shaderPath + "VertexShader.cso");
+	vs->LoadBinary(m_shaderPath + L"VertexShader.cso");
 
 	std::unique_ptr<Shader> ps = std::make_unique<Shader>();
-	ps->LoadBinary(m_shaderPath + "PixelShader.cso");
+	ps->LoadBinary(m_shaderPath + L"PixelShader.cso");
 
 	VertexLayout vertexLayout{};
 	vertexLayout.AddInputElement("Position", DXGI_FORMAT_R32G32B32_FLOAT, 12u);
