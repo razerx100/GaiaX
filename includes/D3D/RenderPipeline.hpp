@@ -44,8 +44,8 @@ public:
 	void DispatchCompute(ID3D12GraphicsCommandList* computeCommandList) const noexcept;
 
 	void CreateCommandSignature(ID3D12Device* device);
-	void CreateCommandBuffers(ID3D12Device* device);
-	void ReserveCommandBuffers(ID3D12Device* device);
+	void CreateBuffers(ID3D12Device* device);
+	void ReserveBuffers(ID3D12Device* device);
 
 	void RecordResourceUpload(ID3D12GraphicsCommandList* copyList) noexcept;
 	void ReleaseUploadResource() noexcept;

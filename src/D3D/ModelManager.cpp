@@ -38,11 +38,11 @@ void ModelManager::BindCommands(
 }
 
 void ModelManager::ReserveBuffers(ID3D12Device* device) {
-	m_renderPipeline.ReserveCommandBuffers(device);
+	m_renderPipeline.ReserveBuffers(device);
 }
 
 void ModelManager::CreateBuffers(ID3D12Device* device) {
-	m_renderPipeline.CreateCommandBuffers(device);
+	m_renderPipeline.CreateBuffers(device);
 
 	m_pPerFrameBuffers.SetMemoryAddresses();
 }

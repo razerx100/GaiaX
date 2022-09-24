@@ -94,7 +94,7 @@ void RenderPipeline::DrawModels(
 	);
 }
 
-void RenderPipeline::ReserveCommandBuffers(ID3D12Device* device) {
+void RenderPipeline::ReserveBuffers(ID3D12Device* device) {
 	m_modelCount = static_cast<UINT>(std::size(m_opaqueModels));
 
 	const size_t commandDescriptorOffset =
@@ -118,7 +118,7 @@ void RenderPipeline::ReserveCommandBuffers(ID3D12Device* device) {
 	);
 }
 
-void RenderPipeline::CreateCommandBuffers(ID3D12Device* device) {
+void RenderPipeline::CreateBuffers(ID3D12Device* device) {
 	const D3D12_CPU_DESCRIPTOR_HANDLE uploadDescriptorStart =
 		Gaia::descriptorTable->GetUploadDescriptorStart();
 
