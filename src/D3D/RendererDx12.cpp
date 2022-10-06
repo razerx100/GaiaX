@@ -20,8 +20,7 @@ RendererDx12::RendererDx12(
 	Gaia::InitDepthBuffer(deviceRef);
 	Gaia::Resources::depthBuffer->SetMaxResolution(7680u, 4320u);
 
-	Gaia::InitGraphicsQueue(deviceRef, bufferCount);
-	Gaia::InitGraphicsCmdList(deviceRef, bufferCount);
+	Gaia::InitGraphicsQueueAndList(deviceRef, bufferCount);
 
 	SwapChainCreateInfo swapChainCreateInfo = {};
 	swapChainCreateInfo.bufferCount = bufferCount;
@@ -29,7 +28,7 @@ RendererDx12::RendererDx12(
 	swapChainCreateInfo.height = height;
 	swapChainCreateInfo.device = deviceRef;
 	swapChainCreateInfo.factory = Gaia::device->GetFactoryRef();
-	swapChainCreateInfo.graphicsQueue = Gaia::graphicsQueue->GetQueueRef();
+	swapChainCreateInfo.graphicsQueue = Gaia::graphicsQueue->GetQueue();
 	swapChainCreateInfo.windowHandle = static_cast<HWND>(windowHandle);
 	swapChainCreateInfo.variableRefreshRate = true;
 
@@ -42,10 +41,11 @@ RendererDx12::RendererDx12(
 
 	Gaia::InitViewportAndScissor(width, height);
 
-	Gaia::InitCopyQueue(deviceRef);
+	Gaia::InitCopyQueueAndList(deviceRef);
 	Gaia::copyQueue->InitSyncObjects(deviceRef);
+	Gaia::InitComputeQueueAndList(deviceRef);
+	Gaia::computeQueue->InitSyncObjects(deviceRef);
 
-	Gaia::InitCopyCmdList(deviceRef);
 	Gaia::InitDescriptorTable();
 	Gaia::InitModelManager(bufferCount);
 	Gaia::InitTextureStorage();
@@ -62,6 +62,8 @@ RendererDx12::~RendererDx12() noexcept {
 	Gaia::copyCmdList.reset();
 	Gaia::copyQueue.reset();
 	Gaia::modelManager.reset();
+	Gaia::computeCmdList.reset();
+	Gaia::computeQueue.reset();
 	Gaia::swapChain.reset();
 	Gaia::graphicsCmdList.reset();
 	Gaia::graphicsQueue.reset();
@@ -87,50 +89,50 @@ void RendererDx12::SubmitModelInputs(
 }
 
 void RendererDx12::Render() {
-	ID3D12GraphicsCommandList* commandList = Gaia::graphicsCmdList->GetCommandListRef();
+	ID3D12GraphicsCommandList* graphicsCommandList = Gaia::graphicsCmdList->GetCommandList();
 
-	size_t currentBackIndex = Gaia::swapChain->GetCurrentBackBufferIndex();
+	const size_t currentBackIndex = Gaia::swapChain->GetCurrentBackBufferIndex();
 
 	Gaia::graphicsCmdList->Reset(currentBackIndex);
 	D3D12_RESOURCE_BARRIER renderBarrier = Gaia::swapChain->GetRenderStateBarrier(
 		currentBackIndex
 	);
-	commandList->ResourceBarrier(1u, &renderBarrier);
+	graphicsCommandList->ResourceBarrier(1u, &renderBarrier);
 
 	ID3D12DescriptorHeap* ppHeap[] = { Gaia::descriptorTable->GetDescHeapRef() };
-	commandList->SetDescriptorHeaps(1u, ppHeap);
+	graphicsCommandList->SetDescriptorHeaps(1u, ppHeap);
 
-	commandList->RSSetViewports(
+	graphicsCommandList->RSSetViewports(
 		1u, Gaia::viewportAndScissor->GetViewportRef()
 	);
-	commandList->RSSetScissorRects(
+	graphicsCommandList->RSSetScissorRects(
 		1u, Gaia::viewportAndScissor->GetScissorRef()
 	);
 
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = Gaia::swapChain->GetRTVHandle(currentBackIndex);
 
 	Gaia::swapChain->ClearRTV(
-		commandList, std::data(m_backgroundColour), rtvHandle
+		graphicsCommandList, std::data(m_backgroundColour), rtvHandle
 	);
 
 	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = Gaia::Resources::depthBuffer->GetDSVHandle();
 
-	Gaia::Resources::depthBuffer->ClearDSV(commandList, dsvHandle);
+	Gaia::Resources::depthBuffer->ClearDSV(graphicsCommandList, dsvHandle);
 
-	commandList->OMSetRenderTargets(
+	graphicsCommandList->OMSetRenderTargets(
 		1u, &rtvHandle, FALSE, &dsvHandle
 	);
 
 	// Record objects
-	Gaia::modelManager->BindCommands(commandList, currentBackIndex);
+	Gaia::modelManager->BindCommands(graphicsCommandList, currentBackIndex);
 
 	D3D12_RESOURCE_BARRIER presentBarrier = Gaia::swapChain->GetPresentStateBarrier(
 		currentBackIndex
 	);
-	commandList->ResourceBarrier(1u, &presentBarrier);
+	graphicsCommandList->ResourceBarrier(1u, &presentBarrier);
 
 	Gaia::graphicsCmdList->Close();
-	Gaia::graphicsQueue->ExecuteCommandLists(commandList);
+	Gaia::graphicsQueue->ExecuteCommandLists(graphicsCommandList);
 
 	Gaia::swapChain->PresentWithTear();
 	Gaia::graphicsQueue->MoveToNextFrame(currentBackIndex);
@@ -230,8 +232,8 @@ void RendererDx12::ProcessData() {
 	// Async copy end
 
 	// GPU upload start
-	Gaia::copyCmdList->Reset(0u);
-	ID3D12GraphicsCommandList* copyList = Gaia::copyCmdList->GetCommandListRef();
+	Gaia::copyCmdList->Reset();
+	ID3D12GraphicsCommandList* copyList = Gaia::copyCmdList->GetCommandList();
 
 	Gaia::Resources::vertexBuffer->RecordResourceUpload(copyList);
 	Gaia::modelManager->RecordResourceUpload(copyList);

@@ -3,18 +3,20 @@
 namespace Gaia {
 	std::unique_ptr<DeviceManager> device;
 	std::unique_ptr<SwapChainManager> swapChain;
-	std::unique_ptr<GraphicsQueueManager> graphicsQueue;
-	std::unique_ptr<CommandListManager> graphicsCmdList;
+	std::unique_ptr<D3DCommandQueue> graphicsQueue;
+	std::unique_ptr<D3DCommandList> graphicsCmdList;
 	std::unique_ptr<DebugInfoManager> debugInfo;
 	std::unique_ptr<ModelManager> modelManager;
-	std::unique_ptr<CopyQueueManager> copyQueue;
-	std::unique_ptr<CommandListManager> copyCmdList;
+	std::unique_ptr<D3DCommandQueue> copyQueue;
+	std::unique_ptr<D3DCommandList> copyCmdList;
 	std::unique_ptr<ViewportAndScissorManager> viewportAndScissor;
 	std::unique_ptr<DescriptorTableManager> descriptorTable;
 	std::unique_ptr<TextureStorage> textureStorage;
 	std::shared_ptr<IThreadPool> threadPool;
 	std::unique_ptr<CameraManager> cameraManager;
 	std::shared_ptr<ISharedDataContainer> sharedData;
+	std::unique_ptr<D3DCommandQueue> computeQueue;
+	std::unique_ptr<D3DCommandList> computeCmdList;
 
 	namespace Resources {
 		std::unique_ptr<D3DHeap> uploadHeap;
@@ -36,13 +38,14 @@ namespace Gaia {
 		swapChain = std::make_unique<SwapChainManager>(createInfo);
 	}
 
-	void InitGraphicsQueue(ID3D12Device* d3dDevice, std::uint32_t syncObjCount) {
-		graphicsQueue = std::make_unique<GraphicsQueueManager>(d3dDevice, syncObjCount);
-	}
-
-	void InitGraphicsCmdList(ID3D12Device4* d3dDevice, std::uint32_t listCount) {
-		graphicsCmdList = std::make_unique<CommandListManager>(
-			d3dDevice, D3D12_COMMAND_LIST_TYPE_DIRECT, listCount
+	void InitGraphicsQueueAndList(
+		ID3D12Device4* d3dDevice, std::uint32_t commandAllocatorCount
+	) {
+		graphicsQueue = std::make_unique<D3DCommandQueue>(
+			d3dDevice, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAllocatorCount
+			);
+		graphicsCmdList = std::make_unique<D3DCommandList>(
+			d3dDevice, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAllocatorCount
 			);
 	}
 
@@ -58,13 +61,17 @@ namespace Gaia {
 		modelManager = std::make_unique<ModelManager>(bufferCount);
 	}
 
-	void InitCopyQueue(ID3D12Device* d3dDevice) {
-		copyQueue = std::make_unique<CopyQueueManager>(d3dDevice);
+	void InitCopyQueueAndList(ID3D12Device4* d3dDevice) {
+		copyQueue = std::make_unique<D3DCommandQueue>(d3dDevice, D3D12_COMMAND_LIST_TYPE_COPY);
+		copyCmdList = std::make_unique<D3DCommandList>(d3dDevice, D3D12_COMMAND_LIST_TYPE_COPY);
 	}
 
-	void InitCopyCmdList(ID3D12Device4* d3dDevice) {
-		copyCmdList = std::make_unique<CommandListManager>(
-			d3dDevice, D3D12_COMMAND_LIST_TYPE_COPY, 1u
+	void InitComputeQueueAndList(ID3D12Device4* d3dDevice) {
+		computeQueue = std::make_unique<D3DCommandQueue>(
+			d3dDevice, D3D12_COMMAND_LIST_TYPE_COMPUTE
+			);
+		computeCmdList = std::make_unique<D3DCommandList>(
+			d3dDevice, D3D12_COMMAND_LIST_TYPE_COMPUTE
 			);
 	}
 

@@ -3,11 +3,10 @@
 #include <memory>
 #include <DeviceManager.hpp>
 #include <SwapChainManager.hpp>
-#include <GraphicsQueueManager.hpp>
-#include <CommandListManager.hpp>
+#include <D3DCommandQueue.hpp>
+#include <D3DCommandList.hpp>
 #include <DebugInfoManager.hpp>
 #include <ModelManager.hpp>
-#include <CopyQueueManager.hpp>
 #include <ViewportAndScissorManager.hpp>
 #include <DescriptorTableManager.hpp>
 #include <TextureStorage.hpp>
@@ -24,18 +23,20 @@ namespace Gaia {
 	// Variables
 	extern std::unique_ptr<DeviceManager> device;
 	extern std::unique_ptr<SwapChainManager> swapChain;
-	extern std::unique_ptr<GraphicsQueueManager> graphicsQueue;
-	extern std::unique_ptr<CommandListManager> graphicsCmdList;
+	extern std::unique_ptr<D3DCommandQueue> graphicsQueue;
+	extern std::unique_ptr<D3DCommandList> graphicsCmdList;
 	extern std::unique_ptr<DebugInfoManager> debugInfo;
 	extern std::unique_ptr<ModelManager> modelManager;
-	extern std::unique_ptr<CopyQueueManager> copyQueue;
-	extern std::unique_ptr<CommandListManager> copyCmdList;
+	extern std::unique_ptr<D3DCommandQueue> copyQueue;
+	extern std::unique_ptr<D3DCommandList> copyCmdList;
 	extern std::unique_ptr<ViewportAndScissorManager> viewportAndScissor;
 	extern std::unique_ptr<DescriptorTableManager> descriptorTable;
 	extern std::unique_ptr<TextureStorage> textureStorage;
 	extern std::shared_ptr<IThreadPool> threadPool;
 	extern std::unique_ptr<CameraManager> cameraManager;
 	extern std::shared_ptr<ISharedDataContainer> sharedData;
+	extern std::unique_ptr<D3DCommandQueue> computeQueue;
+	extern std::unique_ptr<D3DCommandList> computeCmdList;
 
 	namespace Resources {
 		extern std::unique_ptr<D3DHeap> uploadHeap;
@@ -52,13 +53,12 @@ namespace Gaia {
 	// Initialization functions
 	void InitDevice();
 	void InitSwapChain(const SwapChainCreateInfo& createInfo);
-	void InitGraphicsQueue(ID3D12Device* d3dDevice, std::uint32_t syncObjCount);
-	void InitGraphicsCmdList(ID3D12Device4* d3dDevice, std::uint32_t listCount);
+	void InitGraphicsQueueAndList(ID3D12Device4* d3dDevice, std::uint32_t commandAllocatorCount);
 	void InitDebugInfo();
 	void InitDepthBuffer(ID3D12Device* d3dDevice);
 	void InitModelManager(std::uint32_t bufferCount);
-	void InitCopyQueue(ID3D12Device* d3dDevice);
-	void InitCopyCmdList(ID3D12Device4* d3dDevice);
+	void InitCopyQueueAndList(ID3D12Device4* d3dDevice);
+	void InitComputeQueueAndList(ID3D12Device4* d3dDevice);
 	void InitViewportAndScissor(std::uint32_t width, std::uint32_t height);
 	void InitDescriptorTable();
 	void InitTextureStorage();
