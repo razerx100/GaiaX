@@ -19,8 +19,7 @@ void ModelManager::AddModelInputs(
 	std::unique_ptr<std::uint8_t> indices, size_t indexBufferSize
 ) {
 	m_pPerFrameBuffers.AddModelInputs(
-		std::move(vertices), vertexBufferSize, strideSize,
-		std::move(indices), indexBufferSize
+		std::move(vertices), vertexBufferSize, strideSize, std::move(indices), indexBufferSize
 	);
 }
 
@@ -56,16 +55,19 @@ void ModelManager::ReleaseUploadResource() noexcept {
 }
 
 void ModelManager::InitPipelines(ID3D12Device* device) {
-	auto [pso, signature] = CreatePipeline(device);
+	auto [graphicsPSO, graphicsSignature] = CreateGraphicsPipeline(device);
+	auto [computePSO, computeSignature] = CreateComputePipeline(device);
 
-	m_renderPipeline.AddGraphicsRootSignature(std::move(signature));
-	m_renderPipeline.AddGraphicsPipelineObject(std::move(pso));
+	m_renderPipeline.AddGraphicsRootSignature(std::move(graphicsSignature));
+	m_renderPipeline.AddGraphicsPipelineObject(std::move(graphicsPSO));
+	m_renderPipeline.AddComputeRootSignature(std::move(computeSignature));
+	m_renderPipeline.AddComputePipelineObject(std::move(computePSO));
 
 	m_renderPipeline.CreateCommandSignature(device);
 }
 
-ModelManager::Pipeline ModelManager::CreatePipeline(ID3D12Device* device) const {
-	std::unique_ptr<RootSignatureDynamic> signature = std::make_unique<RootSignatureDynamic>();
+ModelManager::Pipeline ModelManager::CreateGraphicsPipeline(ID3D12Device* device) const {
+	auto signature = std::make_unique<RootSignatureDynamic>();
 
 	signature->AddDescriptorTable(
 		D3D12_DESCRIPTOR_RANGE_TYPE_SRV, UINT_MAX, D3D12_SHADER_VISIBILITY_PIXEL, true,
@@ -80,27 +82,33 @@ ModelManager::Pipeline ModelManager::CreatePipeline(ID3D12Device* device) const 
 	signature->CompileSignature();
 	signature->CreateSignature(device);
 
-	std::unique_ptr<Shader> vs = std::make_unique<Shader>();
+	auto vs = std::make_unique<Shader>();
 	vs->LoadBinary(m_shaderPath + L"VertexShader.cso");
 
-	std::unique_ptr<Shader> ps = std::make_unique<Shader>();
+	auto ps = std::make_unique<Shader>();
 	ps->LoadBinary(m_shaderPath + L"PixelShader.cso");
 
 	VertexLayout vertexLayout{};
 	vertexLayout.AddInputElement("Position", DXGI_FORMAT_R32G32B32_FLOAT, 12u);
 	vertexLayout.AddInputElement("UV", DXGI_FORMAT_R32G32_FLOAT, 8u);
 
-	std::unique_ptr<PipelineObjectGFX> pso = std::make_unique<PipelineObjectGFX>();
-	pso->CreatePipelineState(
-		device,
-		vertexLayout.GetLayoutDesc(),
-		signature->Get(),
-		vs->GetByteCode(),
+	auto pso = std::make_unique<D3DPipelineObject>();
+	pso->CreateGFXPipelineState(
+		device, vertexLayout.GetLayoutDesc(), signature->Get(), vs->GetByteCode(),
 		ps->GetByteCode()
 	);
 
-	return {
-		std::move(pso),
-		std::move(signature)
-	};
+	return { std::move(pso), std::move(signature) };
+}
+
+ModelManager::Pipeline ModelManager::CreateComputePipeline(ID3D12Device* device) const {
+	auto signature = std::make_unique<RootSignatureDynamic>();
+
+	auto cs = std::make_unique<Shader>();
+	//cs->LoadBinary(m_shaderPath + L"ComputeShader.cso");
+
+	auto pso = std::make_unique<D3DPipelineObject>();
+	//pso->CreateComputePipelineState(device, signature->Get(), cs->GetByteCode());
+
+	return { std::move(pso), std::move(signature) };
 }

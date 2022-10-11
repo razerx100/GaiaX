@@ -4,7 +4,7 @@
 #include <D3DHeaders.hpp>
 #include <vector>
 #include <memory>
-#include <PipelineObjectGFX.hpp>
+#include <D3DPipelineObject.hpp>
 #include <RootSignatureBase.hpp>
 #include <IModel.hpp>
 #include <D3DResource.hpp>
@@ -28,9 +28,9 @@ class RenderPipeline {
 public:
 	RenderPipeline(std::uint32_t frameCount) noexcept;
 
-	void AddGraphicsPipelineObject(std::unique_ptr<PipelineObjectGFX> pso) noexcept;
+	void AddGraphicsPipelineObject(std::unique_ptr<D3DPipelineObject> pso) noexcept;
 	void AddGraphicsRootSignature(std::unique_ptr<RootSignatureBase> signature) noexcept;
-	void AddComputePipelineObject() noexcept;
+	void AddComputePipelineObject(std::unique_ptr<D3DPipelineObject> pso) noexcept;
 	void AddComputeRootSignature(std::unique_ptr<RootSignatureBase> signature) noexcept;
 
 	void AddOpaqueModels(std::vector<std::shared_ptr<IModel>>&& models) noexcept;
@@ -53,9 +53,10 @@ public:
 private:
 	std::vector<std::shared_ptr<IModel>> m_opaqueModels;
 
-	std::unique_ptr<PipelineObjectGFX> m_graphicPSO;
+	std::unique_ptr<D3DPipelineObject> m_graphicPSO;
 	std::unique_ptr<RootSignatureBase> m_graphicsRS;
 
+	std::unique_ptr<D3DPipelineObject> m_computePSO;
 	std::unique_ptr<RootSignatureBase> m_computeRS;
 
 	ComPtr<ID3D12CommandSignature> m_commandSignature;

@@ -4,7 +4,7 @@
 #include <memory>
 #include <PerFrameBuffers.hpp>
 #include <RootSignatureDynamic.hpp>
-#include <PipelineObjectGFX.hpp>
+#include <D3DPipelineObject.hpp>
 #include <IModel.hpp>
 #include <RenderPipeline.hpp>
 
@@ -32,9 +32,10 @@ public:
 
 private:
 	using Pipeline =
-		std::pair<std::unique_ptr<PipelineObjectGFX>, std::unique_ptr<RootSignatureDynamic>>;
+		std::pair<std::unique_ptr<D3DPipelineObject>, std::unique_ptr<RootSignatureDynamic>>;
 
-	Pipeline CreatePipeline(ID3D12Device* device) const;
+	Pipeline CreateGraphicsPipeline(ID3D12Device* device) const;
+	Pipeline CreateComputePipeline(ID3D12Device* device) const;
 
 private:
 	RenderPipeline m_renderPipeline;

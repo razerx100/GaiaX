@@ -13,7 +13,11 @@ void RenderPipeline::AddOpaqueModels(std::vector<std::shared_ptr<IModel>>&& mode
 	std::ranges::move(models, std::back_inserter(m_opaqueModels));
 }
 
-void RenderPipeline::AddComputePipelineObject() noexcept {}
+void RenderPipeline::AddComputePipelineObject(
+	std::unique_ptr<D3DPipelineObject> pso
+) noexcept {
+	m_computePSO = std::move(pso);
+}
 
 void RenderPipeline::AddComputeRootSignature(
 	std::unique_ptr<RootSignatureBase> signature
@@ -22,7 +26,7 @@ void RenderPipeline::AddComputeRootSignature(
 }
 
 void RenderPipeline::AddGraphicsPipelineObject(
-	std::unique_ptr<PipelineObjectGFX> pso
+	std::unique_ptr<D3DPipelineObject> pso
 ) noexcept {
 	m_graphicPSO = std::move(pso);
 }
