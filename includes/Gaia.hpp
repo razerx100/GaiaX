@@ -18,6 +18,7 @@
 #include <D3DSingleResourceManager.hpp>
 #include <D3DUploadableResourceManager.hpp>
 #include <UploadContainer.hpp>
+#include <D3DFence.hpp>
 
 namespace Gaia {
 	// Variables
@@ -25,6 +26,7 @@ namespace Gaia {
 	extern std::unique_ptr<SwapChainManager> swapChain;
 	extern std::unique_ptr<D3DCommandQueue> graphicsQueue;
 	extern std::unique_ptr<D3DCommandList> graphicsCmdList;
+	extern std::unique_ptr<D3DFence> graphicsFence;
 	extern std::unique_ptr<DebugInfoManager> debugInfo;
 	extern std::unique_ptr<ModelManager> modelManager;
 	extern std::unique_ptr<D3DCommandQueue> copyQueue;
@@ -37,6 +39,7 @@ namespace Gaia {
 	extern std::shared_ptr<ISharedDataContainer> sharedData;
 	extern std::unique_ptr<D3DCommandQueue> computeQueue;
 	extern std::unique_ptr<D3DCommandList> computeCmdList;
+	extern std::unique_ptr<D3DFence> computeFence;
 
 	namespace Resources {
 		extern std::unique_ptr<D3DHeap> uploadHeap;
@@ -58,7 +61,7 @@ namespace Gaia {
 	void InitDepthBuffer(ID3D12Device* d3dDevice);
 	void InitModelManager(std::uint32_t bufferCount);
 	void InitCopyQueueAndList(ID3D12Device4* d3dDevice);
-	void InitComputeQueueAndList(ID3D12Device4* d3dDevice);
+	void InitComputeQueueAndList(ID3D12Device4* d3dDevice, std::uint32_t commandAllocatorCount);
 	void InitViewportAndScissor(std::uint32_t width, std::uint32_t height);
 	void InitDescriptorTable();
 	void InitTextureStorage();

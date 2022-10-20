@@ -5,6 +5,7 @@ namespace Gaia {
 	std::unique_ptr<SwapChainManager> swapChain;
 	std::unique_ptr<D3DCommandQueue> graphicsQueue;
 	std::unique_ptr<D3DCommandList> graphicsCmdList;
+	std::unique_ptr<D3DFence> graphicsFence;
 	std::unique_ptr<DebugInfoManager> debugInfo;
 	std::unique_ptr<ModelManager> modelManager;
 	std::unique_ptr<D3DCommandQueue> copyQueue;
@@ -17,6 +18,7 @@ namespace Gaia {
 	std::shared_ptr<ISharedDataContainer> sharedData;
 	std::unique_ptr<D3DCommandQueue> computeQueue;
 	std::unique_ptr<D3DCommandList> computeCmdList;
+	std::unique_ptr<D3DFence> computeFence;
 
 	namespace Resources {
 		std::unique_ptr<D3DHeap> uploadHeap;
@@ -42,11 +44,12 @@ namespace Gaia {
 		ID3D12Device4* d3dDevice, std::uint32_t commandAllocatorCount
 	) {
 		graphicsQueue = std::make_unique<D3DCommandQueue>(
-			d3dDevice, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAllocatorCount
+			d3dDevice, D3D12_COMMAND_LIST_TYPE_DIRECT
 			);
 		graphicsCmdList = std::make_unique<D3DCommandList>(
 			d3dDevice, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAllocatorCount
 			);
+		graphicsFence = std::make_unique<D3DFence>(d3dDevice, commandAllocatorCount);
 	}
 
 	void InitDebugInfo() {
@@ -66,13 +69,16 @@ namespace Gaia {
 		copyCmdList = std::make_unique<D3DCommandList>(d3dDevice, D3D12_COMMAND_LIST_TYPE_COPY);
 	}
 
-	void InitComputeQueueAndList(ID3D12Device4* d3dDevice) {
+	void InitComputeQueueAndList(
+		ID3D12Device4* d3dDevice, std::uint32_t commandAllocatorCount
+	) {
 		computeQueue = std::make_unique<D3DCommandQueue>(
 			d3dDevice, D3D12_COMMAND_LIST_TYPE_COMPUTE
 			);
 		computeCmdList = std::make_unique<D3DCommandList>(
-			d3dDevice, D3D12_COMMAND_LIST_TYPE_COMPUTE
+			d3dDevice, D3D12_COMMAND_LIST_TYPE_COMPUTE, commandAllocatorCount
 			);
+		computeFence = std::make_unique<D3DFence>(d3dDevice, commandAllocatorCount);
 	}
 
 	void InitViewportAndScissor(std::uint32_t width, std::uint32_t height) {

@@ -26,9 +26,16 @@ public:
 	void RecordResourceUpload(ID3D12GraphicsCommandList* copyList) noexcept;
 	void ReleaseUploadResource() noexcept;
 
-	void BindCommands(
+	void UpdateData(size_t frameIndex) const noexcept;
+	void RecordGraphicsCommands(
 		ID3D12GraphicsCommandList* commandList, size_t frameIndex
 	) const noexcept;
+	void RecordComputeCommands(
+		ID3D12GraphicsCommandList* commandList, size_t frameIndex
+	) const noexcept;
+
+	[[nodiscard]]
+	ID3D12Resource* GetCommandBuffer() const noexcept;
 
 private:
 	using Pipeline =
@@ -39,8 +46,11 @@ private:
 
 private:
 	RenderPipeline m_renderPipeline;
-	PerFrameBuffers m_pPerFrameBuffers;
+	PerFrameBuffers m_perFrameBuffers;
 
 	std::wstring m_shaderPath;
+
+	std::vector<UINT> m_graphicsRSLayout;
+	std::vector<UINT> m_computeRSLayout;
 };
 #endif

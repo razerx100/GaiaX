@@ -34,8 +34,8 @@ public:
 		std::unique_ptr<std::uint8_t> vertices, size_t vertexBufferSize, size_t strideSize,
 		std::unique_ptr<std::uint8_t> indices, size_t indexBufferSize
 	) = 0;
+	virtual void Update() = 0;
 	virtual void Render() = 0;
-	virtual void WaitForAsyncTasks() = 0;
 
 	virtual void SetShaderPath(const wchar_t* path) noexcept = 0;
 	virtual void ProcessData() = 0;

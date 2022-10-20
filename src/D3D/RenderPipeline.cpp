@@ -165,11 +165,23 @@ void RenderPipeline::CreateBuffers(ID3D12Device* device) {
 
 void RenderPipeline::BindComputePipeline(
 	ID3D12GraphicsCommandList* computeCommandList
-) const noexcept {}
+) const noexcept {
+	computeCommandList->SetPipelineState(m_computePSO->Get());
+	computeCommandList->SetComputeRootSignature(m_computeRS->Get());
+}
 
 void RenderPipeline::DispatchCompute(
-	ID3D12GraphicsCommandList* computeCommandList
-) const noexcept {}
+	ID3D12GraphicsCommandList* computeCommandList, size_t frameIndex
+) const noexcept {
+	computeCommandList->SetComputeRootDescriptorTable(
+		0u, m_modelBuffers.GetGPUDescriptorHandle(frameIndex)
+	);
+	computeCommandList->SetComputeRootDescriptorTable(
+		1u, m_commandBuffer.GetGPUDescriptorHandle(frameIndex)
+	);
+
+	computeCommandList->Dispatch(m_modelCount / THREADBLOCKSIZE, 1u, 1u);
+}
 
 void RenderPipeline::RecordResourceUpload(ID3D12GraphicsCommandList* copyList) noexcept {
 	m_commandBuffer.RecordResourceUpload(copyList);
@@ -177,4 +189,8 @@ void RenderPipeline::RecordResourceUpload(ID3D12GraphicsCommandList* copyList) n
 
 void RenderPipeline::ReleaseUploadResource() noexcept {
 	m_commandBuffer.ReleaseUploadResource();
+}
+
+ID3D12Resource* RenderPipeline::GetCommandBuffer() const noexcept {
+	return m_commandBuffer.GetResource();
 }

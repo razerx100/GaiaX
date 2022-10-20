@@ -2,13 +2,16 @@
 #include <D3DThrowMacros.hpp>
 #include <d3dx12.h>
 
+RootSignatureDynamic::RootSignatureDynamic() noexcept :
+	m_elementLayout(static_cast<size_t>(RootSigElement::ElementCount)) {}
+
 void RootSignatureDynamic::AddConstants(
-	std::uint32_t numOfValues,
-	D3D12_SHADER_VISIBILITY visibility,
-	std::uint32_t registerNumber,
-	std::uint32_t registerSpace
+	std::uint32_t numOfValues, D3D12_SHADER_VISIBILITY visibility, RootSigElement elementType,
+	std::uint32_t registerNumber, std::uint32_t registerSpace
 ) noexcept {
-	CD3DX12_ROOT_PARAMETER1 constantParam = {};
+	AddElementType(elementType);
+
+	CD3DX12_ROOT_PARAMETER1 constantParam{};
 	constantParam.InitAsConstants(
 		numOfValues,
 		registerNumber,
@@ -20,12 +23,12 @@ void RootSignatureDynamic::AddConstants(
 }
 
 void RootSignatureDynamic::AddDescriptorTable(
-	D3D12_DESCRIPTOR_RANGE_TYPE descriptorType,
-	std::uint32_t descriptorsAmount,
-	D3D12_SHADER_VISIBILITY visibility, bool bindless,
-	std::uint32_t registerNumber,
-	std::uint32_t registerSpace
+	D3D12_DESCRIPTOR_RANGE_TYPE descriptorType, std::uint32_t descriptorsAmount,
+	D3D12_SHADER_VISIBILITY visibility, RootSigElement elementType, bool bindless,
+	std::uint32_t registerNumber, std::uint32_t registerSpace
 ) noexcept {
+	AddElementType(elementType);
+
 	D3D12_DESCRIPTOR_RANGE_FLAGS descFlag = D3D12_DESCRIPTOR_RANGE_FLAG_NONE;
 
 	if (descriptorType == D3D12_DESCRIPTOR_RANGE_TYPE_SRV)
@@ -43,20 +46,20 @@ void RootSignatureDynamic::AddDescriptorTable(
 		descriptorType, descriptorsAmount, registerNumber, registerSpace, descFlag
 	);
 
-	CD3DX12_ROOT_PARAMETER1 descTableParam = {};
+	CD3DX12_ROOT_PARAMETER1 descTableParam{};
 	descTableParam.InitAsDescriptorTable(1u, descRange.get(), visibility);
 
 	m_rangePreserver.emplace_back(std::move(descRange));
-
 	m_rootParameters.emplace_back(descTableParam);
 }
 
 void RootSignatureDynamic::AddConstantBufferView(
-	D3D12_SHADER_VISIBILITY visibility,
-	std::uint32_t registerNumber,
-	std::uint32_t registerSpace
+	D3D12_SHADER_VISIBILITY visibility, RootSigElement elementType,
+	std::uint32_t registerNumber, std::uint32_t registerSpace
 ) noexcept {
-	CD3DX12_ROOT_PARAMETER1 cbvParam = {};
+	AddElementType(elementType);
+
+	CD3DX12_ROOT_PARAMETER1 cbvParam{};
 	cbvParam.InitAsConstantBufferView(
 		registerNumber, registerSpace,
 		D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE,
@@ -67,11 +70,12 @@ void RootSignatureDynamic::AddConstantBufferView(
 }
 
 void RootSignatureDynamic::AddUnorderedAccessView(
-	D3D12_SHADER_VISIBILITY visibility,
-	std::uint32_t registerNumber,
-	std::uint32_t registerSpace
+	D3D12_SHADER_VISIBILITY visibility, RootSigElement elementType,
+	std::uint32_t registerNumber, std::uint32_t registerSpace
 ) noexcept {
-	CD3DX12_ROOT_PARAMETER1 uavParam = {};
+	AddElementType(elementType);
+
+	CD3DX12_ROOT_PARAMETER1 uavParam{};
 	uavParam.InitAsUnorderedAccessView(
 		registerNumber, registerSpace,
 		D3D12_ROOT_DESCRIPTOR_FLAG_DATA_VOLATILE,
@@ -82,9 +86,11 @@ void RootSignatureDynamic::AddUnorderedAccessView(
 }
 
 void RootSignatureDynamic::AddShaderResourceView(
-	D3D12_SHADER_VISIBILITY visibility,
+	D3D12_SHADER_VISIBILITY visibility, RootSigElement elementType,
 	std::uint32_t registerNumber, std::uint32_t registerSpace
 ) noexcept {
+	AddElementType(elementType);
+
 	D3D12_ROOT_DESCRIPTOR_FLAGS srvFlag = D3D12_ROOT_DESCRIPTOR_FLAG_NONE;
 
 	srvFlag = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE;
@@ -98,14 +104,14 @@ void RootSignatureDynamic::AddShaderResourceView(
 }
 
 void RootSignatureDynamic::CompileSignature(bool staticSampler) {
-	CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSigDesc = {};
+	CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSigDesc{};
 	D3D12_ROOT_SIGNATURE_FLAGS sigFlags =
 		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
 		D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
 		D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS |
 		D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS;
 
-	D3D12_STATIC_SAMPLER_DESC staticSamplerDesc = {};
+	D3D12_STATIC_SAMPLER_DESC staticSamplerDesc{};
 
 	if (staticSampler) {
 		staticSamplerDesc.ShaderRegister = 0u;
@@ -147,3 +153,12 @@ void RootSignatureDynamic::CompileSignature(bool staticSampler) {
 	m_rangePreserver = std::vector<std::unique_ptr<D3D12_DESCRIPTOR_RANGE1>>();
 }
 
+void RootSignatureDynamic::AddElementType(RootSigElement elementType) noexcept {
+	assert(elementType != RootSigElement::ElementCount && "Invalid Root Element Type");
+	m_elementLayout[static_cast<size_t>(elementType)] =
+		static_cast<UINT>(std::size(m_rootParameters));
+}
+
+std::vector<UINT> RootSignatureDynamic::GetElementLayout() const noexcept {
+	return m_elementLayout;
+}

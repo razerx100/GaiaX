@@ -1,5 +1,6 @@
 #include <PerFrameBuffers.hpp>
 #include <Gaia.hpp>
+#include <RootSignatureDynamic.hpp>
 
 #include <CameraManager.hpp>
 
@@ -31,17 +32,26 @@ void PerFrameBuffers::SetMemoryAddresses() noexcept {
 	m_gIndexBufferView.OffsetGPUAddress(vertexGpuStart);
 }
 
-void PerFrameBuffers::BindPerFrameBuffers(
-	ID3D12GraphicsCommandList* graphicsCmdList, size_t frameIndex
-) const noexcept {
+void PerFrameBuffers::UpdateData(size_t frameIndex) const noexcept {
 	std::uint8_t* cameraCpuHandle = m_cameraBuffer.GetCPUAddressStart(frameIndex);
 
 	Gaia::cameraManager->CopyData(cameraCpuHandle);
+}
+
+void PerFrameBuffers::BindPerFrameBuffers(
+	ID3D12GraphicsCommandList* graphicsCmdList, size_t frameIndex,
+	const std::vector<UINT>& rsLayout
+) const noexcept {
+	static constexpr size_t cameraTypeIndex = static_cast<size_t>(RootSigElement::Camera);
 
 	graphicsCmdList->SetGraphicsRootConstantBufferView(
-		3u, m_cameraBuffer.GetGPUAddressStart(frameIndex)
+		rsLayout[cameraTypeIndex], m_cameraBuffer.GetGPUAddressStart(frameIndex)
 	);
+}
 
+void PerFrameBuffers::BindVertexBuffer(
+	ID3D12GraphicsCommandList* graphicsCmdList
+) const noexcept {
 	graphicsCmdList->IASetVertexBuffers(0u, 1u, m_gVertexBufferView.GetAddress());
 	graphicsCmdList->IASetIndexBuffer(m_gIndexBufferView.GetAddress());
 }

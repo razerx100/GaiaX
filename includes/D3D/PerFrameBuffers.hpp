@@ -4,14 +4,17 @@
 #include <BufferView.hpp>
 #include <D3DDescriptorView.hpp>
 #include <memory>
+#include <vector>
 
 class PerFrameBuffers {
 public:
 	PerFrameBuffers(std::uint32_t frameCount);
 
+	void UpdateData(size_t frameIndex) const noexcept;
 	void BindPerFrameBuffers(
-		ID3D12GraphicsCommandList* graphicsCmdList, size_t frameIndex
+		ID3D12GraphicsCommandList* cmdList, size_t frameIndex, const std::vector<UINT>& rsLayout
 	) const noexcept;
+	void BindVertexBuffer(ID3D12GraphicsCommandList* graphicsCmdList) const noexcept;
 	void SetMemoryAddresses() noexcept;
 
 	void AddModelInputs(

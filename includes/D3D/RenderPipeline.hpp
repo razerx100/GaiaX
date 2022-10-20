@@ -41,7 +41,9 @@ public:
 	) const noexcept;
 
 	void BindComputePipeline(ID3D12GraphicsCommandList* computeCommandList) const noexcept;
-	void DispatchCompute(ID3D12GraphicsCommandList* computeCommandList) const noexcept;
+	void DispatchCompute(
+		ID3D12GraphicsCommandList* computeCommandList, size_t frameIndex
+	) const noexcept;
 
 	void CreateCommandSignature(ID3D12Device* device);
 	void CreateBuffers(ID3D12Device* device);
@@ -49,6 +51,9 @@ public:
 
 	void RecordResourceUpload(ID3D12GraphicsCommandList* copyList) noexcept;
 	void ReleaseUploadResource() noexcept;
+
+	[[nodiscard]]
+	ID3D12Resource* GetCommandBuffer() const noexcept;
 
 private:
 	std::vector<std::shared_ptr<IModel>> m_opaqueModels;
@@ -66,5 +71,7 @@ private:
 	D3DUploadResourceDescriptorView m_commandBuffer;
 	size_t m_commandDescriptorOffset;
 	D3DSingleDescriptorView m_modelBuffers;
+
+	static constexpr std::uint32_t THREADBLOCKSIZE = 128u;
 };
 #endif

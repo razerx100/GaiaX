@@ -37,10 +37,7 @@ public:
 	[[nodiscard]]
 	size_t GetCurrentBackBufferIndex() const noexcept;
 	[[nodiscard]]
-	D3D12_RESOURCE_BARRIER GetRenderStateBarrier(size_t index) const noexcept;
-	[[nodiscard]]
-	D3D12_RESOURCE_BARRIER GetPresentStateBarrier(size_t index) const noexcept;
-
+	ID3D12Resource* GetRTV(size_t index) const noexcept;
 	[[nodiscard]]
 	IDXGISwapChain4* GetRef() const noexcept;
 

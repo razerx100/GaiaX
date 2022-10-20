@@ -93,20 +93,8 @@ D3D12_CPU_DESCRIPTOR_HANDLE SwapChainManager::GetRTVHandle(size_t index) const n
 	);
 }
 
-D3D12_RESOURCE_BARRIER SwapChainManager::GetRenderStateBarrier(size_t index) const noexcept {
-	return CD3DX12_RESOURCE_BARRIER::Transition(
-		m_pRenderTargetViews[index].Get(),
-		D3D12_RESOURCE_STATE_PRESENT,
-		D3D12_RESOURCE_STATE_RENDER_TARGET
-	);
-}
-
-D3D12_RESOURCE_BARRIER SwapChainManager::GetPresentStateBarrier(size_t index) const noexcept {
-	return CD3DX12_RESOURCE_BARRIER::Transition(
-		m_pRenderTargetViews[index].Get(),
-		D3D12_RESOURCE_STATE_RENDER_TARGET,
-		D3D12_RESOURCE_STATE_PRESENT
-	);
+ID3D12Resource* SwapChainManager::GetRTV(size_t index) const noexcept {
+	return m_pRenderTargetViews[index].Get();
 }
 
 void SwapChainManager::ToggleVSync() noexcept {
