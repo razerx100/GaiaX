@@ -31,6 +31,7 @@ public:
 	) override;
 	void Update() override;
 	void Render() override;
+	void WaitForAsyncTasks() override;
 
 	void SetShaderPath(const wchar_t* path) noexcept override;
 	void ProcessData() override;

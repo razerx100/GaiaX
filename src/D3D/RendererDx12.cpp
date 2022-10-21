@@ -303,3 +303,12 @@ void RendererDx12::SetSharedDataContainer(
 ) noexcept {
 	Gaia::SetSharedData(std::move(sharedData));
 }
+
+void RendererDx12::WaitForAsyncTasks() {
+	for (std::uint32_t _ = 0u; _ < m_bufferCount; ++_) {
+		Gaia::graphicsFence->WaitOnCPUConditional();
+		Gaia::graphicsFence->AdvanceValueInQueue();
+		Gaia::computeFence->WaitOnCPUConditional();
+		Gaia::computeFence->AdvanceValueInQueue();
+	}
+}
