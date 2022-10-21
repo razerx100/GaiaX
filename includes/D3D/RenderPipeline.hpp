@@ -72,6 +72,6 @@ private:
 	size_t m_commandDescriptorOffset;
 	D3DSingleDescriptorView m_modelBuffers;
 
-	static constexpr std::uint32_t THREADBLOCKSIZE = 128u;
+	static constexpr float THREADBLOCKSIZE = 128.f;
 };
 #endif

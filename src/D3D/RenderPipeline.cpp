@@ -80,7 +80,7 @@ void RenderPipeline::CreateCommandSignature(ID3D12Device* device) {
 	HRESULT hr{};
 	D3D_THROW_FAILED(hr,
 		device->CreateCommandSignature(
-			&desc, m_graphicsRS->Get(), __uuidof(ID3D12CommandSignature), &m_commandSignature
+			&desc, m_graphicsRS->Get(), IID_PPV_ARGS(&m_commandSignature)
 		)
 	);
 }
@@ -180,7 +180,9 @@ void RenderPipeline::DispatchCompute(
 		1u, m_commandBuffer.GetGPUDescriptorHandle(frameIndex)
 	);
 
-	computeCommandList->Dispatch(m_modelCount / THREADBLOCKSIZE, 1u, 1u);
+	computeCommandList->Dispatch(
+		static_cast<UINT>(std::ceil(m_modelCount / THREADBLOCKSIZE)), 1u, 1u
+	);
 }
 
 void RenderPipeline::RecordResourceUpload(ID3D12GraphicsCommandList* copyList) noexcept {
