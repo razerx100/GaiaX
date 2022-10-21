@@ -305,6 +305,11 @@ void RendererDx12::SetSharedDataContainer(
 }
 
 void RendererDx12::WaitForAsyncTasks() {
-	Gaia::graphicsFence->WaitOnCPUConditional();
-	Gaia::computeFence->WaitOnCPUConditional();
+	// Current frame's value is already checked. So, check the rest
+	for (std::uint32_t _ = 0u; _ < m_bufferCount - 1u; ++_) {
+		Gaia::graphicsFence->AdvanceValueInQueue();
+		Gaia::graphicsFence->WaitOnCPUConditional();
+		Gaia::computeFence->AdvanceValueInQueue();
+		Gaia::computeFence->WaitOnCPUConditional();
+	}
 }
