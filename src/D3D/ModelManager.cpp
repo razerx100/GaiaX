@@ -37,7 +37,9 @@ void ModelManager::RecordGraphicsCommands(
 		Gaia::textureStorage->GetTextureDescriptorStart();
 	commandList->SetGraphicsRootDescriptorTable(0u, gpuHandle);
 
-	m_perFrameBuffers.BindPerFrameBuffers(commandList, frameIndex, m_graphicsRSLayout);
+	m_perFrameBuffers.BindPerFrameBuffersToGraphics(
+		commandList, frameIndex, m_graphicsRSLayout
+	);
 	m_perFrameBuffers.BindVertexBuffer(commandList);
 	m_renderPipeline.DrawModels(commandList, frameIndex);
 }
@@ -46,8 +48,9 @@ void ModelManager::RecordComputeCommands(
 	ID3D12GraphicsCommandList* commandList, size_t frameIndex
 ) const noexcept {
 	m_renderPipeline.BindComputePipeline(commandList);
-	// need to bind PerFrameBuffer too
-	m_perFrameBuffers.BindPerFrameBuffers(commandList, frameIndex, m_computeRSLayout);
+	m_perFrameBuffers.BindPerFrameBuffersToCompute(
+		commandList, frameIndex, m_computeRSLayout
+	);
 	m_renderPipeline.DispatchCompute(commandList, frameIndex);
 }
 

@@ -1,6 +1,5 @@
 #include <PerFrameBuffers.hpp>
 #include <Gaia.hpp>
-#include <RootSignatureDynamic.hpp>
 
 #include <CameraManager.hpp>
 
@@ -38,15 +37,22 @@ void PerFrameBuffers::UpdateData(size_t frameIndex) const noexcept {
 	Gaia::cameraManager->CopyData(cameraCpuHandle);
 }
 
-void PerFrameBuffers::BindPerFrameBuffers(
+void PerFrameBuffers::BindPerFrameBuffersToGraphics(
 	ID3D12GraphicsCommandList* graphicsCmdList, size_t frameIndex,
 	const std::vector<UINT>& rsLayout
 ) const noexcept {
-	static constexpr size_t cameraTypeIndex = static_cast<size_t>(RootSigElement::Camera);
+	BindPerFrameBuffers<&ID3D12GraphicsCommandList::SetGraphicsRootConstantBufferView>(
+		graphicsCmdList, frameIndex, rsLayout
+		);
+}
 
-	graphicsCmdList->SetGraphicsRootConstantBufferView(
-		rsLayout[cameraTypeIndex], m_cameraBuffer.GetGPUAddressStart(frameIndex)
-	);
+void PerFrameBuffers::BindPerFrameBuffersToCompute(
+	ID3D12GraphicsCommandList* computeCmdList, size_t frameIndex,
+	const std::vector<UINT>& rsLayout
+) const noexcept {
+	BindPerFrameBuffers<&ID3D12GraphicsCommandList::SetComputeRootConstantBufferView>(
+		computeCmdList, frameIndex, rsLayout
+		);
 }
 
 void PerFrameBuffers::BindVertexBuffer(
