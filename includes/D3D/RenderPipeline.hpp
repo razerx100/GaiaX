@@ -33,8 +33,8 @@ public:
 	void AddComputePipelineObject(std::unique_ptr<D3DPipelineObject> pso) noexcept;
 	void AddComputeRootSignature(std::unique_ptr<RootSignatureBase> signature) noexcept;
 
-	void AddOpaqueModels(std::vector<std::shared_ptr<IModel>>&& models) noexcept;
-	void UpdateModelData(size_t frameIndex) const noexcept;
+	void RecordIndirectArguments(const std::vector<std::shared_ptr<IModel>>& models) noexcept;
+
 	void BindGraphicsPipeline(ID3D12GraphicsCommandList* graphicsCommandList) const noexcept;
 	void DrawModels(
 		ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex
@@ -53,11 +53,11 @@ public:
 	void ReleaseUploadResource() noexcept;
 
 	[[nodiscard]]
-	ID3D12Resource* GetCommandBuffer() const noexcept;
+	D3D12_RESOURCE_BARRIER GetTransitionBarrier(
+		D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_STATES afterState
+	) const noexcept;
 
 private:
-	std::vector<std::shared_ptr<IModel>> m_opaqueModels;
-
 	std::unique_ptr<D3DPipelineObject> m_graphicPSO;
 	std::unique_ptr<RootSignatureBase> m_graphicsRS;
 
@@ -70,7 +70,7 @@ private:
 	size_t m_modelBufferPerFrameSize;
 	D3DUploadResourceDescriptorView m_commandBuffer;
 	size_t m_commandDescriptorOffset;
-	D3DSingleDescriptorView m_modelBuffers;
+	std::vector<IndirectCommand> m_indirectCommands;
 
 	static constexpr float THREADBLOCKSIZE = 128.f;
 };

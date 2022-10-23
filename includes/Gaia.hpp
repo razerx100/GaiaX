@@ -6,7 +6,8 @@
 #include <D3DCommandQueue.hpp>
 #include <D3DCommandList.hpp>
 #include <DebugInfoManager.hpp>
-#include <ModelManager.hpp>
+#include <RenderPipeline.hpp>
+#include <BufferManager.hpp>
 #include <ViewportAndScissorManager.hpp>
 #include <DescriptorTableManager.hpp>
 #include <TextureStorage.hpp>
@@ -28,7 +29,8 @@ namespace Gaia {
 	extern std::unique_ptr<D3DCommandList> graphicsCmdList;
 	extern std::unique_ptr<D3DFence> graphicsFence;
 	extern std::unique_ptr<DebugInfoManager> debugInfo;
-	extern std::unique_ptr<ModelManager> modelManager;
+	extern std::unique_ptr<RenderPipeline> renderPipeline;
+	extern std::unique_ptr<BufferManager> bufferManager;
 	extern std::unique_ptr<D3DCommandQueue> copyQueue;
 	extern std::unique_ptr<D3DCommandList> copyCmdList;
 	extern std::unique_ptr<ViewportAndScissorManager> viewportAndScissor;
@@ -59,7 +61,6 @@ namespace Gaia {
 	void InitGraphicsQueueAndList(ID3D12Device4* d3dDevice, std::uint32_t commandAllocatorCount);
 	void InitDebugInfo();
 	void InitDepthBuffer(ID3D12Device* d3dDevice);
-	void InitModelManager(std::uint32_t bufferCount);
 	void InitCopyQueueAndList(ID3D12Device4* d3dDevice);
 	void InitComputeQueueAndList(ID3D12Device4* d3dDevice, std::uint32_t commandAllocatorCount);
 	void InitViewportAndScissor(std::uint32_t width, std::uint32_t height);
@@ -67,6 +68,8 @@ namespace Gaia {
 	void InitTextureStorage();
 	void SetThreadPool(std::shared_ptr<IThreadPool>&& threadPoolArg);
 	void InitCameraManager();
+	void InitRenderPipeline(std::uint32_t bufferCount);
+	void InitBufferManager(std::uint32_t bufferCount);
 	void SetSharedData(std::shared_ptr<ISharedDataContainer>&& sharedDataArg);
 	void InitResources();
 	void CleanUpResources();

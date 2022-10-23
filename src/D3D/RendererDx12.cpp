@@ -2,6 +2,7 @@
 #include <D3DThrowMacros.hpp>
 #include <Gaia.hpp>
 #include <D3DHelperFunctions.hpp>
+#include <PipelineConstructor.hpp>
 
 RendererDx12::RendererDx12(
 	const char* appName,
@@ -39,7 +40,8 @@ RendererDx12::RendererDx12(
 	Gaia::InitComputeQueueAndList(deviceRef, bufferCount);
 
 	Gaia::InitDescriptorTable();
-	Gaia::InitModelManager(bufferCount);
+	Gaia::InitRenderPipeline(bufferCount);
+	Gaia::InitBufferManager(bufferCount);
 	Gaia::InitTextureStorage();
 
 	Gaia::InitCameraManager();
@@ -53,7 +55,8 @@ RendererDx12::~RendererDx12() noexcept {
 	Gaia::viewportAndScissor.reset();
 	Gaia::copyCmdList.reset();
 	Gaia::copyQueue.reset();
-	Gaia::modelManager.reset();
+	Gaia::renderPipeline.reset();
+	Gaia::bufferManager.reset();
 	Gaia::computeFence.reset();
 	Gaia::computeCmdList.reset();
 	Gaia::computeQueue.reset();
@@ -69,14 +72,15 @@ RendererDx12::~RendererDx12() noexcept {
 }
 
 void RendererDx12::SubmitModels(std::vector<std::shared_ptr<IModel>>&& models) {
-	Gaia::modelManager->AddModels(std::move(models));
+	Gaia::renderPipeline->RecordIndirectArguments(models);
+	Gaia::bufferManager->AddOpaqueModels(std::move(models));
 }
 
 void RendererDx12::SubmitModelInputs(
 	std::unique_ptr<std::uint8_t> vertices, size_t vertexBufferSize, size_t strideSize,
 	std::unique_ptr<std::uint8_t> indices, size_t indexBufferSize
 ) {
-	Gaia::modelManager->AddModelInputs(
+	Gaia::bufferManager->AddModelInputs(
 		std::move(vertices), vertexBufferSize, strideSize,
 		std::move(indices), indexBufferSize
 	);
@@ -85,7 +89,7 @@ void RendererDx12::SubmitModelInputs(
 void RendererDx12::Update() {
 	const size_t currentBackIndex = Gaia::swapChain->GetCurrentBackBufferIndex();
 
-	Gaia::modelManager->UpdateData(currentBackIndex);
+	Gaia::bufferManager->Update(currentBackIndex);
 }
 
 void RendererDx12::Render() {
@@ -100,7 +104,9 @@ void RendererDx12::Render() {
 	computeCommandList->SetDescriptorHeaps(1u, ppHeap);
 
 	// Record compute commands
-	Gaia::modelManager->RecordComputeCommands(computeCommandList, currentBackIndex);
+	Gaia::renderPipeline->BindComputePipeline(computeCommandList);
+	Gaia::bufferManager->BindBuffersToCompute(computeCommandList, currentBackIndex);
+	Gaia::renderPipeline->DispatchCompute(computeCommandList, currentBackIndex);
 
 	Gaia::computeCmdList->Close();
 	Gaia::computeQueue->ExecuteCommandLists(computeCommandList);
@@ -119,24 +125,19 @@ void RendererDx12::Render() {
 	Gaia::graphicsCmdList->Reset(currentBackIndex);
 	static D3D12_RESOURCE_BARRIER preBarriers[2]{};
 
-	preBarriers[0] = GetTransitionBarrier(
-		Gaia::swapChain->GetRTV(currentBackIndex),
-		D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET
+	preBarriers[0] = Gaia::swapChain->GetTransitionBarrier(
+		D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET, currentBackIndex
 	);
-	preBarriers[1] = GetTransitionBarrier(
-		Gaia::modelManager->GetCommandBuffer(),
+	// Need to change transtion barrier implementation for UAV
+	preBarriers[1] = Gaia::renderPipeline->GetTransitionBarrier(
 		D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT
 	);
 	graphicsCommandList->ResourceBarrier(2u, preBarriers);
 
 	graphicsCommandList->SetDescriptorHeaps(1u, ppHeap);
 
-	graphicsCommandList->RSSetViewports(
-		1u, Gaia::viewportAndScissor->GetViewportRef()
-	);
-	graphicsCommandList->RSSetScissorRects(
-		1u, Gaia::viewportAndScissor->GetScissorRef()
-	);
+	graphicsCommandList->RSSetViewports(1u, Gaia::viewportAndScissor->GetViewportRef());
+	graphicsCommandList->RSSetScissorRects(1u, Gaia::viewportAndScissor->GetScissorRef());
 
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = Gaia::swapChain->GetRTVHandle(currentBackIndex);
 
@@ -151,11 +152,12 @@ void RendererDx12::Render() {
 	graphicsCommandList->OMSetRenderTargets(1u, &rtvHandle, FALSE, &dsvHandle);
 
 	// Record objects
-	Gaia::modelManager->RecordGraphicsCommands(graphicsCommandList, currentBackIndex);
+	Gaia::renderPipeline->BindGraphicsPipeline(graphicsCommandList);
+	Gaia::bufferManager->BindBuffersToGraphics(graphicsCommandList, currentBackIndex);
+	Gaia::renderPipeline->DrawModels(graphicsCommandList, currentBackIndex);
 
-	D3D12_RESOURCE_BARRIER presentBarrier = GetTransitionBarrier(
-		Gaia::swapChain->GetRTV(currentBackIndex),
-		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT
+	D3D12_RESOURCE_BARRIER presentBarrier = Gaia::swapChain->GetTransitionBarrier(
+		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT, currentBackIndex
 	);
 	graphicsCommandList->ResourceBarrier(1u, &presentBarrier);
 
@@ -210,7 +212,7 @@ void RendererDx12::SetBackgroundColour(const std::array<float, 4>& colour) noexc
 }
 
 void RendererDx12::SetShaderPath(const wchar_t* path) noexcept {
-	Gaia::modelManager->SetShaderPath(path);
+	m_shaderPath = path;
 }
 
 void RendererDx12::ProcessData() {
@@ -218,7 +220,8 @@ void RendererDx12::ProcessData() {
 
 	// Reserve Heap Space start
 	Gaia::Resources::depthBuffer->ReserveHeapSpace(device);
-	Gaia::modelManager->ReserveBuffers(device);
+	Gaia::renderPipeline->ReserveBuffers(device);
+	Gaia::bufferManager->ReserveBuffers(device);
 	Gaia::Resources::vertexBuffer->ReserveHeapSpace(device);
 	Gaia::Resources::cpuWriteBuffer->ReserveHeapSpace(device);
 	// Reserve Heap Space end
@@ -235,7 +238,8 @@ void RendererDx12::ProcessData() {
 	Gaia::Resources::depthBuffer->CreateDepthBuffer(device, m_width, m_height);
 	Gaia::Resources::cpuWriteBuffer->CreateResource(device);
 	Gaia::Resources::vertexBuffer->CreateResource(device);
-	Gaia::modelManager->CreateBuffers(device);
+	Gaia::renderPipeline->CreateBuffers(device);
+	Gaia::bufferManager->CreateBuffers(device);
 	Gaia::textureStorage->CreateBufferViews(device);
 	// Create Buffers end
 
@@ -261,7 +265,7 @@ void RendererDx12::ProcessData() {
 	ID3D12GraphicsCommandList* copyList = Gaia::copyCmdList->GetCommandList();
 
 	Gaia::Resources::vertexBuffer->RecordResourceUpload(copyList);
-	Gaia::modelManager->RecordResourceUpload(copyList);
+	Gaia::renderPipeline->RecordResourceUpload(copyList);
 	Gaia::textureStorage->RecordResourceUpload(copyList);
 
 	Gaia::copyCmdList->Close();
@@ -274,10 +278,10 @@ void RendererDx12::ProcessData() {
 	Gaia::graphicsFence->SignalFence(fenceValue - 1u);
 	// GPU upload end
 
-	Gaia::modelManager->InitPipelines(device);
+	ConstructPipelines(device);
 
 	// Release Upload Resource start
-	Gaia::modelManager->ReleaseUploadResource();
+	Gaia::renderPipeline->ReleaseUploadResource();
 	Gaia::textureStorage->ReleaseUploadResource();
 	Gaia::descriptorTable->ReleaseUploadHeap();
 	Gaia::Resources::vertexBuffer->ReleaseUploadResource();
@@ -312,4 +316,16 @@ void RendererDx12::WaitForAsyncTasks() {
 		Gaia::computeFence->AdvanceValueInQueue();
 		Gaia::computeFence->WaitOnCPUConditional();
 	}
+}
+
+void RendererDx12::ConstructPipelines(ID3D12Device* device) {
+	auto computeRS = CreateComputeRootSignature(device);
+	auto graphicsRS = CreateGraphicsRootSignature(device);
+	auto computePSO = CreateComputePipelineObject(device, m_shaderPath, computeRS->Get());
+	auto graphicsPSO = CreateGraphicsPipelineObject(device, m_shaderPath, graphicsRS->Get());
+
+	Gaia::renderPipeline->AddComputeRootSignature(std::move(computeRS));
+	Gaia::renderPipeline->AddComputePipelineObject(std::move(computePSO));
+	Gaia::renderPipeline->AddGraphicsRootSignature(std::move(graphicsRS));
+	Gaia::renderPipeline->AddGraphicsPipelineObject(std::move(graphicsPSO));
 }

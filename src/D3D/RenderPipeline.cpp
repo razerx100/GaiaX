@@ -7,11 +7,7 @@
 
 RenderPipeline::RenderPipeline(std::uint32_t frameCount) noexcept
 	: m_modelCount(0u), m_frameCount{ frameCount }, m_modelBufferPerFrameSize{ 0u },
-	m_commandDescriptorOffset{ 0u }, m_modelBuffers{ ResourceType::cpuWrite } {}
-
-void RenderPipeline::AddOpaqueModels(std::vector<std::shared_ptr<IModel>>&& models) noexcept {
-	std::ranges::move(models, std::back_inserter(m_opaqueModels));
-}
+	m_commandDescriptorOffset{ 0u } {}
 
 void RenderPipeline::AddComputePipelineObject(
 	std::unique_ptr<D3DPipelineObject> pso
@@ -37,25 +33,6 @@ void RenderPipeline::AddGraphicsRootSignature(
 	m_graphicsRS = std::move(signature);
 }
 
-void RenderPipeline::UpdateModelData(size_t frameIndex) const noexcept {
-	size_t offset = 0u;
-	constexpr size_t bufferStride = sizeof(ModelConstantBuffer);
-
-	for (auto& model : m_opaqueModels) {
-		ModelConstantBuffer modelBuffer{};
-		modelBuffer.textureIndex = model->GetTextureIndex();
-		modelBuffer.uvInfo = model->GetUVInfo();
-		modelBuffer.modelMatrix = model->GetModelMatrix();
-
-		memcpy(
-			m_modelBuffers.GetCPUWPointer(frameIndex) + offset,
-			&modelBuffer, bufferStride
-		);
-
-		offset += bufferStride;
-	}
-}
-
 void RenderPipeline::BindGraphicsPipeline(
 	ID3D12GraphicsCommandList* graphicsCommandList
 ) const noexcept {
@@ -77,6 +54,8 @@ void RenderPipeline::CreateCommandSignature(ID3D12Device* device) {
 	desc.NumArgumentDescs = static_cast<UINT>(std::size(arguments));
 	desc.pArgumentDescs = std::data(arguments);
 
+	assert(m_graphicsRS->Get() != nullptr && "Graphics RootSignature not initialised");
+
 	HRESULT hr{};
 	D3D_THROW_FAILED(hr,
 		device->CreateCommandSignature(
@@ -88,10 +67,6 @@ void RenderPipeline::CreateCommandSignature(ID3D12Device* device) {
 void RenderPipeline::DrawModels(
 	ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex
 ) const noexcept {
-	graphicsCommandList->SetGraphicsRootDescriptorTable(
-		1u, m_modelBuffers.GetGPUDescriptorHandle(frameIndex)
-	);
-
 	graphicsCommandList->ExecuteIndirect(
 		m_commandSignature.Get(), m_modelCount, m_commandBuffer.GetResource(),
 		sizeof(IndirectCommand) * m_modelCount * frameIndex, nullptr, 0u
@@ -99,8 +74,6 @@ void RenderPipeline::DrawModels(
 }
 
 void RenderPipeline::ReserveBuffers(ID3D12Device* device) {
-	m_modelCount = static_cast<UINT>(std::size(m_opaqueModels));
-
 	const size_t commandDescriptorOffset =
 		Gaia::descriptorTable->ReserveDescriptorsAndGetOffset(m_frameCount);
 
@@ -111,15 +84,27 @@ void RenderPipeline::ReserveBuffers(ID3D12Device* device) {
 	m_commandBuffer.SetBufferInfo(
 		device, static_cast<UINT>(sizeof(IndirectCommand)), m_modelCount, m_frameCount
 	);
+}
 
-	const size_t modelBufferDescriptorOffset = Gaia::descriptorTable->ReserveDescriptorsAndGetOffset(
-		m_frameCount
-	);
+void RenderPipeline::RecordIndirectArguments(
+	const std::vector<std::shared_ptr<IModel>>& models
+) noexcept {
+	for (size_t index = 0u; index < std::size(models); ++index) {
+		IndirectCommand command{};
+		command.modelIndex = static_cast<std::uint32_t>(index);
 
-	m_modelBuffers.SetDescriptorOffset(modelBufferDescriptorOffset, descriptorSize);
-	m_modelBuffers.SetBufferInfo(
-		device, static_cast<UINT>(sizeof(ModelConstantBuffer)), m_modelCount, m_frameCount
-	);
+		const auto& model = models[index];
+
+		command.drawIndexed.BaseVertexLocation = 0u;
+		command.drawIndexed.IndexCountPerInstance = model->GetIndexCount();
+		command.drawIndexed.StartIndexLocation = model->GetIndexOffset();
+		command.drawIndexed.InstanceCount = 1u;
+		command.drawIndexed.StartInstanceLocation = 0u;
+
+		m_indirectCommands.emplace_back(command);
+	}
+
+	m_modelCount = static_cast<UINT>(std::size(models));
 }
 
 void RenderPipeline::CreateBuffers(ID3D12Device* device) {
@@ -129,36 +114,15 @@ void RenderPipeline::CreateBuffers(ID3D12Device* device) {
 	const D3D12_GPU_DESCRIPTOR_HANDLE gpuDescriptorStart =
 		Gaia::descriptorTable->GetGPUDescriptorStart();
 
-	m_modelBuffers.CreateDescriptorView(
-		device, uploadDescriptorStart, gpuDescriptorStart,
-		D3D12_RESOURCE_STATE_GENERIC_READ
-	);
 	m_commandBuffer.CreateDescriptorView(
-		device, uploadDescriptorStart, gpuDescriptorStart,
-		D3D12_RESOURCE_STATE_COPY_DEST
+		device, uploadDescriptorStart, gpuDescriptorStart, D3D12_RESOURCE_STATE_COPY_DEST
 	);
-
-	std::vector<IndirectCommand> commands;
-
-	for (size_t index = 0u; index < std::size(m_opaqueModels); ++index) {
-		IndirectCommand command{};
-		command.modelIndex = static_cast<std::uint32_t>(index);
-
-		const auto& model = m_opaqueModels[index];
-
-		command.drawIndexed.BaseVertexLocation = 0u;
-		command.drawIndexed.IndexCountPerInstance = model->GetIndexCount();
-		command.drawIndexed.StartIndexLocation = model->GetIndexOffset();
-		command.drawIndexed.InstanceCount = 1u;
-		command.drawIndexed.StartInstanceLocation = 0u;
-
-		commands.emplace_back(command);
-	}
 
 	for (size_t frame = 0u; frame < m_frameCount; ++frame) {
 		std::uint8_t* commandCPUPtr = m_commandBuffer.GetCPUWPointer(frame);
 		memcpy(
-			commandCPUPtr, std::data(commands), sizeof(IndirectCommand) * std::size(commands)
+			commandCPUPtr, std::data(m_indirectCommands),
+			sizeof(IndirectCommand) * std::size(m_indirectCommands)
 		);
 	}
 }
@@ -173,9 +137,6 @@ void RenderPipeline::BindComputePipeline(
 void RenderPipeline::DispatchCompute(
 	ID3D12GraphicsCommandList* computeCommandList, size_t frameIndex
 ) const noexcept {
-	computeCommandList->SetComputeRootDescriptorTable(
-		0u, m_modelBuffers.GetGPUDescriptorHandle(frameIndex)
-	);
 	computeCommandList->SetComputeRootDescriptorTable(
 		1u, m_commandBuffer.GetGPUDescriptorHandle(frameIndex)
 	);
@@ -193,6 +154,8 @@ void RenderPipeline::ReleaseUploadResource() noexcept {
 	m_commandBuffer.ReleaseUploadResource();
 }
 
-ID3D12Resource* RenderPipeline::GetCommandBuffer() const noexcept {
-	return m_commandBuffer.GetResource();
+D3D12_RESOURCE_BARRIER RenderPipeline::GetTransitionBarrier(
+	D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_STATES afterState
+) const noexcept {
+	return ::GetTransitionBarrier(m_commandBuffer.GetResource(), beforeState, afterState);
 }

@@ -7,7 +7,8 @@ namespace Gaia {
 	std::unique_ptr<D3DCommandList> graphicsCmdList;
 	std::unique_ptr<D3DFence> graphicsFence;
 	std::unique_ptr<DebugInfoManager> debugInfo;
-	std::unique_ptr<ModelManager> modelManager;
+	std::unique_ptr<RenderPipeline> renderPipeline;
+	std::unique_ptr<BufferManager> bufferManager;
 	std::unique_ptr<D3DCommandQueue> copyQueue;
 	std::unique_ptr<D3DCommandList> copyCmdList;
 	std::unique_ptr<ViewportAndScissorManager> viewportAndScissor;
@@ -60,8 +61,12 @@ namespace Gaia {
 		Resources::depthBuffer = std::make_unique<DepthBuffer>(d3dDevice);
 	}
 
-	void InitModelManager(std::uint32_t bufferCount) {
-		modelManager = std::make_unique<ModelManager>(bufferCount);
+	void InitRenderPipeline(std::uint32_t bufferCount) {
+		renderPipeline = std::make_unique<RenderPipeline>(bufferCount);
+	}
+
+	void InitBufferManager(std::uint32_t bufferCount) {
+		bufferManager = std::make_unique<BufferManager>(bufferCount);
 	}
 
 	void InitCopyQueueAndList(ID3D12Device4* d3dDevice) {

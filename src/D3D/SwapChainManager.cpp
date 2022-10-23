@@ -2,6 +2,7 @@
 #include <D3DThrowMacros.hpp>
 #include <Gaia.hpp>
 #include <d3dx12.h>
+#include <D3DHelperFunctions.hpp>
 
 SwapChainManager::SwapChainManager(const SwapChainCreateInfo& createInfo)
 	: m_rtvDescSize(0u), m_vsyncFlag(false), m_pRenderTargetViews(createInfo.bufferCount) {
@@ -93,8 +94,10 @@ D3D12_CPU_DESCRIPTOR_HANDLE SwapChainManager::GetRTVHandle(size_t index) const n
 	);
 }
 
-ID3D12Resource* SwapChainManager::GetRTV(size_t index) const noexcept {
-	return m_pRenderTargetViews[index].Get();
+D3D12_RESOURCE_BARRIER SwapChainManager::GetTransitionBarrier(
+	D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_STATES afterState, size_t index
+) const noexcept {
+	return ::GetTransitionBarrier(m_pRenderTargetViews[index].Get(), beforeState, afterState);
 }
 
 void SwapChainManager::ToggleVSync() noexcept {

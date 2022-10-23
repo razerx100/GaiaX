@@ -33,11 +33,12 @@ public:
 
 	[[nodiscard]]
 	D3D12_CPU_DESCRIPTOR_HANDLE GetRTVHandle(size_t index) const noexcept;
-
+	[[nodiscard]]
+	D3D12_RESOURCE_BARRIER GetTransitionBarrier(
+		D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_STATES afterState, size_t index
+	) const noexcept;
 	[[nodiscard]]
 	size_t GetCurrentBackBufferIndex() const noexcept;
-	[[nodiscard]]
-	ID3D12Resource* GetRTV(size_t index) const noexcept;
 	[[nodiscard]]
 	IDXGISwapChain4* GetRef() const noexcept;
 
