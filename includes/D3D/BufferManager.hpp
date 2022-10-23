@@ -23,7 +23,6 @@ public:
 
 	void SetComputeRootSignatureLayout(std::vector<UINT> rsLayout) noexcept;
 	void SetGraphicsRootSignatureLayout(std::vector<UINT> rsLayout) noexcept;
-	void SetMemoryAddresses() noexcept;
 
 	void AddModelInputs(
 		std::unique_ptr<std::uint8_t> vertices, size_t vertexBufferSize, size_t strideSize,
@@ -34,6 +33,7 @@ public:
 	void CreateBuffers(ID3D12Device* device);
 
 private:
+	void SetMemoryAddresses() noexcept;
 	void UpdateModelData(size_t frameIndex) const noexcept;
 
 	template<void (__stdcall ID3D12GraphicsCommandList::*RCBV)(UINT, D3D12_GPU_VIRTUAL_ADDRESS),

@@ -56,8 +56,8 @@ void TextureStorage::CreateBufferViews(ID3D12Device* device) {
 	}
 }
 
-D3D12_GPU_DESCRIPTOR_HANDLE TextureStorage::GetTextureDescriptorStart() const noexcept {
-	return m_textureDescriptorStart;
+void TextureStorage::BindTextures(ID3D12GraphicsCommandList* graphicsList) const noexcept {
+	graphicsList->SetGraphicsRootDescriptorTable(0u, m_textureDescriptorStart);
 }
 
 void TextureStorage::RecordResourceUpload(ID3D12GraphicsCommandList* copyList) noexcept {

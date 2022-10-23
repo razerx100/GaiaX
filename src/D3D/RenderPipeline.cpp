@@ -91,7 +91,7 @@ void RenderPipeline::RecordIndirectArguments(
 ) noexcept {
 	for (size_t index = 0u; index < std::size(models); ++index) {
 		IndirectCommand command{};
-		command.modelIndex = static_cast<std::uint32_t>(index);
+		command.modelIndex = static_cast<std::uint32_t>(std::size(m_indirectCommands));
 
 		const auto& model = models[index];
 
@@ -104,7 +104,7 @@ void RenderPipeline::RecordIndirectArguments(
 		m_indirectCommands.emplace_back(command);
 	}
 
-	m_modelCount = static_cast<UINT>(std::size(models));
+	m_modelCount += static_cast<UINT>(std::size(models));
 }
 
 void RenderPipeline::CreateBuffers(ID3D12Device* device) {

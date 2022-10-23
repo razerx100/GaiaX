@@ -21,8 +21,7 @@ public:
 	void RecordResourceUpload(ID3D12GraphicsCommandList* copyList) noexcept;
 	void ReleaseUploadResource() noexcept;
 
-	[[nodiscard]]
-	D3D12_GPU_DESCRIPTOR_HANDLE GetTextureDescriptorStart() const noexcept;
+	void BindTextures(ID3D12GraphicsCommandList* graphicsList) const noexcept;
 
 private:
 	std::vector<std::unique_ptr<D3DUploadResourceDescriptorView>> m_textureDescriptors;

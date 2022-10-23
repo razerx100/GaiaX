@@ -40,6 +40,8 @@ void BufferManager::CreateBuffers(ID3D12Device* device) {
 	m_modelBuffers.CreateDescriptorView(
 		device, uploadDescriptorStart, gpuDescriptorStart, D3D12_RESOURCE_STATE_GENERIC_READ
 	);
+
+	SetMemoryAddresses();
 }
 
 void BufferManager::SetMemoryAddresses() noexcept {

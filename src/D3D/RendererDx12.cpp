@@ -153,7 +153,9 @@ void RendererDx12::Render() {
 
 	// Record objects
 	Gaia::renderPipeline->BindGraphicsPipeline(graphicsCommandList);
+	Gaia::textureStorage->BindTextures(graphicsCommandList);
 	Gaia::bufferManager->BindBuffersToGraphics(graphicsCommandList, currentBackIndex);
+	Gaia::bufferManager->BindVertexBuffer(graphicsCommandList);
 	Gaia::renderPipeline->DrawModels(graphicsCommandList, currentBackIndex);
 
 	D3D12_RESOURCE_BARRIER presentBarrier = Gaia::swapChain->GetTransitionBarrier(
@@ -324,8 +326,13 @@ void RendererDx12::ConstructPipelines(ID3D12Device* device) {
 	auto computePSO = CreateComputePipelineObject(device, m_shaderPath, computeRS->Get());
 	auto graphicsPSO = CreateGraphicsPipelineObject(device, m_shaderPath, graphicsRS->Get());
 
+	Gaia::bufferManager->SetComputeRootSignatureLayout(computeRS->GetElementLayout());
+	Gaia::bufferManager->SetGraphicsRootSignatureLayout(graphicsRS->GetElementLayout());
+
 	Gaia::renderPipeline->AddComputeRootSignature(std::move(computeRS));
 	Gaia::renderPipeline->AddComputePipelineObject(std::move(computePSO));
 	Gaia::renderPipeline->AddGraphicsRootSignature(std::move(graphicsRS));
 	Gaia::renderPipeline->AddGraphicsPipelineObject(std::move(graphicsPSO));
+
+	Gaia::renderPipeline->CreateCommandSignature(device);
 }
