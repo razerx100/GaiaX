@@ -8,7 +8,7 @@ class VertexLayout {
 public:
 	VertexLayout() noexcept;
 
-	void AddInputElement(
+	VertexLayout& AddInputElement(
 		const char* inputName, DXGI_FORMAT format, UINT sizeInBytes
 	) noexcept;
 

@@ -1,11 +1,12 @@
 #ifndef D3D_PIPELINE_OBJECT_HPP_
 #define D3D_PIPELINE_OBJECT_HPP_
 #include <D3DHeaders.hpp>
+#include <VertexLayout.hpp>
 
 class D3DPipelineObject {
 public:
 	void CreateGFXPipelineState(
-		ID3D12Device* device, const D3D12_INPUT_LAYOUT_DESC& vertexLayout,
+		ID3D12Device* device, const VertexLayout& vertexLayout,
 		ID3D12RootSignature* gfxRootSignature, const D3D12_SHADER_BYTECODE& vertexShader,
 		const D3D12_SHADER_BYTECODE& pixelShader
 	);

@@ -6,7 +6,7 @@ D3D12_INPUT_LAYOUT_DESC VertexLayout::GetLayoutDesc() const noexcept {
 	return { std::data(m_inputDescs), static_cast<UINT>(std::size(m_inputDescs)) };
 }
 
-void VertexLayout::AddInputElement(
+VertexLayout& VertexLayout::AddInputElement(
 	const char* inputName, DXGI_FORMAT format, UINT sizeInBytes
 ) noexcept {
 	m_inputDescs.emplace_back(
@@ -16,4 +16,6 @@ void VertexLayout::AddInputElement(
 	);
 
 	m_vertexOffset += sizeInBytes;
+
+	return *this;
 }

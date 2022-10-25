@@ -125,6 +125,8 @@ void RenderPipeline::CreateBuffers(ID3D12Device* device) {
 			sizeof(IndirectCommand) * std::size(m_indirectCommands)
 		);
 	}
+
+	m_indirectCommands = std::vector<IndirectCommand>();
 }
 
 void RenderPipeline::BindComputePipeline(

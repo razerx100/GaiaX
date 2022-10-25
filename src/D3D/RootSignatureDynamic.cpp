@@ -5,7 +5,7 @@
 RootSignatureDynamic::RootSignatureDynamic() noexcept :
 	m_elementLayout(static_cast<size_t>(RootSigElement::ElementCount)) {}
 
-void RootSignatureDynamic::AddConstants(
+RootSignatureDynamic& RootSignatureDynamic::AddConstants(
 	std::uint32_t numOfValues, D3D12_SHADER_VISIBILITY visibility, RootSigElement elementType,
 	std::uint32_t registerNumber, std::uint32_t registerSpace
 ) noexcept {
@@ -20,9 +20,11 @@ void RootSignatureDynamic::AddConstants(
 	);
 
 	m_rootParameters.emplace_back(constantParam);
+
+	return *this;
 }
 
-void RootSignatureDynamic::AddDescriptorTable(
+RootSignatureDynamic& RootSignatureDynamic::AddDescriptorTable(
 	D3D12_DESCRIPTOR_RANGE_TYPE descriptorType, std::uint32_t descriptorsAmount,
 	D3D12_SHADER_VISIBILITY visibility, RootSigElement elementType, bool bindless,
 	std::uint32_t registerNumber, std::uint32_t registerSpace
@@ -51,9 +53,11 @@ void RootSignatureDynamic::AddDescriptorTable(
 
 	m_rangePreserver.emplace_back(std::move(descRange));
 	m_rootParameters.emplace_back(descTableParam);
+
+	return *this;
 }
 
-void RootSignatureDynamic::AddConstantBufferView(
+RootSignatureDynamic& RootSignatureDynamic::AddConstantBufferView(
 	D3D12_SHADER_VISIBILITY visibility, RootSigElement elementType,
 	std::uint32_t registerNumber, std::uint32_t registerSpace
 ) noexcept {
@@ -67,9 +71,11 @@ void RootSignatureDynamic::AddConstantBufferView(
 	);
 
 	m_rootParameters.emplace_back(cbvParam);
+
+	return *this;
 }
 
-void RootSignatureDynamic::AddUnorderedAccessView(
+RootSignatureDynamic& RootSignatureDynamic::AddUnorderedAccessView(
 	D3D12_SHADER_VISIBILITY visibility, RootSigElement elementType,
 	std::uint32_t registerNumber, std::uint32_t registerSpace
 ) noexcept {
@@ -83,9 +89,11 @@ void RootSignatureDynamic::AddUnorderedAccessView(
 	);
 
 	m_rootParameters.emplace_back(uavParam);
+
+	return *this;
 }
 
-void RootSignatureDynamic::AddShaderResourceView(
+RootSignatureDynamic& RootSignatureDynamic::AddShaderResourceView(
 	D3D12_SHADER_VISIBILITY visibility, RootSigElement elementType,
 	std::uint32_t registerNumber, std::uint32_t registerSpace
 ) noexcept {
@@ -101,9 +109,11 @@ void RootSignatureDynamic::AddShaderResourceView(
 	);
 
 	m_rootParameters.emplace_back(srvParam);
+
+	return *this;
 }
 
-void RootSignatureDynamic::CompileSignature(bool staticSampler) {
+RootSignatureDynamic& RootSignatureDynamic::CompileSignature(bool staticSampler) {
 	CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSigDesc{};
 	D3D12_ROOT_SIGNATURE_FLAGS sigFlags =
 		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
@@ -151,6 +161,8 @@ void RootSignatureDynamic::CompileSignature(bool staticSampler) {
 		D3D_GENERIC_THROW(reinterpret_cast<char*>(error->GetBufferPointer()));
 
 	m_rangePreserver = std::vector<std::unique_ptr<D3D12_DESCRIPTOR_RANGE1>>();
+
+	return *this;
 }
 
 void RootSignatureDynamic::AddElementType(RootSigElement elementType) noexcept {

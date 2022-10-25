@@ -17,35 +17,36 @@ class RootSignatureDynamic final : public RootSignatureBase {
 public:
 	RootSignatureDynamic() noexcept;
 
-	void AddConstants(
+	[[nodiscard]]
+	RootSignatureDynamic& AddConstants(
 		std::uint32_t numOfValues, D3D12_SHADER_VISIBILITY visibility,
 		RootSigElement elementType, std::uint32_t registerNumber,
 		std::uint32_t registerSpace = 0u
 	) noexcept;
-
-	void AddDescriptorTable(
+	[[nodiscard]]
+	RootSignatureDynamic& AddDescriptorTable(
 		D3D12_DESCRIPTOR_RANGE_TYPE descriptorType, std::uint32_t descriptorsAmount,
 		D3D12_SHADER_VISIBILITY visibility, RootSigElement elementType,
 		bool bindless, std::uint32_t registerNumber, std::uint32_t registerSpace = 0u
 	) noexcept;
-
-	void AddConstantBufferView(
+	[[nodiscard]]
+	RootSignatureDynamic& AddConstantBufferView(
 		D3D12_SHADER_VISIBILITY visibility, RootSigElement elementType,
 		std::uint32_t registerNumber,
 		std::uint32_t registerSpace = 0u
 	) noexcept;
-
-	void AddUnorderedAccessView(
+	[[nodiscard]]
+	RootSignatureDynamic& AddUnorderedAccessView(
 		D3D12_SHADER_VISIBILITY visibility, RootSigElement elementType,
 		std::uint32_t registerNumber, std::uint32_t registerSpace = 0u
 	) noexcept;
-
-	void AddShaderResourceView(
+	[[nodiscard]]
+	RootSignatureDynamic& AddShaderResourceView(
 		D3D12_SHADER_VISIBILITY visibility, RootSigElement elementType,
 		std::uint32_t registerNumber, std::uint32_t registerSpace = 0u
 	) noexcept;
-
-	void CompileSignature(bool staticSampler = true);
+	[[nodiscard]]
+	RootSignatureDynamic& CompileSignature(bool staticSampler = true);
 
 	[[nodiscard]]
 	std::vector<UINT> GetElementLayout() const noexcept;

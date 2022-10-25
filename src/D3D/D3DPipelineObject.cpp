@@ -5,7 +5,7 @@
 #include <Gaia.hpp>
 
 void D3DPipelineObject::CreateGFXPipelineState(
-	ID3D12Device* device, const D3D12_INPUT_LAYOUT_DESC& vertexLayout,
+	ID3D12Device* device, const VertexLayout& vertexLayout,
 	ID3D12RootSignature* gfxRootSignature, const D3D12_SHADER_BYTECODE& vertexShader,
 	const D3D12_SHADER_BYTECODE& pixelShader
 ) {
@@ -21,7 +21,7 @@ void D3DPipelineObject::CreateGFXPipelineState(
 	psoDesc.RTVFormats[0] = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
 	psoDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
 	psoDesc.SampleDesc.Count = 1u;
-	psoDesc.InputLayout = vertexLayout;
+	psoDesc.InputLayout = vertexLayout.GetLayoutDesc();
 	psoDesc.pRootSignature = gfxRootSignature;
 	psoDesc.VS = vertexShader;
 	psoDesc.PS = pixelShader;
