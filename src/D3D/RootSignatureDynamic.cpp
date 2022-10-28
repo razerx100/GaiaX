@@ -1,6 +1,7 @@
 #include <RootSignatureDynamic.hpp>
-#include <D3DThrowMacros.hpp>
 #include <d3dx12.h>
+#include <fstream>
+#include <cassert>
 
 RootSignatureDynamic::RootSignatureDynamic() noexcept :
 	m_elementLayout(static_cast<size_t>(RootSigElement::ElementCount)) {}
@@ -157,8 +158,14 @@ RootSignatureDynamic& RootSignatureDynamic::CompileSignature(bool staticSampler)
 		&error
 	);
 
-	if (error)
-		D3D_GENERIC_THROW(reinterpret_cast<char*>(error->GetBufferPointer()));
+	if (error) {
+		std::ofstream log("ErrorLog.txt", std::ios_base::app | std::ios_base::out);
+		log << "Category : Root Signature Creation error    "
+			<< "Description : " << reinterpret_cast<char*>(error->GetBufferPointer()) << "    "
+			<< std::endl;
+	}
+
+	assert(!error && "Root Signature Creation error.");
 
 	m_rangePreserver = std::vector<std::unique_ptr<D3D12_DESCRIPTOR_RANGE1>>();
 

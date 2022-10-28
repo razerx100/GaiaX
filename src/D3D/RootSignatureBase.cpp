@@ -1,16 +1,9 @@
 #include <RootSignatureBase.hpp>
-#include <D3DThrowMacros.hpp>
 
 void RootSignatureBase::CreateSignature(ID3D12Device* device) {
-	HRESULT hr;
-	D3D_THROW_FAILED(
-		hr, device->CreateRootSignature(
-			0u,
-			m_pSignatureBinary->GetBufferPointer(),
-			m_pSignatureBinary->GetBufferSize(),
-			__uuidof(ID3D12RootSignature),
-			&m_pRootSignature
-		)
+	device->CreateRootSignature(
+		0u, m_pSignatureBinary->GetBufferPointer(), m_pSignatureBinary->GetBufferSize(),
+		IID_PPV_ARGS(&m_pRootSignature)
 	);
 }
 

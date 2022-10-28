@@ -4,9 +4,8 @@
 TextureStorage::TextureStorage() noexcept : m_textureDescriptorStart{} {}
 
 size_t TextureStorage::AddTexture(
-	ID3D12Device* device,
-	std::unique_ptr<std::uint8_t> textureDataHandle,
-	size_t width, size_t height
+	ID3D12Device* device, std::unique_ptr<std::uint8_t> textureDataHandle, size_t width,
+	size_t height
 ) noexcept {
 	const size_t relativeTextureOffset =
 		Gaia::descriptorTable->ReserveDescriptorsTextureAndGetRelativeOffset();

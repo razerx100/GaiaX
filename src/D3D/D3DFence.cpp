@@ -1,17 +1,13 @@
 #include <D3DFence.hpp>
-#include <D3DThrowMacros.hpp>
+#include <cassert>
 
 D3DFence::D3DFence(ID3D12Device* device, size_t fenceValueCount)
 	: m_fenceValues(std::deque<UINT64>{fenceValueCount, 0u}), m_fenceCPUEvent{nullptr} {
-	HRESULT hr{};
-	D3D_THROW_FAILED(hr,
-		device->CreateFence(GetFrontValue(), D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_fence))
-	);
+	device->CreateFence(GetFrontValue(), D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_fence));
 	IncreaseFrontValue(0u);
 
 	m_fenceCPUEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
-	if (m_fenceCPUEvent == nullptr)
-		D3D_THROW_FAILED(hr, HRESULT_FROM_WIN32(GetLastError()));
+	assert(m_fenceCPUEvent && "Fence event creation failed.");
 }
 
 void D3DFence::IncreaseFrontValue(UINT64 oldValue) noexcept {
@@ -31,8 +27,7 @@ void D3DFence::WaitOnCPUConditional() {
 }
 
 void D3DFence::SignalFence(UINT64 fenceValue) const {
-	HRESULT hr{};
-	D3D_THROW_FAILED(hr, m_fence->Signal(fenceValue));
+	m_fence->Signal(fenceValue);
 }
 
 void D3DFence::WaitOnCPU() {
@@ -40,9 +35,7 @@ void D3DFence::WaitOnCPU() {
 }
 
 void D3DFence::WaitOnCPU(UINT64 fenceValue) {
-	HRESULT hr{};
-
-	D3D_THROW_FAILED(hr, m_fence->SetEventOnCompletion(fenceValue, m_fenceCPUEvent));
+	m_fence->SetEventOnCompletion(fenceValue, m_fenceCPUEvent);
 	WaitForSingleObjectEx(m_fenceCPUEvent, INFINITE, FALSE);
 }
 

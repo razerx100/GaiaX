@@ -6,7 +6,6 @@ namespace Gaia {
 	std::unique_ptr<D3DCommandQueue> graphicsQueue;
 	std::unique_ptr<D3DCommandList> graphicsCmdList;
 	std::unique_ptr<D3DFence> graphicsFence;
-	std::unique_ptr<DebugInfoManager> debugInfo;
 	std::unique_ptr<D3DDebugLogger> debugLogger;
 	std::unique_ptr<RenderPipeline> renderPipeline;
 	std::unique_ptr<BufferManager> bufferManager;
@@ -52,10 +51,6 @@ namespace Gaia {
 			d3dDevice, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAllocatorCount
 			);
 		graphicsFence = std::make_unique<D3DFence>(d3dDevice, commandAllocatorCount);
-	}
-
-	void InitDebugInfo() {
-		debugInfo = std::make_unique<DebugInfoManager>();
 	}
 
 	void InitDebugLogger(ID3D12Device* d3dDevice) {

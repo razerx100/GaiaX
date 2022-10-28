@@ -1,5 +1,4 @@
 #include <DescriptorTableManager.hpp>
-#include <D3DThrowMacros.hpp>
 #include <d3dx12.h>
 
 DescriptorTableManager::DescriptorTableManager()
@@ -59,11 +58,7 @@ ComPtr<ID3D12DescriptorHeap> DescriptorTableManager::CreateDescHeap(
 		D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE : D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 
 	ComPtr<ID3D12DescriptorHeap> descHeap;
-
-	HRESULT hr;
-	D3D_THROW_FAILED(hr,
-		device->CreateDescriptorHeap(&descDesc, __uuidof(ID3D12DescriptorHeap), &descHeap)
-	);
+	device->CreateDescriptorHeap(&descDesc,  IID_PPV_ARGS(&descHeap));
 
 	return descHeap;
 }

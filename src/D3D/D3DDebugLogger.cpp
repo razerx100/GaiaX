@@ -34,6 +34,10 @@ D3DDebugLogger::D3DDebugLogger(ID3D12Device* device) : m_callBackCookie{0u} {
 }
 
 D3DDebugLogger::~D3DDebugLogger() noexcept {
+	UnregisterCallBack();
+}
+
+void D3DDebugLogger::UnregisterCallBack() const noexcept {
 	m_debugInfoQueue->UnregisterMessageCallback(m_callBackCookie);
 }
 

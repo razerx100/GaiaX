@@ -10,9 +10,8 @@ VertexLayout& VertexLayout::AddInputElement(
 	const char* inputName, DXGI_FORMAT format, UINT sizeInBytes
 ) noexcept {
 	m_inputDescs.emplace_back(
-		inputName, 0u,
-		format, 0u,
-		m_vertexOffset, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0u
+		inputName, 0u, format, 0u, m_vertexOffset,
+		D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0u
 	);
 
 	m_vertexOffset += sizeInBytes;

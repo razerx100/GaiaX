@@ -7,6 +7,8 @@ public:
 	D3DDebugLogger(ID3D12Device* device);
 	~D3DDebugLogger() noexcept;
 
+	void UnregisterCallBack() const noexcept;
+
 	static void MessageCallback(
 		D3D12_MESSAGE_CATEGORY category, D3D12_MESSAGE_SEVERITY severity,
 		D3D12_MESSAGE_ID id, LPCSTR pDescription, void* pContext

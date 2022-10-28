@@ -1,6 +1,5 @@
 #include <LinearAllocator.hpp>
 #include <D3DHelperFunctions.hpp>
-#include <D3DThrowMacros.hpp>
 
 LinearAllocator::LinearAllocator() noexcept : m_currentOffset{ 0u } {}
 

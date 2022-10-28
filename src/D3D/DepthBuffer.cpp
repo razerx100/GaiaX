@@ -1,7 +1,7 @@
 #include <DepthBuffer.hpp>
-#include <D3DThrowMacros.hpp>
 #include <d3dx12.h>
 #include <Gaia.hpp>
+#include <Exception.hpp>
 
 DepthBuffer::DepthBuffer(ID3D12Device* device)
     : m_maxWidth{ 0u }, m_maxHeight{ 0u },
@@ -12,17 +12,14 @@ DepthBuffer::DepthBuffer(ID3D12Device* device)
     dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
     dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 
-    HRESULT hr{};
-    D3D_THROW_FAILED(hr, device->CreateDescriptorHeap(
-        &dsvHeapDesc, __uuidof(ID3D12DescriptorHeap), &m_pDSVHeap
-    ));
+    device->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&m_pDSVHeap));
 }
 
 void DepthBuffer::CreateDepthBuffer(
     ID3D12Device* device, std::uint32_t width, std::uint32_t height
 ) {
     if (width > m_maxWidth || height > m_maxHeight)
-        D3D_GENERIC_THROW("Depth buffer resolution exceeds max resolution");
+        throw Exception("DepthBuffer Error", "Resolution exceeds max supported resolution");
 
     static D3D12_CLEAR_VALUE depthValue{ DXGI_FORMAT_D32_FLOAT, { 1.0f, 0u } };
 

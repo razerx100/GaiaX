@@ -1,5 +1,4 @@
 #include <RendererDx12.hpp>
-#include <D3DThrowMacros.hpp>
 #include <Gaia.hpp>
 #include <D3DHelperFunctions.hpp>
 #include <PipelineConstructor.hpp>
@@ -16,7 +15,6 @@ RendererDx12::RendererDx12(
 
 #ifdef _DEBUG
 	Gaia::InitDebugLogger(deviceRef);
-	Gaia::InitDebugInfo();
 #endif
 
 	Gaia::InitDepthBuffer(deviceRef);
@@ -68,7 +66,7 @@ RendererDx12::~RendererDx12() noexcept {
 	Gaia::CleanUpResources();
 	Gaia::device.reset();
 #ifdef _DEBUG
-	Gaia::debugInfo.reset();
+	Gaia::debugLogger.reset();
 #endif
 }
 

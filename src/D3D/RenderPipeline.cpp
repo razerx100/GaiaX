@@ -1,7 +1,6 @@
 #include <RenderPipeline.hpp>
 #include <ranges>
 #include <algorithm>
-#include <D3DThrowMacros.hpp>
 #include <array>
 #include <Gaia.hpp>
 
@@ -56,11 +55,8 @@ void RenderPipeline::CreateCommandSignature(ID3D12Device* device) {
 
 	assert(m_graphicsRS->Get() != nullptr && "Graphics RootSignature not initialised");
 
-	HRESULT hr{};
-	D3D_THROW_FAILED(hr,
-		device->CreateCommandSignature(
-			&desc, m_graphicsRS->Get(), IID_PPV_ARGS(&m_commandSignature)
-		)
+	device->CreateCommandSignature(
+		&desc, m_graphicsRS->Get(), IID_PPV_ARGS(&m_commandSignature)
 	);
 }
 

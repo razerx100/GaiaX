@@ -1,7 +1,6 @@
 #include <D3DPipelineObject.hpp>
 #include <VertexLayout.hpp>
 #include <d3dx12.h>
-#include <D3DThrowMacros.hpp>
 #include <Gaia.hpp>
 
 void D3DPipelineObject::CreateGFXPipelineState(
@@ -27,10 +26,7 @@ void D3DPipelineObject::CreateGFXPipelineState(
 	psoDesc.PS = pixelShader;
 	psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 
-	HRESULT hr{};
-	D3D_THROW_FAILED(hr,
-		device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_pPipelineState))
-	);
+	device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_pPipelineState));
 }
 
 void D3DPipelineObject::CreateComputePipelineState(
@@ -41,10 +37,7 @@ void D3DPipelineObject::CreateComputePipelineState(
 	psoDesc.pRootSignature = computeRootSignature;
 	psoDesc.CS = computeShader;
 
-	HRESULT hr{};
-	D3D_THROW_FAILED(hr,
-		device->CreateComputePipelineState(&psoDesc, IID_PPV_ARGS(&m_pPipelineState))
-	);
+	device->CreateComputePipelineState(&psoDesc, IID_PPV_ARGS(&m_pPipelineState));
 }
 
 ID3D12PipelineState* D3DPipelineObject::Get() const noexcept {

@@ -1,6 +1,5 @@
 #include <DeviceManager.hpp>
 #include <Exception.hpp>
-#include <D3DThrowMacros.hpp>
 
 DeviceManager::DeviceManager() {
     std::uint32_t dxgiFactoryFlags = 0u;
@@ -8,7 +7,7 @@ DeviceManager::DeviceManager() {
 #ifdef _DEBUG
     {
         ComPtr<ID3D12Debug> debugController;
-        D3D12GetDebugInterface(__uuidof(ID3D12Debug), &debugController);
+        D3D12GetDebugInterface(IID_PPV_ARGS(&debugController));
         debugController->EnableDebugLayer();
 
         dxgiFactoryFlags |= DXGI_CREATE_FACTORY_DEBUG;
@@ -22,12 +21,7 @@ DeviceManager::DeviceManager() {
 
         GetHardwareAdapter(m_pFactory.Get(), &adapter);
 
-        D3D12CreateDevice(
-            adapter.Get(),
-            gaiaFeatureLevel,
-            __uuidof(ID3D12Device5),
-            &m_pDevice
-        );
+        D3D12CreateDevice(adapter.Get(), gaiaFeatureLevel,IID_PPV_ARGS(&m_pDevice));
     }
 }
 
@@ -43,13 +37,11 @@ void DeviceManager::GetHardwareAdapter(IDXGIFactory1* pFactory, IDXGIAdapter1** 
     ComPtr<IDXGIFactory6> pFactory6;
     bool found = false;
 
-    if (SUCCEEDED(pFactory->QueryInterface(__uuidof(IDXGIFactory6), &pFactory6))) {
+    if (SUCCEEDED(pFactory->QueryInterface(IID_PPV_ARGS(&pFactory6)))) {
         for (UINT index = 0u;
             SUCCEEDED(pFactory6->EnumAdapterByGpuPreference(
-                index,
-                DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE,
-                __uuidof(IDXGIAdapter1),
-                reinterpret_cast<void**>(ppAdapter)
+                index, DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE,
+                __uuidof(IDXGIAdapter1), reinterpret_cast<void**>(ppAdapter)
             ));
             ++index) {
 
@@ -79,5 +71,7 @@ void DeviceManager::GetHardwareAdapter(IDXGIFactory1* pFactory, IDXGIAdapter1** 
     }
 
     if (!found)
-        D3D_GENERIC_THROW("None of the GPUs have required D3D12 feature support.");
+        throw Exception(
+            "D3D12 Feature Error", "None of the GPUs have required D3D12 feature support."
+        );
 }

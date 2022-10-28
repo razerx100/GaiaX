@@ -1,5 +1,5 @@
 #include <D3DHelperFunctions.hpp>
-#include <D3DThrowMacros.hpp>
+#include <cassert>
 
 Resolution GetDisplayResolution(
 	ID3D12Device* gpu, IDXGIFactory1* factory, std::uint32_t displayIndex
@@ -24,14 +24,14 @@ Resolution GetDisplayResolution(
 		}
 	}
 
-	if (!adapterMatched)
-		D3D_GENERIC_THROW("GPU ID doesn't match.");
+	assert(adapterMatched && "GPU IDs don't match.");
 
 	adapter->GetDesc(&gpuDesc);
 
 	ComPtr<IDXGIOutput> pDisplayOutput;
-	if (FAILED(adapter->EnumOutputs(displayIndex, &pDisplayOutput)))
-		D3D_GENERIC_THROW("Searched GPU couldn't be found.");
+	assert(
+		FAILED(adapter->EnumOutputs(displayIndex, &pDisplayOutput)) && "Invalid display index."
+	);
 
 	DXGI_OUTPUT_DESC displayData = {};
 	pDisplayOutput->GetDesc(&displayData);

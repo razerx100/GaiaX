@@ -1,7 +1,7 @@
 #include <D3DResource.hpp>
-#include <D3DThrowMacros.hpp>
 #include <D3DHelperFunctions.hpp>
 #include <Gaia.hpp>
+#include <cassert>
 
 // D3DResource
 D3DResource::D3DResource() noexcept : m_cpuHandle{ nullptr } {}
@@ -22,11 +22,8 @@ void D3DResource::CreateResource(
 	ID3D12Device* device, ID3D12Heap* heap, size_t offset, const D3D12_RESOURCE_DESC& desc,
 	D3D12_RESOURCE_STATES initialState, const D3D12_CLEAR_VALUE* clearValue
 ) {
-	HRESULT hr{};
-	D3D_THROW_FAILED(hr,
-		device->CreatePlacedResource(
-			heap, offset, &desc, initialState, clearValue, __uuidof(ID3D12Resource), &m_pBuffer
-		)
+	device->CreatePlacedResource(
+		heap, offset, &desc, initialState, clearValue, IID_PPV_ARGS(&m_pBuffer)
 	);
 }
 
@@ -41,11 +38,7 @@ void D3DResource::MapBuffer(bool readAble) {
 	if (!readAble)
 		rangePtr = &range;
 
-	HRESULT hr{};
-	D3D_THROW_FAILED(
-		hr,
-		m_pBuffer->Map(0u, rangePtr, reinterpret_cast<void**>(&m_cpuHandle))
-	);
+	m_pBuffer->Map(0u, rangePtr, reinterpret_cast<void**>(&m_cpuHandle));
 }
 
 std::uint8_t* D3DResource::GetCPUWPointer() const noexcept {
@@ -175,8 +168,7 @@ D3D12_GPU_VIRTUAL_ADDRESS D3DResourceView::GetGPUAddress() const noexcept {
 }
 
 std::uint8_t* D3DResourceView::GetCPUWPointer() const {
-	if (m_type == ResourceType::gpuOnly)
-		D3D_GENERIC_THROW("This buffer doesn't have CPU access.");
+	assert(m_type == ResourceType::gpuOnly && "This buffer doesn't have CPU access.");
 
 	return m_resource.GetCPUWPointer();
 }
