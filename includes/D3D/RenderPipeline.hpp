@@ -1,6 +1,5 @@
 #ifndef RENDER_PIPELINE_HPP_
 #define RENDER_PIPELINE_HPP_
-
 #include <D3DHeaders.hpp>
 #include <vector>
 #include <memory>
@@ -13,15 +12,6 @@
 struct IndirectCommand {
 	std::uint32_t modelIndex;
 	D3D12_DRAW_INDEXED_ARGUMENTS drawIndexed;
-};
-
-// Need to pack stuff in multiple of 16bytes and since the buffers will be allocated
-// contiguously.
-struct ModelConstantBuffer {
-	UVInfo uvInfo;
-	DirectX::XMMATRIX modelMatrix;
-	std::uint32_t textureIndex;
-	float padding[3];
 };
 
 class RenderPipeline {

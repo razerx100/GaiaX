@@ -6,6 +6,7 @@
 #include <D3DCommandQueue.hpp>
 #include <D3DCommandList.hpp>
 #include <DebugInfoManager.hpp>
+#include <D3DDebugLogger.hpp>
 #include <RenderPipeline.hpp>
 #include <BufferManager.hpp>
 #include <ViewportAndScissorManager.hpp>
@@ -29,6 +30,7 @@ namespace Gaia {
 	extern std::unique_ptr<D3DCommandList> graphicsCmdList;
 	extern std::unique_ptr<D3DFence> graphicsFence;
 	extern std::unique_ptr<DebugInfoManager> debugInfo;
+	extern std::unique_ptr<D3DDebugLogger> debugLogger;
 	extern std::unique_ptr<RenderPipeline> renderPipeline;
 	extern std::unique_ptr<BufferManager> bufferManager;
 	extern std::unique_ptr<D3DCommandQueue> copyQueue;
@@ -60,6 +62,7 @@ namespace Gaia {
 	void InitSwapChain(const SwapChainCreateInfo& createInfo);
 	void InitGraphicsQueueAndList(ID3D12Device4* d3dDevice, std::uint32_t commandAllocatorCount);
 	void InitDebugInfo();
+	void InitDebugLogger(ID3D12Device* d3dDevice);
 	void InitDepthBuffer(ID3D12Device* d3dDevice);
 	void InitCopyQueueAndList(ID3D12Device4* d3dDevice);
 	void InitComputeQueueAndList(ID3D12Device4* d3dDevice, std::uint32_t commandAllocatorCount);

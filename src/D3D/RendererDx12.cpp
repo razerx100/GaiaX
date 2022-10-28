@@ -12,11 +12,12 @@ RendererDx12::RendererDx12(
 	Gaia::InitDevice();
 	Gaia::InitResources();
 
+	ID3D12Device4* deviceRef = Gaia::device.get()->GetDeviceRef();
+
 #ifdef _DEBUG
+	Gaia::InitDebugLogger(deviceRef);
 	Gaia::InitDebugInfo();
 #endif
-
-	ID3D12Device4* deviceRef = Gaia::device.get()->GetDeviceRef();
 
 	Gaia::InitDepthBuffer(deviceRef);
 	Gaia::Resources::depthBuffer->SetMaxResolution(7680u, 4320u);
@@ -280,7 +281,7 @@ void RendererDx12::ProcessData() {
 	Gaia::graphicsFence->SignalFence(fenceValue - 1u);
 	// GPU upload end
 
-	ConstructPipelines(device);
+	ConstructPipelines();
 
 	// Release Upload Resource start
 	Gaia::renderPipeline->ReleaseUploadResource();
@@ -320,7 +321,9 @@ void RendererDx12::WaitForAsyncTasks() {
 	}
 }
 
-void RendererDx12::ConstructPipelines(ID3D12Device* device) {
+void RendererDx12::ConstructPipelines() {
+	ID3D12Device* device = Gaia::device->GetDeviceRef();
+
 	auto computeRS = CreateComputeRootSignature(device);
 	auto graphicsRS = CreateGraphicsRootSignature(device);
 	auto computePSO = CreateComputePipelineObject(device, m_shaderPath, computeRS->Get());

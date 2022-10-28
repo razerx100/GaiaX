@@ -41,7 +41,7 @@ public:
 	) noexcept override;
 
 private:
-	void ConstructPipelines(struct ID3D12Device* device);
+	void ConstructPipelines();
 
 private:
 	std::array<float, 4> m_backgroundColour;
