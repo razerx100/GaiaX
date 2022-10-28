@@ -168,7 +168,7 @@ D3D12_GPU_VIRTUAL_ADDRESS D3DResourceView::GetGPUAddress() const noexcept {
 }
 
 std::uint8_t* D3DResourceView::GetCPUWPointer() const {
-	assert(m_type == ResourceType::gpuOnly && "This buffer doesn't have CPU access.");
+	assert(m_type != ResourceType::gpuOnly && "This buffer doesn't have CPU access.");
 
 	return m_resource.GetCPUWPointer();
 }

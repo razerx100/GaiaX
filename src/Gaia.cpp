@@ -129,6 +129,8 @@ namespace Gaia {
 	}
 
 	void CleanUpResources() {
+		CleanUpUploadResources();
+		Resources::uploadHeap.reset();
 		Resources::depthBuffer.reset();
 		Resources::cpuWriteBuffer.reset();
 		Resources::vertexBuffer.reset();

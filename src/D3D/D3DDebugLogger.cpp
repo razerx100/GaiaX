@@ -48,7 +48,7 @@ void D3DDebugLogger::MessageCallback(
 	std::ofstream log("ErrorLog.txt", std::ios_base::app | std::ios_base::out);
 	log << "Category : " << messageCategories[category] << "    "
 		<< "Severity : " << messageSeverity[severity] << "    "
-		<< "ID : " << id << "    "
+		<< "ID : " << id << "\n"
 		<< "Description : " << pDescription << "    "
 		<< std::endl;
 }
