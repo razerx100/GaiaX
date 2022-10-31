@@ -145,6 +145,7 @@ void BufferManager::UpdateModelData(size_t frameIndex) const noexcept {
 		modelBuffer.textureIndex = model->GetTextureIndex();
 		modelBuffer.uvInfo = model->GetUVInfo();
 		modelBuffer.modelMatrix = model->GetModelMatrix();
+		modelBuffer.modelOffset = model->GetModelOffset();
 
 		memcpy(
 			m_modelBuffers.GetCPUWPointer(frameIndex) + offset, &modelBuffer, bufferStride
