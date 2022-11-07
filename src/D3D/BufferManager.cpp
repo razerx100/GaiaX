@@ -147,6 +147,9 @@ void BufferManager::UpdateModelData(size_t frameIndex) const noexcept {
 		modelBuffer.modelMatrix = model->GetModelMatrix();
 		modelBuffer.modelOffset = model->GetModelOffset();
 
+		const auto& boundingBox = model->GetBoundingBox();
+		memcpy(modelBuffer.boundingBox, std::data(boundingBox), sizeof(DirectX::XMFLOAT3) * 8u);
+
 		memcpy(
 			m_modelBuffers.GetCPUWPointer(frameIndex) + offset, &modelBuffer, bufferStride
 		);

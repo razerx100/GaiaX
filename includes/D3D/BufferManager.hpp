@@ -15,6 +15,7 @@ struct ModelConstantBuffer {
 	DirectX::XMMATRIX modelMatrix;
 	std::uint32_t textureIndex;
 	DirectX::XMFLOAT3 modelOffset;
+	DirectX::XMFLOAT3 boundingBox[8];
 };
 
 class BufferManager {
