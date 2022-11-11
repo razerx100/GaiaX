@@ -87,6 +87,7 @@ void RenderPipeline::ReserveBuffers(ID3D12Device* device) {
 	m_commandBufferUAV.SetBufferInfo(device, indirectStructSize, m_modelCount, m_frameCount);
 
 	m_uavCounterBuffer.SetBufferInfo(sizeof(UINT));
+	m_uavCounterBuffer.ReserveHeapSpace(device);
 }
 
 void RenderPipeline::RecordIndirectArguments(
