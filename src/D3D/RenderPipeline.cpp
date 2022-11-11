@@ -6,7 +6,8 @@
 
 RenderPipeline::RenderPipeline(std::uint32_t frameCount) noexcept
 	: m_modelCount(0u), m_frameCount{ frameCount }, m_modelBufferPerFrameSize{ 0u },
-	m_commandDescriptorOffset{ 0u } {}
+	m_commandBufferUAV{ ResourceType::gpuOnly, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS },
+	m_uavCounterBuffer{ ResourceType::cpuWrite }, m_commandDescriptorOffset{ 0u } {}
 
 void RenderPipeline::AddComputePipelineObject(
 	std::unique_ptr<D3DPipelineObject> pso
@@ -64,22 +65,28 @@ void RenderPipeline::DrawModels(
 	ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex
 ) const noexcept {
 	graphicsCommandList->ExecuteIndirect(
-		m_commandSignature.Get(), m_modelCount, m_commandBuffer.GetResource(),
+		m_commandSignature.Get(), m_modelCount, m_commandBufferSRV.GetResource(),
 		sizeof(IndirectCommand) * m_modelCount * frameIndex, nullptr, 0u
 	);
 }
 
 void RenderPipeline::ReserveBuffers(ID3D12Device* device) {
-	const size_t commandDescriptorOffset =
+	const size_t commandDescriptorOffsetSRV =
+		Gaia::descriptorTable->ReserveDescriptorsAndGetOffset(m_frameCount);
+	const size_t commandDescriptorOffsetUAV =
 		Gaia::descriptorTable->ReserveDescriptorsAndGetOffset(m_frameCount);
 
 	const UINT descriptorSize =
 		device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	static constexpr auto indirectStructSize = static_cast<UINT>(sizeof(IndirectCommand));
 
-	m_commandBuffer.SetDescriptorOffset(commandDescriptorOffset, descriptorSize);
-	m_commandBuffer.SetBufferInfo(
-		device, static_cast<UINT>(sizeof(IndirectCommand)), m_modelCount, m_frameCount
-	);
+	m_commandBufferSRV.SetDescriptorOffset(commandDescriptorOffsetSRV, descriptorSize);
+	m_commandBufferSRV.SetBufferInfo(device, indirectStructSize, m_modelCount, m_frameCount);
+
+	m_commandBufferUAV.SetDescriptorOffset(commandDescriptorOffsetUAV, descriptorSize);
+	m_commandBufferUAV.SetBufferInfo(device, indirectStructSize, m_modelCount, m_frameCount);
+
+	m_uavCounterBuffer.SetBufferInfo(sizeof(UINT));
 }
 
 void RenderPipeline::RecordIndirectArguments(
@@ -110,12 +117,22 @@ void RenderPipeline::CreateBuffers(ID3D12Device* device) {
 	const D3D12_GPU_DESCRIPTOR_HANDLE gpuDescriptorStart =
 		Gaia::descriptorTable->GetGPUDescriptorStart();
 
-	m_commandBuffer.CreateDescriptorView(
+	m_commandBufferSRV.CreateDescriptorView(
 		device, uploadDescriptorStart, gpuDescriptorStart, D3D12_RESOURCE_STATE_COPY_DEST
 	);
+	m_commandBufferUAV.CreateDescriptorView(
+		device, uploadDescriptorStart, gpuDescriptorStart, D3D12_RESOURCE_STATE_COPY_DEST
+	);
+	m_uavCounterBuffer.CreateResource(device, D3D12_RESOURCE_STATE_GENERIC_READ);
 
+	// copy zero to counter buffer
+	std::uint8_t* counterCPUPtr = m_uavCounterBuffer.GetCPUWPointer();
+	const UINT zeroValue = 0u;
+	memcpy(counterCPUPtr, &zeroValue, sizeof(UINT));
+
+	// Copy Indirect Commands
 	for (size_t frame = 0u; frame < m_frameCount; ++frame) {
-		std::uint8_t* commandCPUPtr = m_commandBuffer.GetCPUWPointer(frame);
+		std::uint8_t* commandCPUPtr = m_commandBufferSRV.GetCPUWPointer(frame);
 		memcpy(
 			commandCPUPtr, std::data(m_indirectCommands),
 			sizeof(IndirectCommand) * std::size(m_indirectCommands)
@@ -136,7 +153,7 @@ void RenderPipeline::DispatchCompute(
 	ID3D12GraphicsCommandList* computeCommandList, size_t frameIndex
 ) const noexcept {
 	computeCommandList->SetComputeRootDescriptorTable(
-		1u, m_commandBuffer.GetGPUDescriptorHandle(frameIndex)
+		1u, m_commandBufferSRV.GetGPUDescriptorHandle(frameIndex)
 	);
 
 	computeCommandList->Dispatch(
@@ -145,15 +162,15 @@ void RenderPipeline::DispatchCompute(
 }
 
 void RenderPipeline::RecordResourceUpload(ID3D12GraphicsCommandList* copyList) noexcept {
-	m_commandBuffer.RecordResourceUpload(copyList);
+	m_commandBufferSRV.RecordResourceUpload(copyList);
 }
 
 void RenderPipeline::ReleaseUploadResource() noexcept {
-	m_commandBuffer.ReleaseUploadResource();
+	m_commandBufferSRV.ReleaseUploadResource();
 }
 
 D3D12_RESOURCE_BARRIER RenderPipeline::GetTransitionBarrier(
 	D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_STATES afterState
 ) const noexcept {
-	return ::GetTransitionBarrier(m_commandBuffer.GetResource(), beforeState, afterState);
+	return ::GetTransitionBarrier(m_commandBufferSRV.GetResource(), beforeState, afterState);
 }

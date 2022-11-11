@@ -58,7 +58,9 @@ private:
 	UINT m_modelCount;
 	std::uint32_t m_frameCount;
 	size_t m_modelBufferPerFrameSize;
-	D3DUploadResourceDescriptorView m_commandBuffer;
+	D3DUploadResourceDescriptorView m_commandBufferSRV;
+	D3DSingleDescriptorView m_commandBufferUAV;
+	D3DResourceView m_uavCounterBuffer;
 	size_t m_commandDescriptorOffset;
 	std::vector<IndirectCommand> m_indirectCommands;
 
