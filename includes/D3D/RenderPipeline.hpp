@@ -34,6 +34,9 @@ public:
 	void DispatchCompute(
 		ID3D12GraphicsCommandList* computeCommandList, size_t frameIndex
 	) const noexcept;
+	void ResetCounterBuffer(
+		ID3D12GraphicsCommandList* commandList, size_t frameIndex
+	) const noexcept;
 
 	void CreateCommandSignature(ID3D12Device* device);
 	void CreateBuffers(ID3D12Device* device);

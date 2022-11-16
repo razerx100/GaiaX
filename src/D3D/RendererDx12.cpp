@@ -103,6 +103,7 @@ void RendererDx12::Render() {
 	computeCommandList->SetDescriptorHeaps(1u, ppHeap);
 
 	// Record compute commands
+	Gaia::renderPipeline->ResetCounterBuffer(computeCommandList, currentBackIndex);
 	Gaia::renderPipeline->BindComputePipeline(computeCommandList);
 	Gaia::bufferManager->BindBuffersToCompute(computeCommandList, currentBackIndex);
 	Gaia::renderPipeline->DispatchCompute(computeCommandList, currentBackIndex);
@@ -127,9 +128,8 @@ void RendererDx12::Render() {
 	preBarriers[0] = Gaia::swapChain->GetTransitionBarrier(
 		D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET, currentBackIndex
 	);
-	// Need to change transtion barrier implementation for UAV
 	preBarriers[1] = Gaia::renderPipeline->GetTransitionBarrier(
-		D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT
+		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT
 	);
 	graphicsCommandList->ResourceBarrier(2u, preBarriers);
 

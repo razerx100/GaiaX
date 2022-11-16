@@ -151,7 +151,8 @@ void BufferManager::UpdateModelData(size_t frameIndex) const noexcept {
 		memcpy(modelBuffer.boundingBox, std::data(boundingBox), sizeof(DirectX::XMFLOAT3) * 8u);
 
 		memcpy(
-			m_modelBuffers.GetCPUWPointer(frameIndex) + offset, &modelBuffer, bufferStride
+			m_modelBuffers.GetBufferCPUWPointer(frameIndex) + offset, &modelBuffer,
+			bufferStride
 		);
 
 		offset += bufferStride;

@@ -65,8 +65,9 @@ void RenderPipeline::DrawModels(
 	ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex
 ) const noexcept {
 	graphicsCommandList->ExecuteIndirect(
-		m_commandSignature.Get(), m_modelCount, m_commandBufferSRV.GetResource(),
-		sizeof(IndirectCommand) * m_modelCount * frameIndex, nullptr, 0u
+		m_commandSignature.Get(), m_modelCount, m_commandBufferUAV.GetResource(),
+		m_commandBufferUAV.GetBufferOffset(frameIndex),
+		m_commandBufferUAV.GetResource(), m_commandBufferUAV.GetCounterOffset(frameIndex)
 	);
 }
 
@@ -133,7 +134,7 @@ void RenderPipeline::CreateBuffers(ID3D12Device* device) {
 
 	// Copy Indirect Commands
 	for (size_t frame = 0u; frame < m_frameCount; ++frame) {
-		std::uint8_t* commandCPUPtr = m_commandBufferSRV.GetCPUWPointer(frame);
+		std::uint8_t* commandCPUPtr = m_commandBufferSRV.GetBufferCPUWPointer(frame);
 		memcpy(
 			commandCPUPtr, std::data(m_indirectCommands),
 			sizeof(IndirectCommand) * std::size(m_indirectCommands)
@@ -157,6 +158,10 @@ void RenderPipeline::DispatchCompute(
 		1u, m_commandBufferSRV.GetGPUDescriptorHandle(frameIndex)
 	);
 
+	computeCommandList->SetComputeRootDescriptorTable(
+		2u, m_commandBufferUAV.GetGPUDescriptorHandle(frameIndex)
+	);
+
 	computeCommandList->Dispatch(
 		static_cast<UINT>(std::ceil(m_modelCount / THREADBLOCKSIZE)), 1u, 1u
 	);
@@ -173,5 +178,14 @@ void RenderPipeline::ReleaseUploadResource() noexcept {
 D3D12_RESOURCE_BARRIER RenderPipeline::GetTransitionBarrier(
 	D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_STATES afterState
 ) const noexcept {
-	return ::GetTransitionBarrier(m_commandBufferSRV.GetResource(), beforeState, afterState);
+	return ::GetTransitionBarrier(m_commandBufferUAV.GetResource(), beforeState, afterState);
+}
+
+void RenderPipeline::ResetCounterBuffer(
+	ID3D12GraphicsCommandList* commandList, size_t frameIndex
+) const noexcept {
+	commandList->CopyBufferRegion(
+		m_commandBufferUAV.GetResource(), m_commandBufferUAV.GetCounterOffset(frameIndex),
+		m_uavCounterBuffer.GetResource(), 0u, static_cast<UINT64>(sizeof(UINT))
+	);
 }

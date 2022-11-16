@@ -4,6 +4,8 @@
 #include <D3DResource.hpp>
 #include <D3DHelperFunctions.hpp>
 #include <vector>
+#include <type_traits>
+#include <cassert>
 
 class D3DRootDescriptorView {
 public:
@@ -34,8 +36,7 @@ public:
 		: m_resourceBuffer{ type, flags }, m_gpuHandleStart{}, m_cpuHandleStart{},
 		m_descriptorSize{ 0u },
 		m_uav{ flags == D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS },
-		m_subAllocationSize{ 0u }, m_strideSize{ 0u }, m_descriptorOffset{ 0u },
-		m_texture{ false } {}
+		m_descriptorOffset{ 0u }, m_texture{ false } {}
 
 	void SetDescriptorOffset(
 		size_t descriptorOffset, size_t descriptorSize
@@ -51,7 +52,7 @@ public:
 	void SetTextureInfo(
 		ID3D12Device* device, UINT64 width, UINT height, DXGI_FORMAT format, bool msaa
 	) {
-		m_resourceBuffer.SetTextureInfo(device, width, height, format, msaa);
+		m_resourceBuffer.SetTextureInfo(width, height, format, msaa);
 		m_resourceBuffer.ReserveHeapSpace(device);
 
 		m_texture = true;
@@ -61,48 +62,16 @@ public:
 		ID3D12Device* device,
 		UINT strideSize, UINT elementsPerAllocation, size_t subAllocationCount
 	) noexcept {
-		size_t bufferSize = 0u;
-		m_strideSize = strideSize;
+		UINT64 bufferSize = 0u;
 
-		D3D12_BUFFER_UAV bufferInfo{};
-		bufferInfo.StructureByteStride = strideSize;
-		bufferInfo.NumElements = elementsPerAllocation;
-
-		size_t bufferSizePerAllocation =
-			static_cast<size_t>(strideSize) * elementsPerAllocation;
-
-		if (m_uav) {
-			UINT64 counterOffset = 0u;
-			UINT64 firstElement = 1u;
-			UINT64 alignedSubAllocationSize = Align(
-				strideSize + bufferSizePerAllocation, D3D12_UAV_COUNTER_PLACEMENT_ALIGNMENT
+		if (m_uav)
+			bufferSize = ConfigureUAVInfo(
+				strideSize, elementsPerAllocation, subAllocationCount
 			);
-
-			for (size_t index = 0u; index < subAllocationCount; ++index) {
-				bufferInfo.CounterOffsetInBytes = counterOffset;
-				bufferInfo.FirstElement = firstElement;
-
-				m_bufferInfos.emplace_back(bufferInfo);
-
-				bufferSize += alignedSubAllocationSize + sizeof(UINT);
-
-				counterOffset += alignedSubAllocationSize;
-				firstElement = Align(counterOffset + sizeof(UINT), strideSize) / strideSize;
-			}
-
-			m_subAllocationSize = alignedSubAllocationSize;
-		}
-		else {
-			for (size_t index = 0u; index < subAllocationCount; ++index) {
-				bufferInfo.FirstElement = index * elementsPerAllocation;
-
-				m_bufferInfos.emplace_back(bufferInfo);
-
-				bufferSize += bufferSizePerAllocation;
-			}
-
-			m_subAllocationSize = bufferSizePerAllocation;
-		}
+		else
+			bufferSize = ConfigureSRVInfo(
+				strideSize, elementsPerAllocation, subAllocationCount
+			);
 
 		m_resourceBuffer.SetBufferInfo(bufferSize);
 		m_resourceBuffer.ReserveHeapSpace(device);
@@ -139,13 +108,24 @@ public:
 
 	[[nodiscard]]
 	UINT64 GetCounterOffset(size_t index) const noexcept {
-		return static_cast<UINT64>(index * m_subAllocationSize);
+		assert(m_uav && "Not a UAV.");
+		return m_counterOffsets[index];
 	}
 
 	[[nodiscard]]
-	std::uint8_t* GetCPUWPointer(size_t index) const noexcept {
-		return m_resourceBuffer.GetCPUWPointer()
-			+ index * m_subAllocationSize + m_uav * m_strideSize;
+	UINT64 GetBufferOffset(size_t index) const noexcept {
+		return m_bufferOffsets[index];
+	}
+
+	[[nodiscard]]
+	std::uint8_t* GetBufferCPUWPointer(size_t index) const noexcept {
+		return m_resourceBuffer.GetCPUWPointer() + GetBufferOffset(index);
+	}
+
+	[[nodiscard]]
+	std::uint8_t* GetCounterCPUWPointer(size_t index) const noexcept {
+		assert(m_uav && "Not a UAV.");
+		return m_resourceBuffer.GetCPUWPointer() + GetCounterOffset(index);
 	}
 
 	[[nodiscard]]
@@ -226,18 +206,117 @@ private:
 		}
 	}
 
+	[[nodiscard]]
+	UINT64 ConfigureUAVInfo(
+		UINT strideSize, UINT elementCount, size_t subAllocationCount
+	) noexcept {
+		D3D12_BUFFER_UAV bufferInfo{};
+		bufferInfo.StructureByteStride = strideSize;
+		bufferInfo.NumElements = elementCount;
+
+		const size_t bufferSubAllocationSize = static_cast<size_t>(strideSize) * elementCount;
+		UINT64 bufferSize = 0u;
+
+		if (D3D12_UAV_COUNTER_PLACEMENT_ALIGNMENT > strideSize) {
+			// If stride is smaller, placing the counter at the start of each allocation
+			// is more efficient
+
+			UINT64 counterOffset = 0u;
+			UINT64 firstElement = 1u;
+			size_t bufferOffset = strideSize;
+			// Counter is placed inside the first element of the resource and the actual buffer
+			// starts from the second index
+
+			for (size_t index = 0u; index < subAllocationCount; ++index) {
+				bufferInfo.CounterOffsetInBytes = counterOffset;
+				bufferInfo.FirstElement = firstElement;
+
+				m_bufferInfos.emplace_back(bufferInfo);
+				m_counterOffsets.emplace_back(counterOffset);
+				m_bufferOffsets.emplace_back(static_cast<UINT64>(bufferOffset));
+
+				const size_t allocationSize = bufferOffset + bufferSubAllocationSize;
+
+				bufferSize = static_cast<UINT64>(allocationSize);
+				counterOffset = static_cast<UINT64>(Align(
+					allocationSize, D3D12_UAV_COUNTER_PLACEMENT_ALIGNMENT
+				)); // Align to find the next counter position
+				bufferOffset = Align(counterOffset, strideSize); // Next buffer starts after
+				firstElement = bufferOffset / strideSize;        // one element
+			}
+		}
+		else {
+			// If stride is larger, placing the counter at the end of each allocation
+			// is more efficient
+
+			UINT64 counterOffset = 0u;
+			UINT64 firstElement = 0u;
+			size_t bufferOffset = 0u;
+			// The actual buffer is placed at first and then the end of the buffer is aligned
+			// to place the counter
+
+			for (size_t index = 0u; index < subAllocationCount; ++index) {
+				bufferInfo.FirstElement = firstElement;
+
+				m_bufferOffsets.emplace_back(static_cast<UINT64>(bufferOffset));
+
+				const size_t allocationSize = bufferOffset + bufferSubAllocationSize;
+				counterOffset = static_cast<UINT64>(Align(
+					allocationSize, D3D12_UAV_COUNTER_PLACEMENT_ALIGNMENT
+				)); // Align to find the current counter position
+
+				bufferInfo.CounterOffsetInBytes = counterOffset;
+
+				m_bufferInfos.emplace_back(bufferInfo);
+				m_counterOffsets.emplace_back(counterOffset);
+
+				bufferOffset = Align(counterOffset, strideSize); // Next buffer starts after
+				firstElement = bufferOffset / strideSize;        // one element
+			}
+
+			bufferSize = static_cast<UINT64>(bufferOffset);
+		}
+
+		return bufferSize;
+	}
+
+	[[nodiscard]]
+	UINT64 ConfigureSRVInfo(
+		UINT strideSize, UINT elementCount, size_t subAllocationCount
+	) noexcept {
+		D3D12_BUFFER_UAV bufferInfo{};
+		bufferInfo.StructureByteStride = strideSize;
+		bufferInfo.NumElements = elementCount;
+
+		auto subAllocationSize = static_cast<UINT64>(strideSize * elementCount);
+
+		for (size_t index = 0u; index < subAllocationCount; ++index) {
+			bufferInfo.FirstElement = index * elementCount;
+
+			m_bufferInfos.emplace_back(bufferInfo);
+			m_bufferOffsets.emplace_back(static_cast<UINT64>(index * subAllocationSize));
+		}
+
+		return static_cast<UINT64>(subAllocationSize * subAllocationCount);
+	}
+
 protected:
 	ResourceView m_resourceBuffer;
 	D3D12_GPU_DESCRIPTOR_HANDLE m_gpuHandleStart;
 	D3D12_CPU_DESCRIPTOR_HANDLE m_cpuHandleStart;
 	size_t m_descriptorSize;
 	bool m_uav;
-	size_t m_subAllocationSize;
-	size_t m_strideSize;
 	size_t m_descriptorOffset;
 	bool m_texture;
 	std::vector<D3D12_BUFFER_UAV> m_bufferInfos;
+	std::vector<UINT64> m_counterOffsets;
+	std::vector<UINT64> m_bufferOffsets;
 };
+
+template<>
+void D3DDescriptorView<D3DUploadableResourceView>::SetTextureInfo(
+	ID3D12Device* device, UINT64 width, UINT height, DXGI_FORMAT format, bool msaa
+);
 
 using D3DSingleDescriptorView = D3DDescriptorView<D3DResourceView>;
 

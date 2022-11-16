@@ -28,7 +28,10 @@ std::unique_ptr<RootSignatureDynamic> CreateComputeRootSignature(ID3D12Device* d
 		RootSigElement::ModelData, false, 0u
 	).AddDescriptorTable(
 		D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1u, D3D12_SHADER_VISIBILITY_ALL,
-		RootSigElement::IndirectArgsSRV,false, 1u
+		RootSigElement::IndirectArgsSRV, false, 1u
+	).AddDescriptorTable(
+		D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1u, D3D12_SHADER_VISIBILITY_ALL,
+		RootSigElement::IndirectArgsUAV, false, 2u
 	).AddConstantBufferView(
 		D3D12_SHADER_VISIBILITY_ALL, RootSigElement::Camera, 0u
 	).CompileSignature().CreateSignature(device);

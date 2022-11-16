@@ -50,7 +50,7 @@ void TextureStorage::CreateBufferViews(ID3D12Device* device) {
 		const D3D12_RESOURCE_DESC textureDesc = textureDescriptor->GetResourceDesc();
 		Gaia::Resources::textureUploadContainer->AddMemory(
 			std::move(m_textureHandles[index]), textureDesc.Width * 4u, textureDesc.Height,
-			textureDescriptor->GetCPUWPointer(0u)
+			textureDescriptor->GetBufferCPUWPointer(0u)
 		);
 	}
 }

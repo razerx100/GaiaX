@@ -27,6 +27,15 @@ D3D12_GPU_VIRTUAL_ADDRESS D3DRootDescriptorView::GetGPUAddressStart(
 	return m_gpuAddress.GetAddressStart<D3D12_GPU_VIRTUAL_ADDRESS>(index);
 }
 
+void D3DDescriptorView<D3DUploadableResourceView>::SetTextureInfo(
+	ID3D12Device* device, UINT64 width, UINT height, DXGI_FORMAT format, bool msaa
+) {
+	m_resourceBuffer.SetTextureInfo(device, width, height, format, msaa);
+	m_resourceBuffer.ReserveHeapSpace(device);
+
+	m_texture = true;
+}
+
 // D3D Upload Resource Descriptor View
 void D3DUploadResourceDescriptorView::RecordResourceUpload(
 	ID3D12GraphicsCommandList* copyList
