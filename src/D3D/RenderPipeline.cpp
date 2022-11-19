@@ -89,6 +89,9 @@ void RenderPipeline::ReserveBuffers(ID3D12Device* device) {
 
 	m_uavCounterBuffer.SetBufferInfo(sizeof(UINT));
 	m_uavCounterBuffer.ReserveHeapSpace(device);
+
+	m_cullingDataBuffer.SetBufferInfo(sizeof(CullingData));
+	m_cullingDataBuffer.ReserveHeapSpace(device);
 }
 
 void RenderPipeline::RecordIndirectArguments(
@@ -126,6 +129,13 @@ void RenderPipeline::CreateBuffers(ID3D12Device* device) {
 		device, uploadDescriptorStart, gpuDescriptorStart, D3D12_RESOURCE_STATE_COPY_DEST
 	);
 	m_uavCounterBuffer.CreateResource(device, D3D12_RESOURCE_STATE_GENERIC_READ);
+	m_cullingDataBuffer.CreateResource(device);
+
+	// copy the culling data to the buffer.
+	std::uint8_t* cullingBufferPtr = m_cullingDataBuffer.GetCPUWPointer();
+
+	CullingData cullingData{ static_cast<std::uint32_t>(std::size(m_indirectCommands)) };
+	memcpy(cullingBufferPtr, &cullingData, sizeof(CullingData));
 
 	// copy zero to counter buffer
 	std::uint8_t* counterCPUPtr = m_uavCounterBuffer.GetCPUWPointer();
@@ -157,9 +167,11 @@ void RenderPipeline::DispatchCompute(
 	computeCommandList->SetComputeRootDescriptorTable(
 		1u, m_commandBufferSRV.GetGPUDescriptorHandle(frameIndex)
 	);
-
 	computeCommandList->SetComputeRootDescriptorTable(
 		2u, m_commandBufferUAV.GetGPUDescriptorHandle(frameIndex)
+	);
+	computeCommandList->SetComputeRootConstantBufferView(
+		4u, m_cullingDataBuffer.GetGPUAddress()
 	);
 
 	computeCommandList->Dispatch(
@@ -169,10 +181,12 @@ void RenderPipeline::DispatchCompute(
 
 void RenderPipeline::RecordResourceUpload(ID3D12GraphicsCommandList* copyList) noexcept {
 	m_commandBufferSRV.RecordResourceUpload(copyList);
+	m_cullingDataBuffer.RecordResourceUpload(copyList);
 }
 
 void RenderPipeline::ReleaseUploadResource() noexcept {
 	m_commandBufferSRV.ReleaseUploadResource();
+	m_cullingDataBuffer.ReleaseUploadResource();
 }
 
 D3D12_RESOURCE_BARRIER RenderPipeline::GetTransitionBarrier(

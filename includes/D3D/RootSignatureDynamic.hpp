@@ -11,6 +11,7 @@ enum class RootSigElement {
 	TextureIndex,
 	IndirectArgsSRV,
 	IndirectArgsUAV,
+	CullingData,
 	ElementCount
 };
 

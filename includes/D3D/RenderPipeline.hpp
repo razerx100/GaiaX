@@ -14,6 +14,10 @@ struct IndirectCommand {
 	D3D12_DRAW_INDEXED_ARGUMENTS drawIndexed;
 };
 
+struct CullingData {
+	std::uint32_t commandCount;
+};
+
 class RenderPipeline {
 public:
 	RenderPipeline(std::uint32_t frameCount) noexcept;
@@ -64,6 +68,7 @@ private:
 	D3DUploadResourceDescriptorView m_commandBufferSRV;
 	D3DSingleDescriptorView m_commandBufferUAV;
 	D3DResourceView m_uavCounterBuffer;
+	D3DUploadableResourceView m_cullingDataBuffer;
 	size_t m_commandDescriptorOffset;
 	std::vector<IndirectCommand> m_indirectCommands;
 
