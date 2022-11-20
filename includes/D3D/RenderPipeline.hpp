@@ -51,7 +51,7 @@ public:
 
 	[[nodiscard]]
 	D3D12_RESOURCE_BARRIER GetTransitionBarrier(
-		D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_STATES afterState
+		D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_STATES afterState, size_t frameIndex
 	) const noexcept;
 
 private:
@@ -66,7 +66,7 @@ private:
 	std::uint32_t m_frameCount;
 	size_t m_modelBufferPerFrameSize;
 	D3DUploadResourceDescriptorView m_commandBufferSRV;
-	D3DSingleDescriptorView m_commandBufferUAV;
+	std::vector<D3DSingleDescriptorView> m_commandBufferUAVs;
 	D3DResourceView m_uavCounterBuffer;
 	D3DUploadableResourceView m_cullingDataBuffer;
 	size_t m_commandDescriptorOffset;

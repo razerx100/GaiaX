@@ -129,7 +129,8 @@ void RendererDx12::Render() {
 		D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET, currentBackIndex
 	);
 	preBarriers[1] = Gaia::renderPipeline->GetTransitionBarrier(
-		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT
+		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT,
+		currentBackIndex
 	);
 	graphicsCommandList->ResourceBarrier(2u, preBarriers);
 

@@ -32,6 +32,7 @@ void D3DDescriptorView<D3DUploadableResourceView>::SetTextureInfo(
 ) {
 	m_resourceBuffer.SetTextureInfo(device, width, height, format, msaa);
 	m_resourceBuffer.ReserveHeapSpace(device);
+	m_bufferOffsets.emplace_back(0u);
 
 	m_texture = true;
 }
