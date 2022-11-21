@@ -42,6 +42,9 @@ public:
 
 private:
 	void ConstructPipelines();
+	void RecordPreGraphicsBarriers(
+		struct ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex
+	) const noexcept;
 
 private:
 	std::array<float, 4> m_backgroundColour;

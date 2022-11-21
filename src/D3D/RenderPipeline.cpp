@@ -215,5 +215,12 @@ void RenderPipeline::ResetCounterBuffer(
 		m_commandBufferUAVs[frameIndex].GetResource(),
 		m_commandBufferUAVs[frameIndex].GetCounterOffset(0u),
 		m_uavCounterBuffer.GetResource(), 0u, static_cast<UINT64>(sizeof(UINT))
+	); // UAV getting promoted from COMMON to COPY_DEST
+
+	// So need to change it back to UNORDERED_ACCESS
+	D3D12_RESOURCE_BARRIER indirectArgsBarrier = GetTransitionBarrier(
+		D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+		frameIndex
 	);
+	commandList->ResourceBarrier(1u, &indirectArgsBarrier);
 }

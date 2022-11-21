@@ -111,28 +111,18 @@ void RendererDx12::Render() {
 	Gaia::computeCmdList->Close();
 	Gaia::computeQueue->ExecuteCommandLists(computeCommandList);
 
-	UINT64 fenceValue = Gaia::computeFence->GetFrontValue();
+	UINT64 fenceValue = Gaia::graphicsFence->GetFrontValue();
 
 	Gaia::computeQueue->SignalCommandQueue(Gaia::computeFence->GetFence(), fenceValue);
 
 	// Graphics Stage
 	Gaia::graphicsQueue->WaitOnGPU(Gaia::computeFence->GetFence(), fenceValue);
-	Gaia::computeFence->AdvanceValueInQueue();
-	Gaia::computeFence->IncreaseFrontValue(fenceValue);
 
 	ID3D12GraphicsCommandList* graphicsCommandList = Gaia::graphicsCmdList->GetCommandList();
 
 	Gaia::graphicsCmdList->Reset(currentBackIndex);
-	static D3D12_RESOURCE_BARRIER preBarriers[2]{};
 
-	preBarriers[0] = Gaia::swapChain->GetTransitionBarrier(
-		D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET, currentBackIndex
-	);
-	preBarriers[1] = Gaia::renderPipeline->GetTransitionBarrier(
-		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT,
-		currentBackIndex
-	);
-	graphicsCommandList->ResourceBarrier(2u, preBarriers);
+	RecordPreGraphicsBarriers(graphicsCommandList, currentBackIndex);
 
 	graphicsCommandList->SetDescriptorHeaps(1u, ppHeap);
 
@@ -337,4 +327,19 @@ void RendererDx12::ConstructPipelines() {
 	Gaia::renderPipeline->AddGraphicsPipelineObject(std::move(graphicsPSO));
 
 	Gaia::renderPipeline->CreateCommandSignature(device);
+}
+
+void RendererDx12::RecordPreGraphicsBarriers(
+	ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex
+) const noexcept {
+	static D3D12_RESOURCE_BARRIER preBarriers[2]{};
+
+	preBarriers[0] = Gaia::swapChain->GetTransitionBarrier(
+		D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET, frameIndex
+	);
+	preBarriers[1] = Gaia::renderPipeline->GetTransitionBarrier(
+		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT,
+		frameIndex
+	);
+	graphicsCommandList->ResourceBarrier(2u, preBarriers);
 }
