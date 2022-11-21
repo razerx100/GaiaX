@@ -92,7 +92,7 @@ void RenderPipeline::ReserveBuffers(ID3D12Device* device) {
 		commandBufferUAV.SetDescriptorOffset(commandDescriptorOffsetUAV, descriptorSize);
 		commandBufferUAV.SetBufferInfo(device, indirectStructSize, m_modelCount, 1u);
 
-		commandDescriptorOffsetUAV += descriptorSize;
+		++commandDescriptorOffsetUAV;
 	}
 
 	m_uavCounterBuffer.SetBufferInfo(sizeof(UINT));

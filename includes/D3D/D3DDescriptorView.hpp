@@ -275,7 +275,7 @@ private:
 				firstElement = bufferOffset / strideSize;        // one element
 			}
 
-			bufferSize = static_cast<UINT64>(bufferOffset);
+			bufferSize = static_cast<UINT64>(bufferOffset + sizeof(UINT));
 		}
 
 		return bufferSize;
