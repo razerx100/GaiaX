@@ -145,7 +145,12 @@ void RenderPipeline::CreateBuffers(ID3D12Device* device) {
 	// copy the culling data to the buffer.
 	std::uint8_t* cullingBufferPtr = m_cullingDataBuffer.GetCPUWPointer();
 
-	CullingData cullingData{ static_cast<std::uint32_t>(std::size(m_indirectCommands)) };
+	CullingData cullingData{};
+	cullingData.commandCount = static_cast<std::uint32_t>(std::size(m_indirectCommands));
+	cullingData.xBounds = XBOUNDS;
+	cullingData.yBounds = YBOUNDS;
+	cullingData.zBounds = ZBOUNDS;
+
 	memcpy(cullingBufferPtr, &cullingData, sizeof(CullingData));
 
 	// copy zero to counter buffer

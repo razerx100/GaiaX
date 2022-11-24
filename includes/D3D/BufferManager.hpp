@@ -8,14 +8,12 @@
 #include <RootSignatureDynamic.hpp>
 #include <IModel.hpp>
 
-// Need to pack stuff in multiple of 16bytes and since the buffers will be allocated
-// contiguously.
-struct ModelConstantBuffer {
+struct ModelBuffer {
 	UVInfo uvInfo;
 	DirectX::XMMATRIX modelMatrix;
 	std::uint32_t textureIndex;
 	DirectX::XMFLOAT3 modelOffset;
-	DirectX::XMFLOAT3 boundingBox[8];
+	ModelBounds boundingBox;
 };
 
 class BufferManager {

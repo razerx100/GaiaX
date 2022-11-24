@@ -16,6 +16,10 @@ struct IndirectCommand {
 
 struct CullingData {
 	std::uint32_t commandCount;
+	DirectX::XMFLOAT2 xBounds;
+	float padding;
+	DirectX::XMFLOAT2 yBounds;
+	DirectX::XMFLOAT2 zBounds;
 };
 
 class RenderPipeline {
@@ -73,5 +77,8 @@ private:
 	std::vector<IndirectCommand> m_indirectCommands;
 
 	static constexpr float THREADBLOCKSIZE = 128.f;
+	static constexpr DirectX::XMFLOAT2 XBOUNDS = { 1.f, -1.f };
+	static constexpr DirectX::XMFLOAT2 YBOUNDS = { 1.f, -1.f };
+	static constexpr DirectX::XMFLOAT2 ZBOUNDS = { 1.f, -1.f };
 };
 #endif

@@ -25,7 +25,7 @@ void BufferManager::ReserveBuffers(ID3D12Device* device) noexcept {
 
 	m_modelBuffers.SetDescriptorOffset(modelBufferDescriptorOffset, descriptorSize);
 	m_modelBuffers.SetBufferInfo(
-		device, static_cast<UINT>(sizeof(ModelConstantBuffer)),
+		device, static_cast<UINT>(sizeof(ModelBuffer)),
 		static_cast<UINT>(std::size(m_opaqueModels)), m_frameCount
 	);
 }
@@ -138,17 +138,15 @@ void BufferManager::AddOpaqueModels(std::vector<std::shared_ptr<IModel>>&& model
 
 void BufferManager::UpdateModelData(size_t frameIndex) const noexcept {
 	size_t offset = 0u;
-	static constexpr size_t bufferStride = sizeof(ModelConstantBuffer);
+	static constexpr size_t bufferStride = sizeof(ModelBuffer);
 
 	for (auto& model : m_opaqueModels) {
-		ModelConstantBuffer modelBuffer{};
+		ModelBuffer modelBuffer{};
 		modelBuffer.textureIndex = model->GetTextureIndex();
 		modelBuffer.uvInfo = model->GetUVInfo();
 		modelBuffer.modelMatrix = model->GetModelMatrix();
 		modelBuffer.modelOffset = model->GetModelOffset();
-
-		const auto& boundingBox = model->GetBoundingBox();
-		memcpy(modelBuffer.boundingBox, std::data(boundingBox), sizeof(DirectX::XMFLOAT3) * 8u);
+		modelBuffer.boundingBox = model->GetBoundingBox();
 
 		memcpy(
 			m_modelBuffers.GetBufferCPUWPointer(frameIndex) + offset, &modelBuffer,
