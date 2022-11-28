@@ -31,6 +31,9 @@ public:
 	void AddComputePipelineObject(std::unique_ptr<D3DPipelineObject> pso) noexcept;
 	void AddComputeRootSignature(std::unique_ptr<RootSignatureBase> signature) noexcept;
 
+	void SetComputeRootSignatureLayout(std::vector<UINT> rsLayout) noexcept;
+	void SetGraphicsRootSignatureLayout(std::vector<UINT> rsLayout) noexcept;
+
 	void RecordIndirectArguments(const std::vector<std::shared_ptr<IModel>>& models) noexcept;
 
 	void BindGraphicsPipeline(ID3D12GraphicsCommandList* graphicsCommandList) const noexcept;
@@ -75,6 +78,8 @@ private:
 	D3DUploadableResourceView m_cullingDataBuffer;
 	size_t m_commandDescriptorOffset;
 	std::vector<IndirectCommand> m_indirectCommands;
+	std::vector<UINT> m_computeRSLayout;
+	std::vector<UINT> m_graphicsRSLayout;
 
 	static constexpr float THREADBLOCKSIZE = 128.f;
 	static constexpr DirectX::XMFLOAT2 XBOUNDS = { 1.f, -1.f };

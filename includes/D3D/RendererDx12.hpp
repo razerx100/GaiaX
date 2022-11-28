@@ -15,7 +15,7 @@ public:
 	void Resize(std::uint32_t width, std::uint32_t height) override;
 
 	[[nodiscard]]
-	virtual Resolution GetDisplayCoordinates(std::uint32_t displayIndex = 0u) const override;
+	virtual Resolution GetFirstDisplayCoordinates() const override;
 
 	[[nodiscard]]
 	size_t RegisterResource(

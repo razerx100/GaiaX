@@ -31,12 +31,8 @@ void D3DResource::Release() noexcept {
 	m_pBuffer.Reset();
 }
 
-void D3DResource::MapBuffer(bool readAble) {
-	static constexpr D3D12_RANGE range{0u, 0u};
+void D3DResource::MapBuffer() {
 	D3D12_RANGE const* rangePtr = nullptr;
-
-	if (!readAble)
-		rangePtr = &range;
 
 	m_pBuffer->Map(0u, rangePtr, reinterpret_cast<void**>(&m_cpuHandle));
 }

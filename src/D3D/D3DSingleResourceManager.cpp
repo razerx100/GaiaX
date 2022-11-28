@@ -13,5 +13,5 @@ void D3DSingleResourceManager::CreateResource(ID3D12Device* device) {
 	else
 		initialState = D3D12_RESOURCE_STATE_GENERIC_READ;
 
-	m_resourceView.CreateResource(device, initialState, nullptr);
+	m_resourceView.CreateResource(device, initialState);
 }

@@ -191,9 +191,9 @@ void RendererDx12::Resize(std::uint32_t width, std::uint32_t height) {
 	}
 }
 
-Renderer::Resolution RendererDx12::GetDisplayCoordinates(std::uint32_t displayIndex) const {
+Renderer::Resolution RendererDx12::GetFirstDisplayCoordinates() const {
 	auto [width, height] = GetDisplayResolution(
-		Gaia::device->GetDeviceRef(), Gaia::device->GetFactoryRef(), displayIndex
+		Gaia::device->GetDeviceRef(), Gaia::device->GetFactoryRef(), 0u
 	);
 
 	return { width, height };
@@ -253,7 +253,7 @@ void RendererDx12::ProcessData() {
 	// Async copy end
 
 	// GPU upload start
-	Gaia::copyCmdList->Reset();
+	Gaia::copyCmdList->ResetFirst();
 	ID3D12GraphicsCommandList* copyList = Gaia::copyCmdList->GetCommandList();
 
 	Gaia::Resources::vertexBuffer->RecordResourceUpload(copyList);
@@ -318,8 +318,14 @@ void RendererDx12::ConstructPipelines() {
 	auto computePSO = CreateComputePipelineObject(device, m_shaderPath, computeRS->Get());
 	auto graphicsPSO = CreateGraphicsPipelineObject(device, m_shaderPath, graphicsRS->Get());
 
-	Gaia::bufferManager->SetComputeRootSignatureLayout(computeRS->GetElementLayout());
-	Gaia::bufferManager->SetGraphicsRootSignatureLayout(graphicsRS->GetElementLayout());
+	auto computeRSLayout = computeRS->GetElementLayout();
+	auto graphicsRSLayout = graphicsRS->GetElementLayout();
+
+	Gaia::bufferManager->SetComputeRootSignatureLayout(computeRSLayout);
+	Gaia::renderPipeline->SetComputeRootSignatureLayout(std::move(computeRSLayout));
+	Gaia::bufferManager->SetGraphicsRootSignatureLayout(graphicsRSLayout);
+	Gaia::renderPipeline->SetGraphicsRootSignatureLayout(graphicsRSLayout);
+	Gaia::textureStorage->SetGraphicsRootSignatureLayout(std::move(graphicsRSLayout));
 
 	Gaia::renderPipeline->AddComputeRootSignature(std::move(computeRS));
 	Gaia::renderPipeline->AddComputePipelineObject(std::move(computePSO));

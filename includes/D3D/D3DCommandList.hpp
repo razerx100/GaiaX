@@ -9,7 +9,8 @@ public:
 		ID3D12Device4* device, D3D12_COMMAND_LIST_TYPE type, size_t allocatorCount = 1u
 	);
 
-	void Reset(size_t allocatorIndex = 0u);
+	void Reset(size_t allocatorIndex);
+	void ResetFirst();
 	void Close() const;
 
 	[[nodiscard]]

@@ -12,9 +12,10 @@ BufferManager::BufferManager(std::uint32_t frameCount)
 void BufferManager::ReserveBuffers(ID3D12Device* device) noexcept {
 	size_t cameraBufferSize = sizeof(DirectX::XMMATRIX) * 2u;
 	constexpr size_t cameraBufferAlignment = 256u;
-	size_t cameraOffset = Gaia::Resources::cpuWriteBuffer->ReserveSpaceAndGetOffset(
-		cameraBufferSize, m_frameCount, cameraBufferAlignment
-	);
+	size_t cameraOffset =
+		Gaia::Resources::cpuWriteBuffer->ReserveSpaceSuballocatedAndGetOffset(
+			cameraBufferSize, m_frameCount, cameraBufferAlignment
+		);
 
 	m_cameraBuffer.SetAddressesStart(cameraOffset, cameraBufferSize, cameraBufferAlignment);
 

@@ -8,7 +8,7 @@ enum class RootSigElement {
 	Camera,
 	ModelData,
 	Textures,
-	TextureIndex,
+	ModelIndex,
 	IndirectArgsSRV,
 	IndirectArgsUAV,
 	CullingData,

@@ -16,6 +16,8 @@ public:
 		size_t height
 	) noexcept;
 
+	void SetGraphicsRootSignatureLayout(std::vector<UINT> rsLayout) noexcept;
+
 	void CreateBufferViews(ID3D12Device* device);
 	void RecordResourceUpload(ID3D12GraphicsCommandList* copyList) noexcept;
 	void ReleaseUploadResource() noexcept;
@@ -26,5 +28,6 @@ private:
 	std::vector<std::unique_ptr<D3DUploadResourceDescriptorView>> m_textureDescriptors;
 	D3D12_GPU_DESCRIPTOR_HANDLE m_textureDescriptorStart;
 	std::vector<std::unique_ptr<std::uint8_t>> m_textureHandles;
+	std::vector<UINT> m_graphicsRSLayout;
 };
 #endif

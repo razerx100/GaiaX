@@ -19,6 +19,10 @@ void D3DCommandList::Reset(size_t allocatorIndex) {
 	m_pCommandList->Reset(currentAllocator.Get(), nullptr);
 }
 
+void D3DCommandList::ResetFirst() {
+	Reset(0u);
+}
+
 void D3DCommandList::Close() const {
 	m_pCommandList->Close();
 }

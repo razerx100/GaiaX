@@ -45,9 +45,11 @@ void RenderPipeline::BindGraphicsPipeline(
 }
 
 void RenderPipeline::CreateCommandSignature(ID3D12Device* device) {
+	static constexpr size_t modelIndex = static_cast<size_t>(RootSigElement::ModelIndex);
+
 	std::array<D3D12_INDIRECT_ARGUMENT_DESC, 2u> arguments{};
 	arguments[0].Type = D3D12_INDIRECT_ARGUMENT_TYPE_CONSTANT;
-	arguments[0].Constant.RootParameterIndex = 2u;
+	arguments[0].Constant.RootParameterIndex = m_graphicsRSLayout[modelIndex];
 	arguments[0].Constant.DestOffsetIn32BitValues = 0u;
 	arguments[0].Constant.Num32BitValuesToSet = 1u;
 	arguments[1].Type = D3D12_INDIRECT_ARGUMENT_TYPE_DRAW_INDEXED;
@@ -69,9 +71,9 @@ void RenderPipeline::DrawModels(
 ) const noexcept {
 	graphicsCommandList->ExecuteIndirect(
 		m_commandSignature.Get(), m_modelCount, m_commandBufferUAVs[frameIndex].GetResource(),
-		m_commandBufferUAVs[frameIndex].GetBufferOffset(0u),
+		m_commandBufferUAVs[frameIndex].GetFirstBufferOffset(),
 		m_commandBufferUAVs[frameIndex].GetResource(),
-		m_commandBufferUAVs[frameIndex].GetCounterOffset(0u)
+		m_commandBufferUAVs[frameIndex].GetFirstCounterOffset()
 	);
 }
 
@@ -180,14 +182,23 @@ void RenderPipeline::BindComputePipeline(
 void RenderPipeline::DispatchCompute(
 	ID3D12GraphicsCommandList* computeCommandList, size_t frameIndex
 ) const noexcept {
+	static constexpr size_t commandBufferSRVIndex =
+		static_cast<size_t>(RootSigElement::IndirectArgsSRV);
+	static constexpr size_t commandBufferUAVIndex =
+		static_cast<size_t>(RootSigElement::IndirectArgsUAV);
+	static constexpr size_t cullingDataIndex =
+		static_cast<size_t>(RootSigElement::CullingData);
+
 	computeCommandList->SetComputeRootDescriptorTable(
-		1u, m_commandBufferSRV.GetGPUDescriptorHandle(frameIndex)
+		m_computeRSLayout[commandBufferSRVIndex],
+		m_commandBufferSRV.GetGPUDescriptorHandle(frameIndex)
 	);
 	computeCommandList->SetComputeRootDescriptorTable(
-		2u, m_commandBufferUAVs[frameIndex].GetGPUDescriptorHandle(0u)
+		m_computeRSLayout[commandBufferUAVIndex],
+		m_commandBufferUAVs[frameIndex].GetGPUDescriptorHandle(0u)
 	);
 	computeCommandList->SetComputeRootConstantBufferView(
-		4u, m_cullingDataBuffer.GetGPUAddress()
+		m_computeRSLayout[cullingDataIndex], m_cullingDataBuffer.GetGPUAddress()
 	);
 
 	computeCommandList->Dispatch(
@@ -218,7 +229,7 @@ void RenderPipeline::ResetCounterBuffer(
 ) const noexcept {
 	commandList->CopyBufferRegion(
 		m_commandBufferUAVs[frameIndex].GetResource(),
-		m_commandBufferUAVs[frameIndex].GetCounterOffset(0u),
+		m_commandBufferUAVs[frameIndex].GetFirstCounterOffset(),
 		m_uavCounterBuffer.GetResource(), 0u, static_cast<UINT64>(sizeof(UINT))
 	); // UAV getting promoted from COMMON to COPY_DEST
 
@@ -228,4 +239,12 @@ void RenderPipeline::ResetCounterBuffer(
 		frameIndex
 	);
 	commandList->ResourceBarrier(1u, &indirectArgsBarrier);
+}
+
+void RenderPipeline::SetComputeRootSignatureLayout(std::vector<UINT> rsLayout) noexcept {
+	m_computeRSLayout = std::move(rsLayout);
+}
+
+void RenderPipeline::SetGraphicsRootSignatureLayout(std::vector<UINT> rsLayout) noexcept {
+	m_graphicsRSLayout = std::move(rsLayout);
 }

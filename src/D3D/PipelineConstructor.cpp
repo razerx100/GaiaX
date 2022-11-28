@@ -12,7 +12,7 @@ std::unique_ptr<RootSignatureDynamic> CreateGraphicsRootSignature(ID3D12Device* 
 		D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1u, D3D12_SHADER_VISIBILITY_VERTEX,
 		RootSigElement::ModelData, false, 0u
 	).AddConstants(
-		1u, D3D12_SHADER_VISIBILITY_VERTEX, RootSigElement::TextureIndex, 0u
+		1u, D3D12_SHADER_VISIBILITY_VERTEX, RootSigElement::ModelIndex, 0u
 	).AddConstantBufferView(
 		D3D12_SHADER_VISIBILITY_VERTEX, RootSigElement::Camera, 1u
 	).CompileSignature().CreateSignature(device);

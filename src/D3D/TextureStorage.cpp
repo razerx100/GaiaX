@@ -50,13 +50,17 @@ void TextureStorage::CreateBufferViews(ID3D12Device* device) {
 		const D3D12_RESOURCE_DESC textureDesc = textureDescriptor->GetResourceDesc();
 		Gaia::Resources::textureUploadContainer->AddMemory(
 			std::move(m_textureHandles[index]), textureDesc.Width * 4u, textureDesc.Height,
-			textureDescriptor->GetBufferCPUWPointer(0u)
+			textureDescriptor->GetFirstBufferCPUWPointer()
 		);
 	}
 }
 
 void TextureStorage::BindTextures(ID3D12GraphicsCommandList* graphicsList) const noexcept {
-	graphicsList->SetGraphicsRootDescriptorTable(0u, m_textureDescriptorStart);
+	static constexpr size_t texturesIndex = static_cast<size_t>(RootSigElement::Textures);
+
+	graphicsList->SetGraphicsRootDescriptorTable(
+		m_graphicsRSLayout[texturesIndex], m_textureDescriptorStart
+	);
 }
 
 void TextureStorage::RecordResourceUpload(ID3D12GraphicsCommandList* copyList) noexcept {
@@ -69,4 +73,8 @@ void TextureStorage::ReleaseUploadResource() noexcept {
 		textureDesc->ReleaseUploadResource();
 
 	m_textureHandles = std::vector<std::unique_ptr<std::uint8_t>>();
+}
+
+void TextureStorage::SetGraphicsRootSignatureLayout(std::vector<UINT> rsLayout) noexcept {
+	m_graphicsRSLayout = std::move(rsLayout);
 }

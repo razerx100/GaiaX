@@ -17,10 +17,14 @@ public:
 	}
 
 	[[nodiscard]]
-	size_t ReserveSpaceAndGetOffset(
-		size_t subAllocationSize, size_t subAllocationCount = 1u, size_t alignment = 4u
+	size_t ReserveSpaceSuballocatedAndGetOffset(
+		size_t subAllocationSize, size_t subAllocationCount, size_t alignment
 	) noexcept {
 		return m_allocator.SubAllocate(subAllocationSize, subAllocationCount, alignment);
+	}
+	[[nodiscard]]
+	size_t ReserveSpaceAndGetOffset(size_t subAllocationSize) noexcept {
+		return m_allocator.SubAllocate(subAllocationSize, 1u, 4u);
 	}
 	[[nodiscard]]
 	D3D12_GPU_VIRTUAL_ADDRESS GetGPUStartAddress() const noexcept {

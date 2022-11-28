@@ -130,6 +130,26 @@ public:
 	}
 
 	[[nodiscard]]
+	UINT64 GetFirstCounterOffset() const noexcept {
+		return GetCounterOffset(0u);
+	}
+
+	[[nodiscard]]
+	UINT64 GetFirstBufferOffset() const noexcept {
+		return GetBufferOffset(0u);
+	}
+
+	[[nodiscard]]
+	std::uint8_t* GetFirstBufferCPUWPointer() const noexcept {
+		return GetBufferCPUWPointer(0u);
+	}
+
+	[[nodiscard]]
+	std::uint8_t* GetFirstCounterCPUWPointer() const noexcept {
+		return GetCounterCPUWPointer(0u);
+	}
+
+	[[nodiscard]]
 	ID3D12Resource* GetResource() const noexcept {
 		return m_resourceBuffer.GetResource();
 	}

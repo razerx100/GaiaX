@@ -12,7 +12,7 @@ public:
 		ID3D12Device* device, ID3D12Heap* heap, size_t offset, const D3D12_RESOURCE_DESC& desc,
 		D3D12_RESOURCE_STATES initialState, const D3D12_CLEAR_VALUE* clearValue = nullptr
 	);
-	void MapBuffer(bool readAble = true);
+	void MapBuffer();
 	void Release() noexcept;
 
 	[[nodiscard]]
