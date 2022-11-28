@@ -30,7 +30,7 @@ Resolution GetDisplayResolution(
 
 	ComPtr<IDXGIOutput> pDisplayOutput;
 	assert(
-		FAILED(adapter->EnumOutputs(displayIndex, &pDisplayOutput)) && "Invalid display index."
+		SUCCEEDED(adapter->EnumOutputs(displayIndex, &pDisplayOutput)) && "Invalid display index."
 	);
 
 	DXGI_OUTPUT_DESC displayData = {};
