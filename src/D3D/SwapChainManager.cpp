@@ -1,7 +1,6 @@
 #include <SwapChainManager.hpp>
 #include <Gaia.hpp>
 #include <d3dx12.h>
-#include <D3DHelperFunctions.hpp>
 
 SwapChainManager::SwapChainManager(const SwapChainCreateInfo& createInfo)
 	: m_rtvDescSize(0u), m_vsyncFlag(false), m_pRenderTargetViews(createInfo.bufferCount) {
@@ -71,15 +70,12 @@ void SwapChainManager::ClearRTV(
 D3D12_CPU_DESCRIPTOR_HANDLE SwapChainManager::GetRTVHandle(size_t index) const noexcept {
 	return CD3DX12_CPU_DESCRIPTOR_HANDLE(
 		m_pRtvHeap->GetCPUDescriptorHandleForHeapStart(),
-		static_cast<INT>(index),
-		static_cast<UINT>(m_rtvDescSize)
+		static_cast<INT>(index), static_cast<UINT>(m_rtvDescSize)
 	);
 }
 
-D3D12_RESOURCE_BARRIER SwapChainManager::GetTransitionBarrier(
-	D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_STATES afterState, size_t index
-) const noexcept {
-	return ::GetTransitionBarrier(m_pRenderTargetViews[index].Get(), beforeState, afterState);
+ID3D12Resource* SwapChainManager::GetRTV(size_t index) const noexcept {
+	return m_pRenderTargetViews[index].Get();
 }
 
 void SwapChainManager::ToggleVSync() noexcept {

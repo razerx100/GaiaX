@@ -108,6 +108,16 @@ public:
 	}
 
 	[[nodiscard]]
+	D3D12_CPU_DESCRIPTOR_HANDLE GetFirstCPUDescriptorHandle() const noexcept {
+		return GetCPUDescriptorHandle(0u);
+	}
+
+	[[nodiscard]]
+	D3D12_GPU_DESCRIPTOR_HANDLE GetFirstGPUDescriptorHandle() const noexcept {
+		return GetGPUDescriptorHandle(0u);
+	}
+
+	[[nodiscard]]
 	UINT64 GetCounterOffset(size_t index) const noexcept {
 		assert(m_uav && "Not a UAV.");
 		return m_counterOffsets[index];

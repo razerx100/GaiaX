@@ -3,13 +3,11 @@
 #include <algorithm>
 #include <array>
 #include <Gaia.hpp>
+#include <D3DResourceBarrier.hpp>
 
 RenderPipeline::RenderPipeline(std::uint32_t frameCount) noexcept
 	: m_modelCount(0u), m_frameCount{ frameCount }, m_modelBufferPerFrameSize{ 0u },
-	m_commandBufferUAVs{
-		frameCount,
-		{ResourceType::gpuOnly, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS}
-	},
+	m_commandBufferUAV{ ResourceType::gpuOnly, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS },
 	m_uavCounterBuffer{ ResourceType::cpuWrite }, m_commandDescriptorOffset{ 0u } {}
 
 void RenderPipeline::AddComputePipelineObject(
@@ -67,35 +65,30 @@ void RenderPipeline::CreateCommandSignature(ID3D12Device* device) {
 }
 
 void RenderPipeline::DrawModels(
-	ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex
+	ID3D12GraphicsCommandList* graphicsCommandList
 ) const noexcept {
 	graphicsCommandList->ExecuteIndirect(
-		m_commandSignature.Get(), m_modelCount, m_commandBufferUAVs[frameIndex].GetResource(),
-		m_commandBufferUAVs[frameIndex].GetFirstBufferOffset(),
-		m_commandBufferUAVs[frameIndex].GetResource(),
-		m_commandBufferUAVs[frameIndex].GetFirstCounterOffset()
+		m_commandSignature.Get(), m_modelCount, m_commandBufferUAV.GetResource(),
+		m_commandBufferUAV.GetFirstBufferOffset(), m_commandBufferUAV.GetResource(),
+		m_commandBufferUAV.GetFirstCounterOffset()
 	);
 }
 
 void RenderPipeline::ReserveBuffers(ID3D12Device* device) {
 	const size_t commandDescriptorOffsetSRV =
-		Gaia::descriptorTable->ReserveDescriptorsAndGetOffset(m_frameCount);
+		Gaia::descriptorTable->ReserveDescriptorsAndGetOffset();
 	size_t commandDescriptorOffsetUAV =
-		Gaia::descriptorTable->ReserveDescriptorsAndGetOffset(m_frameCount);
+		Gaia::descriptorTable->ReserveDescriptorsAndGetOffset();
 
 	const UINT descriptorSize =
 		device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	static constexpr auto indirectStructSize = static_cast<UINT>(sizeof(IndirectCommand));
 
 	m_commandBufferSRV.SetDescriptorOffset(commandDescriptorOffsetSRV, descriptorSize);
-	m_commandBufferSRV.SetBufferInfo(device, indirectStructSize, m_modelCount, m_frameCount);
+	m_commandBufferSRV.SetBufferInfo(device, indirectStructSize, m_modelCount, 1u);
 
-	for (auto& commandBufferUAV : m_commandBufferUAVs) {
-		commandBufferUAV.SetDescriptorOffset(commandDescriptorOffsetUAV, descriptorSize);
-		commandBufferUAV.SetBufferInfo(device, indirectStructSize, m_modelCount, 1u);
-
-		++commandDescriptorOffsetUAV;
-	}
+	m_commandBufferUAV.SetDescriptorOffset(commandDescriptorOffsetUAV, descriptorSize);
+	m_commandBufferUAV.SetBufferInfo(device, indirectStructSize, m_modelCount, 1u);
 
 	m_uavCounterBuffer.SetBufferInfo(sizeof(UINT));
 	m_uavCounterBuffer.ReserveHeapSpace(device);
@@ -136,10 +129,9 @@ void RenderPipeline::CreateBuffers(ID3D12Device* device) {
 		device, uploadDescriptorStart, gpuDescriptorStart, D3D12_RESOURCE_STATE_COPY_DEST
 	);
 
-	for (auto& commandBufferUAV : m_commandBufferUAVs)
-		commandBufferUAV.CreateDescriptorView(
-			device, uploadDescriptorStart, gpuDescriptorStart, D3D12_RESOURCE_STATE_COPY_DEST
-		);
+	m_commandBufferUAV.CreateDescriptorView(
+		device, uploadDescriptorStart, gpuDescriptorStart, D3D12_RESOURCE_STATE_COPY_DEST
+	);
 
 	m_uavCounterBuffer.CreateResource(device, D3D12_RESOURCE_STATE_GENERIC_READ);
 	m_cullingDataBuffer.CreateResource(device);
@@ -161,13 +153,11 @@ void RenderPipeline::CreateBuffers(ID3D12Device* device) {
 	memcpy(counterCPUPtr, &zeroValue, sizeof(UINT));
 
 	// Copy Indirect Commands
-	for (size_t frame = 0u; frame < m_frameCount; ++frame) {
-		std::uint8_t* commandCPUPtr = m_commandBufferSRV.GetBufferCPUWPointer(frame);
-		memcpy(
-			commandCPUPtr, std::data(m_indirectCommands),
-			sizeof(IndirectCommand) * std::size(m_indirectCommands)
-		);
-	}
+	std::uint8_t* commandCPUPtr = m_commandBufferSRV.GetFirstBufferCPUWPointer();
+	memcpy(
+		commandCPUPtr, std::data(m_indirectCommands),
+		sizeof(IndirectCommand) * std::size(m_indirectCommands)
+	);
 
 	m_indirectCommands = std::vector<IndirectCommand>();
 }
@@ -180,7 +170,7 @@ void RenderPipeline::BindComputePipeline(
 }
 
 void RenderPipeline::DispatchCompute(
-	ID3D12GraphicsCommandList* computeCommandList, size_t frameIndex
+	ID3D12GraphicsCommandList* computeCommandList
 ) const noexcept {
 	static constexpr size_t commandBufferSRVIndex =
 		static_cast<size_t>(RootSigElement::IndirectArgsSRV);
@@ -191,11 +181,11 @@ void RenderPipeline::DispatchCompute(
 
 	computeCommandList->SetComputeRootDescriptorTable(
 		m_computeRSLayout[commandBufferSRVIndex],
-		m_commandBufferSRV.GetGPUDescriptorHandle(frameIndex)
+		m_commandBufferSRV.GetFirstGPUDescriptorHandle()
 	);
 	computeCommandList->SetComputeRootDescriptorTable(
 		m_computeRSLayout[commandBufferUAVIndex],
-		m_commandBufferUAVs[frameIndex].GetGPUDescriptorHandle(0u)
+		m_commandBufferUAV.GetFirstGPUDescriptorHandle()
 	);
 	computeCommandList->SetComputeRootConstantBufferView(
 		m_computeRSLayout[cullingDataIndex], m_cullingDataBuffer.GetGPUAddress()
@@ -216,29 +206,23 @@ void RenderPipeline::ReleaseUploadResource() noexcept {
 	m_cullingDataBuffer.ReleaseUploadResource();
 }
 
-D3D12_RESOURCE_BARRIER RenderPipeline::GetTransitionBarrier(
-	D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_STATES afterState, size_t frameIndex
-) const noexcept {
-	return ::GetTransitionBarrier(
-		m_commandBufferUAVs[frameIndex].GetResource(), beforeState, afterState
-	);
+ID3D12Resource* RenderPipeline::GetArgumentBuffer() const noexcept {
+	return m_commandBufferUAV.GetResource();
 }
 
 void RenderPipeline::ResetCounterBuffer(
-	ID3D12GraphicsCommandList* commandList, size_t frameIndex
+	ID3D12GraphicsCommandList* commandList
 ) const noexcept {
 	commandList->CopyBufferRegion(
-		m_commandBufferUAVs[frameIndex].GetResource(),
-		m_commandBufferUAVs[frameIndex].GetFirstCounterOffset(),
+		m_commandBufferUAV.GetResource(), m_commandBufferUAV.GetFirstCounterOffset(),
 		m_uavCounterBuffer.GetResource(), 0u, static_cast<UINT64>(sizeof(UINT))
 	); // UAV getting promoted from COMMON to COPY_DEST
 
 	// So need to change it back to UNORDERED_ACCESS
-	D3D12_RESOURCE_BARRIER indirectArgsBarrier = GetTransitionBarrier(
-		D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
-		frameIndex
-	);
-	commandList->ResourceBarrier(1u, &indirectArgsBarrier);
+	D3DResourceBarrier().AddBarrier(
+		m_commandBufferUAV.GetResource(),
+		D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_UNORDERED_ACCESS
+	).RecordBarriers(commandList);
 }
 
 void RenderPipeline::SetComputeRootSignatureLayout(std::vector<UINT> rsLayout) noexcept {

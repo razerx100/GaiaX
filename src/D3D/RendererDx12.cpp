@@ -2,6 +2,7 @@
 #include <Gaia.hpp>
 #include <D3DHelperFunctions.hpp>
 #include <PipelineConstructor.hpp>
+#include <D3DResourceBarrier.hpp>
 
 RendererDx12::RendererDx12(
 	const char* appName,
@@ -103,10 +104,10 @@ void RendererDx12::Render() {
 	computeCommandList->SetDescriptorHeaps(1u, ppHeap);
 
 	// Record compute commands
-	Gaia::renderPipeline->ResetCounterBuffer(computeCommandList, currentBackIndex);
+	Gaia::renderPipeline->ResetCounterBuffer(computeCommandList);
 	Gaia::renderPipeline->BindComputePipeline(computeCommandList);
 	Gaia::bufferManager->BindBuffersToCompute(computeCommandList, currentBackIndex);
-	Gaia::renderPipeline->DispatchCompute(computeCommandList, currentBackIndex);
+	Gaia::renderPipeline->DispatchCompute(computeCommandList);
 
 	Gaia::computeCmdList->Close();
 	Gaia::computeQueue->ExecuteCommandLists(computeCommandList);
@@ -122,7 +123,13 @@ void RendererDx12::Render() {
 
 	Gaia::graphicsCmdList->Reset(currentBackIndex);
 
-	RecordPreGraphicsBarriers(graphicsCommandList, currentBackIndex);
+	D3DResourceBarrier<2u>().AddBarrier(
+		Gaia::swapChain->GetRTV(currentBackIndex),
+		D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET
+	).AddBarrier(
+		Gaia::renderPipeline->GetArgumentBuffer(),
+		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT
+	).RecordBarriers(graphicsCommandList);
 
 	graphicsCommandList->SetDescriptorHeaps(1u, ppHeap);
 
@@ -146,12 +153,12 @@ void RendererDx12::Render() {
 	Gaia::textureStorage->BindTextures(graphicsCommandList);
 	Gaia::bufferManager->BindBuffersToGraphics(graphicsCommandList, currentBackIndex);
 	Gaia::bufferManager->BindVertexBuffer(graphicsCommandList);
-	Gaia::renderPipeline->DrawModels(graphicsCommandList, currentBackIndex);
+	Gaia::renderPipeline->DrawModels(graphicsCommandList);
 
-	D3D12_RESOURCE_BARRIER presentBarrier = Gaia::swapChain->GetTransitionBarrier(
-		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT, currentBackIndex
-	);
-	graphicsCommandList->ResourceBarrier(1u, &presentBarrier);
+	D3DResourceBarrier().AddBarrier(
+		Gaia::swapChain->GetRTV(currentBackIndex),
+		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT
+	).RecordBarriers(graphicsCommandList);
 
 	Gaia::graphicsCmdList->Close();
 	Gaia::graphicsQueue->ExecuteCommandLists(graphicsCommandList);
@@ -333,19 +340,4 @@ void RendererDx12::ConstructPipelines() {
 	Gaia::renderPipeline->AddGraphicsPipelineObject(std::move(graphicsPSO));
 
 	Gaia::renderPipeline->CreateCommandSignature(device);
-}
-
-void RendererDx12::RecordPreGraphicsBarriers(
-	ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex
-) const noexcept {
-	static D3D12_RESOURCE_BARRIER preBarriers[2]{};
-
-	preBarriers[0] = Gaia::swapChain->GetTransitionBarrier(
-		D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET, frameIndex
-	);
-	preBarriers[1] = Gaia::renderPipeline->GetTransitionBarrier(
-		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT,
-		frameIndex
-	);
-	graphicsCommandList->ResourceBarrier(2u, preBarriers);
 }

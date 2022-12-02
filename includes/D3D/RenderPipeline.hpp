@@ -37,17 +37,11 @@ public:
 	void RecordIndirectArguments(const std::vector<std::shared_ptr<IModel>>& models) noexcept;
 
 	void BindGraphicsPipeline(ID3D12GraphicsCommandList* graphicsCommandList) const noexcept;
-	void DrawModels(
-		ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex
-	) const noexcept;
+	void DrawModels(ID3D12GraphicsCommandList* graphicsCommandList) const noexcept;
 
 	void BindComputePipeline(ID3D12GraphicsCommandList* computeCommandList) const noexcept;
-	void DispatchCompute(
-		ID3D12GraphicsCommandList* computeCommandList, size_t frameIndex
-	) const noexcept;
-	void ResetCounterBuffer(
-		ID3D12GraphicsCommandList* commandList, size_t frameIndex
-	) const noexcept;
+	void DispatchCompute(ID3D12GraphicsCommandList* computeCommandList) const noexcept;
+	void ResetCounterBuffer(ID3D12GraphicsCommandList* commandList) const noexcept;
 
 	void CreateCommandSignature(ID3D12Device* device);
 	void CreateBuffers(ID3D12Device* device);
@@ -57,9 +51,7 @@ public:
 	void ReleaseUploadResource() noexcept;
 
 	[[nodiscard]]
-	D3D12_RESOURCE_BARRIER GetTransitionBarrier(
-		D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_STATES afterState, size_t frameIndex
-	) const noexcept;
+	ID3D12Resource* GetArgumentBuffer() const noexcept;
 
 private:
 	std::unique_ptr<D3DPipelineObject> m_graphicPSO;
@@ -73,7 +65,7 @@ private:
 	std::uint32_t m_frameCount;
 	size_t m_modelBufferPerFrameSize;
 	D3DUploadResourceDescriptorView m_commandBufferSRV;
-	std::vector<D3DSingleDescriptorView> m_commandBufferUAVs;
+	D3DSingleDescriptorView m_commandBufferUAV;
 	D3DResourceView m_uavCounterBuffer;
 	D3DUploadableResourceView m_cullingDataBuffer;
 	size_t m_commandDescriptorOffset;
