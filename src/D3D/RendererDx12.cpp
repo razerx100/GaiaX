@@ -104,10 +104,10 @@ void RendererDx12::Render() {
 	computeCommandList->SetDescriptorHeaps(1u, ppHeap);
 
 	// Record compute commands
-	Gaia::renderPipeline->ResetCounterBuffer(computeCommandList);
+	Gaia::renderPipeline->ResetCounterBuffer(computeCommandList, currentBackIndex);
 	Gaia::renderPipeline->BindComputePipeline(computeCommandList);
 	Gaia::bufferManager->BindBuffersToCompute(computeCommandList, currentBackIndex);
-	Gaia::renderPipeline->DispatchCompute(computeCommandList);
+	Gaia::renderPipeline->DispatchCompute(computeCommandList, currentBackIndex);
 
 	Gaia::computeCmdList->Close();
 	Gaia::computeQueue->ExecuteCommandLists(computeCommandList);
@@ -127,7 +127,7 @@ void RendererDx12::Render() {
 		Gaia::swapChain->GetRTV(currentBackIndex),
 		D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET
 	).AddBarrier(
-		Gaia::renderPipeline->GetArgumentBuffer(),
+		Gaia::renderPipeline->GetArgumentBuffer(currentBackIndex),
 		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT
 	).RecordBarriers(graphicsCommandList);
 
@@ -153,7 +153,7 @@ void RendererDx12::Render() {
 	Gaia::textureStorage->BindTextures(graphicsCommandList);
 	Gaia::bufferManager->BindBuffersToGraphics(graphicsCommandList, currentBackIndex);
 	Gaia::bufferManager->BindVertexBuffer(graphicsCommandList);
-	Gaia::renderPipeline->DrawModels(graphicsCommandList);
+	Gaia::renderPipeline->DrawModels(graphicsCommandList, currentBackIndex);
 
 	D3DResourceBarrier().AddBarrier(
 		Gaia::swapChain->GetRTV(currentBackIndex),

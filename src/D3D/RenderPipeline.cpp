@@ -7,7 +7,10 @@
 
 RenderPipeline::RenderPipeline(std::uint32_t frameCount) noexcept
 	: m_modelCount(0u), m_frameCount{ frameCount }, m_modelBufferPerFrameSize{ 0u },
-	m_commandBufferUAV{ ResourceType::gpuOnly, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS },
+	m_commandBufferUAVs{
+		frameCount,
+		{ ResourceType::gpuOnly, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS }
+	},
 	m_uavCounterBuffer{ ResourceType::cpuWrite }, m_commandDescriptorOffset{ 0u } {}
 
 void RenderPipeline::AddComputePipelineObject(
@@ -65,12 +68,13 @@ void RenderPipeline::CreateCommandSignature(ID3D12Device* device) {
 }
 
 void RenderPipeline::DrawModels(
-	ID3D12GraphicsCommandList* graphicsCommandList
+	ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex
 ) const noexcept {
 	graphicsCommandList->ExecuteIndirect(
-		m_commandSignature.Get(), m_modelCount, m_commandBufferUAV.GetResource(),
-		m_commandBufferUAV.GetFirstBufferOffset(), m_commandBufferUAV.GetResource(),
-		m_commandBufferUAV.GetFirstCounterOffset()
+		m_commandSignature.Get(), m_modelCount, m_commandBufferUAVs[frameIndex].GetResource(),
+		m_commandBufferUAVs[frameIndex].GetFirstBufferOffset(),
+		m_commandBufferUAVs[frameIndex].GetResource(),
+		m_commandBufferUAVs[frameIndex].GetFirstCounterOffset()
 	);
 }
 
@@ -78,7 +82,7 @@ void RenderPipeline::ReserveBuffers(ID3D12Device* device) {
 	const size_t commandDescriptorOffsetSRV =
 		Gaia::descriptorTable->ReserveDescriptorsAndGetOffset();
 	size_t commandDescriptorOffsetUAV =
-		Gaia::descriptorTable->ReserveDescriptorsAndGetOffset();
+		Gaia::descriptorTable->ReserveDescriptorsAndGetOffset(m_frameCount);
 
 	const UINT descriptorSize =
 		device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
@@ -87,8 +91,12 @@ void RenderPipeline::ReserveBuffers(ID3D12Device* device) {
 	m_commandBufferSRV.SetDescriptorOffset(commandDescriptorOffsetSRV, descriptorSize);
 	m_commandBufferSRV.SetBufferInfo(device, indirectStructSize, m_modelCount, 1u);
 
-	m_commandBufferUAV.SetDescriptorOffset(commandDescriptorOffsetUAV, descriptorSize);
-	m_commandBufferUAV.SetBufferInfo(device, indirectStructSize, m_modelCount, 1u);
+	for (auto& commandBufferUAV : m_commandBufferUAVs) {
+		commandBufferUAV.SetDescriptorOffset(commandDescriptorOffsetUAV, descriptorSize);
+		commandBufferUAV.SetBufferInfo(device, indirectStructSize, m_modelCount, 1u);
+
+		++commandDescriptorOffsetUAV;
+	}
 
 	m_uavCounterBuffer.SetBufferInfo(sizeof(UINT));
 	m_uavCounterBuffer.ReserveHeapSpace(device);
@@ -129,9 +137,10 @@ void RenderPipeline::CreateBuffers(ID3D12Device* device) {
 		device, uploadDescriptorStart, gpuDescriptorStart, D3D12_RESOURCE_STATE_COPY_DEST
 	);
 
-	m_commandBufferUAV.CreateDescriptorView(
-		device, uploadDescriptorStart, gpuDescriptorStart, D3D12_RESOURCE_STATE_COPY_DEST
-	);
+	for (auto& commandBufferUAV : m_commandBufferUAVs)
+		commandBufferUAV.CreateDescriptorView(
+			device, uploadDescriptorStart, gpuDescriptorStart, D3D12_RESOURCE_STATE_COPY_DEST
+		);
 
 	m_uavCounterBuffer.CreateResource(device, D3D12_RESOURCE_STATE_GENERIC_READ);
 	m_cullingDataBuffer.CreateResource(device);
@@ -170,7 +179,7 @@ void RenderPipeline::BindComputePipeline(
 }
 
 void RenderPipeline::DispatchCompute(
-	ID3D12GraphicsCommandList* computeCommandList
+	ID3D12GraphicsCommandList* computeCommandList, size_t frameIndex
 ) const noexcept {
 	static constexpr size_t commandBufferSRVIndex =
 		static_cast<size_t>(RootSigElement::IndirectArgsSRV);
@@ -185,7 +194,7 @@ void RenderPipeline::DispatchCompute(
 	);
 	computeCommandList->SetComputeRootDescriptorTable(
 		m_computeRSLayout[commandBufferUAVIndex],
-		m_commandBufferUAV.GetFirstGPUDescriptorHandle()
+		m_commandBufferUAVs[frameIndex].GetFirstGPUDescriptorHandle()
 	);
 	computeCommandList->SetComputeRootConstantBufferView(
 		m_computeRSLayout[cullingDataIndex], m_cullingDataBuffer.GetGPUAddress()
@@ -206,21 +215,22 @@ void RenderPipeline::ReleaseUploadResource() noexcept {
 	m_cullingDataBuffer.ReleaseUploadResource();
 }
 
-ID3D12Resource* RenderPipeline::GetArgumentBuffer() const noexcept {
-	return m_commandBufferUAV.GetResource();
+ID3D12Resource* RenderPipeline::GetArgumentBuffer(size_t frameIndex) const noexcept {
+	return m_commandBufferUAVs[frameIndex].GetResource();
 }
 
 void RenderPipeline::ResetCounterBuffer(
-	ID3D12GraphicsCommandList* commandList
+	ID3D12GraphicsCommandList* commandList, size_t frameIndex
 ) const noexcept {
 	commandList->CopyBufferRegion(
-		m_commandBufferUAV.GetResource(), m_commandBufferUAV.GetFirstCounterOffset(),
+		m_commandBufferUAVs[frameIndex].GetResource(),
+		m_commandBufferUAVs[frameIndex].GetFirstCounterOffset(),
 		m_uavCounterBuffer.GetResource(), 0u, static_cast<UINT64>(sizeof(UINT))
 	); // UAV getting promoted from COMMON to COPY_DEST
 
 	// So need to change it back to UNORDERED_ACCESS
 	D3DResourceBarrier().AddBarrier(
-		m_commandBufferUAV.GetResource(),
+		m_commandBufferUAVs[frameIndex].GetResource(),
 		D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_UNORDERED_ACCESS
 	).RecordBarriers(commandList);
 }
