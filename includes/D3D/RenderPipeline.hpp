@@ -79,7 +79,7 @@ private:
 	std::vector<UINT> m_computeRSLayout;
 	std::vector<UINT> m_graphicsRSLayout;
 
-	static constexpr float THREADBLOCKSIZE = 128.f;
+	static constexpr float THREADBLOCKSIZE = 64.f;
 	static constexpr DirectX::XMFLOAT2 XBOUNDS = { 1.f, -1.f };
 	static constexpr DirectX::XMFLOAT2 YBOUNDS = { 1.f, -1.f };
 	static constexpr DirectX::XMFLOAT2 ZBOUNDS = { 1.f, -1.f };

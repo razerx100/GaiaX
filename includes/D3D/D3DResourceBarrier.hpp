@@ -8,7 +8,7 @@
 template<UINT barrierCount = 1u>
 class D3DResourceBarrier {
 public:
-	D3DResourceBarrier() noexcept : m_currentIndex{ 0u } {}
+	D3DResourceBarrier() noexcept : m_currentIndex{ 0u }, m_barriers{} {}
 
 	[[nodiscard]]
 	D3DResourceBarrier& AddBarrier(
@@ -27,7 +27,7 @@ public:
 	}
 
 private:
-	UINT m_currentIndex;
+	size_t m_currentIndex;
 	std::array<D3D12_RESOURCE_BARRIER, barrierCount> m_barriers;
 };
 #endif
