@@ -69,12 +69,10 @@ private:
 	ComPtr<ID3D12CommandSignature> m_commandSignature;
 	UINT m_modelCount;
 	std::uint32_t m_frameCount;
-	size_t m_modelBufferPerFrameSize;
 	D3DUploadResourceDescriptorView m_commandBufferSRV;
 	std::vector<D3DSingleDescriptorView> m_commandBufferUAVs;
 	D3DResourceView m_uavCounterBuffer;
 	D3DUploadableResourceView m_cullingDataBuffer;
-	size_t m_commandDescriptorOffset;
 	std::vector<IndirectCommand> m_indirectCommands;
 	std::vector<UINT> m_computeRSLayout;
 	std::vector<UINT> m_graphicsRSLayout;

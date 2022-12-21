@@ -1,4 +1,5 @@
 #include <Gaia.hpp>
+#include <RenderEngineVertex.hpp>
 
 namespace Gaia {
 	std::unique_ptr<DeviceManager> device;
@@ -20,6 +21,7 @@ namespace Gaia {
 	std::unique_ptr<D3DCommandQueue> computeQueue;
 	std::unique_ptr<D3DCommandList> computeCmdList;
 	std::unique_ptr<D3DFence> computeFence;
+	std::unique_ptr<RenderEngine> renderEngine;
 
 	namespace Resources {
 		std::unique_ptr<D3DHeap> uploadHeap;
@@ -108,6 +110,10 @@ namespace Gaia {
 
 	void SetSharedData(std::shared_ptr<ISharedDataContainer>&& sharedDataArg) {
 		sharedData = std::move(sharedDataArg);
+	}
+
+	void InitRenderEngine() {
+		renderEngine = std::make_unique<RenderEngineVertex>();
 	}
 
 	void InitResources() {

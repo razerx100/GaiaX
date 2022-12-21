@@ -6,12 +6,11 @@
 #include <D3DResourceBarrier.hpp>
 
 RenderPipeline::RenderPipeline(std::uint32_t frameCount) noexcept
-	: m_modelCount(0u), m_frameCount{ frameCount }, m_modelBufferPerFrameSize{ 0u },
+	: m_modelCount(0u), m_frameCount{ frameCount },
 	m_commandBufferUAVs{
 		frameCount,
 		{ ResourceType::gpuOnly, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS }
-	},
-	m_uavCounterBuffer{ ResourceType::cpuWrite }, m_commandDescriptorOffset{ 0u } {}
+	}, m_uavCounterBuffer{ ResourceType::cpuWrite } {}
 
 void RenderPipeline::AddComputePipelineObject(
 	std::unique_ptr<D3DPipelineObject> pso

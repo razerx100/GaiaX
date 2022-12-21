@@ -10,6 +10,7 @@ RendererDx12::RendererDx12(
 ) : m_backgroundColour{0.0001f, 0.0001f, 0.0001f, 0.0001f}, m_appName(appName),
 	m_width(width), m_height(height), m_bufferCount{ bufferCount } {
 	Gaia::InitDevice();
+	Gaia::InitRenderEngine();
 	Gaia::InitResources();
 
 	ID3D12Device4* deviceRef = Gaia::device.get()->GetDeviceRef();
@@ -64,6 +65,7 @@ RendererDx12::~RendererDx12() noexcept {
 	Gaia::graphicsFence.reset();
 	Gaia::graphicsCmdList.reset();
 	Gaia::graphicsQueue.reset();
+	Gaia::renderEngine.reset();
 	Gaia::CleanUpResources();
 	Gaia::device.reset();
 #ifdef _DEBUG
@@ -94,83 +96,14 @@ void RendererDx12::Update() {
 
 void RendererDx12::Render() {
 	const size_t currentBackIndex = Gaia::swapChain->GetCurrentBackBufferIndex();
-
-	// Compute Stage
-	ID3D12GraphicsCommandList* computeCommandList = Gaia::computeCmdList->GetCommandList();
-	Gaia::computeCmdList->Reset(currentBackIndex);
-	// Need some barrier stuff
-
-	ID3D12DescriptorHeap* ppHeap[] = { Gaia::descriptorTable->GetDescHeapRef() };
-	computeCommandList->SetDescriptorHeaps(1u, ppHeap);
-
-	// Record compute commands
-	Gaia::renderPipeline->ResetCounterBuffer(computeCommandList, currentBackIndex);
-	Gaia::renderPipeline->BindComputePipeline(computeCommandList);
-	Gaia::bufferManager->BindBuffersToCompute(computeCommandList, currentBackIndex);
-	Gaia::renderPipeline->DispatchCompute(computeCommandList, currentBackIndex);
-
-	Gaia::computeCmdList->Close();
-	Gaia::computeQueue->ExecuteCommandLists(computeCommandList);
-
-	UINT64 fenceValue = Gaia::graphicsFence->GetFrontValue();
-
-	Gaia::computeQueue->SignalCommandQueue(Gaia::computeFence->GetFence(), fenceValue);
-
-	// Graphics Stage
-	Gaia::graphicsQueue->WaitOnGPU(Gaia::computeFence->GetFence(), fenceValue);
-
 	ID3D12GraphicsCommandList* graphicsCommandList = Gaia::graphicsCmdList->GetCommandList();
 
-	Gaia::graphicsCmdList->Reset(currentBackIndex);
-
-	D3DResourceBarrier<2u>().AddBarrier(
-		Gaia::swapChain->GetRTV(currentBackIndex),
-		D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET
-	).AddBarrier(
-		Gaia::renderPipeline->GetArgumentBuffer(currentBackIndex),
-		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT
-	).RecordBarriers(graphicsCommandList);
-
-	graphicsCommandList->SetDescriptorHeaps(1u, ppHeap);
-
-	graphicsCommandList->RSSetViewports(1u, Gaia::viewportAndScissor->GetViewportRef());
-	graphicsCommandList->RSSetScissorRects(1u, Gaia::viewportAndScissor->GetScissorRef());
-
-	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = Gaia::swapChain->GetRTVHandle(currentBackIndex);
-
-	Gaia::swapChain->ClearRTV(
-		graphicsCommandList, std::data(m_backgroundColour), rtvHandle
+	Gaia::renderEngine->ExecutePreRenderStage(
+		graphicsCommandList, currentBackIndex, std::data(m_backgroundColour)
 	);
-
-	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = Gaia::Resources::depthBuffer->GetDSVHandle();
-
-	Gaia::Resources::depthBuffer->ClearDSV(graphicsCommandList, dsvHandle);
-
-	graphicsCommandList->OMSetRenderTargets(1u, &rtvHandle, FALSE, &dsvHandle);
-
-	// Record objects
-	Gaia::renderPipeline->BindGraphicsPipeline(graphicsCommandList);
-	Gaia::textureStorage->BindTextures(graphicsCommandList);
-	Gaia::bufferManager->BindBuffersToGraphics(graphicsCommandList, currentBackIndex);
-	Gaia::bufferManager->BindVertexBuffer(graphicsCommandList);
-	Gaia::renderPipeline->DrawModels(graphicsCommandList, currentBackIndex);
-
-	D3DResourceBarrier().AddBarrier(
-		Gaia::swapChain->GetRTV(currentBackIndex),
-		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT
-	).RecordBarriers(graphicsCommandList);
-
-	Gaia::graphicsCmdList->Close();
-	Gaia::graphicsQueue->ExecuteCommandLists(graphicsCommandList);
-
-	Gaia::swapChain->PresentWithTear();
-
-	fenceValue = Gaia::graphicsFence->GetFrontValue();
-
-	Gaia::graphicsQueue->SignalCommandQueue(Gaia::graphicsFence->GetFence(), fenceValue);
-	Gaia::graphicsFence->AdvanceValueInQueue();
-	Gaia::graphicsFence->WaitOnCPUConditional();
-	Gaia::graphicsFence->IncreaseFrontValue(fenceValue);
+	Gaia::renderEngine->RecordDrawCommands(graphicsCommandList, currentBackIndex);
+	Gaia::renderEngine->Present(graphicsCommandList, currentBackIndex);
+	Gaia::renderEngine->ExecutePostRenderStage();
 }
 
 void RendererDx12::Resize(std::uint32_t width, std::uint32_t height) {

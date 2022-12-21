@@ -20,6 +20,7 @@
 #include <D3DUploadableResourceManager.hpp>
 #include <UploadContainer.hpp>
 #include <D3DFence.hpp>
+#include <RenderEngine.hpp>
 
 namespace Gaia {
 	// Variables
@@ -42,6 +43,7 @@ namespace Gaia {
 	extern std::unique_ptr<D3DCommandQueue> computeQueue;
 	extern std::unique_ptr<D3DCommandList> computeCmdList;
 	extern std::unique_ptr<D3DFence> computeFence;
+	extern std::unique_ptr<RenderEngine> renderEngine;
 
 	namespace Resources {
 		extern std::unique_ptr<D3DHeap> uploadHeap;
@@ -72,6 +74,7 @@ namespace Gaia {
 	void InitBufferManager(std::uint32_t bufferCount);
 	void SetSharedData(std::shared_ptr<ISharedDataContainer>&& sharedDataArg);
 	void InitResources();
+	void InitRenderEngine();
 	void CleanUpResources();
 	void CleanUpUploadResources();
 }
