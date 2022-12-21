@@ -1,83 +1,40 @@
-#include <RenderPipeline.hpp>
+#include <RenderPipelineIndirectDraw.hpp>
 #include <ranges>
 #include <algorithm>
 #include <array>
 #include <Gaia.hpp>
 #include <D3DResourceBarrier.hpp>
+#include <VertexLayout.hpp>
+#include <Shader.hpp>
 
-RenderPipeline::RenderPipeline(std::uint32_t frameCount) noexcept
+RenderPipelineIndirectDraw::RenderPipelineIndirectDraw(std::uint32_t frameCount) noexcept
 	: m_modelCount(0u), m_frameCount{ frameCount },
 	m_commandBufferUAVs{
 		frameCount,
 		{ ResourceType::gpuOnly, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS }
 	}, m_uavCounterBuffer{ ResourceType::cpuWrite } {}
 
-void RenderPipeline::AddComputePipelineObject(
-	std::unique_ptr<D3DPipelineObject> pso
-) noexcept {
-	m_computePSO = std::move(pso);
-}
-
-void RenderPipeline::AddComputeRootSignature(
-	std::unique_ptr<RootSignatureBase> signature
-) noexcept {
-	m_computeRS = std::move(signature);
-}
-
-void RenderPipeline::AddGraphicsPipelineObject(
-	std::unique_ptr<D3DPipelineObject> pso
-) noexcept {
-	m_graphicPSO = std::move(pso);
-}
-
-void RenderPipeline::AddGraphicsRootSignature(
-	std::unique_ptr<RootSignatureBase> signature
-) noexcept {
-	m_graphicsRS = std::move(signature);
-}
-
-void RenderPipeline::BindGraphicsPipeline(
-	ID3D12GraphicsCommandList* graphicsCommandList
+void RenderPipelineIndirectDraw::BindGraphicsPipeline(
+	ID3D12GraphicsCommandList* graphicsCommandList, ID3D12RootSignature* graphicsRS
 ) const noexcept {
 	graphicsCommandList->SetPipelineState(m_graphicPSO->Get());
-	graphicsCommandList->SetGraphicsRootSignature(m_graphicsRS->Get());
+	graphicsCommandList->SetGraphicsRootSignature(graphicsRS);
 	graphicsCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 }
 
-void RenderPipeline::CreateCommandSignature(ID3D12Device* device) {
-	static constexpr size_t modelIndex = static_cast<size_t>(RootSigElement::ModelIndex);
-
-	std::array<D3D12_INDIRECT_ARGUMENT_DESC, 2u> arguments{};
-	arguments[0].Type = D3D12_INDIRECT_ARGUMENT_TYPE_CONSTANT;
-	arguments[0].Constant.RootParameterIndex = m_graphicsRSLayout[modelIndex];
-	arguments[0].Constant.DestOffsetIn32BitValues = 0u;
-	arguments[0].Constant.Num32BitValuesToSet = 1u;
-	arguments[1].Type = D3D12_INDIRECT_ARGUMENT_TYPE_DRAW_INDEXED;
-
-	D3D12_COMMAND_SIGNATURE_DESC desc{};
-	desc.ByteStride = static_cast<UINT>(sizeof(IndirectCommand));
-	desc.NumArgumentDescs = static_cast<UINT>(std::size(arguments));
-	desc.pArgumentDescs = std::data(arguments);
-
-	assert(m_graphicsRS->Get() != nullptr && "Graphics RootSignature not initialised");
-
-	device->CreateCommandSignature(
-		&desc, m_graphicsRS->Get(), IID_PPV_ARGS(&m_commandSignature)
-	);
-}
-
-void RenderPipeline::DrawModels(
+void RenderPipelineIndirectDraw::DrawModels(
+	ID3D12CommandSignature* commandSignature,
 	ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex
 ) const noexcept {
 	graphicsCommandList->ExecuteIndirect(
-		m_commandSignature.Get(), m_modelCount, m_commandBufferUAVs[frameIndex].GetResource(),
+		commandSignature, m_modelCount, m_commandBufferUAVs[frameIndex].GetResource(),
 		m_commandBufferUAVs[frameIndex].GetFirstBufferOffset(),
 		m_commandBufferUAVs[frameIndex].GetResource(),
 		m_commandBufferUAVs[frameIndex].GetFirstCounterOffset()
 	);
 }
 
-void RenderPipeline::ReserveBuffers(ID3D12Device* device) {
+void RenderPipelineIndirectDraw::ReserveBuffers(ID3D12Device* device) {
 	const size_t commandDescriptorOffsetSRV =
 		Gaia::descriptorTable->ReserveDescriptorsAndGetOffset();
 	size_t commandDescriptorOffsetUAV =
@@ -104,7 +61,7 @@ void RenderPipeline::ReserveBuffers(ID3D12Device* device) {
 	m_cullingDataBuffer.ReserveHeapSpace(device);
 }
 
-void RenderPipeline::RecordIndirectArguments(
+void RenderPipelineIndirectDraw::RecordIndirectArguments(
 	const std::vector<std::shared_ptr<IModel>>& models
 ) noexcept {
 	for (size_t index = 0u; index < std::size(models); ++index) {
@@ -125,7 +82,7 @@ void RenderPipeline::RecordIndirectArguments(
 	m_modelCount += static_cast<UINT>(std::size(models));
 }
 
-void RenderPipeline::CreateBuffers(ID3D12Device* device) {
+void RenderPipelineIndirectDraw::CreateBuffers(ID3D12Device* device) {
 	const D3D12_CPU_DESCRIPTOR_HANDLE uploadDescriptorStart =
 		Gaia::descriptorTable->GetUploadDescriptorStart();
 
@@ -170,15 +127,9 @@ void RenderPipeline::CreateBuffers(ID3D12Device* device) {
 	m_indirectCommands = std::vector<IndirectCommand>();
 }
 
-void RenderPipeline::BindComputePipeline(
-	ID3D12GraphicsCommandList* computeCommandList
-) const noexcept {
-	computeCommandList->SetPipelineState(m_computePSO->Get());
-	computeCommandList->SetComputeRootSignature(m_computeRS->Get());
-}
-
-void RenderPipeline::DispatchCompute(
-	ID3D12GraphicsCommandList* computeCommandList, size_t frameIndex
+void RenderPipelineIndirectDraw::DispatchCompute(
+	ID3D12GraphicsCommandList* computeCommandList, size_t frameIndex,
+	const RSLayoutType& computeLayout
 ) const noexcept {
 	static constexpr size_t commandBufferSRVIndex =
 		static_cast<size_t>(RootSigElement::IndirectArgsSRV);
@@ -188,15 +139,15 @@ void RenderPipeline::DispatchCompute(
 		static_cast<size_t>(RootSigElement::CullingData);
 
 	computeCommandList->SetComputeRootDescriptorTable(
-		m_computeRSLayout[commandBufferSRVIndex],
+		computeLayout[commandBufferSRVIndex],
 		m_commandBufferSRV.GetFirstGPUDescriptorHandle()
 	);
 	computeCommandList->SetComputeRootDescriptorTable(
-		m_computeRSLayout[commandBufferUAVIndex],
+		computeLayout[commandBufferUAVIndex],
 		m_commandBufferUAVs[frameIndex].GetFirstGPUDescriptorHandle()
 	);
 	computeCommandList->SetComputeRootConstantBufferView(
-		m_computeRSLayout[cullingDataIndex], m_cullingDataBuffer.GetGPUAddress()
+		computeLayout[cullingDataIndex], m_cullingDataBuffer.GetGPUAddress()
 	);
 
 	computeCommandList->Dispatch(
@@ -204,21 +155,25 @@ void RenderPipeline::DispatchCompute(
 	);
 }
 
-void RenderPipeline::RecordResourceUpload(ID3D12GraphicsCommandList* copyList) noexcept {
+void RenderPipelineIndirectDraw::RecordResourceUpload(
+	ID3D12GraphicsCommandList* copyList
+) noexcept {
 	m_commandBufferSRV.RecordResourceUpload(copyList);
 	m_cullingDataBuffer.RecordResourceUpload(copyList);
 }
 
-void RenderPipeline::ReleaseUploadResource() noexcept {
+void RenderPipelineIndirectDraw::ReleaseUploadResource() noexcept {
 	m_commandBufferSRV.ReleaseUploadResource();
 	m_cullingDataBuffer.ReleaseUploadResource();
 }
 
-ID3D12Resource* RenderPipeline::GetArgumentBuffer(size_t frameIndex) const noexcept {
+ID3D12Resource* RenderPipelineIndirectDraw::GetArgumentBuffer(
+	size_t frameIndex
+) const noexcept {
 	return m_commandBufferUAVs[frameIndex].GetResource();
 }
 
-void RenderPipeline::ResetCounterBuffer(
+void RenderPipelineIndirectDraw::ResetCounterBuffer(
 	ID3D12GraphicsCommandList* commandList, size_t frameIndex
 ) const noexcept {
 	commandList->CopyBufferRegion(
@@ -234,10 +189,33 @@ void RenderPipeline::ResetCounterBuffer(
 	).RecordBarriers(commandList);
 }
 
-void RenderPipeline::SetComputeRootSignatureLayout(std::vector<UINT> rsLayout) noexcept {
-	m_computeRSLayout = std::move(rsLayout);
+std::unique_ptr<D3DPipelineObject> RenderPipelineIndirectDraw::CreateGraphicsPipelineObject(
+	ID3D12Device* device, const std::wstring& shaderPath, const std::wstring& pixelShader,
+	ID3D12RootSignature* graphicsRootSignature
+) const noexcept {
+	auto vs = std::make_unique<Shader>();
+	vs->LoadBinary(shaderPath + L"VertexShader.cso");
+
+	auto ps = std::make_unique<Shader>();
+	ps->LoadBinary(shaderPath + pixelShader);
+
+	auto pso = std::make_unique<D3DPipelineObject>();
+	pso->CreateGFXPipelineState(
+		device,
+		VertexLayout()
+		.AddInputElement("Position", DXGI_FORMAT_R32G32B32_FLOAT, 12u)
+		.AddInputElement("UV", DXGI_FORMAT_R32G32_FLOAT, 8u),
+		graphicsRootSignature, vs->GetByteCode(), ps->GetByteCode()
+	);
+
+	return pso;
 }
 
-void RenderPipeline::SetGraphicsRootSignatureLayout(std::vector<UINT> rsLayout) noexcept {
-	m_graphicsRSLayout = std::move(rsLayout);
+void RenderPipelineIndirectDraw::ConfigureGraphicsPipelineObject(
+	ID3D12Device* device, const std::wstring& shaderPath, const std::wstring& pixelShader,
+	ID3D12RootSignature* graphicsRootSignature
+) noexcept {
+	m_graphicPSO = CreateGraphicsPipelineObject(
+		device, shaderPath, pixelShader, graphicsRootSignature
+	);
 }

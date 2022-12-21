@@ -41,15 +41,9 @@ public:
 	) noexcept override;
 
 private:
-	void ConstructPipelines();
-
-private:
-	std::array<float, 4> m_backgroundColour;
-
 	const std::string m_appName;
 	std::uint32_t m_width;
 	std::uint32_t m_height;
 	std::uint32_t m_bufferCount;
-	std::wstring m_shaderPath;
 };
 #endif

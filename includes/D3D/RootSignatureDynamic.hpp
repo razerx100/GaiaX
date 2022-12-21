@@ -15,6 +15,8 @@ enum class RootSigElement {
 	ElementCount
 };
 
+using RSLayoutType = std::vector<UINT>;
+
 class RootSignatureDynamic final : public RootSignatureBase {
 public:
 	RootSignatureDynamic() noexcept;
@@ -51,7 +53,7 @@ public:
 	RootSignatureDynamic& CompileSignature(bool staticSampler = true);
 
 	[[nodiscard]]
-	std::vector<UINT> GetElementLayout() const noexcept;
+	RSLayoutType GetElementLayout() const noexcept;
 
 private:
 	void AddElementType(RootSigElement elementType) noexcept;
@@ -59,6 +61,6 @@ private:
 private:
 	std::vector<D3D12_ROOT_PARAMETER1> m_rootParameters;
 	std::vector<std::unique_ptr<D3D12_DESCRIPTOR_RANGE1>> m_rangePreserver;
-	std::vector<UINT> m_elementLayout;
+	RSLayoutType m_elementLayout;
 };
 #endif

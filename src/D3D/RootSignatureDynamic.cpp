@@ -178,6 +178,6 @@ void RootSignatureDynamic::AddElementType(RootSigElement elementType) noexcept {
 		static_cast<UINT>(std::size(m_rootParameters));
 }
 
-std::vector<UINT> RootSignatureDynamic::GetElementLayout() const noexcept {
+RSLayoutType RootSignatureDynamic::GetElementLayout() const noexcept {
 	return m_elementLayout;
 }

@@ -1,5 +1,5 @@
-#ifndef RENDER_PIPELINE_HPP_
-#define RENDER_PIPELINE_HPP_
+#ifndef RENDER_PIPELINE_INDIRECT_DRAW_HPP_
+#define RENDER_PIPELINE_INDIRECT_DRAW_HPP_
 #include <D3DHeaders.hpp>
 #include <vector>
 #include <memory>
@@ -8,6 +8,7 @@
 #include <IModel.hpp>
 #include <D3DResource.hpp>
 #include <D3DDescriptorView.hpp>
+#include <RootSignatureDynamic.hpp>
 
 struct IndirectCommand {
 	std::uint32_t modelIndex;
@@ -22,34 +23,33 @@ struct CullingData {
 	DirectX::XMFLOAT2 zBounds;
 };
 
-class RenderPipeline {
+class RenderPipelineIndirectDraw {
 public:
-	RenderPipeline(std::uint32_t frameCount) noexcept;
+	RenderPipelineIndirectDraw(std::uint32_t frameCount) noexcept;
 
-	void AddGraphicsPipelineObject(std::unique_ptr<D3DPipelineObject> pso) noexcept;
-	void AddGraphicsRootSignature(std::unique_ptr<RootSignatureBase> signature) noexcept;
-	void AddComputePipelineObject(std::unique_ptr<D3DPipelineObject> pso) noexcept;
-	void AddComputeRootSignature(std::unique_ptr<RootSignatureBase> signature) noexcept;
-
-	void SetComputeRootSignatureLayout(std::vector<UINT> rsLayout) noexcept;
-	void SetGraphicsRootSignatureLayout(std::vector<UINT> rsLayout) noexcept;
+	void ConfigureGraphicsPipelineObject(
+		ID3D12Device* device, const std::wstring& shaderPath, const std::wstring& pixelShader,
+		ID3D12RootSignature* graphicsRootSignature
+	) noexcept;
 
 	void RecordIndirectArguments(const std::vector<std::shared_ptr<IModel>>& models) noexcept;
 
-	void BindGraphicsPipeline(ID3D12GraphicsCommandList* graphicsCommandList) const noexcept;
+	void BindGraphicsPipeline(
+		ID3D12GraphicsCommandList* graphicsCommandList, ID3D12RootSignature* graphicsRS
+	) const noexcept;
 	void DrawModels(
+		ID3D12CommandSignature* commandSignature,
 		ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex
 	) const noexcept;
 
-	void BindComputePipeline(ID3D12GraphicsCommandList* computeCommandList) const noexcept;
 	void DispatchCompute(
-		ID3D12GraphicsCommandList* computeCommandList, size_t frameIndex
+		ID3D12GraphicsCommandList* computeCommandList, size_t frameIndex,
+		const RSLayoutType& computeLayout
 	) const noexcept;
 	void ResetCounterBuffer(
 		ID3D12GraphicsCommandList* commandList, size_t frameIndex
 	) const noexcept;
 
-	void CreateCommandSignature(ID3D12Device* device);
 	void CreateBuffers(ID3D12Device* device);
 	void ReserveBuffers(ID3D12Device* device);
 
@@ -60,13 +60,15 @@ public:
 	ID3D12Resource* GetArgumentBuffer(size_t frameIndex) const noexcept;
 
 private:
+	[[nodiscard]]
+	std::unique_ptr<D3DPipelineObject> CreateGraphicsPipelineObject(
+		ID3D12Device* device, const std::wstring& shaderPath, const std::wstring& pixelShader,
+		ID3D12RootSignature* graphicsRootSignature
+	) const noexcept;
+
+private:
 	std::unique_ptr<D3DPipelineObject> m_graphicPSO;
-	std::unique_ptr<RootSignatureBase> m_graphicsRS;
 
-	std::unique_ptr<D3DPipelineObject> m_computePSO;
-	std::unique_ptr<RootSignatureBase> m_computeRS;
-
-	ComPtr<ID3D12CommandSignature> m_commandSignature;
 	UINT m_modelCount;
 	std::uint32_t m_frameCount;
 	D3DUploadResourceDescriptorView m_commandBufferSRV;
@@ -74,8 +76,6 @@ private:
 	D3DResourceView m_uavCounterBuffer;
 	D3DUploadableResourceView m_cullingDataBuffer;
 	std::vector<IndirectCommand> m_indirectCommands;
-	std::vector<UINT> m_computeRSLayout;
-	std::vector<UINT> m_graphicsRSLayout;
 
 	static constexpr float THREADBLOCKSIZE = 64.f;
 	static constexpr DirectX::XMFLOAT2 XBOUNDS = { 1.f, -1.f };

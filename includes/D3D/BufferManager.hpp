@@ -29,8 +29,8 @@ public:
 	) const noexcept;
 	void BindVertexBuffer(ID3D12GraphicsCommandList* graphicsCmdList) const noexcept;
 
-	void SetComputeRootSignatureLayout(std::vector<UINT> rsLayout) noexcept;
-	void SetGraphicsRootSignatureLayout(std::vector<UINT> rsLayout) noexcept;
+	void SetComputeRootSignatureLayout(RSLayoutType rsLayout) noexcept;
+	void SetGraphicsRootSignatureLayout(RSLayoutType rsLayout) noexcept;
 
 	void AddModelInputs(
 		std::unique_ptr<std::uint8_t> vertices, size_t vertexBufferSize, size_t strideSize,
@@ -47,7 +47,7 @@ private:
 	template<void (__stdcall ID3D12GraphicsCommandList::*RCBV)(UINT, D3D12_GPU_VIRTUAL_ADDRESS),
 	void (__stdcall ID3D12GraphicsCommandList::*RDT)(UINT, D3D12_GPU_DESCRIPTOR_HANDLE)>
 	void BindBuffers(
-		ID3D12GraphicsCommandList* cmdList, size_t frameIndex, const std::vector<UINT>& rsLayout
+		ID3D12GraphicsCommandList* cmdList, size_t frameIndex, const RSLayoutType& rsLayout
 	) const noexcept {
 		static constexpr auto cameraTypeIndex = static_cast<size_t>(RootSigElement::Camera);
 		(cmdList->*RCBV)(
@@ -66,8 +66,8 @@ private:
 	BufferView<D3D12_VERTEX_BUFFER_VIEW> m_gVertexBufferView;
 	BufferView<D3D12_INDEX_BUFFER_VIEW> m_gIndexBufferView;
 
-	std::vector<UINT> m_graphicsRSLayout;
-	std::vector<UINT> m_computeRSLayout;
+	RSLayoutType m_graphicsRSLayout;
+	RSLayoutType m_computeRSLayout;
 
 	std::vector<std::shared_ptr<IModel>> m_opaqueModels;
 	D3DSingleDescriptorView m_modelBuffers;

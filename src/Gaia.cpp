@@ -1,5 +1,5 @@
 #include <Gaia.hpp>
-#include <RenderEngineVertex.hpp>
+#include <RenderEngineIndirectDraw.hpp>
 
 namespace Gaia {
 	std::unique_ptr<DeviceManager> device;
@@ -8,7 +8,6 @@ namespace Gaia {
 	std::unique_ptr<D3DCommandList> graphicsCmdList;
 	std::unique_ptr<D3DFence> graphicsFence;
 	std::unique_ptr<D3DDebugLogger> debugLogger;
-	std::unique_ptr<RenderPipeline> renderPipeline;
 	std::unique_ptr<BufferManager> bufferManager;
 	std::unique_ptr<D3DCommandQueue> copyQueue;
 	std::unique_ptr<D3DCommandList> copyCmdList;
@@ -63,10 +62,6 @@ namespace Gaia {
 		Resources::depthBuffer = std::make_unique<DepthBuffer>(d3dDevice);
 	}
 
-	void InitRenderPipeline(std::uint32_t bufferCount) {
-		renderPipeline = std::make_unique<RenderPipeline>(bufferCount);
-	}
-
 	void InitBufferManager(std::uint32_t bufferCount) {
 		bufferManager = std::make_unique<BufferManager>(bufferCount);
 	}
@@ -113,7 +108,7 @@ namespace Gaia {
 	}
 
 	void InitRenderEngine() {
-		renderEngine = std::make_unique<RenderEngineVertex>();
+		renderEngine = std::make_unique<RenderEngineIndirectDraw>();
 	}
 
 	void InitResources() {

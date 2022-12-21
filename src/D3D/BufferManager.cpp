@@ -125,11 +125,11 @@ void BufferManager::AddModelInputs(
 	);
 }
 
-void BufferManager::SetComputeRootSignatureLayout(std::vector<UINT> rsLayout) noexcept {
+void BufferManager::SetComputeRootSignatureLayout(RSLayoutType rsLayout) noexcept {
 	m_computeRSLayout = std::move(rsLayout);
 }
 
-void BufferManager::SetGraphicsRootSignatureLayout(std::vector<UINT> rsLayout) noexcept {
+void BufferManager::SetGraphicsRootSignatureLayout(RSLayoutType rsLayout) noexcept {
 	m_graphicsRSLayout = std::move(rsLayout);
 }
 

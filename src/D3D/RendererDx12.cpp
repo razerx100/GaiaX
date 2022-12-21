@@ -1,14 +1,12 @@
 #include <RendererDx12.hpp>
 #include <Gaia.hpp>
 #include <D3DHelperFunctions.hpp>
-#include <PipelineConstructor.hpp>
 #include <D3DResourceBarrier.hpp>
 
 RendererDx12::RendererDx12(
 	const char* appName,
 	void* windowHandle, std::uint32_t width, std::uint32_t height, std::uint32_t bufferCount
-) : m_backgroundColour{0.0001f, 0.0001f, 0.0001f, 0.0001f}, m_appName(appName),
-	m_width(width), m_height(height), m_bufferCount{ bufferCount } {
+) : m_appName(appName), m_width(width), m_height(height), m_bufferCount{ bufferCount } {
 	Gaia::InitDevice();
 	Gaia::InitRenderEngine();
 	Gaia::InitResources();
@@ -41,7 +39,7 @@ RendererDx12::RendererDx12(
 	Gaia::InitComputeQueueAndList(deviceRef, bufferCount);
 
 	Gaia::InitDescriptorTable();
-	Gaia::InitRenderPipeline(bufferCount);
+	Gaia::renderEngine->InitiatePipelines(bufferCount);
 	Gaia::InitBufferManager(bufferCount);
 	Gaia::InitTextureStorage();
 
@@ -56,7 +54,7 @@ RendererDx12::~RendererDx12() noexcept {
 	Gaia::viewportAndScissor.reset();
 	Gaia::copyCmdList.reset();
 	Gaia::copyQueue.reset();
-	Gaia::renderPipeline.reset();
+	Gaia::renderEngine.reset();
 	Gaia::bufferManager.reset();
 	Gaia::computeFence.reset();
 	Gaia::computeCmdList.reset();
@@ -65,7 +63,6 @@ RendererDx12::~RendererDx12() noexcept {
 	Gaia::graphicsFence.reset();
 	Gaia::graphicsCmdList.reset();
 	Gaia::graphicsQueue.reset();
-	Gaia::renderEngine.reset();
 	Gaia::CleanUpResources();
 	Gaia::device.reset();
 #ifdef _DEBUG
@@ -74,7 +71,7 @@ RendererDx12::~RendererDx12() noexcept {
 }
 
 void RendererDx12::SubmitModels(std::vector<std::shared_ptr<IModel>>&& models) {
-	Gaia::renderPipeline->RecordIndirectArguments(models);
+	Gaia::renderEngine->RecordModelData(models);
 	Gaia::bufferManager->AddOpaqueModels(std::move(models));
 }
 
@@ -98,9 +95,7 @@ void RendererDx12::Render() {
 	const size_t currentBackIndex = Gaia::swapChain->GetCurrentBackBufferIndex();
 	ID3D12GraphicsCommandList* graphicsCommandList = Gaia::graphicsCmdList->GetCommandList();
 
-	Gaia::renderEngine->ExecutePreRenderStage(
-		graphicsCommandList, currentBackIndex, std::data(m_backgroundColour)
-	);
+	Gaia::renderEngine->ExecutePreRenderStage(graphicsCommandList, currentBackIndex);
 	Gaia::renderEngine->RecordDrawCommands(graphicsCommandList, currentBackIndex);
 	Gaia::renderEngine->Present(graphicsCommandList, currentBackIndex);
 	Gaia::renderEngine->ExecutePostRenderStage();
@@ -140,11 +135,11 @@ Renderer::Resolution RendererDx12::GetFirstDisplayCoordinates() const {
 }
 
 void RendererDx12::SetBackgroundColour(const std::array<float, 4>& colour) noexcept {
-	m_backgroundColour = colour;
+	Gaia::renderEngine->SetBackgroundColour(colour);
 }
 
 void RendererDx12::SetShaderPath(const wchar_t* path) noexcept {
-	m_shaderPath = path;
+	Gaia::renderEngine->SetShaderPath(path);
 }
 
 void RendererDx12::ProcessData() {
@@ -152,7 +147,7 @@ void RendererDx12::ProcessData() {
 
 	// Reserve Heap Space start
 	Gaia::Resources::depthBuffer->ReserveHeapSpace(device);
-	Gaia::renderPipeline->ReserveBuffers(device);
+	Gaia::renderEngine->ReserveBuffers(device);
 	Gaia::bufferManager->ReserveBuffers(device);
 	Gaia::Resources::vertexBuffer->ReserveHeapSpace(device);
 	Gaia::Resources::cpuWriteBuffer->ReserveHeapSpace(device);
@@ -170,7 +165,7 @@ void RendererDx12::ProcessData() {
 	Gaia::Resources::depthBuffer->CreateDepthBuffer(device, m_width, m_height);
 	Gaia::Resources::cpuWriteBuffer->CreateResource(device);
 	Gaia::Resources::vertexBuffer->CreateResource(device);
-	Gaia::renderPipeline->CreateBuffers(device);
+	Gaia::renderEngine->CreateBuffers(device);
 	Gaia::bufferManager->CreateBuffers(device);
 	Gaia::textureStorage->CreateBufferViews(device);
 	// Create Buffers end
@@ -197,7 +192,7 @@ void RendererDx12::ProcessData() {
 	ID3D12GraphicsCommandList* copyList = Gaia::copyCmdList->GetCommandList();
 
 	Gaia::Resources::vertexBuffer->RecordResourceUpload(copyList);
-	Gaia::renderPipeline->RecordResourceUpload(copyList);
+	Gaia::renderEngine->RecordResourceUploads(copyList);
 	Gaia::textureStorage->RecordResourceUpload(copyList);
 
 	Gaia::copyCmdList->Close();
@@ -210,10 +205,10 @@ void RendererDx12::ProcessData() {
 	Gaia::graphicsFence->SignalFence(fenceValue - 1u);
 	// GPU upload end
 
-	ConstructPipelines();
+	Gaia::renderEngine->ConstructPipelines();
 
 	// Release Upload Resource start
-	Gaia::renderPipeline->ReleaseUploadResource();
+	Gaia::renderEngine->ReleaseUploadResources();
 	Gaia::textureStorage->ReleaseUploadResource();
 	Gaia::descriptorTable->ReleaseUploadHeap();
 	Gaia::Resources::vertexBuffer->ReleaseUploadResource();
@@ -248,29 +243,4 @@ void RendererDx12::WaitForAsyncTasks() {
 		Gaia::computeFence->AdvanceValueInQueue();
 		Gaia::computeFence->WaitOnCPUConditional();
 	}
-}
-
-void RendererDx12::ConstructPipelines() {
-	ID3D12Device* device = Gaia::device->GetDeviceRef();
-
-	auto computeRS = CreateComputeRootSignature(device);
-	auto graphicsRS = CreateGraphicsRootSignature(device);
-	auto computePSO = CreateComputePipelineObject(device, m_shaderPath, computeRS->Get());
-	auto graphicsPSO = CreateGraphicsPipelineObject(device, m_shaderPath, graphicsRS->Get());
-
-	auto computeRSLayout = computeRS->GetElementLayout();
-	auto graphicsRSLayout = graphicsRS->GetElementLayout();
-
-	Gaia::bufferManager->SetComputeRootSignatureLayout(computeRSLayout);
-	Gaia::renderPipeline->SetComputeRootSignatureLayout(std::move(computeRSLayout));
-	Gaia::bufferManager->SetGraphicsRootSignatureLayout(graphicsRSLayout);
-	Gaia::renderPipeline->SetGraphicsRootSignatureLayout(graphicsRSLayout);
-	Gaia::textureStorage->SetGraphicsRootSignatureLayout(std::move(graphicsRSLayout));
-
-	Gaia::renderPipeline->AddComputeRootSignature(std::move(computeRS));
-	Gaia::renderPipeline->AddComputePipelineObject(std::move(computePSO));
-	Gaia::renderPipeline->AddGraphicsRootSignature(std::move(graphicsRS));
-	Gaia::renderPipeline->AddGraphicsPipelineObject(std::move(graphicsPSO));
-
-	Gaia::renderPipeline->CreateCommandSignature(device);
 }
