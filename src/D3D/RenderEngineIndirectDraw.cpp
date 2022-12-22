@@ -19,7 +19,7 @@ void RenderEngineIndirectDraw::ExecutePreRenderStage(
 	// Record compute commands
 	m_renderPipeline->ResetCounterBuffer(computeCommandList, frameIndex);
 
-	// Compute Pipeline doesn't need to be changed for different Graphics Pipeline
+	// Compute Pipeline doesn't need to be changed for different Graphics Pipelines
 	BindComputePipeline(computeCommandList);
 
 	Gaia::bufferManager->BindBuffersToCompute(computeCommandList, frameIndex);
@@ -69,7 +69,7 @@ void RenderEngineIndirectDraw::RecordDrawCommands(
 	m_renderPipeline->BindGraphicsPipeline(graphicsCommandList, m_graphicsRS->Get());
 	Gaia::textureStorage->BindTextures(graphicsCommandList);
 	Gaia::bufferManager->BindBuffersToGraphics(graphicsCommandList, frameIndex);
-	Gaia::bufferManager->BindVertexBuffer(graphicsCommandList);
+	Gaia::vertexManager->BindVertices(graphicsCommandList);
 	m_renderPipeline->DrawModels(m_commandSignature.Get(), graphicsCommandList, frameIndex);
 }
 

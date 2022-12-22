@@ -6,8 +6,7 @@
 #include <CameraManager.hpp>
 
 BufferManager::BufferManager(std::uint32_t frameCount)
-	: m_cameraBuffer{}, m_gVertexBufferView{}, m_gIndexBufferView{},
-	m_modelBuffers{ ResourceType::cpuWrite }, m_frameCount{ frameCount } {}
+	: m_cameraBuffer{}, m_modelBuffers{ ResourceType::cpuWrite }, m_frameCount{ frameCount } {}
 
 void BufferManager::ReserveBuffers(ID3D12Device* device) noexcept {
 	size_t cameraBufferSize = sizeof(DirectX::XMMATRIX) * 2u;
@@ -51,12 +50,6 @@ void BufferManager::SetMemoryAddresses() noexcept {
 
 	m_cameraBuffer.UpdateCPUAddressStart(cpuOffset);
 	m_cameraBuffer.UpdateGPUAddressStart(gpuOffset);
-
-	const D3D12_GPU_VIRTUAL_ADDRESS vertexGpuStart =
-		Gaia::Resources::vertexBuffer->GetGPUStartAddress();
-
-	m_gVertexBufferView.OffsetGPUAddress(vertexGpuStart);
-	m_gIndexBufferView.OffsetGPUAddress(vertexGpuStart);
 }
 
 void BufferManager::Update(size_t frameIndex) const noexcept {
@@ -83,46 +76,6 @@ void BufferManager::BindBuffersToCompute(
 		&ID3D12GraphicsCommandList::SetComputeRootConstantBufferView,
 		&ID3D12GraphicsCommandList::SetComputeRootDescriptorTable
 	>(computeCmdList, frameIndex, m_computeRSLayout);
-}
-
-void BufferManager::BindVertexBuffer(
-	ID3D12GraphicsCommandList* graphicsCmdList
-) const noexcept {
-	graphicsCmdList->IASetVertexBuffers(0u, 1u, m_gVertexBufferView.GetAddress());
-	graphicsCmdList->IASetIndexBuffer(m_gIndexBufferView.GetAddress());
-}
-
-void BufferManager::AddModelInputs(
-	std::unique_ptr<std::uint8_t> vertices, size_t vertexBufferSize, size_t strideSize,
-	std::unique_ptr<std::uint8_t> indices, size_t indexBufferSize
-) {
-	const size_t vertexOffset = Gaia::Resources::vertexBuffer->ReserveSpaceAndGetOffset(
-		vertexBufferSize
-	);
-	const size_t indexOffset = Gaia::Resources::vertexBuffer->ReserveSpaceAndGetOffset(
-		indexBufferSize
-	);
-
-	Gaia::Resources::vertexUploadContainer->AddMemory(
-		std::move(vertices), vertexBufferSize, vertexOffset
-	);
-	Gaia::Resources::vertexUploadContainer->AddMemory(
-		std::move(indices), indexBufferSize, indexOffset
-	);
-
-	m_gVertexBufferView.AddBufferView(
-		D3D12_VERTEX_BUFFER_VIEW{
-			static_cast<D3D12_GPU_VIRTUAL_ADDRESS>(vertexOffset),
-			static_cast<UINT>(vertexBufferSize), static_cast<UINT>(strideSize)
-		}
-	);
-
-	m_gIndexBufferView.AddBufferView(
-		D3D12_INDEX_BUFFER_VIEW{
-			static_cast<D3D12_GPU_VIRTUAL_ADDRESS>(indexOffset),
-			static_cast<UINT>(indexBufferSize), DXGI_FORMAT_R32_UINT
-		}
-	);
 }
 
 void BufferManager::SetComputeRootSignatureLayout(RSLayoutType rsLayout) noexcept {

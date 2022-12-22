@@ -12,7 +12,7 @@ public:
 		std::unique_ptr<std::uint8_t> memory, size_t size, size_t offset
 	) noexcept;
 	void SetStartingAddress(std::uint8_t* offset) noexcept;
-	void CopyData(std::atomic_size_t& workCount) noexcept;
+	void CopyData(std::atomic_size_t& workCount) const noexcept;
 
 private:
 	struct MemoryData {
@@ -32,7 +32,7 @@ public:
 		std::unique_ptr<std::uint8_t> memory, size_t rowPitch, size_t height,
 		std::uint8_t* addressStart
 	) noexcept;
-	void CopyData(std::atomic_size_t& workCount) noexcept;
+	void CopyData(std::atomic_size_t& workCount) const noexcept;
 
 private:
 	struct MemoryData {

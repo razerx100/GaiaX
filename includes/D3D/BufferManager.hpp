@@ -1,7 +1,6 @@
 #ifndef BUFFER_MANAGER_HPP_
 #define BUFFER_MANAGER_HPP_
 #include <D3DHeaders.hpp>
-#include <BufferView.hpp>
 #include <D3DDescriptorView.hpp>
 #include <memory>
 #include <vector>
@@ -27,15 +26,10 @@ public:
 	void BindBuffersToCompute(
 		ID3D12GraphicsCommandList* computeCmdList, size_t frameIndex
 	) const noexcept;
-	void BindVertexBuffer(ID3D12GraphicsCommandList* graphicsCmdList) const noexcept;
 
 	void SetComputeRootSignatureLayout(RSLayoutType rsLayout) noexcept;
 	void SetGraphicsRootSignatureLayout(RSLayoutType rsLayout) noexcept;
 
-	void AddModelInputs(
-		std::unique_ptr<std::uint8_t> vertices, size_t vertexBufferSize, size_t strideSize,
-		std::unique_ptr<std::uint8_t> indices, size_t indexBufferSize
-	);
 	void AddOpaqueModels(std::vector<std::shared_ptr<IModel>>&& models) noexcept;
 	void ReserveBuffers(ID3D12Device* device) noexcept;
 	void CreateBuffers(ID3D12Device* device);
@@ -63,8 +57,6 @@ private:
 
 private:
 	D3DRootDescriptorView m_cameraBuffer;
-	BufferView<D3D12_VERTEX_BUFFER_VIEW> m_gVertexBufferView;
-	BufferView<D3D12_INDEX_BUFFER_VIEW> m_gIndexBufferView;
 
 	RSLayoutType m_graphicsRSLayout;
 	RSLayoutType m_computeRSLayout;

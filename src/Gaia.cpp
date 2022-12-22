@@ -1,5 +1,6 @@
 #include <Gaia.hpp>
 #include <RenderEngineIndirectDraw.hpp>
+#include <VertexManagerVertex.hpp>
 
 namespace Gaia {
 	std::unique_ptr<DeviceManager> device;
@@ -21,6 +22,7 @@ namespace Gaia {
 	std::unique_ptr<D3DCommandList> computeCmdList;
 	std::unique_ptr<D3DFence> computeFence;
 	std::unique_ptr<RenderEngine> renderEngine;
+	std::unique_ptr<VertexManager> vertexManager;
 
 	namespace Resources {
 		std::unique_ptr<D3DHeap> uploadHeap;
@@ -28,9 +30,6 @@ namespace Gaia {
 		std::unique_ptr<D3DHeap> gpuOnlyHeap;
 		std::unique_ptr<D3DHeap> cpuReadBackHeap;
 		std::unique_ptr<DepthBuffer> depthBuffer;
-		std::unique_ptr<D3DUploadableResourceManager> vertexBuffer;
-		std::unique_ptr<UploadContainer> vertexUploadContainer;
-		std::unique_ptr<UploadContainerTexture> textureUploadContainer;
 		std::unique_ptr<D3DSingleResourceManager> cpuWriteBuffer;
 	}
 
@@ -111,30 +110,24 @@ namespace Gaia {
 		renderEngine = std::make_unique<RenderEngineIndirectDraw>();
 	}
 
+	void InitVertexManager() {
+		vertexManager = std::make_unique<VertexManagerVertex>();
+	}
+
 	void InitResources() {
 		Resources::uploadHeap = std::make_unique<D3DHeap>(D3D12_HEAP_TYPE_UPLOAD);
 		Resources::cpuWriteHeap = std::make_unique<D3DHeap>(D3D12_HEAP_TYPE_UPLOAD);
 		Resources::gpuOnlyHeap = std::make_unique<D3DHeap>(D3D12_HEAP_TYPE_DEFAULT);
 		Resources::cpuReadBackHeap = std::make_unique<D3DHeap>(D3D12_HEAP_TYPE_READBACK);
-		Resources::vertexBuffer = std::make_unique<D3DUploadableResourceManager>();
-		Resources::vertexUploadContainer = std::make_unique<UploadContainer>();
-		Resources::textureUploadContainer = std::make_unique<UploadContainerTexture>();
 		Resources::cpuWriteBuffer = std::make_unique<D3DSingleResourceManager>(
 			ResourceType::cpuWrite
 			);
 	}
 
-	void CleanUpUploadResources() {
-		Resources::vertexUploadContainer.reset();
-		Resources::textureUploadContainer.reset();
-	}
-
 	void CleanUpResources() {
-		CleanUpUploadResources();
 		Resources::uploadHeap.reset();
 		Resources::depthBuffer.reset();
 		Resources::cpuWriteBuffer.reset();
-		Resources::vertexBuffer.reset();
 		Resources::cpuWriteHeap.reset();
 		Resources::gpuOnlyHeap.reset();
 		Resources::cpuReadBackHeap.reset();

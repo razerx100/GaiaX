@@ -16,7 +16,7 @@ void UploadContainer::SetStartingAddress(std::uint8_t* offset) noexcept {
 	m_startingAddress = offset;
 }
 
-void UploadContainer::CopyData(std::atomic_size_t& workCount) noexcept {
+void UploadContainer::CopyData(std::atomic_size_t& workCount) const noexcept {
 	++workCount;
 
 	Gaia::threadPool->SubmitWork(
@@ -44,7 +44,7 @@ void UploadContainerTexture::AddMemory(
 	m_memoryData.emplace_back(rowPitch, height, addressStart);
 }
 
-void UploadContainerTexture::CopyData(std::atomic_size_t& workCount) noexcept {
+void UploadContainerTexture::CopyData(std::atomic_size_t& workCount) const noexcept {
 	++workCount;
 
 	Gaia::threadPool->SubmitWork(
