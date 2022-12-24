@@ -37,12 +37,9 @@ void RenderEngineIndirectDraw::ExecutePreRenderStage(
 
 	Gaia::graphicsCmdList->Reset(frameIndex);
 
-	D3DResourceBarrier<2u>().AddBarrier(
+	D3DResourceBarrier<1u>().AddBarrier(
 		Gaia::swapChain->GetRTV(frameIndex),
 		D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET
-	).AddBarrier(
-		m_renderPipeline->GetArgumentBuffer(frameIndex),
-		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT
 	).RecordBarriers(graphicsCommandList);
 
 	graphicsCommandList->SetDescriptorHeaps(1u, ppHeap);

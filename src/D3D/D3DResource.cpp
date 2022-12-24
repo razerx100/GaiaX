@@ -155,8 +155,7 @@ void D3DResourceView::CreateResource(
 		pHeap = Gaia::Resources::cpuReadBackHeap->GetHeap();
 
 	m_resource.CreateResource(
-		device, pHeap, m_heapOffset, m_resourceDescription,
-		initialState, clearValue
+		device, pHeap, m_heapOffset, m_resourceDescription, initialState, clearValue
 	);
 
 	if (m_type != ResourceType::gpuOnly)

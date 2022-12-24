@@ -2,7 +2,7 @@
 #define VERTEX_MANAGER_VERTEX_HPP_
 #include <VertexManager.hpp>
 #include <BufferView.hpp>
-#include <D3DUploadableResourceManager.hpp>
+#include <D3DResourceManager.hpp>
 #include <UploadContainer.hpp>
 
 class VertexManagerVertex final : public VertexManager {

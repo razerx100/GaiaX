@@ -39,4 +39,20 @@ protected:
 	ResourceView m_resourceView;
 	LinearAllocator m_allocator;
 };
+
+class D3DResourceManager : public _D3DResourceManager<D3DResourceView> {
+public:
+	D3DResourceManager(
+		ResourceType type, D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE
+	);
+
+	void CreateResource(ID3D12Device* device);
+};
+
+class D3DUploadableResourceManager : public _D3DResourceManager<D3DUploadableResourceView> {
+public:
+	void CreateResource(ID3D12Device* device);
+	void RecordResourceUpload(ID3D12GraphicsCommandList* copyList) noexcept;
+	void ReleaseUploadResource() noexcept;
+};
 #endif

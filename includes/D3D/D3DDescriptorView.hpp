@@ -33,15 +33,13 @@ enum class DescriptorType {
 };
 
 template<class ResourceView>
-class _D3DDescriptorView {
+class _D3DDescriptorViewBase {
 public:
-	_D3DDescriptorView(ResourceType type, DescriptorType descType)
-		: m_resourceBuffer{
-			type, DescriptorType::SRV == descType ?
-			D3D12_RESOURCE_FLAG_NONE : D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS
-		}, m_gpuHandleStart{}, m_cpuHandleStart{}, m_descriptorSize{ 0u },
-		m_descriptorOffset{ 0u }, m_texture{ false }, m_descType{ descType },
-		m_strideSize{ 0u }, m_elementCount{ 0u }, m_subAllocationCount{ 0u } {}
+	_D3DDescriptorViewBase(ResourceType type, D3D12_RESOURCE_FLAGS flags) noexcept
+		: m_resourceBuffer{ type, flags }, m_gpuHandleStart{}, m_cpuHandleStart{},
+		m_descriptorSize{ 0u }, m_descriptorOffset{ 0u } {}
+
+	virtual ~_D3DDescriptorViewBase() = default;
 
 	void SetDescriptorOffset(size_t descriptorOffset, size_t descriptorSize) noexcept {
 		m_descriptorOffset = descriptorOffset;
@@ -52,13 +50,40 @@ public:
 		m_descriptorOffset += descriptorOffset;
 	}
 
+	[[nodiscard]]
+	ID3D12Resource* GetResource() const noexcept {
+		return m_resourceBuffer.GetResource();
+	}
+	[[nodiscard]]
+	D3D12_RESOURCE_DESC GetResourceDesc() const noexcept {
+		return m_resourceBuffer.GetResourceDesc();
+	}
+
+protected:
+	ResourceView m_resourceBuffer;
+	D3D12_GPU_DESCRIPTOR_HANDLE m_gpuHandleStart;
+	D3D12_CPU_DESCRIPTOR_HANDLE m_cpuHandleStart;
+	size_t m_descriptorSize;
+	size_t m_descriptorOffset;
+};
+
+template<class ResourceView>
+class _D3DDescriptorView : public _D3DDescriptorViewBase<ResourceView> {
+public:
+	_D3DDescriptorView(ResourceType type, DescriptorType descType) noexcept
+		: _D3DDescriptorViewBase<ResourceView>(
+			type, DescriptorType::SRV == descType ?
+			D3D12_RESOURCE_FLAG_NONE : D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS
+			), m_descType{descType}, m_texture{false}, m_strideSize{ 0u },
+		m_elementCount{ 0u }, m_subAllocationCount{ 0u } {}
+
 	void SetTextureInfo(
 		ID3D12Device* device, UINT64 width, UINT height, DXGI_FORMAT format, bool msaa
-	) {
-		m_resourceBuffer.SetTextureInfo(width, height, format, msaa);
-		m_resourceBuffer.ReserveHeapSpace(device);
+	) noexcept {
+		this->m_resourceBuffer.SetTextureInfo(width, height, format, msaa);
+		this->m_resourceBuffer.ReserveHeapSpace(device);
 
-		m_texture = true;
+		this->m_texture = true;
 	}
 
 	void SetBufferInfo(
@@ -69,20 +94,22 @@ public:
 		m_elementCount = elementsPerAllocation;
 		m_subAllocationCount = static_cast<UINT64>(subAllocationCount);
 
-		m_resourceBuffer.SetBufferInfo(strideSize * elementsPerAllocation, subAllocationCount);
-		m_resourceBuffer.ReserveHeapSpace(device);
+		this->m_resourceBuffer.SetBufferInfo(
+			strideSize * elementsPerAllocation, subAllocationCount
+		);
+		this->m_resourceBuffer.ReserveHeapSpace(device);
 	}
 
 	void CreateDescriptorView(
 		ID3D12Device* device, D3D12_CPU_DESCRIPTOR_HANDLE uploadDescriptorStart,
 		D3D12_GPU_DESCRIPTOR_HANDLE gpuDescriptorStart, D3D12_RESOURCE_STATES initialState
-	) {
-		m_cpuHandleStart.ptr =
-		{ uploadDescriptorStart.ptr + m_descriptorSize * m_descriptorOffset };
-		m_gpuHandleStart.ptr =
-		{ gpuDescriptorStart.ptr + m_descriptorSize * m_descriptorOffset };
+	) noexcept {
+		this->m_cpuHandleStart.ptr =
+		{ uploadDescriptorStart.ptr + this->m_descriptorSize * this->m_descriptorOffset };
+		this->m_gpuHandleStart.ptr =
+		{ gpuDescriptorStart.ptr + this->m_descriptorSize * this->m_descriptorOffset };
 
-		m_resourceBuffer.CreateResource(device, initialState);
+		this->m_resourceBuffer.CreateResource(device, initialState);
 
 		if (m_texture)
 			CreateTextureDescriptors(device);
@@ -91,49 +118,43 @@ public:
 	}
 
 	[[nodiscard]]
-	D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescriptorHandle(size_t index) const noexcept {
-		return D3D12_CPU_DESCRIPTOR_HANDLE{ m_cpuHandleStart.ptr + (m_descriptorSize * index) };
-	}
-	[[nodiscard]]
 	D3D12_GPU_DESCRIPTOR_HANDLE GetGPUDescriptorHandle(size_t index) const noexcept {
-		return D3D12_GPU_DESCRIPTOR_HANDLE{ m_gpuHandleStart.ptr + (m_descriptorSize * index) };
-	}
-	[[nodiscard]]
-	D3D12_CPU_DESCRIPTOR_HANDLE GetFirstCPUDescriptorHandle() const noexcept {
-		return GetCPUDescriptorHandle(0u);
+		return D3D12_GPU_DESCRIPTOR_HANDLE{
+			this->m_gpuHandleStart.ptr + (this->m_descriptorSize * index)
+		};
 	}
 	[[nodiscard]]
 	D3D12_GPU_DESCRIPTOR_HANDLE GetFirstGPUDescriptorHandle() const noexcept {
 		return GetGPUDescriptorHandle(0u);
 	}
 	[[nodiscard]]
-	ID3D12Resource* GetResource() const noexcept {
-		return m_resourceBuffer.GetResource();
-	}
-	[[nodiscard]]
-	D3D12_RESOURCE_DESC GetResourceDesc() const noexcept {
-		return m_resourceBuffer.GetResourceDesc();
-	}
-	[[nodiscard]]
 	std::uint8_t* GetCPUWPointer(UINT64 index) const noexcept {
-		return m_resourceBuffer.GetCPUWPointer(index);
+		return this->m_resourceBuffer.GetCPUWPointer(index);
 	}
 	[[nodiscard]]
 	std::uint8_t* GetFirstCPUWPointer() const noexcept {
-		return m_resourceBuffer.GetFirstCPUWPointer();
+		return this->m_resourceBuffer.GetFirstCPUWPointer();
+	}
+	[[nodiscard]]
+	D3D12_GPU_VIRTUAL_ADDRESS GetGPUAddress(UINT64 index) const noexcept {
+		return this->m_resourceBuffer.GetGPUAddress(index);
+	}
+	[[nodiscard]]
+	D3D12_GPU_VIRTUAL_ADDRESS GetFirstGPUAddress() const noexcept {
+		return this->m_resourceBuffer.GetFirstGPUAddress();
 	}
 	[[nodiscard]]
 	UINT64 GetSubAllocationOffset(UINT64 index) const noexcept {
-		return m_resourceBuffer.GetSubAllocationOffset(index);
+		return this->m_resourceBuffer.GetSubAllocationOffset(index);
 	}
 	[[nodiscard]]
 	UINT64 GetFirstSubAllocationOffset() const noexcept {
-		return m_resourceBuffer.GetFirstSubAllocationOffset();
+		return this->m_resourceBuffer.GetFirstSubAllocationOffset();
 	}
 
 private:
-	void CreateBufferDescriptors(ID3D12Device* device) {
-		D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = m_cpuHandleStart;
+	void CreateBufferDescriptors(ID3D12Device* device) const noexcept {
+		D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = this->m_cpuHandleStart;
 
 		if (DescriptorType::UAV == m_descType) {
 			D3D12_UNORDERED_ACCESS_VIEW_DESC desc{
@@ -146,11 +167,11 @@ private:
 				desc.Buffer = bufferInfo;
 
 				device->CreateUnorderedAccessView(
-					m_resourceBuffer.GetResource(), m_resourceBuffer.GetResource(),
+					this->m_resourceBuffer.GetResource(), this->m_resourceBuffer.GetResource(),
 					&desc, cpuHandle
 				);
 
-				cpuHandle.ptr += m_descriptorSize;
+				cpuHandle.ptr += this->m_descriptorSize;
 			}
 		}
 		else {
@@ -165,40 +186,27 @@ private:
 				desc.Buffer = bufferInfo;
 
 				device->CreateShaderResourceView(
-					m_resourceBuffer.GetResource(), &desc, cpuHandle
+					this->m_resourceBuffer.GetResource(), &desc, cpuHandle
 				);
 
-				cpuHandle.ptr += m_descriptorSize;
+				cpuHandle.ptr += this->m_descriptorSize;
 			}
 		}
 	}
 
-	void CreateTextureDescriptors(ID3D12Device* device) {
-		const D3D12_RESOURCE_DESC textureDesc = m_resourceBuffer.GetResourceDesc();
+	void CreateTextureDescriptors(ID3D12Device* device) const noexcept {
+		const D3D12_RESOURCE_DESC textureDesc = this->m_resourceBuffer.GetResourceDesc();
 
-		if (DescriptorType::UAV == m_descType) {
-			D3D12_UNORDERED_ACCESS_VIEW_DESC desc{
-				.Format = textureDesc.Format,
-				.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D
-			};
+		D3D12_SHADER_RESOURCE_VIEW_DESC desc{
+		.Format = textureDesc.Format,
+		.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D,
+		.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING
+		};
+		desc.Texture2D.MipLevels = textureDesc.MipLevels;
 
-			device->CreateUnorderedAccessView(
-				m_resourceBuffer.GetResource(), m_resourceBuffer.GetResource(),
-				&desc, m_cpuHandleStart
-			);
-		}
-		else {
-			D3D12_SHADER_RESOURCE_VIEW_DESC desc{
-				.Format = textureDesc.Format,
-				.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D,
-				.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING
-			};
-			desc.Texture2D.MipLevels = textureDesc.MipLevels,
-
-			device->CreateShaderResourceView(
-				m_resourceBuffer.GetResource(), &desc, m_cpuHandleStart
-			);
-		}
+		device->CreateShaderResourceView(
+			this->m_resourceBuffer.GetResource(), &desc, this->m_cpuHandleStart
+		);
 	}
 
 	[[nodiscard]]
@@ -237,11 +245,6 @@ private:
 	}
 
 protected:
-	ResourceView m_resourceBuffer;
-	D3D12_GPU_DESCRIPTOR_HANDLE m_gpuHandleStart;
-	D3D12_CPU_DESCRIPTOR_HANDLE m_cpuHandleStart;
-	size_t m_descriptorSize;
-	size_t m_descriptorOffset;
 	bool m_texture;
 	DescriptorType m_descType;
 	UINT m_strideSize;
@@ -252,7 +255,7 @@ protected:
 template<>
 void _D3DDescriptorView<D3DUploadableResourceView>::SetTextureInfo(
 	ID3D12Device* device, UINT64 width, UINT height, DXGI_FORMAT format, bool msaa
-);
+) noexcept;
 
 using D3DDescriptorView = _D3DDescriptorView<D3DResourceView>;
 
@@ -264,10 +267,31 @@ public:
 
 	void RecordResourceUpload(ID3D12GraphicsCommandList* copyList) noexcept;
 	void ReleaseUploadResource() noexcept;
+};
+
+class D3DDescriptorViewUAVCounter : public _D3DDescriptorViewBase<D3DResourceView> {
+public:
+	D3DDescriptorViewUAVCounter(ResourceType type) noexcept;
+
+	void SetBufferInfo(ID3D12Device* device, UINT strideSize, UINT elementCount) noexcept;
+	void CreateDescriptorView(
+		ID3D12Device* device, D3D12_CPU_DESCRIPTOR_HANDLE uploadDescriptorStart,
+		D3D12_GPU_DESCRIPTOR_HANDLE gpuDescriptorStart
+	) noexcept;
 
 	[[nodiscard]]
-	D3D12_GPU_VIRTUAL_ADDRESS GetGPUAddress(UINT64 index) const noexcept;
+	D3D12_GPU_DESCRIPTOR_HANDLE GetGPUDescriptorHandle() const noexcept;
 	[[nodiscard]]
-	D3D12_GPU_VIRTUAL_ADDRESS GetFirstGPUAddress() const noexcept;
+	UINT64 GetCounterOffset() const noexcept;
+	[[nodiscard]]
+	UINT64 GetBufferOffset() const noexcept;
+
+private:
+	void CreateBufferDescriptors(ID3D12Device* device) const noexcept;
+
+private:
+	UINT64 m_counterOffset;
+	UINT m_strideSize;
+	UINT m_elementCount;
 };
 #endif

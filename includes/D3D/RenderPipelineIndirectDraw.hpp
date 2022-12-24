@@ -56,9 +56,6 @@ public:
 	void RecordResourceUpload(ID3D12GraphicsCommandList* copyList) noexcept;
 	void ReleaseUploadResource() noexcept;
 
-	[[nodiscard]]
-	ID3D12Resource* GetArgumentBuffer(size_t frameIndex) const noexcept;
-
 private:
 	[[nodiscard]]
 	std::unique_ptr<D3DPipelineObject> CreateGraphicsPipelineObject(

@@ -30,7 +30,7 @@ namespace Gaia {
 		std::unique_ptr<D3DHeap> gpuOnlyHeap;
 		std::unique_ptr<D3DHeap> cpuReadBackHeap;
 		std::unique_ptr<DepthBuffer> depthBuffer;
-		std::unique_ptr<D3DSingleResourceManager> cpuWriteBuffer;
+		std::unique_ptr<D3DResourceManager> cpuWriteBuffer;
 	}
 
 	void InitDevice() {
@@ -119,7 +119,7 @@ namespace Gaia {
 		Resources::cpuWriteHeap = std::make_unique<D3DHeap>(D3D12_HEAP_TYPE_UPLOAD);
 		Resources::gpuOnlyHeap = std::make_unique<D3DHeap>(D3D12_HEAP_TYPE_DEFAULT);
 		Resources::cpuReadBackHeap = std::make_unique<D3DHeap>(D3D12_HEAP_TYPE_READBACK);
-		Resources::cpuWriteBuffer = std::make_unique<D3DSingleResourceManager>(
+		Resources::cpuWriteBuffer = std::make_unique<D3DResourceManager>(
 			ResourceType::cpuWrite
 			);
 	}

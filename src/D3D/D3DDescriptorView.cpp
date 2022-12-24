@@ -1,5 +1,6 @@
 #include <D3DDescriptorView.hpp>
 #include <Gaia.hpp>
+#include <D3DHelperFunctions.hpp>
 
 // D3D Root Descriptor View
 void D3DRootDescriptorView::SetAddressesStart(
@@ -29,7 +30,7 @@ D3D12_GPU_VIRTUAL_ADDRESS D3DRootDescriptorView::GetGPUAddressStart(
 
 void _D3DDescriptorView<D3DUploadableResourceView>::SetTextureInfo(
 	ID3D12Device* device, UINT64 width, UINT height, DXGI_FORMAT format, bool msaa
-) {
+) noexcept {
 	m_resourceBuffer.SetTextureInfo(device, width, height, format, msaa);
 	m_resourceBuffer.ReserveHeapSpace(device);
 
@@ -47,12 +48,63 @@ void D3DUploadResourceDescriptorView::ReleaseUploadResource() noexcept {
 	m_resourceBuffer.ReleaseUploadResource();
 }
 
-D3D12_GPU_VIRTUAL_ADDRESS D3DUploadResourceDescriptorView::GetGPUAddress(
-	UINT64 index
-) const noexcept {
-	return m_resourceBuffer.GetGPUAddress(index);
+// D3D Descriptor View UAV Counter
+D3DDescriptorViewUAVCounter::D3DDescriptorViewUAVCounter(ResourceType type) noexcept
+	: _D3DDescriptorViewBase<D3DResourceView>(type, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS),
+	m_counterOffset{ 0u }, m_strideSize{ 0u }, m_elementCount{ 0u } {}
+
+void D3DDescriptorViewUAVCounter::SetBufferInfo(
+	ID3D12Device* device, UINT strideSize, UINT elementCount
+) noexcept {
+	m_strideSize = strideSize;
+	m_elementCount = elementCount;
+
+	UINT64 bufferSize = static_cast<UINT64>(strideSize * elementCount);
+	m_counterOffset = Align(bufferSize, D3D12_UAV_COUNTER_PLACEMENT_ALIGNMENT);
+
+	m_resourceBuffer.SetBufferInfo(m_counterOffset + sizeof(UINT));
+	m_resourceBuffer.ReserveHeapSpace(device);
 }
 
-D3D12_GPU_VIRTUAL_ADDRESS D3DUploadResourceDescriptorView::GetFirstGPUAddress() const noexcept {
-	return m_resourceBuffer.GetFirstGPUAddress();
+D3D12_GPU_DESCRIPTOR_HANDLE D3DDescriptorViewUAVCounter::GetGPUDescriptorHandle() const noexcept {
+	return m_gpuHandleStart;
+}
+
+UINT64 D3DDescriptorViewUAVCounter::GetCounterOffset() const noexcept {
+	return m_counterOffset;
+}
+
+UINT64 D3DDescriptorViewUAVCounter::GetBufferOffset() const noexcept {
+	return 0u;
+}
+
+void D3DDescriptorViewUAVCounter::CreateBufferDescriptors(ID3D12Device* device) const noexcept {
+	D3D12_BUFFER_UAV bufferInfo{
+			.FirstElement = 0u,
+			.NumElements = m_elementCount,
+			.StructureByteStride = m_strideSize,
+			.CounterOffsetInBytes = m_counterOffset,
+			.Flags = D3D12_BUFFER_UAV_FLAG_NONE
+	};
+
+	D3D12_UNORDERED_ACCESS_VIEW_DESC desc{
+		.Format = DXGI_FORMAT_UNKNOWN,
+		.ViewDimension = D3D12_UAV_DIMENSION_BUFFER,
+		.Buffer = bufferInfo
+	};
+
+	device->CreateUnorderedAccessView(
+		m_resourceBuffer.GetResource(), m_resourceBuffer.GetResource(), &desc, m_cpuHandleStart
+	);
+}
+
+void D3DDescriptorViewUAVCounter::CreateDescriptorView(
+	ID3D12Device* device, D3D12_CPU_DESCRIPTOR_HANDLE uploadDescriptorStart,
+	D3D12_GPU_DESCRIPTOR_HANDLE gpuDescriptorStart
+) noexcept {
+	m_cpuHandleStart.ptr = { uploadDescriptorStart.ptr + m_descriptorSize * m_descriptorOffset };
+	m_gpuHandleStart.ptr = { gpuDescriptorStart.ptr + m_descriptorSize * m_descriptorOffset };
+
+	m_resourceBuffer.CreateResource(device, D3D12_RESOURCE_STATE_COPY_DEST);
+	CreateBufferDescriptors(device);
 }

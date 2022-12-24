@@ -58,7 +58,7 @@ void RenderPipelineIndirectDraw::ReserveBuffers(ID3D12Device* device) {
 		counterBuffer.SetDescriptorOffset(counterDescriptorOffset, descriptorSize);
 		counterBuffer.SetBufferInfo(device, sizeof(UINT), 1u);
 
-		++commandDescriptorOffsetUAV;
+		++counterDescriptorOffset;
 	}
 
 	m_counterResetBuffer.SetBufferInfo(sizeof(UINT));
@@ -183,12 +183,6 @@ void RenderPipelineIndirectDraw::RecordResourceUpload(
 void RenderPipelineIndirectDraw::ReleaseUploadResource() noexcept {
 	m_commandBufferSRV.ReleaseUploadResource();
 	m_cullingDataBuffer.ReleaseUploadResource();
-}
-
-ID3D12Resource* RenderPipelineIndirectDraw::GetArgumentBuffer(
-	size_t frameIndex
-) const noexcept {
-	return m_commandBufferUAVs[frameIndex].GetResource();
 }
 
 void RenderPipelineIndirectDraw::ResetCounterBuffer(
