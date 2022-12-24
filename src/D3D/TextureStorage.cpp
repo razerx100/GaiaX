@@ -12,7 +12,8 @@ size_t TextureStorage::AddTexture(
 	const size_t relativeTextureOffset =
 		Gaia::descriptorTable->ReserveDescriptorsTextureAndGetRelativeOffset();
 
-	auto textureDescriptor = std::make_unique<D3DUploadResourceDescriptorView>();
+	auto textureDescriptor =
+		std::make_unique<D3DUploadResourceDescriptorView>(DescriptorType::SRV);
 	textureDescriptor->SetDescriptorOffset(
 		relativeTextureOffset,
 		device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)
@@ -52,7 +53,7 @@ void TextureStorage::CreateBufferViews(ID3D12Device* device) {
 		const D3D12_RESOURCE_DESC textureDesc = textureDescriptor->GetResourceDesc();
 		m_textureUploadContainer->AddMemory(
 			std::move(m_textureHandles[index]), textureDesc.Width * 4u, textureDesc.Height,
-			textureDescriptor->GetFirstBufferCPUWPointer()
+			textureDescriptor->GetFirstCPUWPointer()
 		);
 	}
 }

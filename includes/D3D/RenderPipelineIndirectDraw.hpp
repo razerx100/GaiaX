@@ -72,8 +72,9 @@ private:
 	UINT m_modelCount;
 	std::uint32_t m_frameCount;
 	D3DUploadResourceDescriptorView m_commandBufferSRV;
-	std::vector<D3DSingleDescriptorView> m_commandBufferUAVs;
-	D3DResourceView m_uavCounterBuffer;
+	std::vector<D3DDescriptorView> m_commandBufferUAVs;
+	std::vector<D3DDescriptorView> m_counterBuffers;
+	D3DResourceView m_counterResetBuffer;
 	D3DUploadableResourceView m_cullingDataBuffer;
 	std::vector<IndirectCommand> m_indirectCommands;
 

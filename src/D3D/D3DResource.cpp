@@ -43,7 +43,8 @@ std::uint8_t* D3DResource::GetCPUWPointer() const noexcept {
 
 // D3DResourceView
 D3DResourceView::D3DResourceView(ResourceType type, D3D12_RESOURCE_FLAGS flags) noexcept
-	: m_resourceDescription{}, m_heapOffset{ 0u }, m_type{ type } {
+	: m_resourceDescription{}, m_heapOffset{ 0u }, m_type{ type }, m_subAllocationSize{ 0u },
+	m_subAllocationCount{ 0u }, m_subBufferSize{ 0u } {
 
 	m_resourceDescription.DepthOrArraySize = 1u;
 	m_resourceDescription.SampleDesc.Count = 1u;
@@ -63,7 +64,14 @@ void D3DResourceView::_setBufferInfo(
 	resourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
 }
 
-void D3DResourceView::SetBufferInfo(UINT64 bufferSize) noexcept {
+void D3DResourceView::SetBufferInfo(
+	UINT64 bufferSize, UINT64 allocationCount, UINT64 alignment
+) noexcept {
+	m_subAllocationSize = Align(bufferSize, alignment);
+	m_subBufferSize = bufferSize;
+	m_subAllocationCount = allocationCount;
+	bufferSize = m_subAllocationSize * (m_subAllocationCount - 1u) + m_subBufferSize;
+
 	_setBufferInfo(bufferSize, m_resourceDescription);
 }
 
@@ -159,14 +167,22 @@ ID3D12Resource* D3DResourceView::GetResource() const noexcept {
 	return m_resource.Get();
 }
 
-D3D12_GPU_VIRTUAL_ADDRESS D3DResourceView::GetGPUAddress() const noexcept {
-	return m_resource.Get()->GetGPUVirtualAddress();
+D3D12_GPU_VIRTUAL_ADDRESS D3DResourceView::GetGPUAddress(UINT64 index) const noexcept {
+	return m_resource.Get()->GetGPUVirtualAddress() + GetSubAllocationOffset(index);
 }
 
-std::uint8_t* D3DResourceView::GetCPUWPointer() const {
+D3D12_GPU_VIRTUAL_ADDRESS D3DResourceView::GetFirstGPUAddress() const noexcept {
+	return GetGPUAddress(0u);
+}
+
+std::uint8_t* D3DResourceView::GetCPUWPointer(UINT64 index) const noexcept {
 	assert(m_type != ResourceType::gpuOnly && "This buffer doesn't have CPU access.");
 
-	return m_resource.GetCPUWPointer();
+	return m_resource.GetCPUWPointer() + GetSubAllocationOffset(index);
+}
+
+std::uint8_t* D3DResourceView::GetFirstCPUWPointer() const noexcept {
+	return GetCPUWPointer(0u);
 }
 
 ResourceType D3DResourceView::GetResourceType() const noexcept {
@@ -198,15 +214,25 @@ D3D12_RESOURCE_DESC D3DResourceView::GetResourceDesc() const noexcept {
 	return m_resourceDescription;
 }
 
+UINT64 D3DResourceView::GetSubAllocationOffset(UINT64 index) const noexcept {
+	return m_subAllocationSize * index;
+}
+
+UINT64 D3DResourceView::GetFirstSubAllocationOffset() const noexcept {
+	return GetSubAllocationOffset(0u);
+}
+
 // D3D Upload Resource View
 D3DUploadableResourceView::D3DUploadableResourceView(
 	ResourceType type, D3D12_RESOURCE_FLAGS flags
 ) noexcept : m_uploadResource{ ResourceType::upload }, m_gpuResource{ type, flags },
 	m_texture{ false } {}
 
-void D3DUploadableResourceView::SetBufferInfo(UINT64 bufferSize) noexcept {
-	m_uploadResource.SetBufferInfo(bufferSize);
-	m_gpuResource.SetBufferInfo(bufferSize);
+void D3DUploadableResourceView::SetBufferInfo(
+	UINT64 bufferSize, UINT64 allocationCount, UINT64 alignment
+) noexcept {
+	m_uploadResource.SetBufferInfo(bufferSize, allocationCount, alignment);
+	m_gpuResource.SetBufferInfo(bufferSize, allocationCount, alignment);
 }
 
 void D3DUploadableResourceView::SetTextureInfo(
@@ -216,7 +242,7 @@ void D3DUploadableResourceView::SetTextureInfo(
 		device, width, height, format, msaa
 	);
 
-	m_uploadResource.SetBufferInfo(textureBufferSize);
+	m_uploadResource.SetBufferInfo(textureBufferSize, 1u);
 	m_gpuResource.SetTextureInfo(width, height, format, msaa);
 
 	m_texture = true;
@@ -281,18 +307,36 @@ void D3DUploadableResourceView::ReleaseUploadResource() noexcept {
 	m_uploadResource.ReleaseResource();
 }
 
-std::uint8_t* D3DUploadableResourceView::GetCPUWPointer() const noexcept {
-	return m_uploadResource.GetCPUWPointer();
+std::uint8_t* D3DUploadableResourceView::GetCPUWPointer(UINT64 index) const noexcept {
+	return m_uploadResource.GetCPUWPointer(index);
 }
 
 ID3D12Resource* D3DUploadableResourceView::GetResource() const noexcept {
 	return m_gpuResource.GetResource();
 }
 
-D3D12_GPU_VIRTUAL_ADDRESS D3DUploadableResourceView::GetGPUAddress() const noexcept {
-	return m_gpuResource.GetGPUAddress();
+D3D12_GPU_VIRTUAL_ADDRESS D3DUploadableResourceView::GetGPUAddress(
+	UINT64 index
+) const noexcept {
+	return m_gpuResource.GetGPUAddress(index);
 }
 
 D3D12_RESOURCE_DESC D3DUploadableResourceView::GetResourceDesc() const noexcept {
 	return m_gpuResource.GetResourceDesc();
+}
+
+D3D12_GPU_VIRTUAL_ADDRESS D3DUploadableResourceView::GetFirstGPUAddress() const noexcept {
+	return m_gpuResource.GetFirstGPUAddress();
+}
+
+std::uint8_t* D3DUploadableResourceView::GetFirstCPUWPointer() const noexcept {
+	return m_uploadResource.GetFirstCPUWPointer();
+}
+
+UINT64 D3DUploadableResourceView::GetSubAllocationOffset(UINT64 index) const noexcept {
+	return m_gpuResource.GetSubAllocationOffset(index);
+}
+
+UINT64 D3DUploadableResourceView::GetFirstSubAllocationOffset() const noexcept {
+	return m_gpuResource.GetFirstSubAllocationOffset();
 }

@@ -42,7 +42,9 @@ public:
 		ResourceType type, D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE
 	) noexcept;
 
-	void SetBufferInfo(UINT64 bufferSize) noexcept;
+	void SetBufferInfo(
+		UINT64 bufferSize, UINT64 allocationCount = 1u, UINT64 alignment = 4u
+	) noexcept;
 	void SetTextureInfo(UINT64 width, UINT height, DXGI_FORMAT format, bool msaa) noexcept;
 	void ReserveHeapSpace(ID3D12Device* device) noexcept;
 	void CreateResource(
@@ -59,28 +61,37 @@ public:
 	[[nodiscard]]
 	ID3D12Resource* GetResource() const noexcept;
 	[[nodiscard]]
-	D3D12_GPU_VIRTUAL_ADDRESS GetGPUAddress() const noexcept;
+	D3D12_GPU_VIRTUAL_ADDRESS GetGPUAddress(UINT64 index) const noexcept;
 	[[nodiscard]]
-	std::uint8_t* GetCPUWPointer() const;
+	D3D12_GPU_VIRTUAL_ADDRESS GetFirstGPUAddress() const noexcept;
+	[[nodiscard]]
+	std::uint8_t* GetCPUWPointer(UINT64 index) const noexcept;
+	[[nodiscard]]
+	std::uint8_t* GetFirstCPUWPointer() const noexcept;
 	[[nodiscard]]
 	ResourceType GetResourceType() const noexcept;
 	[[nodiscard]]
 	D3D12_RESOURCE_DESC GetResourceDesc() const noexcept;
+	[[nodiscard]]
+	UINT64 GetSubAllocationOffset(UINT64 index) const noexcept;
+	[[nodiscard]]
+	UINT64 GetFirstSubAllocationOffset() const noexcept;
 
 private:
 	static void _setTextureInfo(
 		UINT64 width, UINT height, DXGI_FORMAT format, bool msaa,
 		D3D12_RESOURCE_DESC& resourceDesc
 	) noexcept;
-	static void _setBufferInfo(
-		UINT64 bufferSize, D3D12_RESOURCE_DESC& resourceDesc
-	) noexcept;
+	static void _setBufferInfo(UINT64 bufferSize, D3D12_RESOURCE_DESC& resourceDesc) noexcept;
 
 private:
 	D3DResource m_resource;
 	D3D12_RESOURCE_DESC m_resourceDescription;
 	size_t m_heapOffset;
 	ResourceType m_type;
+	UINT64 m_subAllocationSize;
+	UINT64 m_subAllocationCount;
+	UINT64 m_subBufferSize;
 };
 
 class D3DUploadableResourceView {
@@ -90,7 +101,9 @@ public:
 		D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE
 	) noexcept;
 
-	void SetBufferInfo(UINT64 bufferSize) noexcept;
+	void SetBufferInfo(
+		UINT64 bufferSize, UINT64 allocationCount = 1u, UINT64 alignment = 4u
+	) noexcept;
 	void SetTextureInfo(
 		ID3D12Device* device, UINT64 width, UINT height, DXGI_FORMAT format, bool msaa
 	) noexcept;
@@ -103,13 +116,21 @@ public:
 	void ReleaseUploadResource() noexcept;
 
 	[[nodiscard]]
-	std::uint8_t* GetCPUWPointer() const noexcept;
-	[[nodiscard]]
 	ID3D12Resource* GetResource() const noexcept;
 	[[nodiscard]]
-	D3D12_GPU_VIRTUAL_ADDRESS GetGPUAddress() const noexcept;
-	[[nodiscard]]
 	D3D12_RESOURCE_DESC GetResourceDesc() const noexcept;
+	[[nodiscard]]
+	D3D12_GPU_VIRTUAL_ADDRESS GetGPUAddress(UINT64 index) const noexcept;
+	[[nodiscard]]
+	D3D12_GPU_VIRTUAL_ADDRESS GetFirstGPUAddress() const noexcept;
+	[[nodiscard]]
+	std::uint8_t* GetCPUWPointer(UINT64 index) const noexcept;
+	[[nodiscard]]
+	std::uint8_t* GetFirstCPUWPointer() const noexcept;
+	[[nodiscard]]
+	UINT64 GetSubAllocationOffset(UINT64 index) const noexcept;
+	[[nodiscard]]
+	UINT64 GetFirstSubAllocationOffset() const noexcept;
 
 private:
 	D3DResourceView m_uploadResource;

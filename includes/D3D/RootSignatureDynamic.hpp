@@ -11,6 +11,7 @@ enum class RootSigElement {
 	ModelIndex,
 	IndirectArgsSRV,
 	IndirectArgsUAV,
+	IndirectArgsCounterUAV,
 	CullingData,
 	ElementCount
 };

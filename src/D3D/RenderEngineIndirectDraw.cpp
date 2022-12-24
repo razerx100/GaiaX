@@ -183,6 +183,9 @@ std::unique_ptr<RootSignatureDynamic> RenderEngineIndirectDraw::CreateComputeRoo
 	).AddDescriptorTable(
 		D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1u, D3D12_SHADER_VISIBILITY_ALL,
 		RootSigElement::IndirectArgsUAV, false, 0u
+	).AddDescriptorTable(
+		D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1u, D3D12_SHADER_VISIBILITY_ALL,
+		RootSigElement::IndirectArgsCounterUAV, false, 1u
 	).AddConstantBufferView(
 		D3D12_SHADER_VISIBILITY_ALL, RootSigElement::Camera, 0u
 	).AddConstantBufferView(

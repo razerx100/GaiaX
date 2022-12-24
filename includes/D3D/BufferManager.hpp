@@ -62,7 +62,7 @@ private:
 	RSLayoutType m_computeRSLayout;
 
 	std::vector<std::shared_ptr<IModel>> m_opaqueModels;
-	D3DSingleDescriptorView m_modelBuffers;
+	D3DDescriptorView m_modelBuffers;
 	std::uint32_t m_frameCount;
 };
 #endif

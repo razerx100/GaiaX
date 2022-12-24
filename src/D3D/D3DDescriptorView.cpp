@@ -27,12 +27,11 @@ D3D12_GPU_VIRTUAL_ADDRESS D3DRootDescriptorView::GetGPUAddressStart(
 	return m_gpuAddress.GetAddressStart<D3D12_GPU_VIRTUAL_ADDRESS>(index);
 }
 
-void D3DDescriptorView<D3DUploadableResourceView>::SetTextureInfo(
+void _D3DDescriptorView<D3DUploadableResourceView>::SetTextureInfo(
 	ID3D12Device* device, UINT64 width, UINT height, DXGI_FORMAT format, bool msaa
 ) {
 	m_resourceBuffer.SetTextureInfo(device, width, height, format, msaa);
 	m_resourceBuffer.ReserveHeapSpace(device);
-	m_bufferOffsets.emplace_back(0u);
 
 	m_texture = true;
 }
@@ -48,6 +47,12 @@ void D3DUploadResourceDescriptorView::ReleaseUploadResource() noexcept {
 	m_resourceBuffer.ReleaseUploadResource();
 }
 
-D3D12_GPU_VIRTUAL_ADDRESS D3DUploadResourceDescriptorView::GetGPUAddress() const noexcept {
-	return m_resourceBuffer.GetGPUAddress();
+D3D12_GPU_VIRTUAL_ADDRESS D3DUploadResourceDescriptorView::GetGPUAddress(
+	UINT64 index
+) const noexcept {
+	return m_resourceBuffer.GetGPUAddress(index);
+}
+
+D3D12_GPU_VIRTUAL_ADDRESS D3DUploadResourceDescriptorView::GetFirstGPUAddress() const noexcept {
+	return m_resourceBuffer.GetFirstGPUAddress();
 }

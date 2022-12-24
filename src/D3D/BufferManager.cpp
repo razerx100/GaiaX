@@ -6,7 +6,8 @@
 #include <CameraManager.hpp>
 
 BufferManager::BufferManager(std::uint32_t frameCount)
-	: m_cameraBuffer{}, m_modelBuffers{ ResourceType::cpuWrite }, m_frameCount{ frameCount } {}
+	: m_cameraBuffer{}, m_modelBuffers{ ResourceType::cpuWrite, DescriptorType::SRV },
+	m_frameCount{ frameCount } {}
 
 void BufferManager::ReserveBuffers(ID3D12Device* device) noexcept {
 	size_t cameraBufferSize = sizeof(DirectX::XMMATRIX) * 2u;
@@ -103,7 +104,7 @@ void BufferManager::UpdateModelData(size_t frameIndex) const noexcept {
 		modelBuffer.boundingBox = model->GetBoundingBox();
 
 		memcpy(
-			m_modelBuffers.GetBufferCPUWPointer(frameIndex) + offset, &modelBuffer,
+			m_modelBuffers.GetCPUWPointer(frameIndex) + offset, &modelBuffer,
 			bufferStride
 		);
 

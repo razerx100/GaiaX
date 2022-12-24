@@ -28,11 +28,11 @@ public:
 	}
 	[[nodiscard]]
 	D3D12_GPU_VIRTUAL_ADDRESS GetGPUStartAddress() const noexcept {
-		return m_resourceView.GetGPUAddress();
+		return m_resourceView.GetFirstGPUAddress();
 	}
 	[[nodiscard]]
 	std::uint8_t* GetCPUStartAddress() const {
-		return m_resourceView.GetCPUWPointer();
+		return m_resourceView.GetFirstCPUWPointer();
 	}
 
 protected:
