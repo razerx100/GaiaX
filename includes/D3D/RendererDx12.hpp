@@ -2,6 +2,7 @@
 #define RENDERER_DX12_HPP_
 #include <Renderer.hpp>
 #include <string>
+#include <ObjectManager.hpp>
 
 class RendererDx12 final : public Renderer {
 public:
@@ -10,7 +11,6 @@ public:
 		void* windowHandle, std::uint32_t width, std::uint32_t height,
 		std::uint32_t bufferCount
 	);
-	~RendererDx12() noexcept override;
 
 	void Resize(std::uint32_t width, std::uint32_t height) override;
 
@@ -45,5 +45,6 @@ private:
 	std::uint32_t m_width;
 	std::uint32_t m_height;
 	std::uint32_t m_bufferCount;
+	ObjectManager m_objectManager;
 };
 #endif

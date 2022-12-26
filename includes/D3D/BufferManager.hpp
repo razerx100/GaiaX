@@ -6,6 +6,7 @@
 #include <vector>
 #include <RootSignatureDynamic.hpp>
 #include <IModel.hpp>
+#include <optional>
 
 struct ModelBuffer {
 	UVInfo uvInfo;
@@ -17,7 +18,12 @@ struct ModelBuffer {
 
 class BufferManager {
 public:
-	BufferManager(std::uint32_t frameCount);
+	struct Args {
+		std::optional<std::uint32_t> frameCount;
+	};
+
+public:
+	BufferManager(const Args& arguments);
 
 	void Update(size_t frameIndex) const noexcept;
 	void BindBuffersToGraphics(

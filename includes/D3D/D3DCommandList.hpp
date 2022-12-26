@@ -2,12 +2,18 @@
 #define D3D_COMMAND_LIST_HPP_
 #include <D3DHeaders.hpp>
 #include <vector>
+#include <optional>
 
 class D3DCommandList {
 public:
-	D3DCommandList(
-		ID3D12Device4* device, D3D12_COMMAND_LIST_TYPE type, size_t allocatorCount = 1u
-	);
+	struct Args {
+		std::optional<ID3D12Device4*> device;
+		std::optional<D3D12_COMMAND_LIST_TYPE> type;
+		std::optional<size_t> allocatorCount = 1u;
+	};
+
+public:
+	D3DCommandList(const Args& arguments);
 
 	void Reset(size_t allocatorIndex);
 	void ResetFirst();

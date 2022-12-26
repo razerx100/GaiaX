@@ -2,34 +2,41 @@
 #include <Gaia.hpp>
 #include <d3dx12.h>
 
-SwapChainManager::SwapChainManager(const SwapChainCreateInfo& createInfo)
-	: m_rtvDescSize(0u), m_vsyncFlag(false), m_pRenderTargetViews(createInfo.bufferCount) {
+SwapChainManager::SwapChainManager(const Args& arguments)
+	: m_rtvDescSize{ 0u }, m_vsyncFlag{ false },
+	m_pRenderTargetViews{ arguments.bufferCount.value() } {
 
-	DXGI_SWAP_CHAIN_DESC1 desc = {};
-	desc.BufferCount = static_cast<UINT>(createInfo.bufferCount);
-	desc.Width = createInfo.width;
-	desc.Height = createInfo.height;
-	desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
-	desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-	desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+	ID3D12Device* device = arguments.device.value();
+	UINT bufferCount = static_cast<UINT>(arguments.bufferCount.value());
+
+	DXGI_SWAP_CHAIN_DESC1 desc{
+		.Width = arguments.width.value(),
+		.Height = arguments.height.value(),
+		.Format = DXGI_FORMAT_B8G8R8A8_UNORM,
+		.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT,
+		.BufferCount = bufferCount,
+		.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD
+	};
 	desc.SampleDesc.Count = 1u;
 
-	if (createInfo.variableRefreshRate)
+	bool variableRefreshRate = arguments.variableRefreshRate.value();
+	if (variableRefreshRate)
 		desc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
 
+	IDXGIFactory2* factory = arguments.factory.value();
+	HWND windowHandle = arguments.windowHandle.value();
+
 	ComPtr<IDXGISwapChain1> swapChain;
-	createInfo.factory->CreateSwapChainForHwnd(
-		createInfo.graphicsQueue, createInfo.windowHandle, &desc, nullptr, nullptr, &swapChain
+	factory->CreateSwapChainForHwnd(
+		arguments.graphicsQueue.value(), windowHandle, &desc, nullptr, nullptr, &swapChain
 	);
 	swapChain.As(&m_pSwapChain);
 
-	if (createInfo.variableRefreshRate)
-		createInfo.factory->MakeWindowAssociation(
-			createInfo.windowHandle, DXGI_MWA_NO_ALT_ENTER
-		);
+	if (variableRefreshRate)
+		factory->MakeWindowAssociation(windowHandle, DXGI_MWA_NO_ALT_ENTER);
 
-	CreateRTVHeap(createInfo.device, createInfo.bufferCount);
-	CreateRTVs(createInfo.device);
+	CreateRTVHeap(device, bufferCount);
+	CreateRTVs(device);
 }
 
 void SwapChainManager::CreateRTVs(ID3D12Device* device) {
@@ -107,11 +114,12 @@ void SwapChainManager::Resize(
 	CreateRTVs(device);
 }
 
-void SwapChainManager::CreateRTVHeap(ID3D12Device* device, size_t bufferCount) {
-	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc{};
-	rtvHeapDesc.NumDescriptors = static_cast<UINT>(bufferCount);
-	rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-	rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+void SwapChainManager::CreateRTVHeap(ID3D12Device* device, UINT bufferCount) {
+	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc{
+		.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV,
+		.NumDescriptors = bufferCount,
+		.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE
+	};
 
 	device->CreateDescriptorHeap(&rtvHeapDesc,IID_PPV_ARGS(&m_pRtvHeap));
 

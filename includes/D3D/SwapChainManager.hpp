@@ -2,21 +2,23 @@
 #define SWAP_CHAIN_MANAGER_HPP_
 #include <D3DHeaders.hpp>
 #include <vector>
-
-struct SwapChainCreateInfo {
-	ID3D12Device* device;
-	IDXGIFactory2* factory;
-	ID3D12CommandQueue* graphicsQueue;
-	HWND windowHandle;
-	std::uint32_t width;
-	std::uint32_t height;
-	std::uint32_t bufferCount;
-	bool variableRefreshRate;
-};
+#include <optional>
 
 class SwapChainManager {
 public:
-	SwapChainManager(const SwapChainCreateInfo& createInfo);
+	struct Args {
+		std::optional<ID3D12Device*> device;
+		std::optional<IDXGIFactory2*> factory;
+		std::optional<ID3D12CommandQueue*> graphicsQueue;
+		std::optional<HWND> windowHandle;
+		std::optional<std::uint32_t> width;
+		std::optional<std::uint32_t> height;
+		std::optional<std::uint32_t> bufferCount;
+		std::optional<bool> variableRefreshRate;
+	};
+
+public:
+	SwapChainManager(const Args& arguments);
 
 	void ToggleVSync() noexcept;
 	void PresentWithTear();
@@ -41,7 +43,7 @@ public:
 	IDXGISwapChain4* GetRef() const noexcept;
 
 private:
-	void CreateRTVHeap(ID3D12Device* device, size_t bufferCount);
+	void CreateRTVHeap(ID3D12Device* device, UINT bufferCount);
 	void CreateRTVs(ID3D12Device* device);
 
 private:

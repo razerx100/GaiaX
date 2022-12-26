@@ -2,10 +2,17 @@
 #define VIEWPORT_AND_SCISSOR_MANAGER_HPP_
 #include <D3DHeaders.hpp>
 #include <cstdint>
+#include <optional>
 
 class ViewportAndScissorManager {
 public:
-	ViewportAndScissorManager(std::uint32_t width, std::uint32_t height);
+	struct Args {
+		std::optional<std::uint32_t> width;
+		std::optional<std::uint32_t> height;
+	};
+
+public:
+	ViewportAndScissorManager(const Args& arguments);
 
 	[[nodiscard]]
 	const D3D12_VIEWPORT* GetViewportRef() const noexcept;

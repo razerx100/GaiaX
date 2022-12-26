@@ -2,10 +2,17 @@
 #define D3D_COMMAND_QUEUE_HPP_
 #include <D3DHeaders.hpp>
 #include <vector>
+#include <optional>
 
 class D3DCommandQueue {
 public:
-	D3DCommandQueue(ID3D12Device* device, D3D12_COMMAND_LIST_TYPE type);
+	struct Args {
+		std::optional<ID3D12Device*> device;
+		std::optional<D3D12_COMMAND_LIST_TYPE> type;
+	};
+
+public:
+	D3DCommandQueue(const Args& arguments);
 
 	void SignalCommandQueue(ID3D12Fence* fence, UINT64 fenceValue) const;
 	void WaitOnGPU(ID3D12Fence* fence, UINT64 fenceValue) const;

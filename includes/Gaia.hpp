@@ -20,6 +20,7 @@
 #include <D3DFence.hpp>
 #include <RenderEngine.hpp>
 #include <VertexManager.hpp>
+#include <ObjectManager.hpp>
 
 namespace Gaia {
 	// Variables
@@ -54,23 +55,17 @@ namespace Gaia {
 	}
 
 	// Initialization functions
-	void InitDevice();
-	void InitSwapChain(const SwapChainCreateInfo& createInfo);
-	void InitGraphicsQueueAndList(ID3D12Device4* d3dDevice, std::uint32_t commandAllocatorCount);
-	void InitDebugLogger(ID3D12Device* d3dDevice);
-	void InitDepthBuffer(ID3D12Device* d3dDevice);
-	void InitCopyQueueAndList(ID3D12Device4* d3dDevice);
-	void InitComputeQueueAndList(ID3D12Device4* d3dDevice, std::uint32_t commandAllocatorCount);
-	void InitViewportAndScissor(std::uint32_t width, std::uint32_t height);
-	void InitDescriptorTable();
-	void InitTextureStorage();
+	void InitGraphicsQueueAndList(
+		ObjectManager& om, ID3D12Device4* d3dDevice, std::uint32_t commandAllocatorCount
+	);
+	void InitCopyQueueAndList(ObjectManager& om, ID3D12Device4* d3dDevice);
+	void InitComputeQueueAndList(
+		ObjectManager& om, ID3D12Device4* d3dDevice, std::uint32_t commandAllocatorCount
+	);
 	void SetThreadPool(std::shared_ptr<IThreadPool>&& threadPoolArg);
-	void InitCameraManager();
-	void InitBufferManager(std::uint32_t bufferCount);
 	void SetSharedData(std::shared_ptr<ISharedDataContainer>&& sharedDataArg);
-	void InitResources();
-	void InitRenderEngine();
-	void InitVertexManager();
-	void CleanUpResources();
+	void InitResources(ObjectManager& om);
+	void InitRenderEngine(ObjectManager& om);
+	void InitVertexManager(ObjectManager& om);
 }
 #endif

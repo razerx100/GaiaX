@@ -2,10 +2,17 @@
 #define D3D_FENCE_HPP_
 #include <D3DHeaders.hpp>
 #include <queue>
+#include <optional>
 
 class D3DFence {
 public:
-	D3DFence(ID3D12Device* device, size_t fenceValueCount = 1u);
+	struct Args {
+		std::optional<ID3D12Device*> device;
+		std::optional<size_t> fenceValueCount = 1u;
+	};
+
+public:
+	D3DFence(const Args& arguments);
 
 	void AdvanceValueInQueue() noexcept;
 	void WaitOnCPU();

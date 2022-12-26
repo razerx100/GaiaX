@@ -1,13 +1,18 @@
 #ifndef DEPTH_BUFFER_HPP_
 #define DEPTH_BUFFER_HPP_
-
 #include <D3DHeaders.hpp>
 #include <cstdint>
 #include <D3DResource.hpp>
+#include <optional>
 
 class DepthBuffer {
 public:
-	DepthBuffer(ID3D12Device* device);
+	struct Args {
+		std::optional<ID3D12Device*> device;
+	};
+
+public:
+	DepthBuffer(const Args& arguments);
 
 	void CreateDepthBuffer(ID3D12Device* device, std::uint32_t width, std::uint32_t height);
 	void ReserveHeapSpace(ID3D12Device* device) noexcept;

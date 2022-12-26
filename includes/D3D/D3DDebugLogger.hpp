@@ -1,10 +1,16 @@
 #ifndef D3D_DEBUG_LOGGER_HPP_
 #define D3D_DEBUG_LOGGER_HPP_
 #include <D3DHeaders.hpp>
+#include <optional>
 
 class D3DDebugLogger {
 public:
-	D3DDebugLogger(ID3D12Device* device);
+	struct Args {
+		std::optional<ID3D12Device*> device;
+	};
+
+public:
+	D3DDebugLogger(const Args& arguments);
 	~D3DDebugLogger() noexcept;
 
 	void UnregisterCallBack() const noexcept;

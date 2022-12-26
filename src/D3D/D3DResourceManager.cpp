@@ -1,8 +1,9 @@
 #include <D3DResourceManager.hpp>
 
-D3DResourceManager::D3DResourceManager(
-	ResourceType type, D3D12_RESOURCE_FLAGS flags
-) : _D3DResourceManager<D3DResourceView>{ type, flags } {}
+D3DResourceManager::D3DResourceManager(const Args& arguments)
+	: _D3DResourceManager<D3DResourceView>{
+		arguments.type.value(), arguments.flags.value()
+	} {}
 
 void D3DResourceManager::CreateResource(ID3D12Device* device) {
 	D3D12_RESOURCE_STATES initialState = D3D12_RESOURCE_STATE_COMMON;

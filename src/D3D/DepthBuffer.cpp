@@ -3,16 +3,17 @@
 #include <Gaia.hpp>
 #include <Exception.hpp>
 
-DepthBuffer::DepthBuffer(ID3D12Device* device)
+DepthBuffer::DepthBuffer(const Args& arguments)
     : m_maxWidth{ 0u }, m_maxHeight{ 0u },
     m_depthBuffer{ ResourceType::gpuOnly, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL } {
 
-    D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc{};
-    dsvHeapDesc.NumDescriptors = 1u;
-    dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
-    dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+    D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc{
+        .Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV,
+        .NumDescriptors = 1u,
+        .Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE
+    };
 
-    device->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&m_pDSVHeap));
+    arguments.device.value()->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&m_pDSVHeap));
 }
 
 void DepthBuffer::CreateDepthBuffer(

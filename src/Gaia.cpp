@@ -33,103 +33,57 @@ namespace Gaia {
 		std::unique_ptr<D3DResourceManager> cpuWriteBuffer;
 	}
 
-	void InitDevice() {
-		device = std::make_unique<DeviceManager>();
-	}
-
-	void InitSwapChain(const SwapChainCreateInfo& createInfo) {
-		swapChain = std::make_unique<SwapChainManager>(createInfo);
-	}
-
 	void InitGraphicsQueueAndList(
-		ID3D12Device4* d3dDevice, std::uint32_t commandAllocatorCount
+		ObjectManager& om, ID3D12Device4* d3dDevice, std::uint32_t commandAllocatorCount
 	) {
-		graphicsQueue = std::make_unique<D3DCommandQueue>(
-			d3dDevice, D3D12_COMMAND_LIST_TYPE_DIRECT
-			);
-		graphicsCmdList = std::make_unique<D3DCommandList>(
-			d3dDevice, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAllocatorCount
-			);
-		graphicsFence = std::make_unique<D3DFence>(d3dDevice, commandAllocatorCount);
+		om.CreateObject(graphicsQueue, { d3dDevice, D3D12_COMMAND_LIST_TYPE_DIRECT }, 1u);
+		om.CreateObject(
+			graphicsCmdList,
+			{ d3dDevice, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAllocatorCount }, 1u
+		);
+		om.CreateObject(graphicsFence, { d3dDevice, commandAllocatorCount }, 1u);
 	}
 
-	void InitDebugLogger(ID3D12Device* d3dDevice) {
-		debugLogger = std::make_unique<D3DDebugLogger>(d3dDevice);
-	}
-
-	void InitDepthBuffer(ID3D12Device* d3dDevice) {
-		Resources::depthBuffer = std::make_unique<DepthBuffer>(d3dDevice);
-	}
-
-	void InitBufferManager(std::uint32_t bufferCount) {
-		bufferManager = std::make_unique<BufferManager>(bufferCount);
-	}
-
-	void InitCopyQueueAndList(ID3D12Device4* d3dDevice) {
-		copyQueue = std::make_unique<D3DCommandQueue>(d3dDevice, D3D12_COMMAND_LIST_TYPE_COPY);
-		copyCmdList = std::make_unique<D3DCommandList>(d3dDevice, D3D12_COMMAND_LIST_TYPE_COPY);
+	void InitCopyQueueAndList(ObjectManager& om, ID3D12Device4* d3dDevice) {
+		om.CreateObject(copyQueue, { d3dDevice, D3D12_COMMAND_LIST_TYPE_COPY }, 1u);
+		om.CreateObject(
+			copyCmdList, { .device = d3dDevice, .type = D3D12_COMMAND_LIST_TYPE_COPY }, 1u
+		);
 	}
 
 	void InitComputeQueueAndList(
-		ID3D12Device4* d3dDevice, std::uint32_t commandAllocatorCount
+		ObjectManager& om, ID3D12Device4* d3dDevice, std::uint32_t commandAllocatorCount
 	) {
-		computeQueue = std::make_unique<D3DCommandQueue>(
-			d3dDevice, D3D12_COMMAND_LIST_TYPE_COMPUTE
-			);
-		computeCmdList = std::make_unique<D3DCommandList>(
-			d3dDevice, D3D12_COMMAND_LIST_TYPE_COMPUTE, commandAllocatorCount
-			);
-		computeFence = std::make_unique<D3DFence>(d3dDevice, commandAllocatorCount);
-	}
-
-	void InitViewportAndScissor(std::uint32_t width, std::uint32_t height) {
-		viewportAndScissor = std::make_unique<ViewportAndScissorManager>(width, height);
-	}
-
-	void InitDescriptorTable() {
-		descriptorTable = std::make_unique<DescriptorTableManager>();
-	}
-
-	void InitTextureStorage() {
-		textureStorage = std::make_unique<TextureStorage>();
+		om.CreateObject(computeQueue, { d3dDevice, D3D12_COMMAND_LIST_TYPE_COMPUTE }, 1u);
+		om.CreateObject(
+			computeCmdList,
+			{ d3dDevice, D3D12_COMMAND_LIST_TYPE_COMPUTE, commandAllocatorCount }, 1u
+		);
+		om.CreateObject(computeFence, { d3dDevice, commandAllocatorCount }, 1u);
 	}
 
 	void SetThreadPool(std::shared_ptr<IThreadPool>&& threadPoolArg) {
 		threadPool = std::move(threadPoolArg);
 	}
 
-	void InitCameraManager() {
-		cameraManager = std::make_unique<CameraManager>();
-	}
-
 	void SetSharedData(std::shared_ptr<ISharedDataContainer>&& sharedDataArg) {
 		sharedData = std::move(sharedDataArg);
 	}
 
-	void InitRenderEngine() {
-		renderEngine = std::make_unique<RenderEngineIndirectDraw>();
+	void InitRenderEngine(ObjectManager& om) {
+		om.CreateObject<RenderEngineIndirectDraw>(renderEngine, 1u);
 	}
 
-	void InitVertexManager() {
-		vertexManager = std::make_unique<VertexManagerVertex>();
+	void InitVertexManager(ObjectManager& om) {
+		om.CreateObject<VertexManagerVertex>(vertexManager, 1u);
 	}
 
-	void InitResources() {
-		Resources::uploadHeap = std::make_unique<D3DHeap>(D3D12_HEAP_TYPE_UPLOAD);
-		Resources::cpuWriteHeap = std::make_unique<D3DHeap>(D3D12_HEAP_TYPE_UPLOAD);
-		Resources::gpuOnlyHeap = std::make_unique<D3DHeap>(D3D12_HEAP_TYPE_DEFAULT);
-		Resources::cpuReadBackHeap = std::make_unique<D3DHeap>(D3D12_HEAP_TYPE_READBACK);
-		Resources::cpuWriteBuffer = std::make_unique<D3DResourceManager>(
-			ResourceType::cpuWrite
-			);
-	}
+	void InitResources(ObjectManager& om) {
+		om.CreateObject(Resources::uploadHeap, { D3D12_HEAP_TYPE_UPLOAD }, 0u);
+		om.CreateObject(Resources::cpuWriteHeap, { D3D12_HEAP_TYPE_UPLOAD }, 2u);
+		om.CreateObject(Resources::cpuReadBackHeap, { D3D12_HEAP_TYPE_READBACK }, 2u);
+		om.CreateObject(Resources::gpuOnlyHeap, { D3D12_HEAP_TYPE_DEFAULT }, 2u);
 
-	void CleanUpResources() {
-		Resources::uploadHeap.reset();
-		Resources::depthBuffer.reset();
-		Resources::cpuWriteBuffer.reset();
-		Resources::cpuWriteHeap.reset();
-		Resources::gpuOnlyHeap.reset();
-		Resources::cpuReadBackHeap.reset();
+		om.CreateObject(Resources::cpuWriteBuffer, { ResourceType::cpuWrite }, 1u);
 	}
 }

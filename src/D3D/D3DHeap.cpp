@@ -2,8 +2,8 @@
 #include <algorithm>
 #include <D3DHelperFunctions.hpp>
 
-D3DHeap::D3DHeap(D3D12_HEAP_TYPE type) noexcept
-	: m_heapType{ type }, m_maxAlignment{ 0u }, m_totalHeapSize{ 0u } {}
+D3DHeap::D3DHeap(const Args& arguments)
+	: m_heapType{ arguments.type.value() }, m_maxAlignment{ 0u }, m_totalHeapSize{ 0u } {}
 
 void D3DHeap::CreateHeap(ID3D12Device* device) {
 	D3D12_HEAP_PROPERTIES heapProp{};

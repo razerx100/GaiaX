@@ -1,11 +1,16 @@
 #ifndef D3D_HEAP_HPP_
 #define D3D_HEAP_HPP_
-
 #include <D3DHeaders.hpp>
+#include <optional>
 
 class D3DHeap {
 public:
-	D3DHeap(D3D12_HEAP_TYPE type) noexcept;
+	struct Args {
+		std::optional<D3D12_HEAP_TYPE> type;
+	};
+
+public:
+	D3DHeap(const Args& arguments);
 
 	void CreateHeap(ID3D12Device* device);
 

@@ -1,8 +1,10 @@
 #include <D3DCommandList.hpp>
 
-D3DCommandList::D3DCommandList(
-	ID3D12Device4* device, D3D12_COMMAND_LIST_TYPE type, size_t allocatorsCount
-) : m_pCommandAllocators{ allocatorsCount } {
+D3DCommandList::D3DCommandList(const Args& arguments)
+	: m_pCommandAllocators{ arguments.allocatorCount.value()} {
+
+	ID3D12Device4* device = arguments.device.value();
+	D3D12_COMMAND_LIST_TYPE type = arguments.type.value();
 
 	for (auto& commandAllocator : m_pCommandAllocators)
 		device->CreateCommandAllocator(type, IID_PPV_ARGS(&commandAllocator));

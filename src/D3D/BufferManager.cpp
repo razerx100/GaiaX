@@ -5,9 +5,9 @@
 
 #include <CameraManager.hpp>
 
-BufferManager::BufferManager(std::uint32_t frameCount)
+BufferManager::BufferManager(const Args& arguments)
 	: m_cameraBuffer{}, m_modelBuffers{ ResourceType::cpuWrite, DescriptorType::SRV },
-	m_frameCount{ frameCount } {}
+	m_frameCount{ arguments.frameCount.value() } {}
 
 void BufferManager::ReserveBuffers(ID3D12Device* device) noexcept {
 	size_t cameraBufferSize = sizeof(DirectX::XMMATRIX) * 2u;

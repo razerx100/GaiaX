@@ -7,69 +7,48 @@ RendererDx12::RendererDx12(
 	const char* appName,
 	void* windowHandle, std::uint32_t width, std::uint32_t height, std::uint32_t bufferCount
 ) : m_appName(appName), m_width(width), m_height(height), m_bufferCount{ bufferCount } {
-	Gaia::InitDevice();
-	Gaia::InitRenderEngine();
-	Gaia::InitResources();
-	Gaia::InitVertexManager();
+
+	m_objectManager.CreateObject(Gaia::device, 3u);
+	Gaia::InitRenderEngine(m_objectManager);
+	Gaia::InitResources(m_objectManager);
+	Gaia::InitVertexManager(m_objectManager);
 
 	ID3D12Device4* deviceRef = Gaia::device.get()->GetDeviceRef();
 
 #ifdef _DEBUG
-	Gaia::InitDebugLogger(deviceRef);
+	m_objectManager.CreateObject(Gaia::debugLogger, { deviceRef }, 4u);
 #endif
 
-	Gaia::InitDepthBuffer(deviceRef);
+	m_objectManager.CreateObject(Gaia::Resources::depthBuffer, { deviceRef }, 1u);
 	Gaia::Resources::depthBuffer->SetMaxResolution(7680u, 4320u);
 
-	Gaia::InitGraphicsQueueAndList(deviceRef, bufferCount);
+	Gaia::InitGraphicsQueueAndList(m_objectManager, deviceRef, bufferCount);
 
-	SwapChainCreateInfo swapChainCreateInfo = {};
-	swapChainCreateInfo.bufferCount = bufferCount;
-	swapChainCreateInfo.width = width;
-	swapChainCreateInfo.height = height;
-	swapChainCreateInfo.device = deviceRef;
-	swapChainCreateInfo.factory = Gaia::device->GetFactoryRef();
-	swapChainCreateInfo.graphicsQueue = Gaia::graphicsQueue->GetQueue();
-	swapChainCreateInfo.windowHandle = static_cast<HWND>(windowHandle);
-	swapChainCreateInfo.variableRefreshRate = true;
+	SwapChainManager::Args swapChainArguments{
+		.device = deviceRef,
+		.factory = Gaia::device->GetFactoryRef(),
+		.graphicsQueue = Gaia::graphicsQueue->GetQueue(),
+		.windowHandle = static_cast<HWND>(windowHandle),
+		.width = width,
+		.height = height,
+		.bufferCount = bufferCount,
+		.variableRefreshRate = true
+	};
 
-	Gaia::InitSwapChain(swapChainCreateInfo);
-	Gaia::InitViewportAndScissor(width, height);
+	m_objectManager.CreateObject(Gaia::swapChain, swapChainArguments, 1u);
+	m_objectManager.CreateObject(Gaia::viewportAndScissor, { width, height }, 0u);
 
-	Gaia::InitCopyQueueAndList(deviceRef);
-	Gaia::InitComputeQueueAndList(deviceRef, bufferCount);
+	Gaia::InitCopyQueueAndList(m_objectManager, deviceRef);
+	Gaia::InitComputeQueueAndList(m_objectManager, deviceRef, bufferCount);
 
-	Gaia::InitDescriptorTable();
+	m_objectManager.CreateObject(Gaia::descriptorTable, 0u);
 	Gaia::renderEngine->InitiatePipelines(bufferCount);
-	Gaia::InitBufferManager(bufferCount);
-	Gaia::InitTextureStorage();
 
-	Gaia::InitCameraManager();
+	m_objectManager.CreateObject(Gaia::bufferManager, { bufferCount }, 1u);
+	m_objectManager.CreateObject(Gaia::textureStorage, 0u);
+
+	m_objectManager.CreateObject(Gaia::cameraManager, 0u);
 	Gaia::cameraManager->SetSceneResolution(width, height);
-}
-
-RendererDx12::~RendererDx12() noexcept {
-	Gaia::cameraManager.reset();
-	Gaia::textureStorage.reset();
-	Gaia::descriptorTable.reset();
-	Gaia::viewportAndScissor.reset();
-	Gaia::copyCmdList.reset();
-	Gaia::copyQueue.reset();
-	Gaia::renderEngine.reset();
-	Gaia::vertexManager.reset();
-	Gaia::bufferManager.reset();
-	Gaia::computeFence.reset();
-	Gaia::computeCmdList.reset();
-	Gaia::computeQueue.reset();
-	Gaia::swapChain.reset();
-	Gaia::graphicsFence.reset();
-	Gaia::graphicsCmdList.reset();
-	Gaia::graphicsQueue.reset();
-	Gaia::CleanUpResources();
-	Gaia::device.reset();
-#ifdef _DEBUG
-	Gaia::debugLogger.reset();
-#endif
 }
 
 void RendererDx12::SubmitModels(std::vector<std::shared_ptr<IModel>>&& models) {

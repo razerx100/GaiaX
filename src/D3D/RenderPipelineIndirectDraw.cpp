@@ -102,7 +102,8 @@ void RenderPipelineIndirectDraw::CreateBuffers(ID3D12Device* device) {
 
 	for (auto& commandBufferUAV : m_commandBufferUAVs)
 		commandBufferUAV.CreateDescriptorView(
-			device, uploadDescriptorStart, gpuDescriptorStart, D3D12_RESOURCE_STATE_COPY_DEST
+			device, uploadDescriptorStart, gpuDescriptorStart,
+			D3D12_RESOURCE_STATE_UNORDERED_ACCESS
 		);
 
 	for (auto& counterBuffer : m_counterBuffers)
