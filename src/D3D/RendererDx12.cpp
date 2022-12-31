@@ -9,9 +9,8 @@ RendererDx12::RendererDx12(
 ) : m_appName(appName), m_width(width), m_height(height), m_bufferCount{ bufferCount } {
 
 	m_objectManager.CreateObject(Gaia::device, 3u);
-	Gaia::InitRenderEngine(m_objectManager);
+	Gaia::InitRenderEngine(m_objectManager, bufferCount);
 	Gaia::InitResources(m_objectManager);
-	Gaia::InitVertexManager(m_objectManager);
 
 	ID3D12Device4* deviceRef = Gaia::device.get()->GetDeviceRef();
 
@@ -42,7 +41,6 @@ RendererDx12::RendererDx12(
 	Gaia::InitComputeQueueAndList(m_objectManager, deviceRef, bufferCount);
 
 	m_objectManager.CreateObject(Gaia::descriptorTable, 0u);
-	Gaia::renderEngine->InitiatePipelines(bufferCount);
 
 	m_objectManager.CreateObject(Gaia::bufferManager, { bufferCount }, 1u);
 	m_objectManager.CreateObject(Gaia::textureStorage, 0u);
@@ -52,7 +50,7 @@ RendererDx12::RendererDx12(
 }
 
 void RendererDx12::SubmitModels(std::vector<std::shared_ptr<IModel>>&& models) {
-	Gaia::renderEngine->RecordModelData(models);
+	Gaia::renderEngine->RecordModelDataSet(models, L"PixelShader.cso");
 	Gaia::bufferManager->AddOpaqueModels(std::move(models));
 }
 
@@ -60,7 +58,7 @@ void RendererDx12::SubmitModelInputs(
 	std::unique_ptr<std::uint8_t> vertices, size_t vertexBufferSize, size_t strideSize,
 	std::unique_ptr<std::uint8_t> indices, size_t indexBufferSize
 ) {
-	Gaia::vertexManager->AddGlobalVertices(
+	Gaia::renderEngine->AddGlobalVertices(
 		std::move(vertices), vertexBufferSize, strideSize, std::move(indices), indexBufferSize
 	);
 }
@@ -129,7 +127,6 @@ void RendererDx12::ProcessData() {
 	Gaia::Resources::depthBuffer->ReserveHeapSpace(device);
 	Gaia::renderEngine->ReserveBuffers(device);
 	Gaia::bufferManager->ReserveBuffers(device);
-	Gaia::vertexManager->ReserveBuffers(device);
 	Gaia::Resources::cpuWriteBuffer->ReserveHeapSpace(device);
 	// Reserve Heap Space end
 
@@ -144,7 +141,6 @@ void RendererDx12::ProcessData() {
 	// Create Buffers start
 	Gaia::Resources::depthBuffer->CreateDepthBuffer(device, m_width, m_height);
 	Gaia::Resources::cpuWriteBuffer->CreateResource(device);
-	Gaia::vertexManager->CreateBuffers(device);
 	Gaia::renderEngine->CreateBuffers(device);
 	Gaia::bufferManager->CreateBuffers(device);
 	Gaia::textureStorage->CreateBufferViews(device);
@@ -153,7 +149,7 @@ void RendererDx12::ProcessData() {
 	// Async copy start
 	std::atomic_size_t workCount = 0u;
 
-	Gaia::vertexManager->CopyData(workCount);
+	Gaia::renderEngine->CopyData(workCount);
 	Gaia::textureStorage->CopyData(workCount);
 
 	Gaia::descriptorTable->CopyUploadHeap(device);
@@ -165,7 +161,6 @@ void RendererDx12::ProcessData() {
 	Gaia::copyCmdList->ResetFirst();
 	ID3D12GraphicsCommandList* copyList = Gaia::copyCmdList->GetCommandList();
 
-	Gaia::vertexManager->RecordResourceUploads(copyList);
 	Gaia::renderEngine->RecordResourceUploads(copyList);
 	Gaia::textureStorage->RecordResourceUpload(copyList);
 
@@ -185,7 +180,6 @@ void RendererDx12::ProcessData() {
 	Gaia::renderEngine->ReleaseUploadResources();
 	Gaia::textureStorage->ReleaseUploadResource();
 	Gaia::descriptorTable->ReleaseUploadHeap();
-	Gaia::vertexManager->ReleaseUploadResources();
 	Gaia::Resources::uploadHeap.reset();
 	// Release Upload Resource end
 }

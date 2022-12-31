@@ -1,6 +1,5 @@
 #include <Gaia.hpp>
 #include <RenderEngineIndirectDraw.hpp>
-#include <VertexManagerVertex.hpp>
 
 namespace Gaia {
 	std::unique_ptr<DeviceManager> device;
@@ -22,7 +21,6 @@ namespace Gaia {
 	std::unique_ptr<D3DCommandList> computeCmdList;
 	std::unique_ptr<D3DFence> computeFence;
 	std::unique_ptr<RenderEngine> renderEngine;
-	std::unique_ptr<VertexManager> vertexManager;
 
 	namespace Resources {
 		std::unique_ptr<D3DHeap> uploadHeap;
@@ -70,12 +68,8 @@ namespace Gaia {
 		sharedData = std::move(sharedDataArg);
 	}
 
-	void InitRenderEngine(ObjectManager& om) {
-		om.CreateObject<RenderEngineIndirectDraw>(renderEngine, 1u);
-	}
-
-	void InitVertexManager(ObjectManager& om) {
-		om.CreateObject<VertexManagerVertex>(vertexManager, 1u);
+	void InitRenderEngine(ObjectManager& om, std::uint32_t frameCount) {
+		om.CreateObject<RenderEngineIndirectDraw>(renderEngine, { frameCount }, 1u);
 	}
 
 	void InitResources(ObjectManager& om) {

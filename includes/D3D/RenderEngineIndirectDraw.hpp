@@ -1,13 +1,21 @@
 #ifndef RENDER_ENGINE_INDIRECT_DRAW_
 #define RENDER_ENGINE_INDIRECT_DRAW_
 #include <RenderEngine.hpp>
-#include <RenderPipelineIndirectDraw.hpp>
-#include <D3DPipelineObject.hpp>
+#include <ComputePipelineIndirectDraw.hpp>
+#include <GraphicsPipelineIndirectDraw.hpp>
 #include <RootSignatureDynamic.hpp>
+#include <VertexManagerVertex.hpp>
+#include <optional>
 
 class RenderEngineIndirectDraw final : public RenderEngine {
 public:
-	void InitiatePipelines(std::uint32_t bufferCount) noexcept override;
+	struct Args {
+		std::optional<std::uint32_t> frameCount;
+	};
+
+public:
+	RenderEngineIndirectDraw(const Args& arguments);
+
 	void ExecutePreRenderStage(
 		ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex
 	) override;
@@ -18,41 +26,37 @@ public:
 	void ExecutePostRenderStage() override;
 	void ConstructPipelines() override;
 
-	void RecordModelData(
-		const std::vector<std::shared_ptr<IModel>>& models
+	void AddGlobalVertices(
+		std::unique_ptr<std::uint8_t> vertices, size_t vertexBufferSize, size_t strideSize,
+		std::unique_ptr<std::uint8_t> indices, size_t indexBufferSize
+	) noexcept override;
+	void RecordModelDataSet(
+		const std::vector<std::shared_ptr<IModel>>& models, const std::wstring& pixelShader
 	) noexcept override;
 	void CreateBuffers(ID3D12Device* device) override;
 	void ReserveBuffers(ID3D12Device* device) override;
 	void RecordResourceUploads(ID3D12GraphicsCommandList* copyList) noexcept override;
 	void ReleaseUploadResources() noexcept override;
+	void CopyData(std::atomic_size_t& workCount) const noexcept override;
 
 private:
 	[[nodiscard]]
 	std::unique_ptr<RootSignatureDynamic> CreateGraphicsRootSignature(
 		ID3D12Device* device
 	) const noexcept;
-	[[nodiscard]]
-	std::unique_ptr<RootSignatureDynamic> CreateComputeRootSignature(
-		ID3D12Device* device
-	) const noexcept;
-	[[nodiscard]]
-	std::unique_ptr<D3DPipelineObject> CreateComputePipelineObject(
-		ID3D12Device* device, ID3D12RootSignature* computeRootSignature
-	) const noexcept;
 
-	void BindComputePipeline(
-		ID3D12GraphicsCommandList* computeCommandList
-	) const noexcept;
 	void CreateCommandSignature(ID3D12Device* device);
 
-private:
-	ComPtr<ID3D12CommandSignature> m_commandSignature;
-	std::unique_ptr<RootSignatureBase> m_computeRS;
-	std::unique_ptr<D3DPipelineObject> m_computePSO;
-	std::unique_ptr<RootSignatureBase> m_graphicsRS;
+	using GraphicsPipeline = std::unique_ptr<GraphicsPipelineIndirectDraw>;
 
-	std::unique_ptr<RenderPipelineIndirectDraw> m_renderPipeline;
+private:
+	ComputePipelineIndirectDraw m_computePipeline;
+	VertexManagerVertex m_vertexManager;
+	GraphicsPipeline m_graphicsPipeline0;
+	std::vector<GraphicsPipeline> m_graphicsPipelines;
+
+	std::unique_ptr<RootSignatureBase> m_graphicsRS;
+	ComPtr<ID3D12CommandSignature> m_commandSignature;
 	RSLayoutType m_graphicsRSLayout;
-	RSLayoutType m_computeRSLayout;
 };
 #endif

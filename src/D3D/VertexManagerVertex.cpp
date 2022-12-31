@@ -34,7 +34,7 @@ void VertexManagerVertex::AddGlobalVertices(
 	);
 }
 
-void VertexManagerVertex::BindVertices(
+void VertexManagerVertex::BindVertexAndIndexBuffer(
 	ID3D12GraphicsCommandList* graphicsCmdList
 ) const noexcept {
 	graphicsCmdList->IASetVertexBuffers(0u, 1u, m_gVertexBufferView.GetAddress());

@@ -54,12 +54,12 @@ D3DDescriptorViewUAVCounter::D3DDescriptorViewUAVCounter(ResourceType type) noex
 	m_counterOffset{ 0u }, m_strideSize{ 0u }, m_elementCount{ 0u } {}
 
 void D3DDescriptorViewUAVCounter::SetBufferInfo(
-	ID3D12Device* device, UINT strideSize, UINT elementCount
+	ID3D12Device* device, UINT64 strideSize, UINT elementCount
 ) noexcept {
-	m_strideSize = strideSize;
+	m_strideSize = static_cast<UINT>(strideSize);
 	m_elementCount = elementCount;
 
-	UINT64 bufferSize = static_cast<UINT64>(strideSize * elementCount);
+	UINT64 bufferSize = strideSize * elementCount;
 	m_counterOffset = Align(bufferSize, D3D12_UAV_COUNTER_PLACEMENT_ALIGNMENT);
 
 	m_resourceBuffer.SetBufferInfo(m_counterOffset + sizeof(UINT));

@@ -12,7 +12,6 @@ public:
 	RenderEngine() noexcept;
 	virtual ~RenderEngine() = default;
 
-	virtual void InitiatePipelines(std::uint32_t bufferCount) noexcept = 0;
 	virtual void ExecutePreRenderStage(
 		ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex
 	) = 0;
@@ -23,13 +22,18 @@ public:
 	virtual void ExecutePostRenderStage() = 0;
 	virtual void ConstructPipelines() = 0;
 
-	virtual void RecordModelData(
-		const std::vector<std::shared_ptr<IModel>>& models
+	virtual void AddGlobalVertices(
+		std::unique_ptr<std::uint8_t> vertices, size_t vertexBufferSize, size_t strideSize,
+		std::unique_ptr<std::uint8_t> indices, size_t indexBufferSize
+	) noexcept = 0;
+	virtual void RecordModelDataSet(
+		const std::vector<std::shared_ptr<IModel>>& models, const std::wstring& pixelShader
 	) noexcept = 0;
 	virtual void CreateBuffers(ID3D12Device* device) = 0;
 	virtual void ReserveBuffers(ID3D12Device* device) = 0;
 	virtual void RecordResourceUploads(ID3D12GraphicsCommandList* copyList) noexcept = 0;
 	virtual void ReleaseUploadResources() noexcept = 0;
+	virtual void CopyData(std::atomic_size_t& workCount) const noexcept = 0;
 
 	void SetBackgroundColour(const std::array<float, 4>& colour) noexcept;
 	void SetShaderPath(const wchar_t* path) noexcept;

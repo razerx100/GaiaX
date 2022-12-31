@@ -88,9 +88,9 @@ public:
 
 	void SetBufferInfo(
 		ID3D12Device* device,
-		UINT strideSize, UINT elementsPerAllocation, size_t subAllocationCount = 1u
+		UINT64 strideSize, UINT elementsPerAllocation, size_t subAllocationCount = 1u
 	) noexcept {
-		m_strideSize = strideSize;
+		m_strideSize = static_cast<UINT>(strideSize);
 		m_elementCount = elementsPerAllocation;
 		m_subAllocationCount = static_cast<UINT64>(subAllocationCount);
 
@@ -273,7 +273,7 @@ class D3DDescriptorViewUAVCounter : public _D3DDescriptorViewBase<D3DResourceVie
 public:
 	D3DDescriptorViewUAVCounter(ResourceType type) noexcept;
 
-	void SetBufferInfo(ID3D12Device* device, UINT strideSize, UINT elementCount) noexcept;
+	void SetBufferInfo(ID3D12Device* device, UINT64 strideSize, UINT elementCount) noexcept;
 	void CreateDescriptorView(
 		ID3D12Device* device, D3D12_CPU_DESCRIPTOR_HANDLE uploadDescriptorStart,
 		D3D12_GPU_DESCRIPTOR_HANDLE gpuDescriptorStart
