@@ -24,7 +24,9 @@ public:
 
 	void SetThreadPool(std::shared_ptr<IThreadPool> threadPoolArg) noexcept override;
 	void SetBackgroundColour(const std::array<float, 4>& colour) noexcept override;
-	void SubmitModels(std::vector<std::shared_ptr<IModel>>&& models) override;
+	void SubmitModelSet(
+		std::vector<std::shared_ptr<IModel>>&& models, const std::wstring& pixelShader
+	) override;
 	void SubmitModelInputs(
 		std::unique_ptr<std::uint8_t> vertices, size_t vertexBufferSize, size_t strideSize,
 		std::unique_ptr<std::uint8_t> indices, size_t indexBufferSize

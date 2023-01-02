@@ -49,8 +49,10 @@ RendererDx12::RendererDx12(
 	Gaia::cameraManager->SetSceneResolution(width, height);
 }
 
-void RendererDx12::SubmitModels(std::vector<std::shared_ptr<IModel>>&& models) {
-	Gaia::renderEngine->RecordModelDataSet(models, L"PixelShader.cso");
+void RendererDx12::SubmitModelSet(
+	std::vector<std::shared_ptr<IModel>>&& models, const std::wstring& pixelShader
+) {
+	Gaia::renderEngine->RecordModelDataSet(models, pixelShader + L".cso");
 	Gaia::bufferManager->AddOpaqueModels(std::move(models));
 }
 
