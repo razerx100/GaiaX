@@ -13,7 +13,7 @@ public:
 	VertexManagerVertex() noexcept;
 
 	void AddGlobalVertices(
-		std::unique_ptr<std::uint8_t> vertices, size_t vertexBufferSize, size_t strideSize,
+		std::unique_ptr<std::uint8_t> vertices, size_t vertexBufferSize,
 		std::unique_ptr<std::uint8_t> indices, size_t indexBufferSize
 	) noexcept;
 

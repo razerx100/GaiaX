@@ -1,12 +1,13 @@
 #include <VertexManagerVertex.hpp>
 #include <Gaia.hpp>
+#include <IModel.hpp>
 
 VertexManagerVertex::VertexManagerVertex() noexcept
 	: m_gVertexBufferView{}, m_gIndexBufferView{},
 	m_vertexUploadContainer{ std::make_unique<UploadContainer>() } {}
 
 void VertexManagerVertex::AddGlobalVertices(
-	std::unique_ptr<std::uint8_t> vertices, size_t vertexBufferSize, size_t strideSize,
+	std::unique_ptr<std::uint8_t> vertices, size_t vertexBufferSize,
 	std::unique_ptr<std::uint8_t> indices, size_t indexBufferSize
 ) noexcept {
 	const size_t vertexOffset = m_vertexBuffer.ReserveSpaceAndGetOffset(
@@ -22,7 +23,7 @@ void VertexManagerVertex::AddGlobalVertices(
 	m_gVertexBufferView.AddBufferView(
 		D3D12_VERTEX_BUFFER_VIEW{
 			static_cast<D3D12_GPU_VIRTUAL_ADDRESS>(vertexOffset),
-			static_cast<UINT>(vertexBufferSize), static_cast<UINT>(strideSize)
+			static_cast<UINT>(vertexBufferSize), static_cast<UINT>(sizeof(Vertex))
 		}
 	);
 

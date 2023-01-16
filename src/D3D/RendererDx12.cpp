@@ -57,11 +57,11 @@ void RendererDx12::SubmitModelSet(
 }
 
 void RendererDx12::SubmitModelInputs(
-	std::unique_ptr<std::uint8_t> vertices, size_t vertexBufferSize, size_t strideSize,
+	std::unique_ptr<std::uint8_t> vertices, size_t vertexBufferSize,
 	std::unique_ptr<std::uint8_t> indices, size_t indexBufferSize
 ) {
 	Gaia::renderEngine->AddGlobalVertices(
-		std::move(vertices), vertexBufferSize, strideSize, std::move(indices), indexBufferSize
+		std::move(vertices), vertexBufferSize, std::move(indices), indexBufferSize
 	);
 }
 

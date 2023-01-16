@@ -223,11 +223,11 @@ void RenderEngineIndirectDraw::CreateCommandSignature(ID3D12Device* device) {
 }
 
 void RenderEngineIndirectDraw::AddGlobalVertices(
-	std::unique_ptr<std::uint8_t> vertices, size_t vertexBufferSize, size_t strideSize,
+	std::unique_ptr<std::uint8_t> vertices, size_t vertexBufferSize,
 	std::unique_ptr<std::uint8_t> indices, size_t indexBufferSize
 ) noexcept {
 	m_vertexManager.AddGlobalVertices(
-		std::move(vertices), vertexBufferSize, strideSize, std::move(indices), indexBufferSize
+		std::move(vertices), vertexBufferSize, std::move(indices), indexBufferSize
 	);
 }
 

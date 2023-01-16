@@ -28,7 +28,7 @@ public:
 		std::vector<std::shared_ptr<IModel>>&& models, const std::wstring& pixelShader
 	) override;
 	void SubmitModelInputs(
-		std::unique_ptr<std::uint8_t> vertices, size_t vertexBufferSize, size_t strideSize,
+		std::unique_ptr<std::uint8_t> vertices, size_t vertexBufferSize,
 		std::unique_ptr<std::uint8_t> indices, size_t indexBufferSize
 	) override;
 	void Update() override;

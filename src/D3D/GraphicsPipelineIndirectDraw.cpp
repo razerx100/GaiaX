@@ -39,6 +39,7 @@ std::unique_ptr<D3DPipelineObject> GraphicsPipelineIndirectDraw::_createGraphics
 		device,
 		VertexLayout()
 		.AddInputElement("Position", DXGI_FORMAT_R32G32B32_FLOAT, 12u)
+		.AddInputElement("Normal", DXGI_FORMAT_R32G32B32_FLOAT, 12u)
 		.AddInputElement("UV", DXGI_FORMAT_R32G32_FLOAT, 8u),
 		graphicsRootSignature, vs->GetByteCode(), ps->GetByteCode()
 	);
