@@ -17,30 +17,30 @@ public:
 	[[nodiscard]]
 	Resolution GetFirstDisplayCoordinates() const override;
 
-	[[nodiscard]]
-	size_t RegisterResource(
-		std::unique_ptr<std::uint8_t> textureData, size_t width, size_t height
-	) override;
-
 	void SetThreadPool(std::shared_ptr<IThreadPool> threadPoolArg) noexcept override;
 	void SetBackgroundColour(const std::array<float, 4>& colour) noexcept override;
-	void SubmitModelSet(
-		std::vector<std::shared_ptr<IModel>>&& models, const std::wstring& pixelShader
-	) override;
-	void SubmitModelInputs(
-		std::unique_ptr<std::uint8_t> vertices, size_t vertexBufferSize,
-		std::unique_ptr<std::uint8_t> indices, size_t indexBufferSize
-	) override;
-	void Update() override;
-	void Render() override;
-	void WaitForAsyncTasks() override;
-
 	void SetShaderPath(const wchar_t* path) noexcept override;
-	void ProcessData() override;
-
 	void SetSharedDataContainer(
 		std::shared_ptr<ISharedDataContainer> sharedData
 	) noexcept override;
+
+	[[nodiscard]]
+	size_t AddTexture(
+		std::unique_ptr<std::uint8_t> textureData, size_t width, size_t height
+	) override;
+
+	void AddModelSet(
+		std::vector<std::shared_ptr<IModel>>&& models, const std::wstring& pixelShader
+	) override;
+	void AddModelInputs(
+		std::unique_ptr<std::uint8_t> vertices, size_t vertexBufferSize,
+		std::unique_ptr<std::uint8_t> indices, size_t indexBufferSize
+	) override;
+
+	void Update() override;
+	void Render() override;
+	void WaitForAsyncTasks() override;
+	void ProcessData() override;
 
 private:
 	const std::string m_appName;

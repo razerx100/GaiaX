@@ -49,14 +49,14 @@ RendererDx12::RendererDx12(
 	Gaia::cameraManager->SetSceneResolution(width, height);
 }
 
-void RendererDx12::SubmitModelSet(
+void RendererDx12::AddModelSet(
 	std::vector<std::shared_ptr<IModel>>&& models, const std::wstring& pixelShader
 ) {
 	Gaia::renderEngine->RecordModelDataSet(models, pixelShader + L".cso");
 	Gaia::bufferManager->AddOpaqueModels(std::move(models));
 }
 
-void RendererDx12::SubmitModelInputs(
+void RendererDx12::AddModelInputs(
 	std::unique_ptr<std::uint8_t> vertices, size_t vertexBufferSize,
 	std::unique_ptr<std::uint8_t> indices, size_t indexBufferSize
 ) {
@@ -186,7 +186,7 @@ void RendererDx12::ProcessData() {
 	// Release Upload Resource end
 }
 
-size_t RendererDx12::RegisterResource(
+size_t RendererDx12::AddTexture(
 	std::unique_ptr<std::uint8_t> textureData, size_t width, size_t height
 ) {
 	return Gaia::textureStorage->AddTexture(
