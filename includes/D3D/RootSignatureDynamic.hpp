@@ -13,6 +13,9 @@ enum class RootSigElement {
 	IndirectArgsUAV,
 	IndirectArgsCounterUAV,
 	CullingData,
+	MaterialData,
+	LightData,
+	PixelData,
 	ElementCount
 };
 

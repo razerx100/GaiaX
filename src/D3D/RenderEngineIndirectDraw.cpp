@@ -73,6 +73,7 @@ void RenderEngineIndirectDraw::RecordDrawCommands(
 
 	Gaia::textureStorage->BindTextures(graphicsCommandList);
 	Gaia::bufferManager->BindBuffersToGraphics(graphicsCommandList, frameIndex);
+	Gaia::bufferManager->BindPixelOnlyBuffers(graphicsCommandList, frameIndex);
 	m_vertexManager.BindVertexAndIndexBuffer(graphicsCommandList);
 
 	m_graphicsPipeline0->DrawModels(
@@ -187,14 +188,22 @@ std::unique_ptr<RootSignatureDynamic> RenderEngineIndirectDraw::CreateGraphicsRo
 
 	signature->AddDescriptorTable(
 		D3D12_DESCRIPTOR_RANGE_TYPE_SRV, UINT_MAX, D3D12_SHADER_VISIBILITY_PIXEL,
-		RootSigElement::Textures, true, 1u
+		RootSigElement::Textures, true, 3u
 	).AddDescriptorTable(
 		D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1u, D3D12_SHADER_VISIBILITY_VERTEX,
 		RootSigElement::ModelData, false, 0u
+	).AddDescriptorTable(
+		D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1u, D3D12_SHADER_VISIBILITY_PIXEL,
+		RootSigElement::MaterialData, false, 1u
+	).AddDescriptorTable(
+		D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1u, D3D12_SHADER_VISIBILITY_PIXEL,
+		RootSigElement::LightData, false, 2u
 	).AddConstants(
 		1u, D3D12_SHADER_VISIBILITY_VERTEX, RootSigElement::ModelIndex, 0u
 	).AddConstantBufferView(
 		D3D12_SHADER_VISIBILITY_VERTEX, RootSigElement::Camera, 1u
+	).AddConstantBufferView(
+		D3D12_SHADER_VISIBILITY_PIXEL, RootSigElement::PixelData, 2u
 	).CompileSignature().CreateSignature(device);
 
 	return signature;
