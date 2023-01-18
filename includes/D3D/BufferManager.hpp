@@ -97,12 +97,10 @@ struct MaterialBuffer {
 	DirectX::XMFLOAT4 diffuse;
 	DirectX::XMFLOAT4 specular;
 	float shininess;
-	float padding[3];
 };
 
 struct LightBuffer {
 	DirectX::XMFLOAT3 position;
-	float padding;
 	DirectX::XMFLOAT4 ambient;
 	DirectX::XMFLOAT4 diffuse;
 	DirectX::XMFLOAT4 specular;
