@@ -196,16 +196,23 @@ void BufferManager::UpdateLightData(size_t bufferIndex) const noexcept {
 	size_t offset = 0u;
 	std::uint8_t* lightBufferOffset = m_lightBuffers.GetCPUWPointer(bufferIndex);
 
+	const DirectX::XMMATRIX viewMatrix = Gaia::sharedData->GetViewMatrix();
+
 	for (auto& lightIndex : m_lightModelIndices) {
 		auto& model = m_opaqueModels[lightIndex];
 		const auto& modelMaterial = model->GetMaterial();
 
 		LightBuffer light{
-			.position = model->GetModelOffset(),
 			.ambient = modelMaterial.ambient,
 			.diffuse = modelMaterial.diffuse,
 			.specular = modelMaterial.specular
 		};
+
+		DirectX::XMFLOAT3 worldPosition = model->GetModelOffset();
+		DirectX::XMVECTOR viewPosition = DirectX::XMVector3Transform(
+			DirectX::XMLoadFloat3(&worldPosition), viewMatrix
+		);
+		DirectX::XMStoreFloat3(&light.position, viewPosition);
 
 		CopyStruct(light, lightBufferOffset, offset);
 	}
