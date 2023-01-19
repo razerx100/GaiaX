@@ -96,9 +96,11 @@ void BufferManager::SetMemoryAddresses() noexcept {
 }
 
 void BufferManager::Update(size_t frameIndex) const noexcept {
+	const DirectX::XMMATRIX viewMatrix = Gaia::sharedData->GetViewMatrix();
+
 	UpdateCameraData(frameIndex);
-	UpdatePerModelData(frameIndex);
-	UpdateLightData(frameIndex);
+	UpdatePerModelData(frameIndex, viewMatrix);
+	UpdateLightData(frameIndex, viewMatrix);
 	UpdatePixelData(frameIndex);
 }
 
@@ -163,7 +165,9 @@ void BufferManager::UpdateCameraData(size_t bufferIndex) const noexcept {
 	Gaia::cameraManager->CopyData(cameraCpuHandle);
 }
 
-void BufferManager::UpdatePerModelData(size_t bufferIndex) const noexcept {
+void BufferManager::UpdatePerModelData(
+	size_t bufferIndex, const DirectX::XMMATRIX& viewMatrix
+) const noexcept {
 	size_t modelOffset = 0u;
 	std::uint8_t* modelBufferOffset = m_modelBuffers.GetCPUWPointer(bufferIndex);
 
@@ -171,12 +175,17 @@ void BufferManager::UpdatePerModelData(size_t bufferIndex) const noexcept {
 	std::uint8_t* materialBufferOffset = m_materialBuffers.GetCPUWPointer(bufferIndex);
 
 	for (auto& model : m_opaqueModels) {
+		const DirectX::XMMATRIX modelMatrix = model->GetModelMatrix();
+
 		ModelBuffer modelBuffer{
 			.uvInfo = model->GetUVInfo(),
-			.modelMatrix = model->GetModelMatrix(),
+			.modelMatrix = modelMatrix,
 			.textureIndex = model->GetTextureIndex(),
 			.modelOffset = model->GetModelOffset(),
-			.boundingBox = model->GetBoundingBox()
+			.boundingBox = model->GetBoundingBox(),
+			.viewNormalMatrix = DirectX::XMMatrixTranspose(
+				DirectX::XMMatrixInverse(nullptr, modelMatrix * viewMatrix)
+			)
 		};
 		CopyStruct(modelBuffer, modelBufferOffset, modelOffset);
 
@@ -192,11 +201,11 @@ void BufferManager::UpdatePerModelData(size_t bufferIndex) const noexcept {
 	}
 }
 
-void BufferManager::UpdateLightData(size_t bufferIndex) const noexcept {
+void BufferManager::UpdateLightData(
+	size_t bufferIndex, const DirectX::XMMATRIX& viewMatrix
+) const noexcept {
 	size_t offset = 0u;
 	std::uint8_t* lightBufferOffset = m_lightBuffers.GetCPUWPointer(bufferIndex);
-
-	const DirectX::XMMATRIX viewMatrix = Gaia::sharedData->GetViewMatrix();
 
 	for (auto& lightIndex : m_lightModelIndices) {
 		auto& model = m_opaqueModels[lightIndex];
@@ -208,9 +217,10 @@ void BufferManager::UpdateLightData(size_t bufferIndex) const noexcept {
 			.specular = modelMaterial.specular
 		};
 
-		DirectX::XMFLOAT3 worldPosition = model->GetModelOffset();
+		DirectX::XMFLOAT3 modelPosition = model->GetModelOffset();
+		DirectX::XMMATRIX viewSpace = model->GetModelMatrix() * viewMatrix;
 		DirectX::XMVECTOR viewPosition = DirectX::XMVector3Transform(
-			DirectX::XMLoadFloat3(&worldPosition), viewMatrix
+			DirectX::XMLoadFloat3(&modelPosition), viewMatrix
 		);
 		DirectX::XMStoreFloat3(&light.position, viewPosition);
 

@@ -38,8 +38,12 @@ public:
 private:
 	void SetMemoryAddresses() noexcept;
 	void UpdateCameraData(size_t bufferIndex) const noexcept;
-	void UpdatePerModelData(size_t bufferIndex) const noexcept;
-	void UpdateLightData(size_t bufferIndex) const noexcept;
+	void UpdatePerModelData(
+		size_t bufferIndex, const DirectX::XMMATRIX& viewMatrix
+	) const noexcept;
+	void UpdateLightData(
+		size_t bufferIndex, const DirectX::XMMATRIX& viewMatrix
+	) const noexcept;
 	void UpdatePixelData(size_t bufferIndex) const noexcept;
 
 	template<void (__stdcall ID3D12GraphicsCommandList::*RCBV)(UINT, D3D12_GPU_VIRTUAL_ADDRESS),
@@ -90,6 +94,7 @@ struct ModelBuffer {
 	std::uint32_t textureIndex;
 	DirectX::XMFLOAT3 modelOffset;
 	ModelBounds boundingBox;
+	DirectX::XMMATRIX viewNormalMatrix;
 };
 
 struct MaterialBuffer {
