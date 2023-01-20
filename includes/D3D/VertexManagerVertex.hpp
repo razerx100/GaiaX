@@ -5,7 +5,7 @@
 #include <cstdint>
 #include <atomic>
 #include <BufferView.hpp>
-#include <D3DResourceManager.hpp>
+#include <D3DResourceBuffer.hpp>
 #include <UploadContainer.hpp>
 
 class VertexManagerVertex {
@@ -31,7 +31,7 @@ private:
 private:
 	BufferView<D3D12_VERTEX_BUFFER_VIEW> m_gVertexBufferView;
 	BufferView<D3D12_INDEX_BUFFER_VIEW> m_gIndexBufferView;
-	D3DUploadableResourceManager m_vertexBuffer;
+	D3DUploadableResourceBuffer m_vertexBuffer;
 	std::unique_ptr<UploadContainer> m_vertexUploadContainer;
 };
 #endif

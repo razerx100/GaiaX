@@ -15,7 +15,7 @@
 #include <CameraManager.hpp>
 #include <DepthBuffer.hpp>
 #include <D3DHeap.hpp>
-#include <D3DResourceManager.hpp>
+#include <D3DResourceBuffer.hpp>
 #include <UploadContainer.hpp>
 #include <D3DFence.hpp>
 #include <RenderEngine.hpp>
@@ -49,7 +49,7 @@ namespace Gaia {
 		extern std::unique_ptr<D3DHeap> gpuOnlyHeap;
 		extern std::unique_ptr<D3DHeap> cpuReadBackHeap;
 		extern std::unique_ptr<DepthBuffer> depthBuffer;
-		extern std::unique_ptr<D3DResourceManager> cpuWriteBuffer;
+		extern std::unique_ptr<D3DResourceBuffer> cpuWriteBuffer;
 	}
 
 	// Initialization functions

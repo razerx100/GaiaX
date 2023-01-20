@@ -28,7 +28,7 @@ namespace Gaia {
 		std::unique_ptr<D3DHeap> gpuOnlyHeap;
 		std::unique_ptr<D3DHeap> cpuReadBackHeap;
 		std::unique_ptr<DepthBuffer> depthBuffer;
-		std::unique_ptr<D3DResourceManager> cpuWriteBuffer;
+		std::unique_ptr<D3DResourceBuffer> cpuWriteBuffer;
 	}
 
 	void InitGraphicsQueueAndList(

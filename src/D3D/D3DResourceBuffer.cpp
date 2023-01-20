@@ -1,11 +1,12 @@
-#include <D3DResourceManager.hpp>
+#include <D3DResourceBuffer.hpp>
 
-D3DResourceManager::D3DResourceManager(const Args& arguments)
-	: _D3DResourceManager<D3DResourceView>{
+// Resource Buffer
+D3DResourceBuffer::D3DResourceBuffer(const Args& arguments)
+	: _D3DResourceBuffer<D3DResourceView>{
 		arguments.type.value(), arguments.flags.value()
 	} {}
 
-void D3DResourceManager::CreateResource(ID3D12Device* device) {
+void D3DResourceBuffer::CreateResource(ID3D12Device* device) {
 	D3D12_RESOURCE_STATES initialState = D3D12_RESOURCE_STATE_COMMON;
 
 	if (auto type = m_resourceView.GetResourceType();
@@ -17,17 +18,17 @@ void D3DResourceManager::CreateResource(ID3D12Device* device) {
 	m_resourceView.CreateResource(device, initialState);
 }
 
-void D3DUploadableResourceManager::CreateResource(ID3D12Device* device) {
+// Resource Buffer Uploadable
+void D3DUploadableResourceBuffer::CreateResource(ID3D12Device* device) {
 	m_resourceView.CreateResource(device);
 }
 
-void D3DUploadableResourceManager::RecordResourceUpload(
+void D3DUploadableResourceBuffer::RecordResourceUpload(
 	ID3D12GraphicsCommandList* copyList
 ) noexcept {
 	m_resourceView.RecordResourceUpload(copyList);
 }
 
-void D3DUploadableResourceManager::ReleaseUploadResource() noexcept {
+void D3DUploadableResourceBuffer::ReleaseUploadResource() noexcept {
 	m_resourceView.ReleaseUploadResource();
 }
-

@@ -1,13 +1,13 @@
-#ifndef D3D_RESOURCE_MANAGER_HPP_
-#define D3D_RESOURCE_MANAGER_HPP_
+#ifndef D3D_RESOURCE_BUFFER_HPP_
+#define D3D_RESOURCE_BUFFER_HPP_
 #include <D3DResource.hpp>
 #include <LinearAllocator.hpp>
 #include <optional>
 
 template<class ResourceView>
-class _D3DResourceManager {
+class _D3DResourceBuffer {
 public:
-	_D3DResourceManager(
+	_D3DResourceBuffer(
 		ResourceType type = ResourceType::gpuOnly,
 		D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE
 	) noexcept : m_resourceView{ type, flags } {}
@@ -41,7 +41,7 @@ protected:
 	LinearAllocator m_allocator;
 };
 
-class D3DResourceManager : public _D3DResourceManager<D3DResourceView> {
+class D3DResourceBuffer : public _D3DResourceBuffer<D3DResourceView> {
 public:
 	struct Args {
 		std::optional<ResourceType> type;
@@ -49,12 +49,12 @@ public:
 	};
 
 public:
-	D3DResourceManager(const Args& arguments);
+	D3DResourceBuffer(const Args& arguments);
 
 	void CreateResource(ID3D12Device* device);
 };
 
-class D3DUploadableResourceManager : public _D3DResourceManager<D3DUploadableResourceView> {
+class D3DUploadableResourceBuffer : public _D3DResourceBuffer<D3DUploadableResourceView> {
 public:
 	void CreateResource(ID3D12Device* device);
 	void RecordResourceUpload(ID3D12GraphicsCommandList* copyList) noexcept;
