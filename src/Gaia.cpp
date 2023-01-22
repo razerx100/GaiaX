@@ -68,8 +68,13 @@ namespace Gaia {
 		sharedData = std::move(sharedDataArg);
 	}
 
-	void InitRenderEngine(ObjectManager& om, std::uint32_t frameCount) {
-		om.CreateObject<RenderEngineIndirectDraw>(renderEngine, { frameCount }, 1u);
+	void InitRenderEngine(
+		ObjectManager& om, RenderEngineType engineType, std::uint32_t frameCount
+	) {
+		if (engineType == RenderEngineType::IndirectDraw)
+			om.CreateObject<RenderEngineIndirectDraw>(renderEngine, { frameCount }, 1u);
+		else if (engineType == RenderEngineType::IndividualDraw)
+			om.CreateObject<RenderEngineIndividualDraw>(renderEngine, 1u);
 	}
 
 	void InitResources(ObjectManager& om) {

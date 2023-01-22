@@ -5,11 +5,12 @@
 
 RendererDx12::RendererDx12(
 	const char* appName,
-	void* windowHandle, std::uint32_t width, std::uint32_t height, std::uint32_t bufferCount
+	void* windowHandle, std::uint32_t width, std::uint32_t height, std::uint32_t bufferCount,
+	RenderEngineType engineType
 ) : m_appName(appName), m_width(width), m_height(height), m_bufferCount{ bufferCount } {
 
 	m_objectManager.CreateObject(Gaia::device, 3u);
-	Gaia::InitRenderEngine(m_objectManager, bufferCount);
+	Gaia::InitRenderEngine(m_objectManager, engineType, bufferCount);
 	Gaia::InitResources(m_objectManager);
 
 	ID3D12Device4* deviceRef = Gaia::device.get()->GetDeviceRef();

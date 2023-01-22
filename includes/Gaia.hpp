@@ -1,6 +1,7 @@
 #ifndef GAIA_HPP_
 #define GAIA_HPP_
 #include <memory>
+#include <Renderer.hpp>
 #include <DeviceManager.hpp>
 #include <SwapChainManager.hpp>
 #include <D3DCommandQueue.hpp>
@@ -63,6 +64,8 @@ namespace Gaia {
 	void SetThreadPool(std::shared_ptr<IThreadPool>&& threadPoolArg);
 	void SetSharedData(std::shared_ptr<ISharedDataContainer>&& sharedDataArg);
 	void InitResources(ObjectManager& om);
-	void InitRenderEngine(ObjectManager& om, std::uint32_t frameCount);
+	void InitRenderEngine(
+		ObjectManager& om, RenderEngineType engineType, std::uint32_t frameCount
+	);
 }
 #endif
