@@ -2,6 +2,8 @@
 #define GRAPHICS_PIPELINE_VERTEX_SHADER_HPP_
 #include <vector>
 #include <GraphicsPipelineBase.hpp>
+#include <GaiaDataTypes.hpp>
+#include <RootSignatureDynamic.hpp>
 
 class GraphicsPipelineVertexShader : public GraphicsPipelineBase {
 private:
@@ -42,7 +44,8 @@ public:
 
 	void DrawModels(
 		ID3D12GraphicsCommandList* graphicsCommandList,
-		const std::vector<D3D12_DRAW_INDEXED_ARGUMENTS>& drawArguments
+		const std::vector<ModelDrawArguments>& drawArguments,
+		const RSLayoutType& graphicsRSLayout
 	) const noexcept;
 
 private:

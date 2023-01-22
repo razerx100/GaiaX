@@ -101,6 +101,6 @@ private:
 	GraphicsPipeline m_graphicsPipeline0;
 	std::vector<GraphicsPipeline> m_graphicsPipelines;
 
-	std::vector<D3D12_DRAW_INDEXED_ARGUMENTS> m_modelArguments;
+	std::vector<ModelDrawArguments> m_modelArguments;
 };
 #endif

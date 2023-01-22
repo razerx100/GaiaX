@@ -7,12 +7,8 @@
 #include <RootSignatureDynamic.hpp>
 #include <D3DPipelineObject.hpp>
 #include <D3DDescriptorView.hpp>
+#include <GaiaDataTypes.hpp>
 #include <IModel.hpp>
-
-struct IndirectArguments {
-	std::uint32_t modelIndex;
-	D3D12_DRAW_INDEXED_ARGUMENTS drawIndexed;
-};
 
 class ComputePipelineIndirectDraw {
 public:
@@ -71,7 +67,7 @@ private:
 	std::vector<D3DUploadResourceDescriptorView> m_counterBuffers;
 	D3DResourceView m_counterResetBuffer;
 	D3DUploadableResourceView m_cullingDataBuffer;
-	std::vector<IndirectArguments> m_indirectArguments;
+	std::vector<ModelDrawArguments> m_indirectArguments;
 	std::vector<std::uint32_t> m_modelCountOffsets;
 	UINT m_modelCount;
 	std::uint32_t m_frameCount;

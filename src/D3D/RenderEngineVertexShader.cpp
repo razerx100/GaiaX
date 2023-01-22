@@ -208,7 +208,7 @@ void RenderEngineIndirectDraw::CreateCommandSignature(ID3D12Device* device) {
 	arguments[1].Type = D3D12_INDIRECT_ARGUMENT_TYPE_DRAW_INDEXED;
 
 	D3D12_COMMAND_SIGNATURE_DESC desc{};
-	desc.ByteStride = static_cast<UINT>(sizeof(IndirectArguments));
+	desc.ByteStride = static_cast<UINT>(sizeof(ModelDrawArguments));
 	desc.NumArgumentDescs = static_cast<UINT>(std::size(arguments));
 	desc.pArgumentDescs = std::data(arguments);
 
@@ -235,11 +235,11 @@ void RenderEngineIndividualDraw::RecordDrawCommands(
 	m_graphicsPipeline0->BindGraphicsPipeline(graphicsCommandList, graphicsRS);
 	BindGraphicsBuffers(graphicsCommandList, frameIndex);
 
-	m_graphicsPipeline0->DrawModels(graphicsCommandList, m_modelArguments);
+	m_graphicsPipeline0->DrawModels(graphicsCommandList, m_modelArguments, m_graphicsRSLayout);
 
 	for (auto& graphicsPipeline : m_graphicsPipelines) {
 		graphicsPipeline->BindGraphicsPipeline(graphicsCommandList, graphicsRS);
-		graphicsPipeline->DrawModels(graphicsCommandList, m_modelArguments);
+		graphicsPipeline->DrawModels(graphicsCommandList, m_modelArguments, m_graphicsRSLayout);
 	}
 }
 
@@ -279,6 +279,11 @@ void RenderEngineIndividualDraw::RecordModelArguments(
 			.StartInstanceLocation = 0u
 		};
 
-		m_modelArguments.emplace_back(arguments);
+		ModelDrawArguments modelArgs{
+			.modelIndex = static_cast<std::uint32_t>(std::size(m_modelArguments)),
+			.drawIndexed = arguments
+		};
+
+		m_modelArguments.emplace_back(modelArgs);
 	}
 }

@@ -132,10 +132,10 @@ void ComputePipelineIndirectDraw::CreateBuffers(ID3D12Device* device) {
 	std::uint8_t* argumentCPUPtr = m_argumentBufferSRV.GetFirstCPUWPointer();
 	memcpy(
 		argumentCPUPtr, std::data(m_indirectArguments),
-		sizeof(IndirectArguments) * std::size(m_indirectArguments)
+		sizeof(ModelDrawArguments) * std::size(m_indirectArguments)
 	);
 
-	m_indirectArguments = std::vector<IndirectArguments>();
+	m_indirectArguments = std::vector<ModelDrawArguments>();
 }
 
 void ComputePipelineIndirectDraw::ReserveBuffers(ID3D12Device* device) {
@@ -148,7 +148,7 @@ void ComputePipelineIndirectDraw::ReserveBuffers(ID3D12Device* device) {
 
 	const UINT descriptorSize =
 		device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	static constexpr auto indirectStructSize = static_cast<UINT>(sizeof(IndirectArguments));
+	static constexpr auto indirectStructSize = static_cast<UINT>(sizeof(ModelDrawArguments));
 
 	m_argumentBufferSRV.SetDescriptorOffset(argumentDescriptorOffsetSRV, descriptorSize);
 	m_argumentBufferSRV.SetBufferInfo(device, indirectStructSize, m_modelCount);
@@ -180,18 +180,22 @@ void ComputePipelineIndirectDraw::RecordIndirectArguments(
 	const std::vector<std::shared_ptr<IModel>>& models
 ) noexcept {
 	for (size_t index = 0u; index < std::size(models); ++index) {
-		IndirectArguments arguments{};
-		arguments.modelIndex = static_cast<std::uint32_t>(std::size(m_indirectArguments));
-
 		const auto& model = models[index];
 
-		arguments.drawIndexed.BaseVertexLocation = 0u;
-		arguments.drawIndexed.IndexCountPerInstance = model->GetIndexCount();
-		arguments.drawIndexed.StartIndexLocation = model->GetIndexOffset();
-		arguments.drawIndexed.InstanceCount = 1u;
-		arguments.drawIndexed.StartInstanceLocation = 0u;
+		D3D12_DRAW_INDEXED_ARGUMENTS arguments{
+			.IndexCountPerInstance = model->GetIndexCount(),
+			.InstanceCount = 1u,
+			.StartIndexLocation = model->GetIndexOffset(),
+			.BaseVertexLocation = 0u,
+			.StartInstanceLocation = 0u
+		};
 
-		m_indirectArguments.emplace_back(arguments);
+		ModelDrawArguments modelArgs{
+			.modelIndex = static_cast<std::uint32_t>(std::size(m_indirectArguments)),
+			.drawIndexed = arguments
+		};
+
+		m_indirectArguments.emplace_back(modelArgs);
 	}
 
 	m_modelCountOffsets.emplace_back(m_modelCount);
