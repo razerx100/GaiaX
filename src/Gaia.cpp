@@ -1,5 +1,5 @@
 #include <Gaia.hpp>
-#include <RenderEngineIndirectDraw.hpp>
+#include <RenderEngineVertexShader.hpp>
 
 namespace Gaia {
 	std::unique_ptr<DeviceManager> device;

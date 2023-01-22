@@ -1,0 +1,73 @@
+#include <RenderEngineBase.hpp>
+#include <Gaia.hpp>
+#include <D3DResourceBarrier.hpp>
+
+void RenderEngineBase::Present(
+	ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex
+) {
+	D3DResourceBarrier().AddBarrier(
+		Gaia::swapChain->GetRTV(frameIndex),
+		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT
+	).RecordBarriers(graphicsCommandList);
+
+	Gaia::graphicsCmdList->Close();
+	Gaia::graphicsQueue->ExecuteCommandLists(graphicsCommandList);
+
+	Gaia::swapChain->PresentWithTear();
+}
+
+void RenderEngineBase::ExecutePostRenderStage() {
+	UINT64 fenceValue = Gaia::graphicsFence->GetFrontValue();
+
+	Gaia::graphicsQueue->SignalCommandQueue(Gaia::graphicsFence->GetFence(), fenceValue);
+	Gaia::graphicsFence->AdvanceValueInQueue();
+	Gaia::graphicsFence->WaitOnCPUConditional();
+	Gaia::graphicsFence->IncreaseFrontValue(fenceValue);
+}
+
+void RenderEngineBase::ExecutePreGraphicsStage(
+	ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex
+) {
+	Gaia::graphicsCmdList->Reset(frameIndex);
+
+	D3DResourceBarrier<1u>().AddBarrier(
+		Gaia::swapChain->GetRTV(frameIndex),
+		D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET
+	).RecordBarriers(graphicsCommandList);
+
+	ID3D12DescriptorHeap* descriptorHeap[] = { Gaia::descriptorTable->GetDescHeapRef() };
+	graphicsCommandList->SetDescriptorHeaps(1u, descriptorHeap);
+
+	graphicsCommandList->RSSetViewports(1u, Gaia::viewportAndScissor->GetViewportRef());
+	graphicsCommandList->RSSetScissorRects(1u, Gaia::viewportAndScissor->GetScissorRef());
+
+	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = Gaia::swapChain->GetRTVHandle(frameIndex);
+
+	Gaia::swapChain->ClearRTV(
+		graphicsCommandList, std::data(m_backgroundColour), rtvHandle
+	);
+
+	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = Gaia::Resources::depthBuffer->GetDSVHandle();
+
+	Gaia::Resources::depthBuffer->ClearDSV(graphicsCommandList, dsvHandle);
+
+	graphicsCommandList->OMSetRenderTargets(1u, &rtvHandle, FALSE, &dsvHandle);
+}
+
+void RenderEngineBase::BindCommonGraphicsBuffers(
+	ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex
+) {
+	Gaia::textureStorage->BindTextures(graphicsCommandList);
+	Gaia::bufferManager->BindBuffersToGraphics(graphicsCommandList, frameIndex);
+	Gaia::bufferManager->BindPixelOnlyBuffers(graphicsCommandList, frameIndex);
+}
+
+void RenderEngineBase::ConstructGraphicsRootSignature(ID3D12Device* device) {
+	auto graphicsRS = CreateGraphicsRootSignature(device);
+
+	m_graphicsRSLayout = graphicsRS->GetElementLayout();
+	m_graphicsRS = std::move(graphicsRS);
+
+	Gaia::bufferManager->SetGraphicsRootSignatureLayout(m_graphicsRSLayout);
+	Gaia::textureStorage->SetGraphicsRootSignatureLayout(m_graphicsRSLayout);
+}

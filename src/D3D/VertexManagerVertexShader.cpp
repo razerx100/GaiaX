@@ -1,12 +1,12 @@
-#include <VertexManagerVertex.hpp>
+#include <VertexManagerVertexShader.hpp>
 #include <Gaia.hpp>
 #include <IModel.hpp>
 
-VertexManagerVertex::VertexManagerVertex() noexcept
+VertexManagerVertexShader::VertexManagerVertexShader() noexcept
 	: m_gVertexBufferView{}, m_gIndexBufferView{},
 	m_vertexUploadContainer{ std::make_unique<UploadContainer>() } {}
 
-void VertexManagerVertex::AddGlobalVertices(
+void VertexManagerVertexShader::AddGlobalVertices(
 	std::unique_ptr<std::uint8_t> vertices, size_t vertexBufferSize,
 	std::unique_ptr<std::uint8_t> indices, size_t indexBufferSize
 ) noexcept {
@@ -35,14 +35,14 @@ void VertexManagerVertex::AddGlobalVertices(
 	);
 }
 
-void VertexManagerVertex::BindVertexAndIndexBuffer(
+void VertexManagerVertexShader::BindVertexAndIndexBuffer(
 	ID3D12GraphicsCommandList* graphicsCmdList
 ) const noexcept {
 	graphicsCmdList->IASetVertexBuffers(0u, 1u, m_gVertexBufferView.GetAddress());
 	graphicsCmdList->IASetIndexBuffer(m_gIndexBufferView.GetAddress());
 }
 
-void VertexManagerVertex::SetMemoryAddresses() noexcept {
+void VertexManagerVertexShader::SetMemoryAddresses() noexcept {
 	std::uint8_t* vertexBufferUploadStartAddress = m_vertexBuffer.GetCPUStartAddress();
 	m_vertexUploadContainer->SetStartingAddress(vertexBufferUploadStartAddress);
 
@@ -52,27 +52,27 @@ void VertexManagerVertex::SetMemoryAddresses() noexcept {
 	m_gIndexBufferView.OffsetGPUAddress(vertexGpuStart);
 }
 
-void VertexManagerVertex::CreateBuffers(ID3D12Device* device) {
+void VertexManagerVertexShader::CreateBuffers(ID3D12Device* device) {
 	m_vertexBuffer.CreateResource(device);
 
 	SetMemoryAddresses();
 }
 
-void VertexManagerVertex::ReserveBuffers(ID3D12Device* device) {
+void VertexManagerVertexShader::ReserveBuffers(ID3D12Device* device) {
 	m_vertexBuffer.ReserveHeapSpace(device);
 }
 
-void VertexManagerVertex::RecordResourceUploads(
+void VertexManagerVertexShader::RecordResourceUploads(
 	ID3D12GraphicsCommandList* copyList
 ) noexcept {
 	m_vertexBuffer.RecordResourceUpload(copyList);
 }
 
-void VertexManagerVertex::ReleaseUploadResources() noexcept {
+void VertexManagerVertexShader::ReleaseUploadResources() noexcept {
 	m_vertexBuffer.ReleaseUploadResource();
 	m_vertexUploadContainer.reset();
 }
 
-void VertexManagerVertex::CopyData(std::atomic_size_t& workCount) const noexcept {
+void VertexManagerVertexShader::CopyData(std::atomic_size_t& workCount) const noexcept {
 	m_vertexUploadContainer->CopyData(workCount);
 }

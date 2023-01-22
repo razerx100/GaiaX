@@ -1,5 +1,5 @@
-#ifndef VERTEX_MANAGER_VERTEX_HPP_
-#define VERTEX_MANAGER_VERTEX_HPP_
+#ifndef VERTEX_MANAGER_VERTEX_SHADER_HPP_
+#define VERTEX_MANAGER_VERTEX_SHADER_HPP_
 #include <D3DHeaders.hpp>
 #include <memory>
 #include <cstdint>
@@ -8,9 +8,9 @@
 #include <D3DResourceBuffer.hpp>
 #include <UploadContainer.hpp>
 
-class VertexManagerVertex {
+class VertexManagerVertexShader {
 public:
-	VertexManagerVertex() noexcept;
+	VertexManagerVertexShader() noexcept;
 
 	void AddGlobalVertices(
 		std::unique_ptr<std::uint8_t> vertices, size_t vertexBufferSize,
