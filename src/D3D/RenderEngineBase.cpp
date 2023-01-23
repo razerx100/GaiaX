@@ -2,6 +2,10 @@
 #include <Gaia.hpp>
 #include <D3DResourceBarrier.hpp>
 
+RenderEngineBase::RenderEngineBase(ID3D12Device* device) : m_depthBuffer{ device } {
+	m_depthBuffer.SetMaxResolution(7680u, 4320u);
+}
+
 void RenderEngineBase::Present(
 	ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex
 ) {
@@ -38,8 +42,8 @@ void RenderEngineBase::ExecutePreGraphicsStage(
 	ID3D12DescriptorHeap* descriptorHeap[] = { Gaia::descriptorTable->GetDescHeapRef() };
 	graphicsCommandList->SetDescriptorHeaps(1u, descriptorHeap);
 
-	graphicsCommandList->RSSetViewports(1u, Gaia::viewportAndScissor->GetViewportRef());
-	graphicsCommandList->RSSetScissorRects(1u, Gaia::viewportAndScissor->GetScissorRef());
+	graphicsCommandList->RSSetViewports(1u, m_viewportAndScissor.GetViewportRef());
+	graphicsCommandList->RSSetScissorRects(1u, m_viewportAndScissor.GetScissorRef());
 
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = Gaia::swapChain->GetRTVHandle(frameIndex);
 
@@ -47,9 +51,9 @@ void RenderEngineBase::ExecutePreGraphicsStage(
 		graphicsCommandList, std::data(m_backgroundColour), rtvHandle
 	);
 
-	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = Gaia::Resources::depthBuffer->GetDSVHandle();
+	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = m_depthBuffer.GetDSVHandle();
 
-	Gaia::Resources::depthBuffer->ClearDSV(graphicsCommandList, dsvHandle);
+	m_depthBuffer.ClearDSV(graphicsCommandList, dsvHandle);
 
 	graphicsCommandList->OMSetRenderTargets(1u, &rtvHandle, FALSE, &dsvHandle);
 }
@@ -71,3 +75,22 @@ void RenderEngineBase::ConstructGraphicsRootSignature(ID3D12Device* device) {
 	Gaia::bufferManager->SetGraphicsRootSignatureLayout(m_graphicsRSLayout);
 	Gaia::textureStorage->SetGraphicsRootSignatureLayout(m_graphicsRSLayout);
 }
+
+void RenderEngineBase::ResizeViewportAndScissor(
+	std::uint32_t width, std::uint32_t height
+) noexcept {
+	m_viewportAndScissor.Resize(width, height);
+}
+
+void RenderEngineBase::CreateDepthBufferView(
+	ID3D12Device* device, std::uint32_t width, std::uint32_t height
+) {
+	m_depthBuffer.CreateDepthBufferView(device, width, height);
+}
+
+void RenderEngineBase::ReserveBuffers(ID3D12Device* device) {
+	m_depthBuffer.ReserveHeapSpace(device);
+	ReserveBuffersDerived(device);
+}
+
+void RenderEngineBase::ReserveBuffersDerived(ID3D12Device* device) {}

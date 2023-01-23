@@ -3,18 +3,12 @@
 #include <D3DHeaders.hpp>
 #include <cstdint>
 #include <D3DResource.hpp>
-#include <optional>
 
 class DepthBuffer {
 public:
-	struct Args {
-		std::optional<ID3D12Device*> device;
-	};
+	DepthBuffer(ID3D12Device* device);
 
-public:
-	DepthBuffer(const Args& arguments);
-
-	void CreateDepthBuffer(ID3D12Device* device, std::uint32_t width, std::uint32_t height);
+	void CreateDepthBufferView(ID3D12Device* device, std::uint32_t width, std::uint32_t height);
 	void ReserveHeapSpace(ID3D12Device* device) noexcept;
 
 	void SetMaxResolution(std::uint32_t width, std::uint32_t height) noexcept;

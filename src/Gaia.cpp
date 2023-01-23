@@ -11,7 +11,6 @@ namespace Gaia {
 	std::unique_ptr<BufferManager> bufferManager;
 	std::unique_ptr<D3DCommandQueue> copyQueue;
 	std::unique_ptr<D3DCommandList> copyCmdList;
-	std::unique_ptr<ViewportAndScissorManager> viewportAndScissor;
 	std::unique_ptr<DescriptorTableManager> descriptorTable;
 	std::unique_ptr<TextureStorage> textureStorage;
 	std::shared_ptr<IThreadPool> threadPool;
@@ -27,7 +26,6 @@ namespace Gaia {
 		std::unique_ptr<D3DHeap> cpuWriteHeap;
 		std::unique_ptr<D3DHeap> gpuOnlyHeap;
 		std::unique_ptr<D3DHeap> cpuReadBackHeap;
-		std::unique_ptr<DepthBuffer> depthBuffer;
 		std::unique_ptr<D3DResourceBuffer> cpuWriteBuffer;
 	}
 
@@ -69,12 +67,15 @@ namespace Gaia {
 	}
 
 	void InitRenderEngine(
-		ObjectManager& om, RenderEngineType engineType, std::uint32_t frameCount
+		ObjectManager& om, RenderEngineType engineType, ID3D12Device* d3dDevice,
+		std::uint32_t frameCount
 	) {
 		if (engineType == RenderEngineType::IndirectDraw)
-			om.CreateObject<RenderEngineIndirectDraw>(renderEngine, { frameCount }, 1u);
+			om.CreateObject<RenderEngineIndirectDraw>(
+				renderEngine, { d3dDevice, frameCount }, 1u
+			);
 		else if (engineType == RenderEngineType::IndividualDraw)
-			om.CreateObject<RenderEngineIndividualDraw>(renderEngine, 1u);
+			om.CreateObject<RenderEngineIndividualDraw>(renderEngine,{ d3dDevice }, 1u);
 	}
 
 	void InitResources(ObjectManager& om) {

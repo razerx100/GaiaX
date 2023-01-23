@@ -6,6 +6,9 @@
 #include <cassert>
 
 // Vertex Shader
+RenderEngineVertexShader::RenderEngineVertexShader(ID3D12Device* device)
+	: RenderEngineBase{ device } {}
+
 void RenderEngineVertexShader::AddGlobalVertices(
 	std::unique_ptr<std::uint8_t> vertices, size_t vertexBufferSize,
 	std::unique_ptr<std::uint8_t> indices, size_t indexBufferSize
@@ -20,7 +23,7 @@ void RenderEngineVertexShader::CreateBuffers(ID3D12Device* device) {
 	_createBuffers(device);
 }
 
-void RenderEngineVertexShader::ReserveBuffers(ID3D12Device* device) {
+void RenderEngineVertexShader::ReserveBuffersDerived(ID3D12Device* device) {
 	m_vertexManager.ReserveBuffers(device);
 	_reserveBuffers(device);
 }
@@ -85,7 +88,8 @@ void RenderEngineVertexShader::BindGraphicsBuffers(
 
 // Indirect Draw
 RenderEngineIndirectDraw::RenderEngineIndirectDraw(const Args& arguments)
-	: m_computePipeline{ arguments.frameCount.value() } {}
+	: RenderEngineVertexShader{ arguments.device.value() },
+	m_computePipeline{ arguments.frameCount.value() } {}
 
 void RenderEngineIndirectDraw::ExecuteComputeStage(size_t frameIndex) {
 	ID3D12GraphicsCommandList* computeCommandList = Gaia::computeCmdList->GetCommandList();
@@ -220,6 +224,9 @@ void RenderEngineIndirectDraw::CreateCommandSignature(ID3D12Device* device) {
 }
 
 // Individual Draw
+RenderEngineIndividualDraw::RenderEngineIndividualDraw(const Args& arguments)
+	: RenderEngineVertexShader{ arguments.device.value() } {}
+
 void RenderEngineIndividualDraw::ExecutePreRenderStage(
 	ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex
 ) {

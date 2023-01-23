@@ -10,17 +10,17 @@ RendererDx12::RendererDx12(
 ) : m_appName(appName), m_width(width), m_height(height), m_bufferCount{ bufferCount } {
 
 	m_objectManager.CreateObject(Gaia::device, 3u);
-	Gaia::InitRenderEngine(m_objectManager, engineType, bufferCount);
-	Gaia::InitResources(m_objectManager);
 
 	ID3D12Device4* deviceRef = Gaia::device.get()->GetDeviceRef();
+
+	Gaia::InitRenderEngine(m_objectManager, engineType, deviceRef, bufferCount);
+	Gaia::renderEngine->ResizeViewportAndScissor(width, height);
+
+	Gaia::InitResources(m_objectManager);
 
 #ifdef _DEBUG
 	m_objectManager.CreateObject(Gaia::debugLogger, { deviceRef }, 4u);
 #endif
-
-	m_objectManager.CreateObject(Gaia::Resources::depthBuffer, { deviceRef }, 1u);
-	Gaia::Resources::depthBuffer->SetMaxResolution(7680u, 4320u);
 
 	Gaia::InitGraphicsQueueAndList(m_objectManager, deviceRef, bufferCount);
 
@@ -36,7 +36,6 @@ RendererDx12::RendererDx12(
 	};
 
 	m_objectManager.CreateObject(Gaia::swapChain, swapChainArguments, 1u);
-	m_objectManager.CreateObject(Gaia::viewportAndScissor, { width, height }, 0u);
 
 	Gaia::InitCopyQueueAndList(m_objectManager, deviceRef);
 	Gaia::InitComputeQueueAndList(m_objectManager, deviceRef, bufferCount);
@@ -98,10 +97,8 @@ void RendererDx12::Resize(std::uint32_t width, std::uint32_t height) {
 
 		Gaia::graphicsFence->ResetFenceValues(fenceValue + 1u);
 
-		Gaia::Resources::depthBuffer->CreateDepthBuffer(
-			deviceRef, width, height
-		);
-		Gaia::viewportAndScissor->Resize(width, height);
+		Gaia::renderEngine->CreateDepthBufferView(deviceRef, width, height);
+		Gaia::renderEngine->ResizeViewportAndScissor(width, height);
 
 		Gaia::cameraManager->SetSceneResolution(width, height);
 	}
@@ -127,7 +124,6 @@ void RendererDx12::ProcessData() {
 	ID3D12Device* device = Gaia::device->GetDeviceRef();
 
 	// Reserve Heap Space start
-	Gaia::Resources::depthBuffer->ReserveHeapSpace(device);
 	Gaia::renderEngine->ReserveBuffers(device);
 	Gaia::bufferManager->ReserveBuffers(device);
 	Gaia::Resources::cpuWriteBuffer->ReserveHeapSpace(device);
@@ -142,7 +138,7 @@ void RendererDx12::ProcessData() {
 	Gaia::descriptorTable->CreateDescriptorTable(device);
 
 	// Create Buffers start
-	Gaia::Resources::depthBuffer->CreateDepthBuffer(device, m_width, m_height);
+	Gaia::renderEngine->CreateDepthBufferView(device, m_width, m_height);
 	Gaia::Resources::cpuWriteBuffer->CreateResource(device);
 	Gaia::renderEngine->CreateBuffers(device);
 	Gaia::bufferManager->CreateBuffers(device);

@@ -4,11 +4,21 @@
 #include <RenderEngine.hpp>
 #include <RootSignatureDynamic.hpp>
 #include <GraphicsPipelineBase.hpp>
+#include <ViewportAndScissorManager.hpp>
+#include <DepthBuffer.hpp>
 
 class RenderEngineBase : public RenderEngine {
 public:
-	void Present(ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex) override;
-	void ExecutePostRenderStage() override;
+	RenderEngineBase(ID3D12Device* device);
+
+	void Present(ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex) final;
+	void ExecutePostRenderStage() final;
+
+	void ResizeViewportAndScissor(std::uint32_t width, std::uint32_t height) noexcept final;
+	void CreateDepthBufferView(
+		ID3D12Device* device, std::uint32_t width, std::uint32_t height
+	) final;
+	void ReserveBuffers(ID3D12Device* device) final;
 
 protected:
 	void ExecutePreGraphicsStage(
@@ -22,6 +32,8 @@ protected:
 	virtual std::unique_ptr<RootSignatureDynamic> CreateGraphicsRootSignature(
 		ID3D12Device* device
 	) const noexcept = 0;
+
+	virtual void ReserveBuffersDerived(ID3D12Device* device);
 
 	void ConstructGraphicsRootSignature(ID3D12Device* device);
 
@@ -40,5 +52,9 @@ protected:
 protected:
 	std::unique_ptr<RootSignatureBase> m_graphicsRS;
 	RSLayoutType m_graphicsRSLayout;
+
+private:
+	ViewportAndScissorManager m_viewportAndScissor;
+	DepthBuffer m_depthBuffer;
 };
 #endif

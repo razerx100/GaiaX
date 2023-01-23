@@ -22,6 +22,13 @@ public:
 	virtual void ExecutePostRenderStage() = 0;
 	virtual void ConstructPipelines() = 0;
 
+
+	virtual void CreateDepthBufferView(
+		ID3D12Device* device, std::uint32_t width, std::uint32_t height
+	) = 0;
+	virtual void ResizeViewportAndScissor(
+		std::uint32_t width, std::uint32_t height
+	) noexcept = 0;
 	virtual void AddGlobalVertices(
 		std::unique_ptr<std::uint8_t> vertices, size_t vertexBufferSize,
 		std::unique_ptr<std::uint8_t> indices, size_t indexBufferSize

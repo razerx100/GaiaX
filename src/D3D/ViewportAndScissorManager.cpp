@@ -1,20 +1,13 @@
 #include <ViewportAndScissorManager.hpp>
 
-ViewportAndScissorManager::ViewportAndScissorManager(const Args& arguments)
-	: m_viewport{}, m_scissor{} {
+ViewportAndScissorManager::ViewportAndScissorManager() noexcept : m_viewport{}, m_scissor{} {
 	m_viewport.TopLeftX = 0.0f;
 	m_viewport.TopLeftY = 0.0f;
 	m_viewport.MinDepth = 0.0f;
 	m_viewport.MaxDepth = 1.0f;
 
-	std::uint32_t width = arguments.width.value();
-	std::uint32_t height = arguments.height.value();
-
-	ResizeViewport(width, height);
-
 	m_scissor.left = 0l;
 	m_scissor.top = 0l;
-	ResizeScissor(width, height);
 }
 
 const D3D12_VIEWPORT* ViewportAndScissorManager::GetViewportRef() const noexcept {

@@ -8,7 +8,6 @@
 #include <D3DCommandList.hpp>
 #include <D3DDebugLogger.hpp>
 #include <BufferManager.hpp>
-#include <ViewportAndScissorManager.hpp>
 #include <DescriptorTableManager.hpp>
 #include <TextureStorage.hpp>
 #include <IThreadPool.hpp>
@@ -33,7 +32,6 @@ namespace Gaia {
 	extern std::unique_ptr<BufferManager> bufferManager;
 	extern std::unique_ptr<D3DCommandQueue> copyQueue;
 	extern std::unique_ptr<D3DCommandList> copyCmdList;
-	extern std::unique_ptr<ViewportAndScissorManager> viewportAndScissor;
 	extern std::unique_ptr<DescriptorTableManager> descriptorTable;
 	extern std::unique_ptr<TextureStorage> textureStorage;
 	extern std::shared_ptr<IThreadPool> threadPool;
@@ -49,7 +47,6 @@ namespace Gaia {
 		extern std::unique_ptr<D3DHeap> cpuWriteHeap;
 		extern std::unique_ptr<D3DHeap> gpuOnlyHeap;
 		extern std::unique_ptr<D3DHeap> cpuReadBackHeap;
-		extern std::unique_ptr<DepthBuffer> depthBuffer;
 		extern std::unique_ptr<D3DResourceBuffer> cpuWriteBuffer;
 	}
 
@@ -65,7 +62,8 @@ namespace Gaia {
 	void SetSharedData(std::shared_ptr<ISharedDataContainer>&& sharedDataArg);
 	void InitResources(ObjectManager& om);
 	void InitRenderEngine(
-		ObjectManager& om, RenderEngineType engineType, std::uint32_t frameCount
+		ObjectManager& om, RenderEngineType engineType, ID3D12Device* d3dDevice,
+		std::uint32_t frameCount
 	);
 }
 #endif

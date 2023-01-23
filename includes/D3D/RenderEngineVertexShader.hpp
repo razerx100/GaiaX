@@ -8,22 +8,25 @@
 
 class RenderEngineVertexShader : public RenderEngineBase {
 public:
+	RenderEngineVertexShader(ID3D12Device* device);
+
 	void AddGlobalVertices(
 		std::unique_ptr<std::uint8_t> vertices, size_t vertexBufferSize,
 		std::unique_ptr<std::uint8_t> indices, size_t indexBufferSize
-	) noexcept override;
+	) noexcept final;
 
-	void CreateBuffers(ID3D12Device* device) override;
-	void ReserveBuffers(ID3D12Device* device) override;
-	void RecordResourceUploads(ID3D12GraphicsCommandList* copyList) noexcept override;
-	void ReleaseUploadResources() noexcept override;
-	void CopyData(std::atomic_size_t& workCount) const noexcept override;
+	void CreateBuffers(ID3D12Device* device) final;
+	void RecordResourceUploads(ID3D12GraphicsCommandList* copyList) noexcept final;
+	void ReleaseUploadResources() noexcept final;
+	void CopyData(std::atomic_size_t& workCount) const noexcept final;
 
 protected:
 	[[nodiscard]]
 	std::unique_ptr<RootSignatureDynamic> CreateGraphicsRootSignature(
 		ID3D12Device* device
-	) const noexcept override;
+	) const noexcept final;
+
+	void ReserveBuffersDerived(ID3D12Device* device) final;
 
 	void BindGraphicsBuffers(
 		ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex
@@ -41,6 +44,7 @@ private:
 class RenderEngineIndirectDraw final : public RenderEngineVertexShader {
 public:
 	struct Args {
+		std::optional<ID3D12Device*> device;
 		std::optional<std::uint32_t> frameCount;
 	};
 
@@ -49,15 +53,15 @@ public:
 
 	void ExecutePreRenderStage(
 		ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex
-	) override;
+	) final;
 	void RecordDrawCommands(
 		ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex
-	) override;
-	void ConstructPipelines() override;
+	) final;
+	void ConstructPipelines() final;
 
 	void RecordModelDataSet(
 		const std::vector<std::shared_ptr<IModel>>& models, const std::wstring& pixelShader
-	) noexcept override;
+	) noexcept final;
 
 private:
 	void _createBuffers(ID3D12Device* device) override;
@@ -80,17 +84,24 @@ private:
 
 class RenderEngineIndividualDraw final : public RenderEngineVertexShader {
 public:
+	struct Args {
+		std::optional<ID3D12Device*> device;
+	};
+
+public:
+	RenderEngineIndividualDraw(const Args& arguments);
+
 	void ExecutePreRenderStage(
 		ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex
-	) override;
+	) final;
 	void RecordDrawCommands(
 		ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex
-	) override;
-	void ConstructPipelines() override;
+	) final;
+	void ConstructPipelines() final;
 
 	void RecordModelDataSet(
 		const std::vector<std::shared_ptr<IModel>>& models, const std::wstring& pixelShader
-	) noexcept override;
+	) noexcept final;
 
 private:
 	using GraphicsPipeline = std::unique_ptr<GraphicsPipelineIndividualDraw>;
