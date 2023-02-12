@@ -13,7 +13,6 @@
 #include <IThreadPool.hpp>
 #include <ISharedDataContainer.hpp>
 #include <CameraManager.hpp>
-#include <DepthBuffer.hpp>
 #include <D3DHeap.hpp>
 #include <D3DResourceBuffer.hpp>
 #include <UploadContainer.hpp>
