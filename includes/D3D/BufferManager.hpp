@@ -89,18 +89,20 @@ private:
 };
 
 struct ModelBuffer {
-	UVInfo uvInfo;
 	DirectX::XMMATRIX modelMatrix;
-	std::uint32_t textureIndex;
+	DirectX::XMMATRIX viewNormalMatrix;
 	DirectX::XMFLOAT3 modelOffset;
 	ModelBounds boundingBox;
-	DirectX::XMMATRIX viewNormalMatrix;
 };
 
 struct MaterialBuffer {
 	DirectX::XMFLOAT4 ambient;
 	DirectX::XMFLOAT4 diffuse;
 	DirectX::XMFLOAT4 specular;
+	UVInfo diffuseTexUVInfo;
+	UVInfo specularTexUVInfo;
+	std::uint32_t diffuseTexIndex;
+	std::uint32_t specularTexIndex;
 	float shininess;
 };
 
