@@ -26,7 +26,7 @@ void ComputePipelineIndirectDraw::CreateComputeRootSignature(ID3D12Device* devic
 }
 
 void ComputePipelineIndirectDraw::CreateComputePipelineObject(
-	ID3D12Device* device, const std::wstring& shaderPath
+	ID3D12Device2* device, const std::wstring& shaderPath
 ) noexcept {
 	m_computePSO = _createComputePipelineObject(device, m_computeRS->Get(), shaderPath);
 }
@@ -266,7 +266,7 @@ std::unique_ptr<RootSignatureDynamic> ComputePipelineIndirectDraw::_createComput
 }
 
 std::unique_ptr<D3DPipelineObject> ComputePipelineIndirectDraw::_createComputePipelineObject(
-	ID3D12Device* device, ID3D12RootSignature* computeRootSignature,
+	ID3D12Device2* device, ID3D12RootSignature* computeRootSignature,
 	const std::wstring& shaderPath
 ) const noexcept {
 	auto cs = std::make_unique<Shader>();

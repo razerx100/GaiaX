@@ -9,7 +9,7 @@ void GraphicsPipelineBase::BindGraphicsPipeline(
 }
 
 void GraphicsPipelineBase::CreateGraphicsPipeline(
-	ID3D12Device* device, ID3D12RootSignature* graphicsRootSignature,
+	ID3D12Device2* device, ID3D12RootSignature* graphicsRootSignature,
 	const std::wstring& shaderPath
 ) noexcept {
 	m_graphicPSO = _createGraphicsPipelineObject(

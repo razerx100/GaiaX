@@ -18,7 +18,7 @@ public:
 
 	void CreateComputeRootSignature(ID3D12Device* device) noexcept;
 	void CreateComputePipelineObject(
-		ID3D12Device* device, const std::wstring& shaderPath
+		ID3D12Device2* device, const std::wstring& shaderPath
 	) noexcept;
 	void CreateBuffers(ID3D12Device* device);
 	void ReserveBuffers(ID3D12Device* device);
@@ -53,7 +53,7 @@ private:
 	) const noexcept;
 	[[nodiscard]]
 	std::unique_ptr<D3DPipelineObject> _createComputePipelineObject(
-		ID3D12Device* device, ID3D12RootSignature* computeRootSignature,
+		ID3D12Device2* device, ID3D12RootSignature* computeRootSignature,
 		const std::wstring& shaderPath
 	) const noexcept;
 

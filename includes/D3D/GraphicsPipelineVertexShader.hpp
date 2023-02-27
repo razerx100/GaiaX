@@ -9,7 +9,7 @@ class GraphicsPipelineVertexShader : public GraphicsPipelineBase {
 private:
 	[[nodiscard]]
 	std::unique_ptr<D3DPipelineObject> _createGraphicsPipelineObject(
-		ID3D12Device* device, const std::wstring& shaderPath, const std::wstring& pixelShader,
+		ID3D12Device2* device, const std::wstring& shaderPath, const std::wstring& pixelShader,
 		ID3D12RootSignature* graphicsRootSignature
 	) const noexcept override;
 };

@@ -4,7 +4,7 @@
 
 // Vertex Shader
 std::unique_ptr<D3DPipelineObject> GraphicsPipelineVertexShader::_createGraphicsPipelineObject(
-	ID3D12Device* device, const std::wstring& shaderPath, const std::wstring& pixelShader,
+	ID3D12Device2* device, const std::wstring& shaderPath, const std::wstring& pixelShader,
 	ID3D12RootSignature* graphicsRootSignature
 ) const noexcept {
 	auto vs = std::make_unique<Shader>();
@@ -14,12 +14,12 @@ std::unique_ptr<D3DPipelineObject> GraphicsPipelineVertexShader::_createGraphics
 	ps->LoadBinary(shaderPath + pixelShader);
 
 	auto pso = std::make_unique<D3DPipelineObject>();
-	pso->CreateGFXPipelineState(
+	pso->CreateGFXPipelineStateVertex(
 		device,
 		VertexLayout()
 		.AddInputElement("Position", DXGI_FORMAT_R32G32B32_FLOAT, 12u)
 		.AddInputElement("Normal", DXGI_FORMAT_R32G32B32_FLOAT, 12u)
-		.AddInputElement("UV", DXGI_FORMAT_R32G32_FLOAT, 8u),
+		.AddInputElement("UV", DXGI_FORMAT_R32G32_FLOAT, 8u).GetLayoutDesc(),
 		graphicsRootSignature, vs->GetByteCode(), ps->GetByteCode()
 	);
 

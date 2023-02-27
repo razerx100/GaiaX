@@ -39,7 +39,7 @@ protected:
 
 	template<std::derived_from<GraphicsPipelineBase> Pipeline>
 	void CreateGraphicsPipelines(
-		ID3D12Device* device, std::unique_ptr<Pipeline>& graphicsPipeline0,
+		ID3D12Device2* device, std::unique_ptr<Pipeline>& graphicsPipeline0,
 		std::vector<std::unique_ptr<Pipeline>>& graphicsPipelines
 	) const noexcept {
 		ID3D12RootSignature* graphicsRootSig = m_graphicsRS->Get();

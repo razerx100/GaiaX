@@ -8,7 +8,7 @@
 class GraphicsPipelineBase {
 public:
 	void CreateGraphicsPipeline(
-		ID3D12Device* device, ID3D12RootSignature* graphicsRootSignature,
+		ID3D12Device2* device, ID3D12RootSignature* graphicsRootSignature,
 		const std::wstring& shaderPath
 	) noexcept;
 
@@ -19,7 +19,7 @@ public:
 protected:
 	[[nodiscard]]
 	virtual std::unique_ptr<D3DPipelineObject> _createGraphicsPipelineObject(
-		ID3D12Device* device, const std::wstring& shaderPath, const std::wstring& pixelShader,
+		ID3D12Device2* device, const std::wstring& shaderPath, const std::wstring& pixelShader,
 		ID3D12RootSignature* graphicsRootSignature
 	) const noexcept = 0 ;
 
