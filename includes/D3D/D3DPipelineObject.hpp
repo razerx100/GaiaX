@@ -50,9 +50,9 @@ private:
 		};
 
 		psoDesc.PS = pixelShader;
-		psoDesc.BlendState = CD3DX12_BLEND_DESC();
+		psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
 		psoDesc.SampleMask = UINT_MAX;
-		psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC();
+		psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
 		psoDesc.DepthStencilState = depthStencilState;
 		psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 		psoDesc.NumRenderTargets = 1u;
