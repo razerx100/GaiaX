@@ -32,9 +32,15 @@ public:
 	void AddModelSet(
 		std::vector<std::shared_ptr<IModel>>&& models, const std::wstring& pixelShader
 	) override;
+	void AddMeshletModelSet(
+		std::vector<MeshletModel>&& meshletModels, const std::wstring& pixelShader
+	) override;
 	void AddModelInputs(
-		std::unique_ptr<std::uint8_t> vertices, size_t vertexBufferSize,
-		std::unique_ptr<std::uint8_t> indices, size_t indexBufferSize
+		std::vector<Vertex>&& gVertices, std::vector<std::uint32_t>&& gIndices
+	) override;
+	void AddModelInputs(
+		std::vector<Vertex>&& gVertices, std::vector<std::uint32_t>&& gVerticesIndices,
+		std::vector<std::uint32_t>&& gPrimIndices
 	) override;
 
 	void Update() override;

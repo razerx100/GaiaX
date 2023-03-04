@@ -56,13 +56,23 @@ void RendererDx12::AddModelSet(
 	Gaia::bufferManager->AddOpaqueModels(std::move(models));
 }
 
-void RendererDx12::AddModelInputs(
-	std::unique_ptr<std::uint8_t> vertices, size_t vertexBufferSize,
-	std::unique_ptr<std::uint8_t> indices, size_t indexBufferSize
+void RendererDx12::AddMeshletModelSet(
+	std::vector<MeshletModel>&& meshletModels, const std::wstring& pixelShader
 ) {
-	Gaia::renderEngine->AddGlobalVertices(
-		std::move(vertices), vertexBufferSize, std::move(indices), indexBufferSize
-	);
+
+}
+
+void RendererDx12::AddModelInputs(
+	std::vector<Vertex>&& gVertices, std::vector<std::uint32_t>&& gIndices
+) {
+	Gaia::renderEngine->AddGVerticesAndIndices(std::move(gVertices), std::move(gIndices));
+}
+
+void RendererDx12::AddModelInputs(
+	std::vector<Vertex>&& gVertices, std::vector<std::uint32_t>&& gVerticesIndices,
+	std::vector<std::uint32_t>&& gPrimIndices
+) {
+
 }
 
 void RendererDx12::Update() {

@@ -1,15 +1,16 @@
 #include <VertexManagerVertexShader.hpp>
 #include <Gaia.hpp>
-#include <IModel.hpp>
 
 VertexManagerVertexShader::VertexManagerVertexShader() noexcept
 	: m_gVertexBufferView{}, m_gIndexBufferView{},
 	m_vertexUploadContainer{ std::make_unique<UploadContainer>() } {}
 
-void VertexManagerVertexShader::AddGlobalVertices(
-	std::unique_ptr<std::uint8_t> vertices, size_t vertexBufferSize,
-	std::unique_ptr<std::uint8_t> indices, size_t indexBufferSize
+void VertexManagerVertexShader::AddGVerticesAndIndices(
+	std::vector<Vertex>&& gVertices, std::vector<std::uint32_t>&& gIndices
 ) noexcept {
+	const size_t vertexBufferSize = sizeof(Vertex) * std::size(gVertices);
+	const size_t indexBufferSize = sizeof(std::uint32_t) * std::size(gIndices);
+
 	const size_t vertexOffset = m_vertexBuffer.ReserveSpaceAndGetOffset(
 		vertexBufferSize
 	);
@@ -17,8 +18,11 @@ void VertexManagerVertexShader::AddGlobalVertices(
 		indexBufferSize
 	);
 
-	m_vertexUploadContainer->AddMemory(std::move(vertices), vertexBufferSize, vertexOffset);
-	m_vertexUploadContainer->AddMemory(std::move(indices), indexBufferSize, indexOffset);
+	m_vertexUploadContainer->AddMemory(std::data(gVertices), vertexBufferSize, vertexOffset);
+	m_vertexUploadContainer->AddMemory(std::data(gIndices), indexBufferSize, indexOffset);
+
+	m_gIndices = gIndices;
+	m_gVertices = gVertices;
 
 	m_gVertexBufferView.AddBufferView(
 		D3D12_VERTEX_BUFFER_VIEW{
@@ -71,6 +75,9 @@ void VertexManagerVertexShader::RecordResourceUploads(
 void VertexManagerVertexShader::ReleaseUploadResources() noexcept {
 	m_vertexBuffer.ReleaseUploadResource();
 	m_vertexUploadContainer.reset();
+
+	m_gIndices = std::vector<std::uint32_t>{};
+	m_gVertices = std::vector<Vertex>{};
 }
 
 void VertexManagerVertexShader::CopyData(std::atomic_size_t& workCount) const noexcept {

@@ -7,14 +7,14 @@
 #include <BufferView.hpp>
 #include <D3DResourceBuffer.hpp>
 #include <UploadContainer.hpp>
+#include <IModel.hpp>
 
 class VertexManagerVertexShader {
 public:
 	VertexManagerVertexShader() noexcept;
 
-	void AddGlobalVertices(
-		std::unique_ptr<std::uint8_t> vertices, size_t vertexBufferSize,
-		std::unique_ptr<std::uint8_t> indices, size_t indexBufferSize
+	void AddGVerticesAndIndices(
+		std::vector<Vertex>&& gVertices, std::vector<std::uint32_t>&& gIndices
 	) noexcept;
 
 	void BindVertexAndIndexBuffer(ID3D12GraphicsCommandList* graphicsCmdList) const noexcept;
@@ -33,5 +33,7 @@ private:
 	BufferView<D3D12_INDEX_BUFFER_VIEW> m_gIndexBufferView;
 	D3DUploadableResourceBuffer m_vertexBuffer;
 	std::unique_ptr<UploadContainer> m_vertexUploadContainer;
+	std::vector<Vertex> m_gVertices;
+	std::vector<std::uint32_t> m_gIndices;
 };
 #endif

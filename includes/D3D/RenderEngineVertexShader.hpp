@@ -10,9 +10,8 @@ class RenderEngineVertexShader : public RenderEngineBase {
 public:
 	RenderEngineVertexShader(ID3D12Device* device);
 
-	void AddGlobalVertices(
-		std::unique_ptr<std::uint8_t> vertices, size_t vertexBufferSize,
-		std::unique_ptr<std::uint8_t> indices, size_t indexBufferSize
+	void AddGVerticesAndIndices(
+		std::vector<Vertex>&& gVertices, std::vector<std::uint32_t>&& gIndices
 	) noexcept final;
 
 	void CreateBuffers(ID3D12Device* device) final;

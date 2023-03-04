@@ -5,10 +5,8 @@
 
 UploadContainer::UploadContainer() noexcept : m_startingAddress{ nullptr } {}
 
-void UploadContainer::AddMemory(
-	std::unique_ptr<std::uint8_t> memory, size_t size, size_t offset
-) noexcept {
-	m_memories.emplace_back(std::move(memory));
+void UploadContainer::AddMemory(void* memoryRef, size_t size, size_t offset) noexcept {
+	m_memoryRefs.emplace_back(memoryRef);
 	m_memoryData.emplace_back(size, offset);
 }
 
@@ -21,12 +19,11 @@ void UploadContainer::CopyData(std::atomic_size_t& workCount) const noexcept {
 
 	Gaia::threadPool->SubmitWork(
 		[&] {
-			for (size_t index = 0u; index < std::size(m_memories); ++index) {
+			for (size_t index = 0u; index < std::size(m_memoryRefs); ++index) {
 				const MemoryData& memoryData = m_memoryData[index];
 
 				memcpy(
-					m_startingAddress + memoryData.offset,
-					m_memories[index].get(), memoryData.size
+					m_startingAddress + memoryData.offset, m_memoryRefs[index], memoryData.size
 				);
 			}
 

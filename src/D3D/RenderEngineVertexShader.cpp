@@ -9,13 +9,10 @@
 RenderEngineVertexShader::RenderEngineVertexShader(ID3D12Device* device)
 	: RenderEngineBase{ device } {}
 
-void RenderEngineVertexShader::AddGlobalVertices(
-	std::unique_ptr<std::uint8_t> vertices, size_t vertexBufferSize,
-	std::unique_ptr<std::uint8_t> indices, size_t indexBufferSize
+void RenderEngineVertexShader::AddGVerticesAndIndices(
+	std::vector<Vertex>&& gVertices, std::vector<std::uint32_t>&& gIndices
 ) noexcept {
-	m_vertexManager.AddGlobalVertices(
-		std::move(vertices), vertexBufferSize, std::move(indices), indexBufferSize
-	);
+	m_vertexManager.AddGVerticesAndIndices(std::move(gVertices), std::move(gIndices));
 }
 
 void RenderEngineVertexShader::CreateBuffers(ID3D12Device* device) {
