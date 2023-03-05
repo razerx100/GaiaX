@@ -3,7 +3,7 @@
 
 TextureStorage::TextureStorage() noexcept
 	: m_textureDescriptorStart{},
-	m_textureUploadContainer{ std::make_unique<UploadContainerTexture>() } {}
+	m_textureUploadContainer{ std::make_unique<UploadContainer>() } {}
 
 size_t TextureStorage::AddTexture(
 	ID3D12Device* device, std::unique_ptr<std::uint8_t> textureDataHandle, size_t width,

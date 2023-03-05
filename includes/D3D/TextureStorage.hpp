@@ -31,6 +31,6 @@ private:
 	D3D12_GPU_DESCRIPTOR_HANDLE m_textureDescriptorStart;
 	std::vector<std::unique_ptr<std::uint8_t>> m_textureHandles;
 	std::vector<UINT> m_graphicsRSLayout;
-	std::unique_ptr<UploadContainerTexture> m_textureUploadContainer;
+	std::unique_ptr<UploadContainer> m_textureUploadContainer;
 };
 #endif
