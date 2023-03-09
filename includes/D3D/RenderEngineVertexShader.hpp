@@ -13,6 +13,7 @@ public:
 	void AddGVerticesAndIndices(
 		std::vector<Vertex>&& gVertices, std::vector<std::uint32_t>&& gIndices
 	) noexcept final;
+	void UpdateModelBuffers(size_t frameIndex) const noexcept final;
 
 	void CreateBuffers(ID3D12Device* device) final;
 	void RecordResourceUploads(ID3D12GraphicsCommandList* copyList) noexcept final;

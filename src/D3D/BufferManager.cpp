@@ -10,7 +10,8 @@ BufferManager::BufferManager(const Args& arguments)
 	m_modelBuffers{ ResourceType::cpuWrite, DescriptorType::SRV },
 	m_materialBuffers{ ResourceType::cpuWrite, DescriptorType::SRV },
 	m_lightBuffers{ ResourceType::cpuWrite, DescriptorType::SRV },
-	m_frameCount{ arguments.frameCount.value() } {}
+	m_frameCount{ arguments.frameCount.value() },
+	m_meshletModelData{ arguments.meshletModelData.value() } {}
 
 void BufferManager::ReserveBuffers(ID3D12Device* device) noexcept {
 	// Camera
@@ -41,9 +42,11 @@ void BufferManager::ReserveBuffers(ID3D12Device* device) noexcept {
 	const auto modelCount = static_cast<UINT>(std::size(m_opaqueModels));
 
 	m_modelBuffers.SetDescriptorOffset(modelBufferDescriptorOffset, descriptorSize);
-	m_modelBuffers.SetBufferInfo(
-		device, static_cast<UINT>(sizeof(ModelBuffer)), modelCount, m_frameCount
-	);
+
+	const UINT64 modelBufferStride = m_meshletModelData ?
+		static_cast<UINT64>(sizeof(ModelBufferMesh)) : static_cast<UINT64>(sizeof(ModelBuffer));
+
+	m_modelBuffers.SetBufferInfo(device, modelBufferStride, modelCount, m_frameCount);
 
 	// Material Data
 	const size_t materialBufferDescriptorOffset =
@@ -51,7 +54,7 @@ void BufferManager::ReserveBuffers(ID3D12Device* device) noexcept {
 
 	m_materialBuffers.SetDescriptorOffset(materialBufferDescriptorOffset, descriptorSize);
 	m_materialBuffers.SetBufferInfo(
-		device, static_cast<UINT>(sizeof(MaterialBuffer)), modelCount, m_frameCount
+		device, static_cast<UINT64>(sizeof(MaterialBuffer)), modelCount, m_frameCount
 	);
 
 	// Light Data
@@ -60,7 +63,7 @@ void BufferManager::ReserveBuffers(ID3D12Device* device) noexcept {
 
 	m_lightBuffers.SetDescriptorOffset(lightBufferDescriptorOffset, descriptorSize);
 	m_lightBuffers.SetBufferInfo(
-		device, static_cast<UINT>(sizeof(LightBuffer)),
+		device, static_cast<UINT64>(sizeof(LightBuffer)),
 		static_cast<UINT>(std::size(m_lightModelIndices)), m_frameCount
 	);
 }
@@ -95,13 +98,8 @@ void BufferManager::SetMemoryAddresses() noexcept {
 	m_pixelDataBuffer.UpdateGPUAddressStart(gpuOffset);
 }
 
-void BufferManager::Update(size_t frameIndex) const noexcept {
-	const DirectX::XMMATRIX viewMatrix = Gaia::sharedData->GetViewMatrix();
-
-	UpdateCameraData(frameIndex);
-	UpdatePerModelData(frameIndex, viewMatrix);
-	UpdateLightData(frameIndex, viewMatrix);
-	UpdatePixelData(frameIndex);
+DirectX::XMMATRIX BufferManager::GetViewMatrix() const noexcept {
+	return Gaia::sharedData->GetViewMatrix();
 }
 
 void BufferManager::BindBuffersToGraphics(
@@ -163,44 +161,6 @@ void BufferManager::UpdateCameraData(size_t bufferIndex) const noexcept {
 	std::uint8_t* cameraCpuHandle = m_cameraBuffer.GetCPUAddressStart(bufferIndex);
 
 	Gaia::cameraManager->CopyData(cameraCpuHandle);
-}
-
-void BufferManager::UpdatePerModelData(
-	size_t bufferIndex, const DirectX::XMMATRIX& viewMatrix
-) const noexcept {
-	size_t modelOffset = 0u;
-	std::uint8_t* modelBufferOffset = m_modelBuffers.GetCPUWPointer(bufferIndex);
-
-	size_t materialOffset = 0u;
-	std::uint8_t* materialBufferOffset = m_materialBuffers.GetCPUWPointer(bufferIndex);
-
-	for (auto& model : m_opaqueModels) {
-		const DirectX::XMMATRIX modelMatrix = model->GetModelMatrix();
-
-		ModelBuffer modelBuffer{
-			.modelMatrix = modelMatrix,
-			.viewNormalMatrix = DirectX::XMMatrixTranspose(
-				DirectX::XMMatrixInverse(nullptr, modelMatrix * viewMatrix)
-			),
-			.modelOffset = model->GetModelOffset(),
-			.boundingBox = model->GetBoundingBox()
-		};
-		CopyStruct(modelBuffer, modelBufferOffset, modelOffset);
-
-		const auto& modelMaterial = model->GetMaterial();
-
-		MaterialBuffer material{
-			.ambient = modelMaterial.ambient,
-			.diffuse = modelMaterial.diffuse,
-			.specular = modelMaterial.specular,
-			.diffuseTexUVInfo = model->GetDiffuseTexUVInfo(),
-			.specularTexUVInfo = model->GetSpecularTexUVInfo(),
-			.diffuseTexIndex = model->GetDiffuseTexIndex(),
-			.specularTexIndex = model->GetSpecularTexIndex(),
-			.shininess = modelMaterial.shininess
-		};
-		CopyStruct(material, materialBufferOffset, materialOffset);
-	}
 }
 
 void BufferManager::UpdateLightData(

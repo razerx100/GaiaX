@@ -15,6 +15,10 @@ void RenderEngineVertexShader::AddGVerticesAndIndices(
 	m_vertexManager.AddGVerticesAndIndices(std::move(gVertices), std::move(gIndices));
 }
 
+void RenderEngineVertexShader::UpdateModelBuffers(size_t frameIndex) const noexcept {
+	Gaia::bufferManager->Update<false>(frameIndex);
+}
+
 void RenderEngineVertexShader::CreateBuffers(ID3D12Device* device) {
 	m_vertexManager.CreateBuffers(device);
 	_createBuffers(device);

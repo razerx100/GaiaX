@@ -42,7 +42,9 @@ RendererDx12::RendererDx12(
 
 	m_objectManager.CreateObject(Gaia::descriptorTable, 0u);
 
-	m_objectManager.CreateObject(Gaia::bufferManager, { bufferCount }, 1u);
+	const bool meshletModelData = engineType == RenderEngineType::MeshDraw ? true : false;
+
+	m_objectManager.CreateObject(Gaia::bufferManager, { bufferCount, meshletModelData }, 1u);
 	m_objectManager.CreateObject(Gaia::textureStorage, 0u);
 
 	m_objectManager.CreateObject(Gaia::cameraManager, 0u);
@@ -78,7 +80,8 @@ void RendererDx12::AddModelInputs(
 void RendererDx12::Update() {
 	const size_t currentBackIndex = Gaia::swapChain->GetCurrentBackBufferIndex();
 
-	Gaia::bufferManager->Update(currentBackIndex);
+	Gaia::renderEngine->UpdateModelBuffers(currentBackIndex);
+	Gaia::bufferManager->Update<false>(currentBackIndex);
 }
 
 void RendererDx12::Render() {

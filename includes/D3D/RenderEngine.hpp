@@ -21,7 +21,7 @@ public:
 	virtual void Present(ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex) = 0;
 	virtual void ExecutePostRenderStage() = 0;
 	virtual void ConstructPipelines() = 0;
-
+	virtual void UpdateModelBuffers(size_t frameIndex) const noexcept = 0;
 
 	virtual void CreateDepthBufferView(
 		ID3D12Device* device, std::uint32_t width, std::uint32_t height
