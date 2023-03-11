@@ -14,6 +14,7 @@ public:
 		std::vector<Vertex>&& gVertices, std::vector<std::uint32_t>&& gIndices
 	) noexcept final;
 	void UpdateModelBuffers(size_t frameIndex) const noexcept final;
+	void ExecuteRenderStage(size_t frameIndex) final;
 
 	void CreateBuffers(ID3D12Device* device) final;
 	void RecordResourceUploads(ID3D12GraphicsCommandList* copyList) noexcept final;
@@ -37,6 +38,13 @@ protected:
 	virtual void _recordResourceUploads(ID3D12GraphicsCommandList* copyList) noexcept;
 	virtual void _releaseUploadResources() noexcept;
 
+	virtual void ExecutePreRenderStage(
+		ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex
+	) = 0;
+	virtual void RecordDrawCommands(
+		ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex
+	) = 0;
+
 private:
 	VertexManagerVertexShader m_vertexManager;
 };
@@ -51,12 +59,6 @@ public:
 public:
 	RenderEngineIndirectDraw(const Args& arguments);
 
-	void ExecutePreRenderStage(
-		ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex
-	) final;
-	void RecordDrawCommands(
-		ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex
-	) final;
 	void ConstructPipelines() final;
 
 	void RecordModelDataSet(
@@ -71,6 +73,13 @@ private:
 
 	void CreateCommandSignature(ID3D12Device* device);
 	void ExecuteComputeStage(size_t frameIndex);
+
+	void ExecutePreRenderStage(
+		ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex
+	) final;
+	void RecordDrawCommands(
+		ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex
+	) final;
 
 	using GraphicsPipeline = std::unique_ptr<GraphicsPipelineIndirectDraw>;
 
@@ -91,12 +100,6 @@ public:
 public:
 	RenderEngineIndividualDraw(const Args& arguments);
 
-	void ExecutePreRenderStage(
-		ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex
-	) final;
-	void RecordDrawCommands(
-		ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex
-	) final;
 	void ConstructPipelines() final;
 
 	void RecordModelDataSet(
@@ -107,6 +110,13 @@ private:
 	using GraphicsPipeline = std::unique_ptr<GraphicsPipelineIndividualDraw>;
 
 	void RecordModelArguments(const std::vector<std::shared_ptr<IModel>>& models) noexcept;
+
+	void ExecutePreRenderStage(
+		ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex
+	) final;
+	void RecordDrawCommands(
+		ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex
+	) final;
 
 private:
 	GraphicsPipeline m_graphicsPipeline0;

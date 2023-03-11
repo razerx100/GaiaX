@@ -87,6 +87,13 @@ void RenderEngineVertexShader::BindGraphicsBuffers(
 	m_vertexManager.BindVertexAndIndexBuffer(graphicsCommandList);
 }
 
+void RenderEngineVertexShader::ExecuteRenderStage(size_t frameIndex) {
+	ID3D12GraphicsCommandList* graphicsCommandList = Gaia::graphicsCmdList->GetCommandList();
+
+	ExecutePreRenderStage(graphicsCommandList, frameIndex);
+	RecordDrawCommands(graphicsCommandList, frameIndex);
+}
+
 // Indirect Draw
 RenderEngineIndirectDraw::RenderEngineIndirectDraw(const Args& arguments)
 	: RenderEngineVertexShader{ arguments.device.value() },

@@ -9,6 +9,7 @@ public:
 	struct Args {
 		std::optional<ID3D12Device4*> device;
 		std::optional<D3D12_COMMAND_LIST_TYPE> type;
+		std::optional<bool> cmdList6;
 		std::optional<size_t> allocatorCount = 1u;
 	};
 
@@ -21,9 +22,12 @@ public:
 
 	[[nodiscard]]
 	ID3D12GraphicsCommandList* GetCommandList() const noexcept;
+	[[nodiscard]]
+	ID3D12GraphicsCommandList6* GetCommandList6() const noexcept;
 
 private:
 	ComPtr<ID3D12GraphicsCommandList> m_pCommandList;
+	ComPtr<ID3D12GraphicsCommandList6> m_pCommandList6;
 	std::vector<ComPtr<ID3D12CommandAllocator>> m_pCommandAllocators;
 };
 #endif

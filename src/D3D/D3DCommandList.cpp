@@ -1,4 +1,5 @@
 #include <D3DCommandList.hpp>
+#include <Exception.hpp>
 
 D3DCommandList::D3DCommandList(const Args& arguments)
 	: m_pCommandAllocators{ arguments.allocatorCount.value()} {
@@ -12,6 +13,13 @@ D3DCommandList::D3DCommandList(const Args& arguments)
 	device->CreateCommandList1(
 		0u, type, D3D12_COMMAND_LIST_FLAG_NONE, IID_PPV_ARGS(&m_pCommandList)
 	);
+
+	if (arguments.cmdList6.value()) {
+		HRESULT hr = m_pCommandList.As(&m_pCommandList6);
+
+		if (hr == E_NOINTERFACE)
+			throw Exception("Interface Query Error", "CommandList6 is not supported.");
+	}
 }
 
 void D3DCommandList::Reset(size_t allocatorIndex) {
@@ -31,4 +39,8 @@ void D3DCommandList::Close() const {
 
 ID3D12GraphicsCommandList* D3DCommandList::GetCommandList() const noexcept {
 	return m_pCommandList.Get();
+}
+
+ID3D12GraphicsCommandList6* D3DCommandList::GetCommandList6() const noexcept {
+	return m_pCommandList6.Get();
 }

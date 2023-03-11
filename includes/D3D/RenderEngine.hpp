@@ -12,13 +12,8 @@ public:
 	RenderEngine() noexcept;
 	virtual ~RenderEngine() = default;
 
-	virtual void ExecutePreRenderStage(
-		ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex
-	) = 0;
-	virtual void RecordDrawCommands(
-		ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex
-	) = 0;
-	virtual void Present(ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex) = 0;
+	virtual void ExecuteRenderStage(size_t frameIndex) = 0;
+	virtual void Present(size_t frameIndex) = 0;
 	virtual void ExecutePostRenderStage() = 0;
 	virtual void ConstructPipelines() = 0;
 	virtual void UpdateModelBuffers(size_t frameIndex) const noexcept = 0;
@@ -35,6 +30,14 @@ public:
 	virtual void RecordModelDataSet(
 		const std::vector<std::shared_ptr<IModel>>& models, const std::wstring& pixelShader
 	) noexcept = 0;
+	virtual void AddMeshletModelSet(
+		std::vector<MeshletModel>&& meshletModels, const std::wstring& pixelShader
+	) noexcept = 0;
+	virtual void AddGVerticesAndPrimIndices(
+		std::vector<Vertex>&& gVertices, std::vector<std::uint32_t>&& gVerticesIndices,
+		std::vector<std::uint32_t>&& gPrimIndices
+	) noexcept = 0;
+
 	virtual void CreateBuffers(ID3D12Device* device) = 0;
 	virtual void ReserveBuffers(ID3D12Device* device) = 0;
 	virtual void RecordResourceUploads(ID3D12GraphicsCommandList* copyList) noexcept = 0;

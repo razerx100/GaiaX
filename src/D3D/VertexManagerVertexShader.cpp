@@ -8,7 +8,8 @@ VertexManagerVertexShader::VertexManagerVertexShader() noexcept
 void VertexManagerVertexShader::AddGVerticesAndIndices(
 	std::vector<Vertex>&& gVertices, std::vector<std::uint32_t>&& gIndices
 ) noexcept {
-	const size_t vertexBufferSize = sizeof(Vertex) * std::size(gVertices);
+	const auto vertexStrideSize = static_cast<UINT>(sizeof(Vertex));
+	const size_t vertexBufferSize = vertexStrideSize * std::size(gVertices);
 	const size_t indexBufferSize = sizeof(std::uint32_t) * std::size(gIndices);
 
 	const size_t vertexOffset = m_vertexBuffer.ReserveSpaceAndGetOffset(
@@ -21,29 +22,28 @@ void VertexManagerVertexShader::AddGVerticesAndIndices(
 	m_vertexUploadContainer->AddMemory(std::data(gVertices), vertexBufferSize, vertexOffset);
 	m_vertexUploadContainer->AddMemory(std::data(gIndices), indexBufferSize, indexOffset);
 
-	m_gIndices = gIndices;
-	m_gVertices = gVertices;
+	m_gVertexBufferView = D3D12_VERTEX_BUFFER_VIEW{
+		.BufferLocation = static_cast<D3D12_GPU_VIRTUAL_ADDRESS>(vertexOffset),
+		.SizeInBytes = static_cast<UINT>(vertexBufferSize),
+		.StrideInBytes = vertexStrideSize
+	};
 
-	m_gVertexBufferView.AddBufferView(
-		D3D12_VERTEX_BUFFER_VIEW{
-			static_cast<D3D12_GPU_VIRTUAL_ADDRESS>(vertexOffset),
-			static_cast<UINT>(vertexBufferSize), static_cast<UINT>(sizeof(Vertex))
-		}
-	);
+	m_gVertices = std::move(gVertices);
 
-	m_gIndexBufferView.AddBufferView(
-		D3D12_INDEX_BUFFER_VIEW{
-			static_cast<D3D12_GPU_VIRTUAL_ADDRESS>(indexOffset),
-			static_cast<UINT>(indexBufferSize), DXGI_FORMAT_R32_UINT
-		}
-	);
+	m_gIndexBufferView = D3D12_INDEX_BUFFER_VIEW{
+		.BufferLocation = static_cast<D3D12_GPU_VIRTUAL_ADDRESS>(indexOffset),
+		.SizeInBytes = static_cast<UINT>(indexBufferSize),
+		.Format = DXGI_FORMAT_R32_UINT
+	};
+
+	m_gIndices = std::move(gIndices);
 }
 
 void VertexManagerVertexShader::BindVertexAndIndexBuffer(
 	ID3D12GraphicsCommandList* graphicsCmdList
 ) const noexcept {
-	graphicsCmdList->IASetVertexBuffers(0u, 1u, m_gVertexBufferView.GetAddress());
-	graphicsCmdList->IASetIndexBuffer(m_gIndexBufferView.GetAddress());
+	graphicsCmdList->IASetVertexBuffers(0u, 1u, &m_gVertexBufferView);
+	graphicsCmdList->IASetIndexBuffer(&m_gIndexBufferView);
 }
 
 void VertexManagerVertexShader::SetMemoryAddresses() noexcept {
@@ -52,8 +52,8 @@ void VertexManagerVertexShader::SetMemoryAddresses() noexcept {
 
 	const D3D12_GPU_VIRTUAL_ADDRESS vertexGpuStart = m_vertexBuffer.GetGPUStartAddress();
 
-	m_gVertexBufferView.OffsetGPUAddress(vertexGpuStart);
-	m_gIndexBufferView.OffsetGPUAddress(vertexGpuStart);
+	m_gVertexBufferView.BufferLocation += vertexGpuStart;
+	m_gIndexBufferView.BufferLocation += vertexGpuStart;
 }
 
 void VertexManagerVertexShader::CreateBuffers(ID3D12Device* device) {

@@ -4,7 +4,6 @@
 #include <memory>
 #include <cstdint>
 #include <atomic>
-#include <BufferView.hpp>
 #include <D3DResourceBuffer.hpp>
 #include <UploadContainer.hpp>
 #include <IModel.hpp>
@@ -29,8 +28,8 @@ private:
 	void SetMemoryAddresses() noexcept;
 
 private:
-	BufferView<D3D12_VERTEX_BUFFER_VIEW> m_gVertexBufferView;
-	BufferView<D3D12_INDEX_BUFFER_VIEW> m_gIndexBufferView;
+	D3D12_VERTEX_BUFFER_VIEW m_gVertexBufferView;
+	D3D12_INDEX_BUFFER_VIEW m_gIndexBufferView;
 	D3DUploadableResourceBuffer m_vertexBuffer;
 	std::unique_ptr<UploadContainer> m_vertexUploadContainer;
 	std::vector<Vertex> m_gVertices;

@@ -51,7 +51,8 @@ namespace Gaia {
 
 	// Initialization functions
 	void InitGraphicsQueueAndList(
-		ObjectManager& om, ID3D12Device4* d3dDevice, std::uint32_t commandAllocatorCount
+		ObjectManager& om, ID3D12Device4* d3dDevice, bool cmdList6,
+		std::uint32_t commandAllocatorCount
 	);
 	void InitCopyQueueAndList(ObjectManager& om, ID3D12Device4* d3dDevice);
 	void InitComputeQueueAndList(

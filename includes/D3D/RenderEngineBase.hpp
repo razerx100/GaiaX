@@ -11,7 +11,7 @@ class RenderEngineBase : public RenderEngine {
 public:
 	RenderEngineBase(ID3D12Device* device);
 
-	void Present(ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex) final;
+	void Present(size_t frameIndex) final;
 	void ExecutePostRenderStage() final;
 
 	void ResizeViewportAndScissor(std::uint32_t width, std::uint32_t height) noexcept final;
@@ -19,6 +19,20 @@ public:
 		ID3D12Device* device, std::uint32_t width, std::uint32_t height
 	) final;
 	void ReserveBuffers(ID3D12Device* device) final;
+
+	virtual void AddGVerticesAndIndices(
+		std::vector<Vertex>&& gVertices, std::vector<std::uint32_t>&& gIndices
+	) noexcept override;
+	virtual void RecordModelDataSet(
+		const std::vector<std::shared_ptr<IModel>>& models, const std::wstring& pixelShader
+	) noexcept override;
+	virtual void AddMeshletModelSet(
+		std::vector<MeshletModel>&& meshletModels, const std::wstring& pixelShader
+	) noexcept override;
+	virtual void AddGVerticesAndPrimIndices(
+		std::vector<Vertex>&& gVertices, std::vector<std::uint32_t>&& gVerticesIndices,
+		std::vector<std::uint32_t>&& gPrimIndices
+	) noexcept override;
 
 protected:
 	void ExecutePreGraphicsStage(

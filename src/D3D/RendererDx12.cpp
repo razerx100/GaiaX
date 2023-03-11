@@ -22,7 +22,9 @@ RendererDx12::RendererDx12(
 	m_objectManager.CreateObject(Gaia::debugLogger, { deviceRef }, 4u);
 #endif
 
-	Gaia::InitGraphicsQueueAndList(m_objectManager, deviceRef, bufferCount);
+	const bool meshDrawType = engineType == RenderEngineType::MeshDraw ? true : false;
+
+	Gaia::InitGraphicsQueueAndList(m_objectManager, deviceRef, meshDrawType, bufferCount);
 
 	SwapChainManager::Args swapChainArguments{
 		.device = deviceRef,
@@ -42,9 +44,7 @@ RendererDx12::RendererDx12(
 
 	m_objectManager.CreateObject(Gaia::descriptorTable, 0u);
 
-	const bool meshletModelData = engineType == RenderEngineType::MeshDraw ? true : false;
-
-	m_objectManager.CreateObject(Gaia::bufferManager, { bufferCount, meshletModelData }, 1u);
+	m_objectManager.CreateObject(Gaia::bufferManager, { bufferCount, meshDrawType }, 1u);
 	m_objectManager.CreateObject(Gaia::textureStorage, 0u);
 
 	m_objectManager.CreateObject(Gaia::cameraManager, 0u);
@@ -61,7 +61,7 @@ void RendererDx12::AddModelSet(
 void RendererDx12::AddMeshletModelSet(
 	std::vector<MeshletModel>&& meshletModels, const std::wstring& pixelShader
 ) {
-
+	Gaia::renderEngine->AddMeshletModelSet(std::move(meshletModels), pixelShader);
 }
 
 void RendererDx12::AddModelInputs(
@@ -74,7 +74,9 @@ void RendererDx12::AddModelInputs(
 	std::vector<Vertex>&& gVertices, std::vector<std::uint32_t>&& gVerticesIndices,
 	std::vector<std::uint32_t>&& gPrimIndices
 ) {
-
+	Gaia::renderEngine->AddGVerticesAndPrimIndices(
+		std::move(gVertices), std::move(gVerticesIndices), std::move(gPrimIndices)
+	);
 }
 
 void RendererDx12::Update() {
@@ -86,11 +88,9 @@ void RendererDx12::Update() {
 
 void RendererDx12::Render() {
 	const size_t currentBackIndex = Gaia::swapChain->GetCurrentBackBufferIndex();
-	ID3D12GraphicsCommandList* graphicsCommandList = Gaia::graphicsCmdList->GetCommandList();
 
-	Gaia::renderEngine->ExecutePreRenderStage(graphicsCommandList, currentBackIndex);
-	Gaia::renderEngine->RecordDrawCommands(graphicsCommandList, currentBackIndex);
-	Gaia::renderEngine->Present(graphicsCommandList, currentBackIndex);
+	Gaia::renderEngine->ExecuteRenderStage(currentBackIndex);
+	Gaia::renderEngine->Present(currentBackIndex);
 	Gaia::renderEngine->ExecutePostRenderStage();
 }
 

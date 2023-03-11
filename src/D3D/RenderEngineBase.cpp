@@ -6,9 +6,9 @@ RenderEngineBase::RenderEngineBase(ID3D12Device* device) : m_depthBuffer{ device
 	m_depthBuffer.SetMaxResolution(7680u, 4320u);
 }
 
-void RenderEngineBase::Present(
-	ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex
-) {
+void RenderEngineBase::Present(size_t frameIndex) {
+	ID3D12GraphicsCommandList* graphicsCommandList = Gaia::graphicsCmdList->GetCommandList();
+
 	D3DResourceBarrier().AddBarrier(
 		Gaia::swapChain->GetRTV(frameIndex),
 		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT
@@ -94,3 +94,20 @@ void RenderEngineBase::ReserveBuffers(ID3D12Device* device) {
 }
 
 void RenderEngineBase::ReserveBuffersDerived(ID3D12Device* device) {}
+
+void RenderEngineBase::AddGVerticesAndIndices(
+	std::vector<Vertex>&& gVertices, std::vector<std::uint32_t>&& gIndices
+) noexcept {}
+
+void RenderEngineBase::RecordModelDataSet(
+	const std::vector<std::shared_ptr<IModel>>& models, const std::wstring& pixelShader
+) noexcept {}
+
+void RenderEngineBase::AddMeshletModelSet(
+	std::vector<MeshletModel>&& meshletModels, const std::wstring& pixelShader
+) noexcept {}
+
+void RenderEngineBase::AddGVerticesAndPrimIndices(
+	std::vector<Vertex>&& gVertices, std::vector<std::uint32_t>&& gVerticesIndices,
+	std::vector<std::uint32_t>&& gPrimIndices
+) noexcept {}

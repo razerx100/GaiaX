@@ -30,12 +30,13 @@ namespace Gaia {
 	}
 
 	void InitGraphicsQueueAndList(
-		ObjectManager& om, ID3D12Device4* d3dDevice, std::uint32_t commandAllocatorCount
+		ObjectManager& om, ID3D12Device4* d3dDevice, bool cmdList6,
+		std::uint32_t commandAllocatorCount
 	) {
 		om.CreateObject(graphicsQueue, { d3dDevice, D3D12_COMMAND_LIST_TYPE_DIRECT }, 1u);
 		om.CreateObject(
 			graphicsCmdList,
-			{ d3dDevice, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAllocatorCount }, 1u
+			{ d3dDevice, D3D12_COMMAND_LIST_TYPE_DIRECT, cmdList6, commandAllocatorCount }, 1u
 		);
 		om.CreateObject(graphicsFence, { d3dDevice, commandAllocatorCount }, 1u);
 	}
@@ -43,7 +44,9 @@ namespace Gaia {
 	void InitCopyQueueAndList(ObjectManager& om, ID3D12Device4* d3dDevice) {
 		om.CreateObject(copyQueue, { d3dDevice, D3D12_COMMAND_LIST_TYPE_COPY }, 1u);
 		om.CreateObject(
-			copyCmdList, { .device = d3dDevice, .type = D3D12_COMMAND_LIST_TYPE_COPY }, 1u
+			copyCmdList,
+			{ .device = d3dDevice, .type = D3D12_COMMAND_LIST_TYPE_COPY, .cmdList6 = false },
+			1u
 		);
 	}
 
@@ -53,7 +56,7 @@ namespace Gaia {
 		om.CreateObject(computeQueue, { d3dDevice, D3D12_COMMAND_LIST_TYPE_COMPUTE }, 1u);
 		om.CreateObject(
 			computeCmdList,
-			{ d3dDevice, D3D12_COMMAND_LIST_TYPE_COMPUTE, commandAllocatorCount }, 1u
+			{ d3dDevice, D3D12_COMMAND_LIST_TYPE_COMPUTE, false, commandAllocatorCount }, 1u
 		);
 		om.CreateObject(computeFence, { d3dDevice, commandAllocatorCount }, 1u);
 	}
