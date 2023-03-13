@@ -27,6 +27,7 @@ namespace Gaia {
 		std::unique_ptr<D3DHeap> gpuOnlyHeap;
 		std::unique_ptr<D3DHeap> cpuReadBackHeap;
 		std::unique_ptr<D3DResourceBuffer> cpuWriteBuffer;
+		std::unique_ptr<UploadContainer> uploadContainer;
 	}
 
 	void InitGraphicsQueueAndList(
@@ -88,5 +89,6 @@ namespace Gaia {
 		om.CreateObject(Resources::gpuOnlyHeap, { D3D12_HEAP_TYPE_DEFAULT }, 2u);
 
 		om.CreateObject(Resources::cpuWriteBuffer, { ResourceType::cpuWrite }, 1u);
+		om.CreateObject(Resources::uploadContainer, 0u);
 	}
 }

@@ -42,7 +42,6 @@ public:
 	virtual void ReserveBuffers(ID3D12Device* device) = 0;
 	virtual void RecordResourceUploads(ID3D12GraphicsCommandList* copyList) noexcept = 0;
 	virtual void ReleaseUploadResources() noexcept = 0;
-	virtual void CopyData(std::atomic_size_t& workCount) const noexcept = 0;
 
 	void SetBackgroundColour(const std::array<float, 4>& colour) noexcept;
 	void SetShaderPath(const wchar_t* path) noexcept;

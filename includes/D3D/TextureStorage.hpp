@@ -5,7 +5,6 @@
 #include <vector>
 #include <memory>
 #include <D3DDescriptorView.hpp>
-#include <UploadContainer.hpp>
 
 class TextureStorage {
 public:
@@ -24,13 +23,11 @@ public:
 	void ReleaseUploadResource() noexcept;
 
 	void BindTextures(ID3D12GraphicsCommandList* graphicsList) const noexcept;
-	void CopyData(std::atomic_size_t& workCount) const noexcept;
 
 private:
 	std::vector<std::unique_ptr<D3DUploadResourceDescriptorView>> m_textureDescriptors;
 	D3D12_GPU_DESCRIPTOR_HANDLE m_textureDescriptorStart;
 	std::vector<std::unique_ptr<std::uint8_t>> m_textureHandles;
 	std::vector<UINT> m_graphicsRSLayout;
-	std::unique_ptr<UploadContainer> m_textureUploadContainer;
 };
 #endif

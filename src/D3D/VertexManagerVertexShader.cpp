@@ -2,8 +2,8 @@
 #include <Gaia.hpp>
 
 VertexManagerVertexShader::VertexManagerVertexShader() noexcept
-	: m_gVertexBufferView{}, m_gIndexBufferView{},
-	m_vertexUploadContainer{ std::make_unique<UploadContainer>() } {}
+	: m_gVertexBufferView{}, m_gIndexBufferView{}, m_verticesOffset{ 0u },
+	m_indicesOffset{ 0u } {}
 
 void VertexManagerVertexShader::AddGVerticesAndIndices(
 	std::vector<Vertex>&& gVertices, std::vector<std::uint32_t>&& gIndices
@@ -18,9 +18,6 @@ void VertexManagerVertexShader::AddGVerticesAndIndices(
 	const size_t indexOffset = m_vertexBuffer.ReserveSpaceAndGetOffset(
 		indexBufferSize
 	);
-
-	m_vertexUploadContainer->AddMemory(std::data(gVertices), vertexBufferSize, vertexOffset);
-	m_vertexUploadContainer->AddMemory(std::data(gIndices), indexBufferSize, indexOffset);
 
 	m_gVertexBufferView = D3D12_VERTEX_BUFFER_VIEW{
 		.BufferLocation = static_cast<D3D12_GPU_VIRTUAL_ADDRESS>(vertexOffset),
@@ -46,20 +43,25 @@ void VertexManagerVertexShader::BindVertexAndIndexBuffer(
 	graphicsCmdList->IASetIndexBuffer(&m_gIndexBufferView);
 }
 
-void VertexManagerVertexShader::SetMemoryAddresses() noexcept {
-	std::uint8_t* vertexBufferUploadStartAddress = m_vertexBuffer.GetCPUStartAddress();
-	m_vertexUploadContainer->SetStartingAddress(vertexBufferUploadStartAddress);
+void VertexManagerVertexShader::CreateBuffers(ID3D12Device* device) {
+	m_vertexBuffer.CreateResource(device);
+
+	std::uint8_t* vertexCpuStart = m_vertexBuffer.GetCPUStartAddress();
+
+	Gaia::Resources::uploadContainer->AddMemory(
+		std::data(m_gVertices), vertexCpuStart + m_gVertexBufferView.BufferLocation,
+		m_gVertexBufferView.SizeInBytes
+	);
+
+	Gaia::Resources::uploadContainer->AddMemory(
+		std::data(m_gIndices), vertexCpuStart + m_gIndexBufferView.BufferLocation,
+		m_gIndexBufferView.SizeInBytes
+	);
 
 	const D3D12_GPU_VIRTUAL_ADDRESS vertexGpuStart = m_vertexBuffer.GetGPUStartAddress();
 
 	m_gVertexBufferView.BufferLocation += vertexGpuStart;
 	m_gIndexBufferView.BufferLocation += vertexGpuStart;
-}
-
-void VertexManagerVertexShader::CreateBuffers(ID3D12Device* device) {
-	m_vertexBuffer.CreateResource(device);
-
-	SetMemoryAddresses();
 }
 
 void VertexManagerVertexShader::ReserveBuffers(ID3D12Device* device) {
@@ -74,12 +76,7 @@ void VertexManagerVertexShader::RecordResourceUploads(
 
 void VertexManagerVertexShader::ReleaseUploadResources() noexcept {
 	m_vertexBuffer.ReleaseUploadResource();
-	m_vertexUploadContainer.reset();
 
 	m_gIndices = std::vector<std::uint32_t>{};
 	m_gVertices = std::vector<Vertex>{};
-}
-
-void VertexManagerVertexShader::CopyData(std::atomic_size_t& workCount) const noexcept {
-	m_vertexUploadContainer->CopyData(workCount);
 }

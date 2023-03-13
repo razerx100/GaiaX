@@ -1,9 +1,7 @@
 #include <TextureStorage.hpp>
 #include <Gaia.hpp>
 
-TextureStorage::TextureStorage() noexcept
-	: m_textureDescriptorStart{},
-	m_textureUploadContainer{ std::make_unique<UploadContainer>() } {}
+TextureStorage::TextureStorage() noexcept : m_textureDescriptorStart{} {}
 
 size_t TextureStorage::AddTexture(
 	ID3D12Device* device, std::unique_ptr<std::uint8_t> textureDataHandle, size_t width,
@@ -51,9 +49,9 @@ void TextureStorage::CreateBufferViews(ID3D12Device* device) {
 		);
 
 		const D3D12_RESOURCE_DESC textureDesc = textureDescriptor->GetResourceDesc();
-		m_textureUploadContainer->AddMemory(
-			std::move(m_textureHandles[index]), textureDesc.Width * 4u, textureDesc.Height,
-			textureDescriptor->GetFirstCPUWPointer()
+		Gaia::Resources::uploadContainer->AddMemory(
+			m_textureHandles[index].get(), textureDescriptor->GetFirstCPUWPointer(),
+			textureDesc.Width * 4u, textureDesc.Height
 		);
 	}
 }
@@ -76,13 +74,8 @@ void TextureStorage::ReleaseUploadResource() noexcept {
 		textureDesc->ReleaseUploadResource();
 
 	m_textureHandles = std::vector<std::unique_ptr<std::uint8_t>>();
-	m_textureUploadContainer.reset();
 }
 
 void TextureStorage::SetGraphicsRootSignatureLayout(std::vector<UINT> rsLayout) noexcept {
 	m_graphicsRSLayout = std::move(rsLayout);
-}
-
-void TextureStorage::CopyData(std::atomic_size_t& workCount) const noexcept {
-	m_textureUploadContainer->CopyData(workCount);
 }

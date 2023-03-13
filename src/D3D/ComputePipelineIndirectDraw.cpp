@@ -34,13 +34,13 @@ void ComputePipelineIndirectDraw::CreateComputePipelineObject(
 void ComputePipelineIndirectDraw::DispatchCompute(
 	ID3D12GraphicsCommandList* computeCommandList, size_t frameIndex
 ) const noexcept {
-	static constexpr size_t argumentBufferSRVIndex =
+	static constexpr auto argumentBufferSRVIndex =
 		static_cast<size_t>(RootSigElement::IndirectArgsSRV);
-	static constexpr size_t argumentBufferUAVIndex =
+	static constexpr auto argumentBufferUAVIndex =
 		static_cast<size_t>(RootSigElement::IndirectArgsUAV);
-	static constexpr size_t counterBufferIndex =
+	static constexpr auto counterBufferIndex =
 		static_cast<size_t>(RootSigElement::IndirectArgsCounterUAV);
-	static constexpr size_t cullingDataIndex =
+	static constexpr auto cullingDataIndex =
 		static_cast<size_t>(RootSigElement::CullingData);
 
 	computeCommandList->SetComputeRootDescriptorTable(
@@ -128,14 +128,10 @@ void ComputePipelineIndirectDraw::CreateBuffers(ID3D12Device* device) {
 	const UINT zeroValue = 0u;
 	memcpy(counterCPUPtr, &zeroValue, sizeof(UINT));
 
-	// Copy Indirect Arguments
-	std::uint8_t* argumentCPUPtr = m_argumentBufferSRV.GetFirstCPUWPointer();
-	memcpy(
-		argumentCPUPtr, std::data(m_indirectArguments),
+	Gaia::Resources::uploadContainer->AddMemory(
+		std::data(m_indirectArguments), m_argumentBufferSRV.GetFirstCPUWPointer(),
 		sizeof(ModelDrawArguments) * std::size(m_indirectArguments)
 	);
-
-	m_indirectArguments = std::vector<ModelDrawArguments>();
 }
 
 void ComputePipelineIndirectDraw::ReserveBuffers(ID3D12Device* device) {
@@ -237,6 +233,8 @@ void ComputePipelineIndirectDraw::ReleaseUploadResource() noexcept {
 
 	for (auto& counterBuffer : m_counterBuffers)
 		counterBuffer.ReleaseUploadResource();
+
+	m_indirectArguments = std::vector<ModelDrawArguments>();
 }
 
 std::unique_ptr<RootSignatureDynamic> ComputePipelineIndirectDraw::_createComputeRootSignature(

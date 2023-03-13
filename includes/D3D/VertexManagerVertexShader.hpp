@@ -5,7 +5,6 @@
 #include <cstdint>
 #include <atomic>
 #include <D3DResourceBuffer.hpp>
-#include <UploadContainer.hpp>
 #include <IModel.hpp>
 
 class VertexManagerVertexShader {
@@ -22,17 +21,14 @@ public:
 	void ReserveBuffers(ID3D12Device* device);
 	void RecordResourceUploads(ID3D12GraphicsCommandList* copyList) noexcept;
 	void ReleaseUploadResources() noexcept;
-	void CopyData(std::atomic_size_t& workCount) const noexcept;
 
 private:
-	void SetMemoryAddresses() noexcept;
-
-private:
+	D3DUploadableResourceBuffer m_vertexBuffer;
 	D3D12_VERTEX_BUFFER_VIEW m_gVertexBufferView;
 	D3D12_INDEX_BUFFER_VIEW m_gIndexBufferView;
-	D3DUploadableResourceBuffer m_vertexBuffer;
-	std::unique_ptr<UploadContainer> m_vertexUploadContainer;
 	std::vector<Vertex> m_gVertices;
 	std::vector<std::uint32_t> m_gIndices;
+	size_t m_verticesOffset;
+	size_t m_indicesOffset;
 };
 #endif

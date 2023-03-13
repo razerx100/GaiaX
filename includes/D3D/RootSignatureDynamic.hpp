@@ -16,6 +16,9 @@ enum class RootSigElement {
 	MaterialData,
 	LightData,
 	PixelData,
+	VertexData,
+	VertexIndices,
+	PrimIndices,
 	ElementCount
 };
 

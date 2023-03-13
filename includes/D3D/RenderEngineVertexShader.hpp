@@ -19,7 +19,6 @@ public:
 	void CreateBuffers(ID3D12Device* device) final;
 	void RecordResourceUploads(ID3D12GraphicsCommandList* copyList) noexcept final;
 	void ReleaseUploadResources() noexcept final;
-	void CopyData(std::atomic_size_t& workCount) const noexcept final;
 
 protected:
 	[[nodiscard]]

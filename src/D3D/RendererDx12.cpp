@@ -161,8 +161,7 @@ void RendererDx12::ProcessData() {
 	// Async copy start
 	std::atomic_size_t workCount = 0u;
 
-	Gaia::renderEngine->CopyData(workCount);
-	Gaia::textureStorage->CopyData(workCount);
+	Gaia::Resources::uploadContainer->CopyData(workCount);
 
 	Gaia::descriptorTable->CopyUploadHeap(device);
 

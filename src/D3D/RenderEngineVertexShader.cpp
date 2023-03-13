@@ -41,10 +41,6 @@ void RenderEngineVertexShader::ReleaseUploadResources() noexcept {
 	_releaseUploadResources();
 }
 
-void RenderEngineVertexShader::CopyData(std::atomic_size_t& workCount) const noexcept {
-	m_vertexManager.CopyData(workCount);
-}
-
 void RenderEngineVertexShader::_createBuffers(ID3D12Device* device) {}
 void RenderEngineVertexShader::_reserveBuffers(ID3D12Device* device) {}
 void RenderEngineVertexShader::_recordResourceUploads(
