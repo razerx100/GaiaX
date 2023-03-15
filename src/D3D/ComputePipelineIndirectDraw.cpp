@@ -75,16 +75,9 @@ void ComputePipelineIndirectDraw::CreateBuffers(ID3D12Device* device) {
 		device, uploadDescriptorStart, gpuDescriptorStart, D3D12_RESOURCE_STATE_COPY_DEST
 	);
 
-	for (auto& argumentBufferUAV : m_argumentBufferUAVs)
-		argumentBufferUAV.CreateDescriptorView(
-			device, uploadDescriptorStart, gpuDescriptorStart,
-			D3D12_RESOURCE_STATE_UNORDERED_ACCESS
-		);
+	CreateDescriptorViews(device, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, m_argumentBufferUAVs);
 
-	for (auto& counterBuffer : m_counterBuffers)
-		counterBuffer.CreateDescriptorView(
-			device, uploadDescriptorStart, gpuDescriptorStart, D3D12_RESOURCE_STATE_COPY_DEST
-		);
+	CreateDescriptorViews(device, D3D12_RESOURCE_STATE_COPY_DEST, m_counterBuffers);
 
 	m_counterResetBuffer.CreateResource(device, D3D12_RESOURCE_STATE_GENERIC_READ);
 	m_cullingDataBuffer.CreateResource(device);
@@ -92,12 +85,13 @@ void ComputePipelineIndirectDraw::CreateBuffers(ID3D12Device* device) {
 	// copy the culling data to the buffer.
 	std::uint8_t* cullingBufferPtr = m_cullingDataBuffer.GetFirstCPUWPointer();
 
-	CullingData cullingData{};
-	cullingData.modelCount = static_cast<std::uint32_t>(std::size(m_indirectArguments));
-	cullingData.modelTypes = static_cast<std::uint32_t>(std::size(m_modelCountOffsets));
-	cullingData.xBounds = XBOUNDS;
-	cullingData.yBounds = YBOUNDS;
-	cullingData.zBounds = ZBOUNDS;
+	CullingData cullingData{
+		.modelCount = static_cast<std::uint32_t>(std::size(m_indirectArguments)),
+		.modelTypes = static_cast<std::uint32_t>(std::size(m_modelCountOffsets)),
+		.xBounds = XBOUNDS,
+		.yBounds = YBOUNDS,
+		.zBounds = ZBOUNDS
+	};
 
 	memcpy(cullingBufferPtr, &cullingData, sizeof(CullingData));
 
@@ -142,34 +136,29 @@ void ComputePipelineIndirectDraw::ReserveBuffers(ID3D12Device* device) {
 	size_t counterDescriptorOffset =
 		Gaia::descriptorTable->ReserveDescriptorsAndGetOffset(m_frameCount);
 
-	const UINT descriptorSize =
-		device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	static constexpr auto indirectStructSize = static_cast<UINT>(sizeof(ModelDrawArguments));
 
-	m_argumentBufferSRV.SetDescriptorOffset(argumentDescriptorOffsetSRV, descriptorSize);
-	m_argumentBufferSRV.SetBufferInfo(device, indirectStructSize, m_modelCount);
+	SetDescBufferInfo(
+		device, argumentDescriptorOffsetSRV, indirectStructSize, m_modelCount,
+		m_argumentBufferSRV
+	);
 
-	for (auto& argumentBufferUAV : m_argumentBufferUAVs) {
-		argumentBufferUAV.SetDescriptorOffset(argumentDescriptorOffsetUAV, descriptorSize);
-		argumentBufferUAV.SetBufferInfo(device, indirectStructSize, m_modelCount);
-
-		++argumentDescriptorOffsetUAV;
-	}
+	SetDescBuffersInfo(
+		device, argumentDescriptorOffsetUAV, indirectStructSize, m_modelCount,
+		m_argumentBufferUAVs
+	);
 
 	const auto counterCount = static_cast<UINT>(std::size(m_modelCountOffsets));
 
-	for (auto& counterBuffer : m_counterBuffers) {
-		counterBuffer.SetDescriptorOffset(counterDescriptorOffset, descriptorSize);
-		counterBuffer.SetBufferInfo(device, COUNTERBUFFERSTRIDE, counterCount);
+	SetDescBuffersInfo(
+		device, counterDescriptorOffset, COUNTERBUFFERSTRIDE, counterCount, m_counterBuffers
+	);
 
-		++counterDescriptorOffset;
-	}
+	SetResourceViewBufferInfo(device, static_cast<UINT64>(sizeof(UINT)), m_counterResetBuffer);
 
-	m_counterResetBuffer.SetBufferInfo(sizeof(UINT));
-	m_counterResetBuffer.ReserveHeapSpace(device);
-
-	m_cullingDataBuffer.SetBufferInfo(sizeof(CullingData));
-	m_cullingDataBuffer.ReserveHeapSpace(device);
+	SetResourceViewBufferInfo(
+		device, static_cast<UINT64>(sizeof(CullingData)), m_cullingDataBuffer
+	);
 }
 
 void ComputePipelineIndirectDraw::RecordIndirectArguments(

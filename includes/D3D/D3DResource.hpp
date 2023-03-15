@@ -137,4 +137,14 @@ private:
 	D3DResourceView m_gpuResource;
 	bool m_texture;
 };
+
+// Helper Functions
+template<typename T>
+void SetResourceViewBufferInfo(
+	ID3D12Device* device, UINT64 bufferSize, T& resView, UINT64 allocationCount = 1u,
+	UINT64 alignment = 4u
+) noexcept {
+	resView.SetBufferInfo(bufferSize, allocationCount, alignment);
+	resView.ReserveHeapSpace(device);
+}
 #endif

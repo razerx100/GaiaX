@@ -32,6 +32,7 @@ public:
 	void SetGraphicsRootSignatureLayout(RSLayoutType rsLayout) noexcept;
 
 	void AddOpaqueModels(std::vector<std::shared_ptr<IModel>>&& models) noexcept;
+	void AddOpaqueModels(std::vector<MeshletModel>&& meshletModels) noexcept;
 	void ReserveBuffers(ID3D12Device* device) noexcept;
 	void CreateBuffers(ID3D12Device* device);
 
@@ -91,6 +92,7 @@ private:
 		size_t bufferIndex, const DirectX::XMMATRIX& viewMatrix
 	) const noexcept;
 	void UpdatePixelData(size_t bufferIndex) const noexcept;
+	void CheckLightSourceAndAddOpaque(std::shared_ptr<IModel>&& model, size_t index) noexcept;
 
 	template<bool meshletModel>
 	void UpdatePerModelData(

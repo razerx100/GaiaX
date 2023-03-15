@@ -3,6 +3,7 @@
 #include <AddressContainer.hpp>
 #include <D3DResource.hpp>
 #include <D3DHelperFunctions.hpp>
+#include <UploadContainer.hpp>
 #include <vector>
 #include <type_traits>
 #include <cassert>
@@ -94,10 +95,10 @@ public:
 		m_elementCount = elementsPerAllocation;
 		m_subAllocationCount = static_cast<UINT64>(subAllocationCount);
 
-		this->m_resourceBuffer.SetBufferInfo(
-			strideSize * elementsPerAllocation, subAllocationCount
+		SetResourceViewBufferInfo(
+			device, strideSize * elementsPerAllocation, this->m_resourceBuffer,
+			subAllocationCount
 		);
-		this->m_resourceBuffer.ReserveHeapSpace(device);
 	}
 
 	void CreateDescriptorView(
@@ -294,4 +295,74 @@ private:
 	UINT m_strideSize;
 	UINT m_elementCount;
 };
+
+// Helper Functions
+[[nodiscard]]
+UploadContainer* GetGUploadContainer() noexcept;
+[[nodiscard]]
+D3D12_CPU_DESCRIPTOR_HANDLE GetUploadDescsStart() noexcept;
+[[nodiscard]]
+D3D12_GPU_DESCRIPTOR_HANDLE GetGPUDescsStart() noexcept;
+
+template<typename T>
+void CreateUploadDescView(
+	ID3D12Device* device, D3DUploadResourceDescriptorView& buffer, std::vector<T>& bufferData
+) noexcept {
+	const D3D12_CPU_DESCRIPTOR_HANDLE uploadDescStart = GetUploadDescsStart();
+	const D3D12_GPU_DESCRIPTOR_HANDLE gpuDescStart = GetGPUDescsStart();
+
+	buffer.CreateDescriptorView(
+		device, uploadDescStart, gpuDescStart, D3D12_RESOURCE_STATE_COPY_DEST
+	);
+	GetGUploadContainer()->AddMemory(
+		std::data(bufferData), buffer.GetFirstCPUWPointer(),
+		sizeof(T) * std::size(bufferData)
+	);
+}
+
+template<typename T>
+void CreateDescriptorViews(
+	ID3D12Device* device, D3D12_RESOURCE_STATES startState, std::vector<T>& descViews
+) noexcept {
+	const D3D12_CPU_DESCRIPTOR_HANDLE uploadDescStart = GetUploadDescsStart();
+	const D3D12_GPU_DESCRIPTOR_HANDLE gpuDescStart = GetGPUDescsStart();
+
+	for (auto& descView : descViews)
+		descView.CreateDescriptorView(device, uploadDescStart, gpuDescStart, startState);
+}
+
+template<typename T>
+void SetDescBufferInfo(
+	ID3D12Device* device, size_t descOffset, UINT64 bufferStride, UINT elementCount,
+	T& descView, size_t subAllocationCount = 1u
+) noexcept {
+	const UINT descSize =
+		device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+	descView.SetDescriptorOffset(descOffset, descSize);
+	descView.SetBufferInfo(device, bufferStride, elementCount, subAllocationCount);
+}
+
+template<typename T, typename G>
+void SetDescBufferInfo(
+	ID3D12Device* device, size_t descOffset, const std::vector<G>& descData,
+	T& descView, size_t subAllocationCount = 1u
+) noexcept {
+	SetDescBufferInfo(
+		device, descOffset, static_cast<UINT64>(sizeof(G)),
+		static_cast<UINT>(std::size(descData)), descView, subAllocationCount
+	);
+}
+
+template<typename T>
+void SetDescBuffersInfo(
+	ID3D12Device* device, size_t descOffset, UINT64 bufferStride, UINT elementCount,
+	std::vector<T>& descViews
+) noexcept {
+	for (auto& descView : descViews) {
+		SetDescBufferInfo(device, descOffset, bufferStride, elementCount, descView);
+
+		++descOffset;
+	}
+}
 #endif

@@ -26,25 +26,6 @@ public:
 	void ReleaseUploadResource() noexcept;
 
 private:
-	[[nodiscard]]
-	UploadContainer* GetGUploadContainer() const noexcept;
-
-	template<typename T>
-	void CreateBuffer(
-		ID3D12Device* device, const D3D12_CPU_DESCRIPTOR_HANDLE& uploadHandle,
-		const D3D12_GPU_DESCRIPTOR_HANDLE& gpuHandle, D3DUploadResourceDescriptorView& buffer,
-		std::vector<T>& bufferData
-	) noexcept {
-		buffer.CreateDescriptorView(
-			device, uploadHandle, gpuHandle, D3D12_RESOURCE_STATE_COPY_DEST
-		);
-		GetGUploadContainer()->AddMemory(
-			std::data(bufferData), buffer.GetFirstCPUWPointer(),
-			sizeof(T) * std::size(bufferData)
-		);
-	}
-
-private:
 	RSLayoutType m_graphicsRSLayout;
 	D3DUploadResourceDescriptorView m_vertexBuffer;
 	D3DUploadResourceDescriptorView m_vertexIndicesBuffer;

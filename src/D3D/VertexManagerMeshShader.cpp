@@ -42,57 +42,29 @@ void VertexManagerMeshShader::SetGraphicsRootSignatureLayout(RSLayoutType rsLayo
 }
 
 void VertexManagerMeshShader::ReserveBuffers(ID3D12Device* device) noexcept {
-	const UINT descriptorSize =
-		device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
 	const size_t vertexDescriptorOffset =
 		Gaia::descriptorTable->ReserveDescriptorsAndGetOffset();
-	m_vertexBuffer.SetDescriptorOffset(vertexDescriptorOffset, descriptorSize);
-	m_vertexBuffer.SetBufferInfo(
-		device, static_cast<UINT64>(sizeof(Vertex)), static_cast<UINT>(std::size(m_gVertices))
-	);
+	SetDescBufferInfo(device, vertexDescriptorOffset, m_gVertices, m_vertexBuffer);
 
 	const size_t vertexIndicesDescriptorOffset =
 		Gaia::descriptorTable->ReserveDescriptorsAndGetOffset();
-	m_vertexIndicesBuffer.SetDescriptorOffset(vertexIndicesDescriptorOffset, descriptorSize);
-	m_vertexIndicesBuffer.SetBufferInfo(
-		device, static_cast<UINT64>(sizeof(std::uint32_t)),
-		static_cast<UINT>(std::size(m_gVerticesIndices))
+	SetDescBufferInfo(
+		device, vertexIndicesDescriptorOffset, m_gVerticesIndices, m_vertexIndicesBuffer
 	);
 
 	const size_t primIndicesDescriptorOffset =
 		Gaia::descriptorTable->ReserveDescriptorsAndGetOffset();
-	m_primIndicesBuffer.SetDescriptorOffset(primIndicesDescriptorOffset, descriptorSize);
-	m_primIndicesBuffer.SetBufferInfo(
-		device, static_cast<UINT64>(sizeof(std::uint32_t)),
-		static_cast<UINT>(std::size(m_gPrimIndices))
+	SetDescBufferInfo(
+		device, primIndicesDescriptorOffset, m_gPrimIndices, m_primIndicesBuffer
 	);
 }
 
 void VertexManagerMeshShader::CreateBuffers(ID3D12Device* device) {
-	const D3D12_CPU_DESCRIPTOR_HANDLE uploadDescriptorStart =
-		Gaia::descriptorTable->GetUploadDescriptorStart();
+	CreateUploadDescView(device, m_vertexBuffer, m_gVertices);
 
-	const D3D12_GPU_DESCRIPTOR_HANDLE gpuDescriptorStart =
-		Gaia::descriptorTable->GetGPUDescriptorStart();
+	CreateUploadDescView(device, m_vertexIndicesBuffer,m_gVerticesIndices);
 
-	CreateBuffer(
-		device, uploadDescriptorStart, gpuDescriptorStart, m_vertexBuffer, m_gVertices
-	);
-
-	CreateBuffer(
-		device, uploadDescriptorStart, gpuDescriptorStart, m_vertexIndicesBuffer,
-		m_gVerticesIndices
-	);
-
-	CreateBuffer(
-		device, uploadDescriptorStart, gpuDescriptorStart, m_primIndicesBuffer,
-		m_gPrimIndices
-	);
-}
-
-UploadContainer* VertexManagerMeshShader::GetGUploadContainer() const noexcept {
-	return Gaia::Resources::uploadContainer.get();
+	CreateUploadDescView(device, m_primIndicesBuffer, m_gPrimIndices);
 }
 
 void VertexManagerMeshShader::RecordResourceUpload(

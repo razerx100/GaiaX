@@ -62,8 +62,7 @@ void D3DDescriptorViewUAVCounter::SetBufferInfo(
 	UINT64 bufferSize = strideSize * elementCount;
 	m_counterOffset = Align(bufferSize, D3D12_UAV_COUNTER_PLACEMENT_ALIGNMENT);
 
-	m_resourceBuffer.SetBufferInfo(m_counterOffset + sizeof(UINT));
-	m_resourceBuffer.ReserveHeapSpace(device);
+	SetResourceViewBufferInfo(device, m_counterOffset + sizeof(UINT), m_resourceBuffer);
 }
 
 D3D12_GPU_DESCRIPTOR_HANDLE D3DDescriptorViewUAVCounter::GetGPUDescriptorHandle() const noexcept {
@@ -107,4 +106,16 @@ void D3DDescriptorViewUAVCounter::CreateDescriptorView(
 
 	m_resourceBuffer.CreateResource(device, D3D12_RESOURCE_STATE_COPY_DEST);
 	CreateBufferDescriptors(device);
+}
+
+UploadContainer* GetGUploadContainer() noexcept {
+	return Gaia::Resources::uploadContainer.get();
+}
+
+D3D12_CPU_DESCRIPTOR_HANDLE GetUploadDescsStart() noexcept {
+	return Gaia::descriptorTable->GetUploadDescriptorStart();
+}
+
+D3D12_GPU_DESCRIPTOR_HANDLE GetGPUDescsStart() noexcept {
+	return Gaia::descriptorTable->GetGPUDescriptorStart();
 }

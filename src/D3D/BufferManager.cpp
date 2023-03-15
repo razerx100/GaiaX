@@ -33,38 +33,33 @@ void BufferManager::ReserveBuffers(ID3D12Device* device) noexcept {
 		pixelDataOffset, pixelDataBufferSize, constantBufferAlignment
 	);
 
-	const UINT descriptorSize =
-		device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
 	// Model Data
 	const size_t modelBufferDescriptorOffset =
 		Gaia::descriptorTable->ReserveDescriptorsAndGetOffset(m_frameCount);
 	const auto modelCount = static_cast<UINT>(std::size(m_opaqueModels));
-
-	m_modelBuffers.SetDescriptorOffset(modelBufferDescriptorOffset, descriptorSize);
-
 	const UINT64 modelBufferStride = m_meshletModelData ?
 		static_cast<UINT64>(sizeof(ModelBufferMesh)) : static_cast<UINT64>(sizeof(ModelBuffer));
 
-	m_modelBuffers.SetBufferInfo(device, modelBufferStride, modelCount, m_frameCount);
+	SetDescBufferInfo(
+		device, modelBufferDescriptorOffset, modelBufferStride, modelCount, m_modelBuffers,
+		m_frameCount
+	);
 
 	// Material Data
 	const size_t materialBufferDescriptorOffset =
 		Gaia::descriptorTable->ReserveDescriptorsAndGetOffset(m_frameCount);
 
-	m_materialBuffers.SetDescriptorOffset(materialBufferDescriptorOffset, descriptorSize);
-	m_materialBuffers.SetBufferInfo(
-		device, static_cast<UINT64>(sizeof(MaterialBuffer)), modelCount, m_frameCount
+	SetDescBufferInfo(
+		device, materialBufferDescriptorOffset, static_cast<UINT64>(sizeof(MaterialBuffer)),
+		modelCount, m_materialBuffers, m_frameCount
 	);
 
 	// Light Data
 	const size_t lightBufferDescriptorOffset =
 		Gaia::descriptorTable->ReserveDescriptorsAndGetOffset(m_frameCount);
 
-	m_lightBuffers.SetDescriptorOffset(lightBufferDescriptorOffset, descriptorSize);
-	m_lightBuffers.SetBufferInfo(
-		device, static_cast<UINT64>(sizeof(LightBuffer)),
-		static_cast<UINT>(std::size(m_lightModelIndices)), m_frameCount
+	SetDescBufferInfo(
+		device, lightBufferDescriptorOffset, m_lightModelIndices, m_lightBuffers, m_frameCount
 	);
 }
 
@@ -149,12 +144,23 @@ void BufferManager::SetGraphicsRootSignatureLayout(RSLayoutType rsLayout) noexce
 	m_graphicsRSLayout = std::move(rsLayout);
 }
 
+void BufferManager::CheckLightSourceAndAddOpaque(
+	std::shared_ptr<IModel>&& model, size_t index
+) noexcept {
+	if (model->IsLightSource())
+		m_lightModelIndices.emplace_back(std::size(m_opaqueModels) + index);
+
+	m_opaqueModels.emplace_back(std::move(model));
+}
+
 void BufferManager::AddOpaqueModels(std::vector<std::shared_ptr<IModel>>&& models) noexcept {
 	for (size_t index = 0u; index < std::size(models); ++index)
-		if (models[index]->IsLightSource())
-			m_lightModelIndices.emplace_back(std::size(m_opaqueModels) + index);
+		CheckLightSourceAndAddOpaque(std::move(models[index]), index);
+}
 
-	std::ranges::move(models, std::back_inserter(m_opaqueModels));
+void BufferManager::AddOpaqueModels(std::vector<MeshletModel>&& meshletModels) noexcept {
+	for (size_t index = 0u; index < std::size(meshletModels); ++index)
+		CheckLightSourceAndAddOpaque(std::move(meshletModels[index].model), index);
 }
 
 void BufferManager::UpdateCameraData(size_t bufferIndex) const noexcept {
