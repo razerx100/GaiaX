@@ -59,7 +59,8 @@ void BufferManager::ReserveBuffers(ID3D12Device* device) noexcept {
 		Gaia::descriptorTable->ReserveDescriptorsAndGetOffset(m_frameCount);
 
 	SetDescBufferInfo(
-		device, lightBufferDescriptorOffset, m_lightModelIndices, m_lightBuffers, m_frameCount
+		device, lightBufferDescriptorOffset, static_cast<UINT64>(sizeof(LightBuffer)),
+		static_cast<UINT>(std::size(m_lightModelIndices)), m_lightBuffers, m_frameCount
 	);
 }
 
@@ -144,23 +145,21 @@ void BufferManager::SetGraphicsRootSignatureLayout(RSLayoutType rsLayout) noexce
 	m_graphicsRSLayout = std::move(rsLayout);
 }
 
-void BufferManager::CheckLightSourceAndAddOpaque(
-	std::shared_ptr<IModel>&& model, size_t index
-) noexcept {
+void BufferManager::CheckLightSourceAndAddOpaque(std::shared_ptr<IModel>&& model) noexcept {
 	if (model->IsLightSource())
-		m_lightModelIndices.emplace_back(std::size(m_opaqueModels) + index);
+		m_lightModelIndices.emplace_back(std::size(m_opaqueModels));
 
 	m_opaqueModels.emplace_back(std::move(model));
 }
 
 void BufferManager::AddOpaqueModels(std::vector<std::shared_ptr<IModel>>&& models) noexcept {
 	for (size_t index = 0u; index < std::size(models); ++index)
-		CheckLightSourceAndAddOpaque(std::move(models[index]), index);
+		CheckLightSourceAndAddOpaque(std::move(models[index]));
 }
 
 void BufferManager::AddOpaqueModels(std::vector<MeshletModel>&& meshletModels) noexcept {
 	for (size_t index = 0u; index < std::size(meshletModels); ++index)
-		CheckLightSourceAndAddOpaque(std::move(meshletModels[index].model), index);
+		CheckLightSourceAndAddOpaque(std::move(meshletModels[index].model));
 }
 
 void BufferManager::UpdateCameraData(size_t bufferIndex) const noexcept {

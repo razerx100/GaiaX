@@ -92,7 +92,7 @@ private:
 		size_t bufferIndex, const DirectX::XMMATRIX& viewMatrix
 	) const noexcept;
 	void UpdatePixelData(size_t bufferIndex) const noexcept;
-	void CheckLightSourceAndAddOpaque(std::shared_ptr<IModel>&& model, size_t index) noexcept;
+	void CheckLightSourceAndAddOpaque(std::shared_ptr<IModel>&& model) noexcept;
 
 	template<bool meshletModel>
 	void UpdatePerModelData(
