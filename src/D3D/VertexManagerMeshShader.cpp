@@ -2,8 +2,8 @@
 #include <Gaia.hpp>
 
 VertexManagerMeshShader::VertexManagerMeshShader() noexcept
-	: m_vertexBuffer{ DescriptorType::SRV },
-	m_vertexIndicesBuffer{ DescriptorType::SRV }, m_primIndicesBuffer{ DescriptorType::SRV } {}
+	: m_vertexBuffer{ DescriptorType::SRV }, m_vertexIndicesBuffer{ DescriptorType::SRV },
+	m_primIndicesBuffer{ DescriptorType::SRV } {}
 
 void VertexManagerMeshShader::AddGVerticesAndPrimIndices(
 	std::vector<Vertex>&& gVertices, std::vector<std::uint32_t>&& gVerticesIndices,

@@ -41,6 +41,8 @@ void D3DDebugLogger::UnregisterCallBack() const noexcept {
 	m_debugInfoQueue->UnregisterMessageCallback(m_callBackCookie);
 }
 
+#pragma warning(push)
+#pragma warning(disable: 4100)
 void D3DDebugLogger::MessageCallback(
 	D3D12_MESSAGE_CATEGORY category, D3D12_MESSAGE_SEVERITY severity,
 	D3D12_MESSAGE_ID id, LPCSTR pDescription, void* pContext
@@ -52,3 +54,4 @@ void D3DDebugLogger::MessageCallback(
 		<< "Description : " << pDescription << "    "
 		<< std::endl;
 }
+#pragma warning(pop)

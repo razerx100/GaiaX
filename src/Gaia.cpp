@@ -1,5 +1,6 @@
 #include <Gaia.hpp>
 #include <RenderEngineVertexShader.hpp>
+#include <RenderEngineMeshShader.hpp>
 
 namespace Gaia {
 	std::unique_ptr<DeviceManager> device;
@@ -74,12 +75,22 @@ namespace Gaia {
 		ObjectManager& om, RenderEngineType engineType, ID3D12Device* d3dDevice,
 		std::uint32_t frameCount
 	) {
-		if (engineType == RenderEngineType::IndirectDraw)
+		switch (engineType) {
+		case RenderEngineType::IndirectDraw: {
 			om.CreateObject<RenderEngineIndirectDraw>(
 				renderEngine, { d3dDevice, frameCount }, 1u
 			);
-		else if (engineType == RenderEngineType::IndividualDraw)
-			om.CreateObject<RenderEngineIndividualDraw>(renderEngine,{ d3dDevice }, 1u);
+			break;
+		}
+		case RenderEngineType::IndividualDraw: {
+			om.CreateObject<RenderEngineIndividualDraw>(renderEngine, { d3dDevice }, 1u);
+			break;
+		}
+		case RenderEngineType::MeshDraw: {
+			om.CreateObject<RenderEngineMeshShader>(renderEngine, { d3dDevice }, 1u);
+			break;
+		}
+		}
 	}
 
 	void InitResources(ObjectManager& om) {

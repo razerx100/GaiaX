@@ -93,6 +93,8 @@ void RenderEngineBase::ReserveBuffers(ID3D12Device* device) {
 	ReserveBuffersDerived(device);
 }
 
+#pragma warning(push)
+#pragma warning(disable: 4100)
 void RenderEngineBase::ReserveBuffersDerived(ID3D12Device* device) {}
 
 void RenderEngineBase::AddGVerticesAndIndices(
@@ -111,3 +113,4 @@ void RenderEngineBase::AddGVerticesAndPrimIndices(
 	std::vector<Vertex>&& gVertices, std::vector<std::uint32_t>&& gVerticesIndices,
 	std::vector<std::uint32_t>&& gPrimIndices
 ) noexcept {}
+#pragma warning(pop)

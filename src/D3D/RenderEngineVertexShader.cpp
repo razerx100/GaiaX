@@ -41,12 +41,15 @@ void RenderEngineVertexShader::ReleaseUploadResources() noexcept {
 	_releaseUploadResources();
 }
 
+#pragma warning(push)
+#pragma warning(disable: 4100)
 void RenderEngineVertexShader::_createBuffers(ID3D12Device* device) {}
 void RenderEngineVertexShader::_reserveBuffers(ID3D12Device* device) {}
 void RenderEngineVertexShader::_recordResourceUploads(
 	ID3D12GraphicsCommandList* copyList
 ) noexcept {}
 void RenderEngineVertexShader::_releaseUploadResources() noexcept {}
+#pragma warning(pop)
 
 std::unique_ptr<RootSignatureDynamic> RenderEngineVertexShader::CreateGraphicsRootSignature(
 	ID3D12Device* device
@@ -55,7 +58,7 @@ std::unique_ptr<RootSignatureDynamic> RenderEngineVertexShader::CreateGraphicsRo
 
 	signature->AddDescriptorTable(
 		D3D12_DESCRIPTOR_RANGE_TYPE_SRV, UINT_MAX, D3D12_SHADER_VISIBILITY_PIXEL,
-		RootSigElement::Textures, true, 3u
+		RootSigElement::Textures, true, 0u, 1u
 	).AddDescriptorTable(
 		D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1u, D3D12_SHADER_VISIBILITY_VERTEX,
 		RootSigElement::ModelData, false, 0u
