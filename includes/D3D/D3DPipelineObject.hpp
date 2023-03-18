@@ -23,9 +23,17 @@ public:
 	ID3D12PipelineState* Get() const noexcept;
 
 private:
+	template<typename StreamObj>
 	void CreatePipelineState(
-		ID3D12Device2* device, struct CD3DX12_PIPELINE_STATE_STREAM1 subObjectDesc
-	) noexcept;
+		ID3D12Device2* device, StreamObj subObjectDesc
+	) noexcept {
+		D3D12_PIPELINE_STATE_STREAM_DESC streamDesc{
+			.SizeInBytes = sizeof(subObjectDesc),
+			.pPipelineStateSubobjectStream = &subObjectDesc
+		};
+
+		device->CreatePipelineState(&streamDesc, IID_PPV_ARGS(&m_pPipelineState));
+	}
 
 	template<typename T>
 	void PopulateRootSignature(T& psoDesc, ID3D12RootSignature* rootSignature) const noexcept {

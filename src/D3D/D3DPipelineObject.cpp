@@ -13,7 +13,7 @@ void D3DPipelineObject::CreateGFXPipelineStateVertex(
 
 	PopulateGeneralGFXStates(psoDesc, gfxRootSignature, pixelShader);
 
-	CreatePipelineState(device, psoDesc);
+	CreatePipelineState(device, CD3DX12_PIPELINE_STATE_STREAM1(psoDesc));
 }
 
 void D3DPipelineObject::CreateComputePipelineState(
@@ -26,7 +26,7 @@ void D3DPipelineObject::CreateComputePipelineState(
 
 	PopulateRootSignature(psoDesc, computeRootSignature);
 
-	CreatePipelineState(device, psoDesc);
+	CreatePipelineState(device, CD3DX12_PIPELINE_STATE_STREAM1(psoDesc));
 }
 
 ID3D12PipelineState* D3DPipelineObject::Get() const noexcept {
@@ -43,16 +43,5 @@ void D3DPipelineObject::CreateGFXPipelineStateMesh(
 
 	PopulateGeneralGFXStates(psoDesc, gfxRootSignature, pixelShader);
 
-	CreatePipelineState(device, psoDesc);
-}
-
-void D3DPipelineObject::CreatePipelineState(
-	ID3D12Device2* device, CD3DX12_PIPELINE_STATE_STREAM1 subObjectDesc
-) noexcept {
-	D3D12_PIPELINE_STATE_STREAM_DESC streamDesc{
-		.SizeInBytes = sizeof(subObjectDesc),
-		.pPipelineStateSubobjectStream = &subObjectDesc
-	};
-
-	device->CreatePipelineState(&streamDesc, IID_PPV_ARGS(&m_pPipelineState));
+	CreatePipelineState(device, CD3DX12_PIPELINE_MESH_STATE_STREAM(psoDesc));
 }
