@@ -17,11 +17,11 @@ void RenderEngineMeshShader::BindGraphicsBuffers(
 	ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex
 ) {
 	BindCommonGraphicsBuffers(graphicsCommandList, frameIndex);
-	m_vertexManager.BindVertexBuffers(graphicsCommandList, frameIndex, m_graphicsRSLayout);
+	m_vertexManager.BindVertexBuffers(graphicsCommandList, m_graphicsRSLayout);
 
 	static constexpr auto meshletsIndex = static_cast<size_t>(RootSigElement::Meshlets);
 	graphicsCommandList->SetGraphicsRootDescriptorTable(
-		m_graphicsRSLayout[meshletsIndex], m_meshletBuffer.GetGPUDescriptorHandle(frameIndex)
+		m_graphicsRSLayout[meshletsIndex], m_meshletBuffer.GetFirstGPUDescriptorHandle()
 	);
 }
 

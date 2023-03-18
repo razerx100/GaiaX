@@ -15,26 +15,23 @@ void VertexManagerMeshShader::AddGVerticesAndPrimIndices(
 }
 
 void VertexManagerMeshShader::BindVertexBuffers(
-	ID3D12GraphicsCommandList* graphicsCmdList, size_t frameIndex,
-	const RSLayoutType& graphicsRSLayout
+	ID3D12GraphicsCommandList* graphicsCmdList, const RSLayoutType& graphicsRSLayout
 ) const noexcept {
 	static constexpr auto vertexRIndex = static_cast<size_t>(RootSigElement::VertexData);
 	graphicsCmdList->SetGraphicsRootDescriptorTable(
-		graphicsRSLayout[vertexRIndex],
-		m_vertexBuffer.GetGPUDescriptorHandle(frameIndex)
+		graphicsRSLayout[vertexRIndex], m_vertexBuffer.GetFirstGPUDescriptorHandle()
 	);
 
 	static constexpr auto vertexIndicesRIndex =
 		static_cast<size_t>(RootSigElement::VertexIndices);
 	graphicsCmdList->SetGraphicsRootDescriptorTable(
 		graphicsRSLayout[vertexIndicesRIndex],
-		m_vertexIndicesBuffer.GetGPUDescriptorHandle(frameIndex)
+		m_vertexIndicesBuffer.GetFirstGPUDescriptorHandle()
 	);
 
 	static constexpr auto primIndicesRIndex = static_cast<size_t>(RootSigElement::PrimIndices);
 	graphicsCmdList->SetGraphicsRootDescriptorTable(
-		graphicsRSLayout[primIndicesRIndex],
-		m_primIndicesBuffer.GetGPUDescriptorHandle(frameIndex)
+		graphicsRSLayout[primIndicesRIndex], m_primIndicesBuffer.GetFirstGPUDescriptorHandle()
 	);
 }
 

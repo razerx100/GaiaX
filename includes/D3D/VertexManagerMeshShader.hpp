@@ -16,8 +16,7 @@ public:
 	) noexcept;
 
 	void BindVertexBuffers(
-		ID3D12GraphicsCommandList* graphicsCmdList, size_t frameIndex,
-		const RSLayoutType& graphicsRSLayout
+		ID3D12GraphicsCommandList* graphicsCmdList, const RSLayoutType& graphicsRSLayout
 	) const noexcept;
 
 	void ReserveBuffers(ID3D12Device* device) noexcept;
