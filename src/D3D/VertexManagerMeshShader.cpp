@@ -15,30 +15,27 @@ void VertexManagerMeshShader::AddGVerticesAndPrimIndices(
 }
 
 void VertexManagerMeshShader::BindVertexBuffers(
-	ID3D12GraphicsCommandList* graphicsCmdList, size_t frameIndex
+	ID3D12GraphicsCommandList* graphicsCmdList, size_t frameIndex,
+	const RSLayoutType& graphicsRSLayout
 ) const noexcept {
 	static constexpr auto vertexRIndex = static_cast<size_t>(RootSigElement::VertexData);
 	graphicsCmdList->SetGraphicsRootDescriptorTable(
-		m_graphicsRSLayout[vertexRIndex],
+		graphicsRSLayout[vertexRIndex],
 		m_vertexBuffer.GetGPUDescriptorHandle(frameIndex)
 	);
 
 	static constexpr auto vertexIndicesRIndex =
 		static_cast<size_t>(RootSigElement::VertexIndices);
 	graphicsCmdList->SetGraphicsRootDescriptorTable(
-		m_graphicsRSLayout[vertexIndicesRIndex],
+		graphicsRSLayout[vertexIndicesRIndex],
 		m_vertexIndicesBuffer.GetGPUDescriptorHandle(frameIndex)
 	);
 
 	static constexpr auto primIndicesRIndex = static_cast<size_t>(RootSigElement::PrimIndices);
 	graphicsCmdList->SetGraphicsRootDescriptorTable(
-		m_graphicsRSLayout[primIndicesRIndex],
+		graphicsRSLayout[primIndicesRIndex],
 		m_primIndicesBuffer.GetGPUDescriptorHandle(frameIndex)
 	);
-}
-
-void VertexManagerMeshShader::SetGraphicsRootSignatureLayout(RSLayoutType rsLayout) noexcept {
-	m_graphicsRSLayout = std::move(rsLayout);
 }
 
 void VertexManagerMeshShader::ReserveBuffers(ID3D12Device* device) noexcept {

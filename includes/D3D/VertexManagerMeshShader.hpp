@@ -16,9 +16,9 @@ public:
 	) noexcept;
 
 	void BindVertexBuffers(
-		ID3D12GraphicsCommandList* graphicsCmdList, size_t frameIndex
+		ID3D12GraphicsCommandList* graphicsCmdList, size_t frameIndex,
+		const RSLayoutType& graphicsRSLayout
 	) const noexcept;
-	void SetGraphicsRootSignatureLayout(RSLayoutType rsLayout) noexcept;
 
 	void ReserveBuffers(ID3D12Device* device) noexcept;
 	void CreateBuffers(ID3D12Device* device);
@@ -26,7 +26,6 @@ public:
 	void ReleaseUploadResource() noexcept;
 
 private:
-	RSLayoutType m_graphicsRSLayout;
 	D3DUploadResourceDescriptorView m_vertexBuffer;
 	D3DUploadResourceDescriptorView m_vertexIndicesBuffer;
 	D3DUploadResourceDescriptorView m_primIndicesBuffer;

@@ -17,7 +17,7 @@ void RenderEngineMeshShader::BindGraphicsBuffers(
 	ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex
 ) {
 	BindCommonGraphicsBuffers(graphicsCommandList, frameIndex);
-	m_vertexManager.BindVertexBuffers(graphicsCommandList, frameIndex);
+	m_vertexManager.BindVertexBuffers(graphicsCommandList, frameIndex, m_graphicsRSLayout);
 
 	static constexpr auto meshletsIndex = static_cast<size_t>(RootSigElement::Meshlets);
 	graphicsCommandList->SetGraphicsRootDescriptorTable(
