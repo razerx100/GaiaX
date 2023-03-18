@@ -16,7 +16,7 @@ public:
 	RenderEngineMeshShader(const Args& arguments) noexcept;
 
 	void AddMeshletModelSet(
-		std::vector<MeshletModel>&& meshletModels, const std::wstring& pixelShader
+		std::vector<MeshletModel>& meshletModels, const std::wstring& pixelShader
 	) noexcept final;
 	void AddGVerticesAndPrimIndices(
 		std::vector<Vertex>&& gVertices, std::vector<std::uint32_t>&& gVerticesIndices,

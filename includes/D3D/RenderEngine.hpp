@@ -31,7 +31,7 @@ public:
 		const std::vector<std::shared_ptr<IModel>>& models, const std::wstring& pixelShader
 	) noexcept = 0;
 	virtual void AddMeshletModelSet(
-		std::vector<MeshletModel>&& meshletModels, const std::wstring& pixelShader
+		std::vector<MeshletModel>& meshletModels, const std::wstring& pixelShader
 	) noexcept = 0;
 	virtual void AddGVerticesAndPrimIndices(
 		std::vector<Vertex>&& gVertices, std::vector<std::uint32_t>&& gVerticesIndices,

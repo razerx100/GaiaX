@@ -19,9 +19,9 @@ void RenderEngineMeshShader::BindGraphicsBuffers(
 	BindCommonGraphicsBuffers(graphicsCommandList, frameIndex);
 	m_vertexManager.BindVertexBuffers(graphicsCommandList, frameIndex);
 
-	static constexpr auto meshletIndex = static_cast<size_t>(RootSigElement::Meshlets);
+	static constexpr auto meshletsIndex = static_cast<size_t>(RootSigElement::Meshlets);
 	graphicsCommandList->SetGraphicsRootDescriptorTable(
-		m_graphicsRSLayout[meshletIndex], m_meshletBuffer.GetGPUDescriptorHandle(frameIndex)
+		m_graphicsRSLayout[meshletsIndex], m_meshletBuffer.GetGPUDescriptorHandle(frameIndex)
 	);
 }
 
@@ -47,7 +47,7 @@ void RenderEngineMeshShader::UpdateModelBuffers(size_t frameIndex) const noexcep
 }
 
 void RenderEngineMeshShader::AddMeshletModelSet(
-	std::vector<MeshletModel>&& meshletModels, const std::wstring& pixelShader
+	std::vector<MeshletModel>& meshletModels, const std::wstring& pixelShader
 ) noexcept {
 	auto graphicsPipeline = std::make_unique<GraphicsPipelineMeshShader>();
 

@@ -106,7 +106,7 @@ void RenderEngineBase::RecordModelDataSet(
 ) noexcept {}
 
 void RenderEngineBase::AddMeshletModelSet(
-	std::vector<MeshletModel>&& meshletModels, const std::wstring& pixelShader
+	std::vector<MeshletModel>& meshletModels, const std::wstring& pixelShader
 ) noexcept {}
 
 void RenderEngineBase::AddGVerticesAndPrimIndices(

@@ -61,7 +61,8 @@ void RendererDx12::AddModelSet(
 void RendererDx12::AddMeshletModelSet(
 	std::vector<MeshletModel>&& meshletModels, const std::wstring& pixelShader
 ) {
-	Gaia::renderEngine->AddMeshletModelSet(std::move(meshletModels), pixelShader);
+	Gaia::renderEngine->AddMeshletModelSet(meshletModels, pixelShader);
+	Gaia::bufferManager->AddOpaqueModels(std::move(meshletModels));
 }
 
 void RendererDx12::AddModelInputs(
