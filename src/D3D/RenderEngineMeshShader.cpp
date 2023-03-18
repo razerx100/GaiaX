@@ -18,6 +18,11 @@ void RenderEngineMeshShader::BindGraphicsBuffers(
 ) {
 	BindCommonGraphicsBuffers(graphicsCommandList, frameIndex);
 	m_vertexManager.BindVertexBuffers(graphicsCommandList, frameIndex);
+
+	static constexpr auto meshletIndex = static_cast<size_t>(RootSigElement::Meshlets);
+	graphicsCommandList->SetGraphicsRootDescriptorTable(
+		m_graphicsRSLayout[meshletIndex], m_meshletBuffer.GetGPUDescriptorHandle(frameIndex)
+	);
 }
 
 void RenderEngineMeshShader::RecordDrawCommands(
@@ -136,6 +141,9 @@ std::unique_ptr<RootSignatureDynamic> RenderEngineMeshShader::CreateGraphicsRoot
 	).AddDescriptorTable(
 		D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1u, D3D12_SHADER_VISIBILITY_MESH,
 		RootSigElement::PrimIndices, false, 5u
+	).AddDescriptorTable(
+		D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1u, D3D12_SHADER_VISIBILITY_MESH,
+		RootSigElement::Meshlets, false, 6u
 	).AddConstants(
 		1u, D3D12_SHADER_VISIBILITY_MESH, RootSigElement::ModelIndex, 0u
 	).AddConstantBufferView(

@@ -19,6 +19,7 @@ enum class RootSigElement {
 	VertexData,
 	VertexIndices,
 	PrimIndices,
+	Meshlets,
 	ElementCount
 };
 
