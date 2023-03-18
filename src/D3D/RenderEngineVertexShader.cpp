@@ -69,7 +69,7 @@ std::unique_ptr<RootSignatureDynamic> RenderEngineVertexShader::CreateGraphicsRo
 		D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1u, D3D12_SHADER_VISIBILITY_PIXEL,
 		RootSigElement::LightData, false, 2u
 	).AddConstants(
-		1u, D3D12_SHADER_VISIBILITY_VERTEX, RootSigElement::ModelIndex, 0u
+		1u, D3D12_SHADER_VISIBILITY_VERTEX, RootSigElement::ModelInfo, 0u
 	).AddConstantBufferView(
 		D3D12_SHADER_VISIBILITY_VERTEX, RootSigElement::Camera, 1u
 	).AddConstantBufferView(
@@ -209,11 +209,11 @@ void RenderEngineIndirectDraw::_releaseUploadResources() noexcept {
 }
 
 void RenderEngineIndirectDraw::CreateCommandSignature(ID3D12Device* device) {
-	static constexpr size_t modelIndex = static_cast<size_t>(RootSigElement::ModelIndex);
+	static constexpr size_t modelInfoIndex = static_cast<size_t>(RootSigElement::ModelInfo);
 
 	std::array<D3D12_INDIRECT_ARGUMENT_DESC, 2u> arguments{};
 	arguments[0].Type = D3D12_INDIRECT_ARGUMENT_TYPE_CONSTANT;
-	arguments[0].Constant.RootParameterIndex = m_graphicsRSLayout[modelIndex];
+	arguments[0].Constant.RootParameterIndex = m_graphicsRSLayout[modelInfoIndex];
 	arguments[0].Constant.DestOffsetIn32BitValues = 0u;
 	arguments[0].Constant.Num32BitValuesToSet = 1u;
 	arguments[1].Type = D3D12_INDIRECT_ARGUMENT_TYPE_DRAW_INDEXED;

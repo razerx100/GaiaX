@@ -53,13 +53,17 @@ void RenderEngineMeshShader::AddMeshletModelSet(
 
 	graphicsPipeline->ConfigureGraphicsPipelineObject(pixelShader);
 
+	static std::uint32_t modelCount = 0u;
+
 	for (size_t index = 0u; index < std::size(meshletModels); ++index) {
 		std::vector<Meshlet>&& meshlets = std::move(meshletModels[index].meshlets);
 
 		graphicsPipeline->AddModelDetails(
 			static_cast<std::uint32_t>(std::size(meshlets)),
-			static_cast<std::uint32_t>(std::size(m_meshlets))
+			static_cast<std::uint32_t>(std::size(m_meshlets)), modelCount
 		);
+
+		++modelCount;
 
 		std::ranges::move(meshlets, std::back_inserter(m_meshlets));
 	}
@@ -145,7 +149,7 @@ std::unique_ptr<RootSignatureDynamic> RenderEngineMeshShader::CreateGraphicsRoot
 		D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1u, D3D12_SHADER_VISIBILITY_MESH,
 		RootSigElement::Meshlets, false, 6u
 	).AddConstants(
-		1u, D3D12_SHADER_VISIBILITY_MESH, RootSigElement::ModelIndex, 0u
+		2u, D3D12_SHADER_VISIBILITY_MESH, RootSigElement::ModelInfo, 0u
 	).AddConstantBufferView(
 		D3D12_SHADER_VISIBILITY_MESH, RootSigElement::Camera, 1u
 	).AddConstantBufferView(

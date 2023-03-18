@@ -71,10 +71,10 @@ void GraphicsPipelineIndividualDraw::DrawModels(
 	for (size_t index = 0u; index < m_modelCount; ++index) {
 		const auto& modelArgs = drawArguments[m_modelOffset + index];
 
-		static constexpr size_t modelIndex = static_cast<size_t>(RootSigElement::ModelIndex);
+		static constexpr size_t modelInfoIndex = static_cast<size_t>(RootSigElement::ModelInfo);
 
 		graphicsCommandList->SetGraphicsRoot32BitConstant(
-			graphicsRSLayout[modelIndex], modelArgs.modelIndex, 0u
+			graphicsRSLayout[modelInfoIndex], modelArgs.modelIndex, 0u
 		);
 
 		const D3D12_DRAW_INDEXED_ARGUMENTS& args = modelArgs.drawIndexed;

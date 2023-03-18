@@ -7,7 +7,9 @@
 class GraphicsPipelineMeshShader : public GraphicsPipelineBase {
 public:
 	void ConfigureGraphicsPipelineObject(const std::wstring& pixelShader) noexcept;
-	void AddModelDetails(std::uint32_t meshletCount, std::uint32_t meshletOffset) noexcept;
+	void AddModelDetails(
+		std::uint32_t meshletCount, std::uint32_t meshletOffset, std::uint32_t modelIndex
+	) noexcept;
 	void DrawModels(
 		ID3D12GraphicsCommandList6* graphicsCommandList, const RSLayoutType& graphicsRSLayout
 	) const noexcept;
@@ -21,6 +23,7 @@ private:
 
 private:
 	struct ModelDetails {
+		std::uint32_t modelIndex;
 		std::uint32_t meshletOffset;
 		std::uint32_t meshletCount;
 	};

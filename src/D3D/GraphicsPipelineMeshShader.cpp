@@ -26,9 +26,10 @@ void GraphicsPipelineMeshShader::ConfigureGraphicsPipelineObject(
 }
 
 void GraphicsPipelineMeshShader::AddModelDetails(
-	std::uint32_t meshletCount, std::uint32_t meshletOffset
+	std::uint32_t meshletCount, std::uint32_t meshletOffset, std::uint32_t modelIndex
 ) noexcept {
 	ModelDetails modelDetails{
+		.modelIndex = modelIndex,
 		.meshletOffset = meshletOffset,
 		.meshletCount = meshletCount
 	};
@@ -40,10 +41,10 @@ void GraphicsPipelineMeshShader::DrawModels(
 	ID3D12GraphicsCommandList6* graphicsCommandList, const RSLayoutType& graphicsRSLayout
 ) const noexcept {
 	for (const auto& modelDetail : m_modelDetails) {
-		static constexpr size_t meshletOffset = static_cast<size_t>(RootSigElement::ModelIndex);
+		static constexpr size_t modelInfoIndex = static_cast<size_t>(RootSigElement::ModelInfo);
 
-		graphicsCommandList->SetGraphicsRoot32BitConstant(
-			graphicsRSLayout[meshletOffset], modelDetail.meshletOffset, 0u
+		graphicsCommandList->SetGraphicsRoot32BitConstants(
+			graphicsRSLayout[modelInfoIndex], 2u, &modelDetail.modelIndex, 0u
 		);
 
 		graphicsCommandList->DispatchMesh(modelDetail.meshletCount, 1u, 1u);
