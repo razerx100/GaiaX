@@ -84,7 +84,6 @@ void RendererDx12::Update() {
 	const size_t currentBackIndex = Gaia::swapChain->GetCurrentBackBufferIndex();
 
 	Gaia::renderEngine->UpdateModelBuffers(currentBackIndex);
-	Gaia::bufferManager->Update<false>(currentBackIndex);
 }
 
 void RendererDx12::Render() {
