@@ -15,10 +15,6 @@ void RenderEngineVertexShader::AddGVerticesAndIndices(
 	m_vertexManager.AddGVerticesAndIndices(std::move(gVertices), std::move(gIndices));
 }
 
-void RenderEngineVertexShader::UpdateModelBuffers(size_t frameIndex) const noexcept {
-	Gaia::bufferManager->Update<false>(frameIndex);
-}
-
 void RenderEngineVertexShader::CreateBuffers(ID3D12Device* device) {
 	m_vertexManager.CreateBuffers(device);
 	_createBuffers(device);
@@ -130,6 +126,10 @@ void RenderEngineIndirectDraw::ExecutePreRenderStage(
 	ExecutePreGraphicsStage(graphicsCommandList, frameIndex);
 }
 
+void RenderEngineIndirectDraw::UpdateModelBuffers(size_t frameIndex) const noexcept {
+	Gaia::bufferManager->Update<false>(frameIndex);
+}
+
 void RenderEngineIndirectDraw::RecordDrawCommands(
 	ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex
 ) {
@@ -238,6 +238,10 @@ void RenderEngineIndividualDraw::ExecutePreRenderStage(
 	ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex
 ) {
 	ExecutePreGraphicsStage(graphicsCommandList, frameIndex);
+}
+
+void RenderEngineIndividualDraw::UpdateModelBuffers(size_t frameIndex) const noexcept {
+	Gaia::bufferManager->Update<true>(frameIndex);
 }
 
 void RenderEngineIndividualDraw::RecordDrawCommands(

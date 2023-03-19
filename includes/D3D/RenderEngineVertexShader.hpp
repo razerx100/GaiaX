@@ -13,7 +13,6 @@ public:
 	void AddGVerticesAndIndices(
 		std::vector<Vertex>&& gVertices, std::vector<std::uint32_t>&& gIndices
 	) noexcept final;
-	void UpdateModelBuffers(size_t frameIndex) const noexcept final;
 	void ExecuteRenderStage(size_t frameIndex) final;
 
 	void CreateBuffers(ID3D12Device* device) final;
@@ -79,6 +78,7 @@ private:
 	void RecordDrawCommands(
 		ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex
 	) final;
+	void UpdateModelBuffers(size_t frameIndex) const noexcept final;
 
 	using GraphicsPipeline = std::unique_ptr<GraphicsPipelineIndirectDraw>;
 
@@ -104,6 +104,7 @@ public:
 	void RecordModelDataSet(
 		const std::vector<std::shared_ptr<IModel>>& models, const std::wstring& pixelShader
 	) noexcept final;
+	void UpdateModelBuffers(size_t frameIndex) const noexcept final;
 
 private:
 	using GraphicsPipeline = std::unique_ptr<GraphicsPipelineIndividualDraw>;

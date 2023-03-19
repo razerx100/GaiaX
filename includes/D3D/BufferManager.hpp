@@ -12,7 +12,7 @@ class BufferManager {
 public:
 	struct Args {
 		std::optional<std::uint32_t> frameCount;
-		std::optional<bool> meshletModelData;
+		std::optional<bool> modelDataNoBB;
 	};
 
 public:
@@ -36,12 +36,12 @@ public:
 	void ReserveBuffers(ID3D12Device* device) noexcept;
 	void CreateBuffers(ID3D12Device* device);
 
-	template<bool meshletModel>
+	template<bool modelWithNoBB>
 	void Update(size_t frameIndex) const noexcept {
 		const DirectX::XMMATRIX viewMatrix = GetViewMatrix();
 
 		UpdateCameraData(frameIndex);
-		UpdatePerModelData<meshletModel>(frameIndex, viewMatrix);
+		UpdatePerModelData<modelWithNoBB>(frameIndex, viewMatrix);
 		UpdateLightData(frameIndex, viewMatrix);
 		UpdatePixelData(frameIndex);
 	}
@@ -54,7 +54,7 @@ private:
 		ModelBounds boundingBox;
 	};
 
-	struct ModelBufferMesh {
+	struct ModelBufferNoBB {
 		DirectX::XMMATRIX modelMatrix;
 		DirectX::XMMATRIX viewNormalMatrix;
 		DirectX::XMFLOAT3 modelOffset;
@@ -94,7 +94,7 @@ private:
 	void UpdatePixelData(size_t bufferIndex) const noexcept;
 	void CheckLightSourceAndAddOpaque(std::shared_ptr<IModel>&& model) noexcept;
 
-	template<bool meshletModel>
+	template<bool modelWithNoBB>
 	void UpdatePerModelData(
 		size_t bufferIndex, const DirectX::XMMATRIX& viewMatrix
 	) const noexcept {
@@ -107,26 +107,30 @@ private:
 		for (auto& model : m_opaqueModels) {
 			const DirectX::XMMATRIX modelMatrix = model->GetModelMatrix();
 
-			if constexpr (meshletModel) {
-				ModelBufferMesh modelBuffer{
-					.modelMatrix = modelMatrix,
-					.viewNormalMatrix = DirectX::XMMatrixTranspose(
-						DirectX::XMMatrixInverse(nullptr, modelMatrix * viewMatrix)
-					),
-					.modelOffset = model->GetModelOffset()
-				};
-				CopyStruct(modelBuffer, modelBufferOffset, modelOffset);
+			if constexpr (modelWithNoBB) {
+				CopyStruct(
+					ModelBufferNoBB{
+						.modelMatrix = modelMatrix,
+						.viewNormalMatrix = DirectX::XMMatrixTranspose(
+							DirectX::XMMatrixInverse(nullptr, modelMatrix * viewMatrix)
+						),
+						.modelOffset = model->GetModelOffset()
+					},
+					modelBufferOffset, modelOffset
+				);
 			}
 			else {
-				ModelBuffer modelBuffer{
+				CopyStruct(
+					ModelBuffer{
 					.modelMatrix = modelMatrix,
 					.viewNormalMatrix = DirectX::XMMatrixTranspose(
 						DirectX::XMMatrixInverse(nullptr, modelMatrix * viewMatrix)
 					),
 					.modelOffset = model->GetModelOffset(),
 					.boundingBox = model->GetBoundingBox()
-				};
-				CopyStruct(modelBuffer, modelBufferOffset, modelOffset);
+					},
+					modelBufferOffset, modelOffset
+				);
 			}
 
 			const auto& modelMaterial = model->GetMaterial();
@@ -185,6 +189,6 @@ private:
 	std::vector<std::shared_ptr<IModel>> m_opaqueModels;
 	std::uint32_t m_frameCount;
 	std::vector<size_t> m_lightModelIndices;
-	bool m_meshletModelData;
+	bool m_modelDataNoBB;
 };
 #endif

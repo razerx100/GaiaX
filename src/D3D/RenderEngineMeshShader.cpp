@@ -3,17 +3,17 @@
 #include <RenderEngineMeshShader.hpp>
 #include <Gaia.hpp>
 
-RenderEngineMeshShader::RenderEngineMeshShader(const Args& arguments) noexcept
+RenderEngineMeshDraw::RenderEngineMeshDraw(const Args& arguments) noexcept
 	: RenderEngineBase{ arguments.device.value() }, m_meshletBuffer{ DescriptorType::SRV } {}
 
-void RenderEngineMeshShader::ExecuteRenderStage(size_t frameIndex) {
+void RenderEngineMeshDraw::ExecuteRenderStage(size_t frameIndex) {
 	ID3D12GraphicsCommandList6* graphicsCommandList = Gaia::graphicsCmdList->GetCommandList6();
 
 	ExecutePreGraphicsStage(graphicsCommandList, frameIndex);
 	RecordDrawCommands(graphicsCommandList, frameIndex);
 }
 
-void RenderEngineMeshShader::BindGraphicsBuffers(
+void RenderEngineMeshDraw::BindGraphicsBuffers(
 	ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex
 ) {
 	BindCommonGraphicsBuffers(graphicsCommandList, frameIndex);
@@ -25,7 +25,7 @@ void RenderEngineMeshShader::BindGraphicsBuffers(
 	);
 }
 
-void RenderEngineMeshShader::RecordDrawCommands(
+void RenderEngineMeshDraw::RecordDrawCommands(
 	ID3D12GraphicsCommandList6* graphicsCommandList, size_t frameIndex
 ) {
 	ID3D12RootSignature* graphicsRS = m_graphicsRS->Get();
@@ -42,11 +42,11 @@ void RenderEngineMeshShader::RecordDrawCommands(
 	}
 }
 
-void RenderEngineMeshShader::UpdateModelBuffers(size_t frameIndex) const noexcept {
+void RenderEngineMeshDraw::UpdateModelBuffers(size_t frameIndex) const noexcept {
 	Gaia::bufferManager->Update<true>(frameIndex);
 }
 
-void RenderEngineMeshShader::AddMeshletModelSet(
+void RenderEngineMeshDraw::AddMeshletModelSet(
 	std::vector<MeshletModel>& meshletModels, const std::wstring& pixelShader
 ) noexcept {
 	auto graphicsPipeline = std::make_unique<GraphicsPipelineMeshShader>();
@@ -74,7 +74,7 @@ void RenderEngineMeshShader::AddMeshletModelSet(
 		m_graphicsPipelines.emplace_back(std::move(graphicsPipeline));
 }
 
-void RenderEngineMeshShader::AddGVerticesAndPrimIndices(
+void RenderEngineMeshDraw::AddGVerticesAndPrimIndices(
 	std::vector<Vertex>&& gVertices, std::vector<std::uint32_t>&& gVerticesIndices,
 	std::vector<std::uint32_t>&& gPrimIndices
 ) noexcept {
@@ -83,27 +83,27 @@ void RenderEngineMeshShader::AddGVerticesAndPrimIndices(
 	);
 }
 
-void RenderEngineMeshShader::CreateBuffers(ID3D12Device* device) {
+void RenderEngineMeshDraw::CreateBuffers(ID3D12Device* device) {
 	m_vertexManager.CreateBuffers(device);
 
 	CreateUploadDescView(device, m_meshletBuffer, m_meshlets);
 }
 
-void RenderEngineMeshShader::RecordResourceUploads(
+void RenderEngineMeshDraw::RecordResourceUploads(
 	ID3D12GraphicsCommandList* copyList
 ) noexcept {
 	m_vertexManager.RecordResourceUpload(copyList);
 	m_meshletBuffer.RecordResourceUpload(copyList);
 }
 
-void RenderEngineMeshShader::ReleaseUploadResources() noexcept {
+void RenderEngineMeshDraw::ReleaseUploadResources() noexcept {
 	m_vertexManager.ReleaseUploadResource();
 	m_meshletBuffer.ReleaseUploadResource();
 
 	m_meshlets = std::vector<Meshlet>{};
 }
 
-void RenderEngineMeshShader::ReserveBuffersDerived(ID3D12Device* device) {
+void RenderEngineMeshDraw::ReserveBuffersDerived(ID3D12Device* device) {
 	m_vertexManager.ReserveBuffers(device);
 
 	const size_t meshletDescriptorOffset =
@@ -112,14 +112,14 @@ void RenderEngineMeshShader::ReserveBuffersDerived(ID3D12Device* device) {
 	SetDescBufferInfo(device, meshletDescriptorOffset, m_meshlets, m_meshletBuffer);
 }
 
-void RenderEngineMeshShader::ConstructPipelines() {
+void RenderEngineMeshDraw::ConstructPipelines() {
 	ID3D12Device2* device = Gaia::device->GetDeviceRef();
 
 	ConstructGraphicsRootSignature(device);
 	CreateGraphicsPipelines(device, m_graphicsPipeline0, m_graphicsPipelines);
 }
 
-std::unique_ptr<RootSignatureDynamic> RenderEngineMeshShader::CreateGraphicsRootSignature(
+std::unique_ptr<RootSignatureDynamic> RenderEngineMeshDraw::CreateGraphicsRootSignature(
 	ID3D12Device* device
 ) const noexcept {
 	auto signature = std::make_unique<RootSignatureDynamic>();

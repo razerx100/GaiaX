@@ -11,7 +11,7 @@ BufferManager::BufferManager(const Args& arguments)
 	m_materialBuffers{ ResourceType::cpuWrite, DescriptorType::SRV },
 	m_lightBuffers{ ResourceType::cpuWrite, DescriptorType::SRV },
 	m_frameCount{ arguments.frameCount.value() },
-	m_meshletModelData{ arguments.meshletModelData.value() } {}
+	m_modelDataNoBB{ arguments.modelDataNoBB.value() } {}
 
 void BufferManager::ReserveBuffers(ID3D12Device* device) noexcept {
 	// Camera
@@ -37,8 +37,8 @@ void BufferManager::ReserveBuffers(ID3D12Device* device) noexcept {
 	const size_t modelBufferDescriptorOffset =
 		Gaia::descriptorTable->ReserveDescriptorsAndGetOffset(m_frameCount);
 	const auto modelCount = static_cast<UINT>(std::size(m_opaqueModels));
-	const UINT64 modelBufferStride = m_meshletModelData ?
-		static_cast<UINT64>(sizeof(ModelBufferMesh)) : static_cast<UINT64>(sizeof(ModelBuffer));
+	const UINT64 modelBufferStride = m_modelDataNoBB ?
+		static_cast<UINT64>(sizeof(ModelBufferNoBB)) : static_cast<UINT64>(sizeof(ModelBuffer));
 
 	SetDescBufferInfo(
 		device, modelBufferDescriptorOffset, modelBufferStride, modelCount, m_modelBuffers,

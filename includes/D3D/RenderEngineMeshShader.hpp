@@ -6,14 +6,14 @@
 #include <GraphicsPipelineMeshShader.hpp>
 #include <optional>
 
-class RenderEngineMeshShader : public RenderEngineBase {
+class RenderEngineMeshDraw : public RenderEngineBase {
 public:
 	struct Args {
 		std::optional<ID3D12Device*> device;
 	};
 
 public:
-	RenderEngineMeshShader(const Args& arguments) noexcept;
+	RenderEngineMeshDraw(const Args& arguments) noexcept;
 
 	void AddMeshletModelSet(
 		std::vector<MeshletModel>& meshletModels, const std::wstring& pixelShader

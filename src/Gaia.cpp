@@ -87,7 +87,7 @@ namespace Gaia {
 			break;
 		}
 		case RenderEngineType::MeshDraw: {
-			om.CreateObject<RenderEngineMeshShader>(renderEngine, { d3dDevice }, 1u);
+			om.CreateObject<RenderEngineMeshDraw>(renderEngine, { d3dDevice }, 1u);
 			break;
 		}
 		}
