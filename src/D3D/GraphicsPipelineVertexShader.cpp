@@ -3,12 +3,12 @@
 #include <Shader.hpp>
 
 // Vertex Shader
-std::unique_ptr<D3DPipelineObject> GraphicsPipelineVertexShader::_createGraphicsPipelineObject(
+std::unique_ptr<D3DPipelineObject> GraphicsPipelineVertexShader::CreateGraphicsPipelineObjectVS(
 	ID3D12Device2* device, const std::wstring& shaderPath, const std::wstring& pixelShader,
-	ID3D12RootSignature* graphicsRootSignature
+	const std::wstring& vertexShader, ID3D12RootSignature* graphicsRootSignature
 ) const noexcept {
 	auto vs = std::make_unique<Shader>();
-	vs->LoadBinary(shaderPath + L"VertexShader.cso");
+	vs->LoadBinary(shaderPath + vertexShader);
 
 	auto ps = std::make_unique<Shader>();
 	ps->LoadBinary(shaderPath + pixelShader);
@@ -51,6 +51,15 @@ void GraphicsPipelineIndirectDraw::ConfigureGraphicsPipelineObject(
 	m_pixelShader = pixelShader;
 }
 
+std::unique_ptr<D3DPipelineObject> GraphicsPipelineIndirectDraw::_createGraphicsPipelineObject(
+	ID3D12Device2* device, const std::wstring& shaderPath, const std::wstring& pixelShader,
+	ID3D12RootSignature* graphicsRootSignature
+) const noexcept {
+	return CreateGraphicsPipelineObjectVS(
+		device, shaderPath, pixelShader, L"VertexShaderIndirect.cso", graphicsRootSignature
+	);
+}
+
 // Individual Draw
 GraphicsPipelineIndividualDraw::GraphicsPipelineIndividualDraw() noexcept
 	: m_modelCount{ 0u }, m_modelOffset{ 0u } {}
@@ -84,4 +93,13 @@ void GraphicsPipelineIndividualDraw::DrawModels(
 			args.BaseVertexLocation, args.StartInstanceLocation
 		);
 	}
+}
+
+std::unique_ptr<D3DPipelineObject> GraphicsPipelineIndividualDraw::_createGraphicsPipelineObject(
+	ID3D12Device2* device, const std::wstring& shaderPath, const std::wstring& pixelShader,
+	ID3D12RootSignature* graphicsRootSignature
+) const noexcept {
+	return CreateGraphicsPipelineObjectVS(
+		device, shaderPath, pixelShader, L"VertexShaderIndividual.cso", graphicsRootSignature
+	);
 }
