@@ -44,7 +44,9 @@ RendererDx12::RendererDx12(
 
 	m_objectManager.CreateObject(Gaia::descriptorTable, 0u);
 
-	m_objectManager.CreateObject(Gaia::bufferManager, { bufferCount, meshDrawType }, 1u);
+	const bool modelDataNoBB = engineType == RenderEngineType::IndirectDraw ? false : true;
+
+	m_objectManager.CreateObject(Gaia::bufferManager, { bufferCount, modelDataNoBB }, 1u);
 	m_objectManager.CreateObject(Gaia::textureStorage, 0u);
 
 	m_objectManager.CreateObject(Gaia::cameraManager, 0u);
