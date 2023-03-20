@@ -29,9 +29,8 @@ Resolution GetDisplayResolution(
 	adapter->GetDesc(&gpuDesc);
 
 	ComPtr<IDXGIOutput> pDisplayOutput;
-	assert(
-		SUCCEEDED(adapter->EnumOutputs(displayIndex, &pDisplayOutput)) && "Invalid display index."
-	);
+	[[maybe_unused]] HRESULT displayCheck = adapter->EnumOutputs(displayIndex, &pDisplayOutput);
+	assert(SUCCEEDED(displayCheck) && "Invalid display index.");
 
 	DXGI_OUTPUT_DESC displayData = {};
 	pDisplayOutput->GetDesc(&displayData);
