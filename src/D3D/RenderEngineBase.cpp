@@ -93,24 +93,25 @@ void RenderEngineBase::ReserveBuffers(ID3D12Device* device) {
 	ReserveBuffersDerived(device);
 }
 
-#pragma warning(push)
-#pragma warning(disable: 4100)
-void RenderEngineBase::ReserveBuffersDerived(ID3D12Device* device) {}
+void RenderEngineBase::ReserveBuffersDerived([[maybe_unused]] ID3D12Device* device) {}
 
 void RenderEngineBase::AddGVerticesAndIndices(
-	std::vector<Vertex>&& gVertices, std::vector<std::uint32_t>&& gIndices
+	[[maybe_unused]] std::vector<Vertex>&& gVertices,
+	[[maybe_unused]] std::vector<std::uint32_t>&& gIndices
 ) noexcept {}
 
 void RenderEngineBase::RecordModelDataSet(
-	const std::vector<std::shared_ptr<IModel>>& models, const std::wstring& pixelShader
+	[[maybe_unused]] const std::vector<std::shared_ptr<IModel>>& models,
+	[[maybe_unused]] const std::wstring& pixelShader
 ) noexcept {}
 
 void RenderEngineBase::AddMeshletModelSet(
-	std::vector<MeshletModel>& meshletModels, const std::wstring& pixelShader
+	[[maybe_unused]] std::vector<MeshletModel>& meshletModels,
+	[[maybe_unused]] const std::wstring& pixelShader
 ) noexcept {}
 
 void RenderEngineBase::AddGVerticesAndPrimIndices(
-	std::vector<Vertex>&& gVertices, std::vector<std::uint32_t>&& gVerticesIndices,
-	std::vector<std::uint32_t>&& gPrimIndices
+	[[maybe_unused]] std::vector<Vertex>&& gVertices,
+	[[maybe_unused]] std::vector<std::uint32_t>&& gVerticesIndices,
+	[[maybe_unused]] std::vector<std::uint32_t>&& gPrimIndices
 ) noexcept {}
-#pragma warning(pop)

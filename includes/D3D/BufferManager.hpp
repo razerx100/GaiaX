@@ -107,7 +107,7 @@ private:
 		for (auto& model : m_opaqueModels) {
 			const DirectX::XMMATRIX modelMatrix = model->GetModelMatrix();
 
-			if constexpr (modelWithNoBB) {
+			if constexpr (modelWithNoBB)
 				CopyStruct(
 					ModelBufferNoBB{
 						.modelMatrix = modelMatrix,
@@ -118,8 +118,7 @@ private:
 					},
 					modelBufferOffset, modelOffset
 				);
-			}
-			else {
+			else
 				CopyStruct(
 					ModelBuffer{
 					.modelMatrix = modelMatrix,
@@ -131,7 +130,6 @@ private:
 					},
 					modelBufferOffset, modelOffset
 				);
-			}
 
 			const auto& modelMaterial = model->GetMaterial();
 

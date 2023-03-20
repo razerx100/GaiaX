@@ -37,15 +37,12 @@ void RenderEngineVertexShader::ReleaseUploadResources() noexcept {
 	_releaseUploadResources();
 }
 
-#pragma warning(push)
-#pragma warning(disable: 4100)
-void RenderEngineVertexShader::_createBuffers(ID3D12Device* device) {}
-void RenderEngineVertexShader::_reserveBuffers(ID3D12Device* device) {}
+void RenderEngineVertexShader::_createBuffers([[maybe_unused]] ID3D12Device* device) {}
+void RenderEngineVertexShader::_reserveBuffers([[maybe_unused]] ID3D12Device* device) {}
 void RenderEngineVertexShader::_recordResourceUploads(
-	ID3D12GraphicsCommandList* copyList
+	[[maybe_unused]] ID3D12GraphicsCommandList* copyList
 ) noexcept {}
 void RenderEngineVertexShader::_releaseUploadResources() noexcept {}
-#pragma warning(pop)
 
 std::unique_ptr<RootSignatureDynamic> RenderEngineVertexShader::CreateGraphicsRootSignature(
 	ID3D12Device* device
