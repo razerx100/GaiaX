@@ -25,12 +25,15 @@ static std::array<const char*, 5u> messageSeverity{
 };
 
 D3DDebugLogger::D3DDebugLogger(const Args& arguments) : m_callBackCookie{ 0u } {
-	arguments.device.value()->QueryInterface(IID_PPV_ARGS(&m_debugInfoQueue));
+	HRESULT hr = arguments.device.value()->QueryInterface(IID_PPV_ARGS(&m_debugInfoQueue));
 
-	m_debugInfoQueue->RegisterMessageCallback(
-		D3DDebugLogger::MessageCallback, D3D12_MESSAGE_CALLBACK_FLAG_NONE, nullptr,
-		&m_callBackCookie
-	);
+	if (hr != E_NOINTERFACE)
+		m_debugInfoQueue->RegisterMessageCallback(
+			D3DDebugLogger::MessageCallback, D3D12_MESSAGE_CALLBACK_FLAG_NONE, nullptr,
+			&m_callBackCookie
+		);
+	else
+		std::ofstream{"ErrorLog.txt", std::ios_base::app | std::ios_base::out} << "ID3D12InfoQueue1 isn't supported." << std::endl;
 }
 
 D3DDebugLogger::~D3DDebugLogger() noexcept {
@@ -38,7 +41,8 @@ D3DDebugLogger::~D3DDebugLogger() noexcept {
 }
 
 void D3DDebugLogger::UnregisterCallBack() const noexcept {
-	m_debugInfoQueue->UnregisterMessageCallback(m_callBackCookie);
+	if (m_debugInfoQueue)
+		m_debugInfoQueue->UnregisterMessageCallback(m_callBackCookie);
 }
 
 void D3DDebugLogger::MessageCallback(
