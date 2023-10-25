@@ -13,15 +13,18 @@ public:
 	D3DDebugLogger(const Args& arguments);
 	~D3DDebugLogger() noexcept;
 
+#ifdef __ID3D12InfoQueue1_INTERFACE_DEFINED__
 	void UnregisterCallBack() const noexcept;
 
 	static void MessageCallback(
 		D3D12_MESSAGE_CATEGORY category, D3D12_MESSAGE_SEVERITY severity,
 		D3D12_MESSAGE_ID id, LPCSTR pDescription, void* pContext
 	);
-
+#endif
 private:
+#ifdef __ID3D12InfoQueue1_INTERFACE_DEFINED__
 	DWORD m_callBackCookie;
 	ComPtr<ID3D12InfoQueue1> m_debugInfoQueue;
+#endif
 };
 #endif
