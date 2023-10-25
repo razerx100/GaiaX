@@ -41,7 +41,10 @@ D3DDebugLogger::D3DDebugLogger(const Args& arguments) : m_callBackCookie{ 0u } {
 		);
 	}
 	else if (hr == E_NOINTERFACE) {
-		std::ofstream{ "ErrorLog.txt", std::ios_base::app | std::ios_base::out } << "ID3D12InfoQueue1 isn't supported. Upgrade to Windows 11." << std::endl;
+		std::ofstream{ "ErrorLog.txt", std::ios_base::app | std::ios_base::out } << std::format("ID3D12InfoQueue1 isn't supported. Upgrade to Windows 11. HRESULT: 0x{0:X}", static_cast<unsigned>(hr)).c_str() << std::endl;
+	}
+	else {
+		std::ofstream{ "ErrorLog.txt", std::ios_base::app | std::ios_base::out } << std::format("Something went wrong while initializing debugInfoQueue. HRESULT:0x{0:X}", static_cast<unsigned>(hr)).c_str() << std::endl;
 	}
 }
 
