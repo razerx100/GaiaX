@@ -2,15 +2,7 @@
 #include <fstream>
 #include <array>
 
-#ifndef __ID3D12InfoQueue1_INTERFACE_DEFINED__
-D3DDebugLogger::D3DDebugLogger(const Args& arguments) {
-	OutputDebugStringA("Failed to initalize D3D12DebugLogger: ID3D12InfoQueue1 interface is not defined. Upgrade to Windows 11 or use DX12 Agility SDK from NuGet.\n");
-	std::ofstream{ "ErrorLog.txt", std::ios_base::app | std::ios_base::out } << "Failed to initalize D3D12DebugLogger: ID3D12InfoQueue1 interface is not defined. Upgrade to Windows 11 or use DX12 Agility SDK from NuGet." << std::endl;
-}
-D3DDebugLogger::~D3DDebugLogger() noexcept {
-}
 
-#else
 static std::array<const char*, 11u> messageCategories{
 	"D3D12_MESSAGE_CATEGORY_APPLICATION_DEFINED",
 	"D3D12_MESSAGE_CATEGORY_MISCELLANEOUS",
@@ -32,7 +24,9 @@ static std::array<const char*, 5u> messageSeverity{
 	"D3D12_MESSAGE_SEVERITY_INFO",
 	"D3D12_MESSAGE_SEVERITY_MESSAGE"
 };
-D3DDebugLogger::D3DDebugLogger(const Args& arguments) : m_callBackCookie{ 0u } {
+D3DDebugLogger::D3DDebugLogger(const Args& arguments) {
+
+#ifdef __ID3D12InfoQueue1_INTERFACE_DEFINED__
 	HRESULT hr = arguments.device.value()->QueryInterface(IID_PPV_ARGS(&m_debugInfoQueue));
 	if (hr == S_OK) {
 		m_debugInfoQueue->RegisterMessageCallback(
@@ -46,6 +40,10 @@ D3DDebugLogger::D3DDebugLogger(const Args& arguments) : m_callBackCookie{ 0u } {
 	else {
 		std::ofstream{ "ErrorLog.txt", std::ios_base::app | std::ios_base::out } << std::format("Something went wrong while initializing debugInfoQueue. HRESULT:0x{0:X}", static_cast<unsigned>(hr)).c_str() << std::endl;
 	}
+#else
+	OutputDebugStringA("Failed to initalize D3D12DebugLogger: ID3D12InfoQueue1 interface is not defined. Upgrade to Windows 11 or use DX12 Agility SDK from NuGet.\n");
+	std::ofstream{ "ErrorLog.txt", std::ios_base::app | std::ios_base::out } << "Failed to initalize D3D12DebugLogger: ID3D12InfoQueue1 interface is not defined. Upgrade to Windows 11 or use DX12 Agility SDK from NuGet." << std::endl;
+#endif
 }
 
 D3DDebugLogger::~D3DDebugLogger() noexcept {
@@ -53,9 +51,11 @@ D3DDebugLogger::~D3DDebugLogger() noexcept {
 }
 
 void D3DDebugLogger::UnregisterCallBack() const noexcept {
+#ifdef __ID3D12InfoQueue1_INTERFACE_DEFINED__
 	if (m_debugInfoQueue) {
 		m_debugInfoQueue->UnregisterMessageCallback(m_callBackCookie);
 	}
+#endif
 }
 
 void D3DDebugLogger::MessageCallback(
@@ -69,4 +69,3 @@ void D3DDebugLogger::MessageCallback(
 		<< "Description : " << pDescription << "    "
 		<< std::endl;
 }
-#endif
