@@ -27,6 +27,7 @@ static std::array<const char*, 5u> messageSeverity{
 D3DDebugLogger::D3DDebugLogger(const Args& arguments) {
 
 #ifdef __ID3D12InfoQueue1_INTERFACE_DEFINED__
+	m_callBackCookie = 0;
 	HRESULT hr = arguments.device.value()->QueryInterface(IID_PPV_ARGS(&m_debugInfoQueue));
 	if (hr == S_OK) {
 		m_debugInfoQueue->RegisterMessageCallback(
