@@ -20,7 +20,14 @@ DeviceManager::DeviceManager() {
         ComPtr<IDXGIAdapter1> adapter;
 
         GetHardwareAdapter(m_pFactory.Get(), &adapter);
-
+        if (adapter) {
+            DXGI_ADAPTER_DESC1 adapterDescription;
+            if (SUCCEEDED(adapter->GetDesc1(&adapterDescription))) {
+                std::wstring desc = adapterDescription.Description;
+                desc = L"Selected DX12 Adapter: " + desc + L"\n";
+                OutputDebugStringW(desc.c_str());
+            }
+        }
         D3D12CreateDevice(adapter.Get(), gaiaFeatureLevel,IID_PPV_ARGS(&m_pDevice));
     }
 }

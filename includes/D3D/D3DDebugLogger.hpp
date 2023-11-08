@@ -3,6 +3,7 @@
 #include <D3DHeaders.hpp>
 #include <optional>
 
+
 class D3DDebugLogger {
 public:
 	struct Args {
@@ -22,6 +23,10 @@ public:
 
 private:
 	DWORD m_callBackCookie;
+#ifdef __ID3D12InfoQueue1_INTERFACE_DEFINED__
 	ComPtr<ID3D12InfoQueue1> m_debugInfoQueue;
+#else
+	ComPtr<ID3D12InfoQueue> m_debugInfoQueue;
+#endif
 };
 #endif
