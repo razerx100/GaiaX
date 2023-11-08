@@ -1,7 +1,7 @@
 #include <D3DDebugLogger.hpp>
 #include <fstream>
 #include <array>
-
+#include <format>
 
 static std::array<const char*, 11u> messageCategories{
 	"D3D12_MESSAGE_CATEGORY_APPLICATION_DEFINED",
@@ -24,11 +24,13 @@ static std::array<const char*, 5u> messageSeverity{
 	"D3D12_MESSAGE_SEVERITY_INFO",
 	"D3D12_MESSAGE_SEVERITY_MESSAGE"
 };
-D3DDebugLogger::D3DDebugLogger(const Args& arguments) {
-
+D3DDebugLogger::D3DDebugLogger(const Args& arguments)
+	:
+	m_callBackCookie(0)
+{
 #ifdef __ID3D12InfoQueue1_INTERFACE_DEFINED__
-	m_callBackCookie = 0;
 	HRESULT hr = arguments.device.value()->QueryInterface(IID_PPV_ARGS(&m_debugInfoQueue));
+	std::string errorMessage = "";
 	if (hr == S_OK) {
 		m_debugInfoQueue->RegisterMessageCallback(
 			D3DDebugLogger::MessageCallback, D3D12_MESSAGE_CALLBACK_FLAG_NONE, nullptr,
@@ -36,14 +38,19 @@ D3DDebugLogger::D3DDebugLogger(const Args& arguments) {
 		);
 	}
 	else if (hr == E_NOINTERFACE) {
-		std::ofstream{ "ErrorLog.txt", std::ios_base::app | std::ios_base::out } << std::format("ID3D12InfoQueue1 isn't supported. Upgrade to Windows 11. HRESULT: 0x{0:X}", static_cast<unsigned>(hr)).c_str() << std::endl;
+		errorMessage = std::format("ID3D12InfoQueue1 isn't supported. Upgrade to Windows 11. HRESULT: 0x{0:X}\n", static_cast<unsigned>(hr)).c_str();
 	}
 	else {
-		std::ofstream{ "ErrorLog.txt", std::ios_base::app | std::ios_base::out } << std::format("Something went wrong while initializing debugInfoQueue. HRESULT:0x{0:X}", static_cast<unsigned>(hr)).c_str() << std::endl;
+		errorMessage = std::format("Something went wrong while initializing debugInfoQueue. HRESULT:0x{0:X}\n", static_cast<unsigned>(hr)).c_str();
+}
+	if (hr != S_OK) {
+		std::ofstream{ "ErrorLog.txt", std::ios_base::app | std::ios_base::out } << errorMessage;
+		OutputDebugStringA(errorMessage.c_str());
 	}
 #else
-	OutputDebugStringA("Failed to initalize D3D12DebugLogger: ID3D12InfoQueue1 interface is not defined. Upgrade to Windows 11 or use DX12 Agility SDK from NuGet.\n");
-	std::ofstream{ "ErrorLog.txt", std::ios_base::app | std::ios_base::out } << "Failed to initalize D3D12DebugLogger: ID3D12InfoQueue1 interface is not defined. Upgrade to Windows 11 or use DX12 Agility SDK from NuGet." << std::endl;
+	std::string errorInterfaceNotFoundMessage = "Failed to initalize D3D12DebugLogger: ID3D12InfoQueue1 interface is not defined. Upgrade to Windows 11 or use DX12 Agility SDK from NuGet.\n";
+	OutputDebugStringA(errorInterfaceNotFoundMessage.c_str());
+	std::ofstream{ "ErrorLog.txt", std::ios_base::app | std::ios_base::out } << errorInterfaceNotFoundMessage << std::endl;
 #endif
 }
 

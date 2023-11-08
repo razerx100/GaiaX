@@ -3,6 +3,7 @@
 #include <D3DHeaders.hpp>
 #include <optional>
 
+
 class D3DDebugLogger {
 public:
 	struct Args {
@@ -19,10 +20,13 @@ public:
 		D3D12_MESSAGE_CATEGORY category, D3D12_MESSAGE_SEVERITY severity,
 		D3D12_MESSAGE_ID id, LPCSTR pDescription, void* pContext
 	);
+
 private:
-#ifdef __ID3D12InfoQueue1_INTERFACE_DEFINED__
 	DWORD m_callBackCookie;
+#ifdef __ID3D12InfoQueue1_INTERFACE_DEFINED__
 	ComPtr<ID3D12InfoQueue1> m_debugInfoQueue;
+#else
+	ComPtr<ID3D12InfoQueue> m_debugInfoQueue;
 #endif
 };
 #endif
