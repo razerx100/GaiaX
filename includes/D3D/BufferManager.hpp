@@ -6,17 +6,12 @@
 #include <vector>
 #include <RootSignatureDynamic.hpp>
 #include <IModel.hpp>
-#include <optional>
+#include <ISharedDataContainer.hpp>
 
-class BufferManager {
+class BufferManager
+{
 public:
-	struct Args {
-		std::optional<std::uint32_t> frameCount;
-		std::optional<bool> modelDataNoBB;
-	};
-
-public:
-	BufferManager(const Args& arguments);
+	BufferManager(std::uint32_t frameCount, bool modelDataNoBB, ISharedDataContainer& sharedData);
 
 	void BindBuffersToGraphics(
 		ID3D12GraphicsCommandList* graphicsCmdList, size_t frameIndex
@@ -188,5 +183,6 @@ private:
 	std::uint32_t m_frameCount;
 	std::vector<size_t> m_lightModelIndices;
 	bool m_modelDataNoBB;
+	ISharedDataContainer& m_sharedData;
 };
 #endif

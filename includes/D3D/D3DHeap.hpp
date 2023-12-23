@@ -3,14 +3,10 @@
 #include <D3DHeaders.hpp>
 #include <optional>
 
-class D3DHeap {
+class D3DHeap
+{
 public:
-	struct Args {
-		std::optional<D3D12_HEAP_TYPE> type;
-	};
-
-public:
-	D3DHeap(const Args& arguments);
+	D3DHeap(D3D12_HEAP_TYPE type);
 
 	void CreateHeap(ID3D12Device* device);
 

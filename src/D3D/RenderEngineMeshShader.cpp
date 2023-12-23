@@ -3,8 +3,8 @@
 #include <RenderEngineMeshShader.hpp>
 #include <Gaia.hpp>
 
-RenderEngineMeshDraw::RenderEngineMeshDraw(const Args& arguments) noexcept
-	: RenderEngineBase{ arguments.device.value() }, m_meshletBuffer{ DescriptorType::SRV } {}
+RenderEngineMeshDraw::RenderEngineMeshDraw(ID3D12Device* device) noexcept
+	: RenderEngineBase{ device }, m_meshletBuffer{ DescriptorType::SRV } {}
 
 void RenderEngineMeshDraw::ExecuteRenderStage(size_t frameIndex) {
 	ID3D12GraphicsCommandList6* graphicsCommandList = Gaia::graphicsCmdList->GetCommandList6();

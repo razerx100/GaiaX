@@ -6,13 +6,7 @@
 
 class D3DFence {
 public:
-	struct Args {
-		std::optional<ID3D12Device*> device;
-		std::optional<size_t> fenceValueCount = 1u;
-	};
-
-public:
-	D3DFence(const Args& arguments);
+	D3DFence(ID3D12Device* device, size_t fenceValueCount = 1u);
 
 	void AdvanceValueInQueue() noexcept;
 	void WaitOnCPU();

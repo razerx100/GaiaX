@@ -1,12 +1,14 @@
 #include <D3DCommandQueue.hpp>
 
-D3DCommandQueue::D3DCommandQueue(const Args& arguments) {
-	D3D12_COMMAND_QUEUE_DESC queueDesc{
-		.Type = arguments.type.value(),
+D3DCommandQueue::D3DCommandQueue(ID3D12Device* device, D3D12_COMMAND_LIST_TYPE type)
+{
+	D3D12_COMMAND_QUEUE_DESC queueDesc
+	{
+		.Type  = type,
 		.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE
 	};
 
-	arguments.device.value()->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&m_pCommandQueue));
+	device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&m_pCommandQueue));
 }
 
 void D3DCommandQueue::SignalCommandQueue(ID3D12Fence* fence, UINT64 fenceValue) const {

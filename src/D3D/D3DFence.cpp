@@ -1,11 +1,10 @@
 #include <D3DFence.hpp>
 #include <Exception.hpp>
 
-D3DFence::D3DFence(const Args& arguments)
-	: m_fenceValues(std::deque<UINT64>{arguments.fenceValueCount.value(), 0u}),
-	m_fenceCPUEvent{ nullptr } {
-
-	arguments.device.value()->CreateFence(
+D3DFence::D3DFence(ID3D12Device* device, size_t fenceValueCount)
+	: m_fenceValues(std::deque<UINT64>{fenceValueCount, 0u}), m_fenceCPUEvent{ nullptr }
+{
+	device->CreateFence(
 		GetFrontValue(), D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_fence)
 	);
 	IncreaseFrontValue(0u);

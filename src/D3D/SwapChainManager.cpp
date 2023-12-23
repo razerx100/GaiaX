@@ -4,14 +4,14 @@
 
 SwapChainManager::SwapChainManager(const Args& arguments)
 	: m_rtvDescSize{ 0u }, m_vsyncFlag{ false },
-	m_pRenderTargetViews{ arguments.bufferCount.value() } {
+	m_pRenderTargetViews{ arguments.bufferCount } {
 
-	ID3D12Device* device = arguments.device.value();
-	UINT bufferCount = static_cast<UINT>(arguments.bufferCount.value());
+	ID3D12Device* device = arguments.device;
+	UINT bufferCount = static_cast<UINT>(arguments.bufferCount);
 
 	DXGI_SWAP_CHAIN_DESC1 desc{
-		.Width = arguments.width.value(),
-		.Height = arguments.height.value(),
+		.Width = arguments.width,
+		.Height = arguments.height,
 		.Format = DXGI_FORMAT_B8G8R8A8_UNORM,
 		.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT,
 		.BufferCount = bufferCount,
@@ -19,16 +19,16 @@ SwapChainManager::SwapChainManager(const Args& arguments)
 	};
 	desc.SampleDesc.Count = 1u;
 
-	bool variableRefreshRate = arguments.variableRefreshRate.value();
+	bool variableRefreshRate = arguments.variableRefreshRate;
 	if (variableRefreshRate)
 		desc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
 
-	IDXGIFactory2* factory = arguments.factory.value();
-	HWND windowHandle = arguments.windowHandle.value();
+	IDXGIFactory2* factory = arguments.factory;
+	HWND windowHandle = arguments.windowHandle;
 
 	ComPtr<IDXGISwapChain1> swapChain;
 	factory->CreateSwapChainForHwnd(
-		arguments.graphicsQueue.value(), windowHandle, &desc, nullptr, nullptr, &swapChain
+		arguments.graphicsQueue, windowHandle, &desc, nullptr, nullptr, &swapChain
 	);
 	swapChain.As(&m_pSwapChain);
 

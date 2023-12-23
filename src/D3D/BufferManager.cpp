@@ -5,13 +5,15 @@
 
 #include <CameraManager.hpp>
 
-BufferManager::BufferManager(const Args& arguments)
+BufferManager::BufferManager(
+	std::uint32_t frameCount, bool modelDataNoBB, ISharedDataContainer& sharedData
+)
 	: m_cameraBuffer{}, m_pixelDataBuffer{},
 	m_modelBuffers{ ResourceType::cpuWrite, DescriptorType::SRV },
 	m_materialBuffers{ ResourceType::cpuWrite, DescriptorType::SRV },
 	m_lightBuffers{ ResourceType::cpuWrite, DescriptorType::SRV },
-	m_frameCount{ arguments.frameCount.value() },
-	m_modelDataNoBB{ arguments.modelDataNoBB.value() } {}
+	m_frameCount{ frameCount },
+	m_modelDataNoBB{ modelDataNoBB }, m_sharedData{ sharedData } {}
 
 void BufferManager::ReserveBuffers(ID3D12Device* device) noexcept {
 	// Camera
@@ -95,7 +97,7 @@ void BufferManager::SetMemoryAddresses() noexcept {
 }
 
 DirectX::XMMATRIX BufferManager::GetViewMatrix() const noexcept {
-	return Gaia::sharedData->GetViewMatrix();
+	return m_sharedData.GetViewMatrix();
 }
 
 void BufferManager::BindBuffersToGraphics(

@@ -55,7 +55,7 @@ public:
 	};
 
 public:
-	RenderEngineIndirectDraw(const Args& arguments);
+	RenderEngineIndirectDraw(ID3D12Device* device, std::uint32_t frameCount);
 
 	void ConstructPipelines() final;
 
@@ -92,12 +92,7 @@ private:
 
 class RenderEngineIndividualDraw final : public RenderEngineVertexShader {
 public:
-	struct Args {
-		std::optional<ID3D12Device*> device;
-	};
-
-public:
-	RenderEngineIndividualDraw(const Args& arguments);
+	RenderEngineIndividualDraw(ID3D12Device* device);
 
 	void ConstructPipelines() final;
 

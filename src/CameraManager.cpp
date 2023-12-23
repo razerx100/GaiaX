@@ -1,10 +1,9 @@
 #include <cstring>
 #include <CameraManager.hpp>
-#include <Gaia.hpp>
 
-CameraManager::CameraManager() noexcept
+CameraManager::CameraManager(ISharedDataContainer& sharedContainer) noexcept
 	: m_cameraMatrices{}, m_fovRadian(DirectX::XMConvertToRadians(65.f)),
-	m_sceneWidth(0), m_sceneHeight(0) {}
+	m_sceneWidth(0), m_sceneHeight(0), m_sharedData{ sharedContainer } {}
 
 void CameraManager::CopyData(std::uint8_t* cpuHandle) noexcept {
 	FetchCameraData();
@@ -30,9 +29,9 @@ void CameraManager::SetSceneResolution(std::uint32_t width, std::uint32_t height
 }
 
 void CameraManager::FetchCameraData() noexcept {
-	m_fovRadian = DirectX::XMConvertToRadians(static_cast<float>(Gaia::sharedData->GetFov()));
+	m_fovRadian = DirectX::XMConvertToRadians(static_cast<float>(m_sharedData.GetFov()));
 
 	SetProjectionMatrix();
 
-	m_cameraMatrices.view = Gaia::sharedData->GetViewMatrix();
+	m_cameraMatrices.view = m_sharedData.GetViewMatrix();
 }

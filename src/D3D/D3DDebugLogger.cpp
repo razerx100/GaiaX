@@ -24,12 +24,11 @@ static std::array<const char*, 5u> messageSeverity{
 	"D3D12_MESSAGE_SEVERITY_INFO",
 	"D3D12_MESSAGE_SEVERITY_MESSAGE"
 };
-D3DDebugLogger::D3DDebugLogger(const Args& arguments)
-	:
-	m_callBackCookie(0)
+D3DDebugLogger::D3DDebugLogger(ID3D12Device* device)
+	: m_callBackCookie(0)
 {
 #ifdef __ID3D12InfoQueue1_INTERFACE_DEFINED__
-	HRESULT hr = arguments.device.value()->QueryInterface(IID_PPV_ARGS(&m_debugInfoQueue));
+	HRESULT hr = device->QueryInterface(IID_PPV_ARGS(&m_debugInfoQueue));
 	std::string errorMessage = "";
 	if (hr == S_OK) {
 		m_debugInfoQueue->RegisterMessageCallback(

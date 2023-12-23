@@ -4,14 +4,10 @@
 #include <optional>
 
 
-class D3DDebugLogger {
+class D3DDebugLogger
+{
 public:
-	struct Args {
-		std::optional<ID3D12Device*> device;
-	};
-
-public:
-	D3DDebugLogger(const Args& arguments);
+	D3DDebugLogger(ID3D12Device* device);
 	~D3DDebugLogger() noexcept;
 
 	void UnregisterCallBack() const noexcept;

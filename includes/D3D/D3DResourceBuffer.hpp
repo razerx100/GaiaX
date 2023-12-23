@@ -43,13 +43,7 @@ protected:
 
 class D3DResourceBuffer : public _D3DResourceBuffer<D3DResourceView> {
 public:
-	struct Args {
-		std::optional<ResourceType> type;
-		std::optional<D3D12_RESOURCE_FLAGS> flags = D3D12_RESOURCE_FLAG_NONE;
-	};
-
-public:
-	D3DResourceBuffer(const Args& arguments);
+	D3DResourceBuffer(ResourceType type, D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE);
 
 	void CreateResource(ID3D12Device* device);
 };

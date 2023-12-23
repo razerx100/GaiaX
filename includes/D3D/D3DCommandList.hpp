@@ -4,17 +4,12 @@
 #include <vector>
 #include <optional>
 
-class D3DCommandList {
+class D3DCommandList
+{
 public:
-	struct Args {
-		std::optional<ID3D12Device4*> device;
-		std::optional<D3D12_COMMAND_LIST_TYPE> type;
-		std::optional<bool> cmdList6;
-		std::optional<size_t> allocatorCount = 1u;
-	};
-
-public:
-	D3DCommandList(const Args& arguments);
+	D3DCommandList(
+		ID3D12Device4* device, D3D12_COMMAND_LIST_TYPE type, bool cmdList6, size_t allocatorCount = 1u
+	);
 
 	void Reset(size_t allocatorIndex);
 	void ResetFirst();

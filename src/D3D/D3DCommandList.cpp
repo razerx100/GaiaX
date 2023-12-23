@@ -1,12 +1,10 @@
 #include <D3DCommandList.hpp>
 #include <Exception.hpp>
 
-D3DCommandList::D3DCommandList(const Args& arguments)
-	: m_pCommandAllocators{ arguments.allocatorCount.value()} {
-
-	ID3D12Device4* device = arguments.device.value();
-	D3D12_COMMAND_LIST_TYPE type = arguments.type.value();
-
+D3DCommandList::D3DCommandList(
+		ID3D12Device4* device, D3D12_COMMAND_LIST_TYPE type, bool cmdList6, size_t allocatorCount
+) : m_pCommandAllocators{ allocatorCount }
+{
 	for (auto& commandAllocator : m_pCommandAllocators)
 		device->CreateCommandAllocator(type, IID_PPV_ARGS(&commandAllocator));
 
@@ -14,7 +12,8 @@ D3DCommandList::D3DCommandList(const Args& arguments)
 		0u, type, D3D12_COMMAND_LIST_FLAG_NONE, IID_PPV_ARGS(&m_pCommandList)
 	);
 
-	if (arguments.cmdList6.value()) {
+	if (cmdList6)
+	{
 		HRESULT hr = m_pCommandList.As(&m_pCommandList6);
 
 		if (hr == E_NOINTERFACE)

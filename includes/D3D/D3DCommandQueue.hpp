@@ -4,15 +4,10 @@
 #include <vector>
 #include <optional>
 
-class D3DCommandQueue {
+class D3DCommandQueue
+{
 public:
-	struct Args {
-		std::optional<ID3D12Device*> device;
-		std::optional<D3D12_COMMAND_LIST_TYPE> type;
-	};
-
-public:
-	D3DCommandQueue(const Args& arguments);
+	D3DCommandQueue(ID3D12Device* device, D3D12_COMMAND_LIST_TYPE type);
 
 	void SignalCommandQueue(ID3D12Fence* fence, UINT64 fenceValue) const;
 	void WaitOnGPU(ID3D12Fence* fence, UINT64 fenceValue) const;

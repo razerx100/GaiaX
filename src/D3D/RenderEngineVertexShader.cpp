@@ -87,9 +87,8 @@ void RenderEngineVertexShader::ExecuteRenderStage(size_t frameIndex) {
 }
 
 // Indirect Draw
-RenderEngineIndirectDraw::RenderEngineIndirectDraw(const Args& arguments)
-	: RenderEngineVertexShader{ arguments.device.value() },
-	m_computePipeline{ arguments.frameCount.value() } {}
+RenderEngineIndirectDraw::RenderEngineIndirectDraw(ID3D12Device* device, std::uint32_t frameCount)
+	: RenderEngineVertexShader{ device }, m_computePipeline{ frameCount } {}
 
 void RenderEngineIndirectDraw::ExecuteComputeStage(size_t frameIndex) {
 	ID3D12GraphicsCommandList* computeCommandList = Gaia::computeCmdList->GetCommandList();
@@ -228,8 +227,8 @@ void RenderEngineIndirectDraw::CreateCommandSignature(ID3D12Device* device) {
 }
 
 // Individual Draw
-RenderEngineIndividualDraw::RenderEngineIndividualDraw(const Args& arguments)
-	: RenderEngineVertexShader{ arguments.device.value() } {}
+RenderEngineIndividualDraw::RenderEngineIndividualDraw(ID3D12Device* device)
+	: RenderEngineVertexShader{ device } {}
 
 void RenderEngineIndividualDraw::ExecutePreRenderStage(
 	ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex

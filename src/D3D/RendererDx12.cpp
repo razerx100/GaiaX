@@ -6,7 +6,7 @@
 RendererDx12::RendererDx12(
 	const char* appName,
 	void* windowHandle, std::uint32_t width, std::uint32_t height, std::uint32_t bufferCount,
-	RenderEngineType engineType
+	IThreadPool& threadPool, ISharedDataContainer& sharedContainer, RenderEngineType engineType
 ) : m_appName(appName), m_width(width), m_height(height), m_bufferCount{ bufferCount } {
 
 	m_objectManager.CreateObject(Gaia::device, 3u);
@@ -16,10 +16,10 @@ RendererDx12::RendererDx12(
 	Gaia::InitRenderEngine(m_objectManager, engineType, deviceRef, bufferCount);
 	Gaia::renderEngine->ResizeViewportAndScissor(width, height);
 
-	Gaia::InitResources(m_objectManager);
+	Gaia::InitResources(m_objectManager, threadPool);
 
 #ifdef _DEBUG
-	m_objectManager.CreateObject(Gaia::debugLogger, { deviceRef }, 4u);
+	m_objectManager.CreateObject(Gaia::debugLogger, 4u, deviceRef);
 #endif
 
 	const bool meshDrawType = engineType == RenderEngineType::MeshDraw ? true : false;
@@ -37,7 +37,7 @@ RendererDx12::RendererDx12(
 		.variableRefreshRate = true
 	};
 
-	m_objectManager.CreateObject(Gaia::swapChain, swapChainArguments, 1u);
+	m_objectManager.CreateObject(Gaia::swapChain, 1u, swapChainArguments);
 
 	Gaia::InitCopyQueueAndList(m_objectManager, deviceRef);
 	Gaia::InitComputeQueueAndList(m_objectManager, deviceRef, bufferCount);
@@ -46,10 +46,10 @@ RendererDx12::RendererDx12(
 
 	const bool modelDataNoBB = engineType == RenderEngineType::IndirectDraw ? false : true;
 
-	m_objectManager.CreateObject(Gaia::bufferManager, { bufferCount, modelDataNoBB }, 1u);
+	m_objectManager.CreateObject(Gaia::bufferManager, 1u, bufferCount, modelDataNoBB, sharedContainer);
 	m_objectManager.CreateObject(Gaia::textureStorage, 0u);
 
-	m_objectManager.CreateObject(Gaia::cameraManager, 0u);
+	m_objectManager.CreateObject(Gaia::cameraManager, 0u, sharedContainer);
 	Gaia::cameraManager->SetSceneResolution(width, height);
 }
 
@@ -203,16 +203,6 @@ size_t RendererDx12::AddTexture(
 	return Gaia::textureStorage->AddTexture(
 		Gaia::device->GetDeviceRef(), std::move(textureData), width, height
 	);
-}
-
-void RendererDx12::SetThreadPool(std::shared_ptr<IThreadPool> threadPoolArg) noexcept {
-	Gaia::SetThreadPool(std::move(threadPoolArg));
-}
-
-void RendererDx12::SetSharedDataContainer(
-	std::shared_ptr<ISharedDataContainer> sharedData
-) noexcept {
-	Gaia::SetSharedData(std::move(sharedData));
 }
 
 void RendererDx12::WaitForAsyncTasks() {

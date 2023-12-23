@@ -8,8 +8,8 @@ class RendererDx12 final : public Renderer {
 public:
 	RendererDx12(
 		const char* appName,
-		void* windowHandle, std::uint32_t width, std::uint32_t height,
-		std::uint32_t bufferCount, RenderEngineType engineType
+		void* windowHandle, std::uint32_t width, std::uint32_t height, std::uint32_t bufferCount,
+		IThreadPool& threadPool, ISharedDataContainer& sharedContainer, RenderEngineType engineType
 	);
 
 	void Resize(std::uint32_t width, std::uint32_t height) override;
@@ -17,12 +17,8 @@ public:
 	[[nodiscard]]
 	Resolution GetFirstDisplayCoordinates() const override;
 
-	void SetThreadPool(std::shared_ptr<IThreadPool> threadPoolArg) noexcept override;
 	void SetBackgroundColour(const std::array<float, 4>& colour) noexcept override;
 	void SetShaderPath(const wchar_t* path) noexcept override;
-	void SetSharedDataContainer(
-		std::shared_ptr<ISharedDataContainer> sharedData
-	) noexcept override;
 
 	[[nodiscard]]
 	size_t AddTexture(

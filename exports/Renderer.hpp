@@ -29,12 +29,8 @@ public:
 	[[nodiscard]]
 	virtual Resolution GetFirstDisplayCoordinates() const = 0;
 
-	virtual void SetThreadPool(std::shared_ptr<IThreadPool> threadPoolArg) noexcept = 0;
 	virtual void SetBackgroundColour(const std::array<float, 4>& colour) noexcept = 0;
 	virtual void SetShaderPath(const wchar_t* path) noexcept = 0;
-	virtual void SetSharedDataContainer(
-		std::shared_ptr<ISharedDataContainer> sharedData
-	) noexcept = 0;
 
 	[[nodiscard]]
 	virtual size_t AddTexture(

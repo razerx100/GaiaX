@@ -6,15 +6,16 @@
 
 class SwapChainManager {
 public:
-	struct Args {
-		std::optional<ID3D12Device*> device;
-		std::optional<IDXGIFactory2*> factory;
-		std::optional<ID3D12CommandQueue*> graphicsQueue;
-		std::optional<HWND> windowHandle;
-		std::optional<std::uint32_t> width;
-		std::optional<std::uint32_t> height;
-		std::optional<std::uint32_t> bufferCount;
-		std::optional<bool> variableRefreshRate;
+	struct Args
+	{
+		ID3D12Device* device;
+		IDXGIFactory2* factory;
+		ID3D12CommandQueue* graphicsQueue;
+		HWND windowHandle;
+		std::uint32_t width;
+		std::uint32_t height;
+		std::uint32_t bufferCount;
+		bool variableRefreshRate;
 	};
 
 public:
