@@ -4,10 +4,8 @@
 #include <memory>
 #include <array>
 #include <string>
-#include <IThreadPool.hpp>
 
 #include <IModel.hpp>
-#include <ISharedDataContainer.hpp>
 
 enum class RenderEngineType {
 	IndirectDraw,

@@ -1,6 +1,8 @@
 #ifndef GAIA_INSTANCE_HPP_
 #define GAIA_INSTANCE_HPP_
 #include <Renderer.hpp>
+#include <IThreadPool.hpp>
+#include <ISharedDataContainer.hpp>
 
 #ifdef BUILD_GAIAX
 #define GAIAX_DLL __declspec(dllexport)

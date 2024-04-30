@@ -3,6 +3,8 @@
 #include <Renderer.hpp>
 #include <string>
 #include <ObjectManager.hpp>
+#include <IThreadPool.hpp>
+#include <ISharedDataContainer.hpp>
 
 class RendererDx12 final : public Renderer {
 public:
