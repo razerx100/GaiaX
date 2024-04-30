@@ -10,7 +10,7 @@
 #include <BufferManager.hpp>
 #include <DescriptorTableManager.hpp>
 #include <TextureStorage.hpp>
-#include <IThreadPool.hpp>
+#include <ThreadPool.hpp>
 #include <ISharedDataContainer.hpp>
 #include <CameraManager.hpp>
 #include <D3DHeap.hpp>
@@ -57,7 +57,7 @@ namespace Gaia {
 	void InitComputeQueueAndList(
 		ObjectManager& om, ID3D12Device4* d3dDevice, std::uint32_t commandAllocatorCount
 	);
-	void InitResources(ObjectManager& om, IThreadPool& threadPool);
+	void InitResources(ObjectManager& om, ThreadPool& threadPool);
 	void InitRenderEngine(
 		ObjectManager& om, RenderEngineType engineType, ID3D12Device* d3dDevice,
 		std::uint32_t frameCount

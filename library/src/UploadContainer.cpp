@@ -2,7 +2,7 @@
 #include <cstring>
 #include <D3DHelperFunctions.hpp>
 
-UploadContainer::UploadContainer(IThreadPool& threadPool)
+UploadContainer::UploadContainer(ThreadPool& threadPool)
 	: m_memoryData{}, m_threadPool{ threadPool } {}
 
 void UploadContainer::AddMemory(
@@ -58,20 +58,19 @@ void UploadContainer::CopyData(std::atomic_size_t& workCount) const noexcept
 {
 	++workCount;
 
-	m_threadPool.SubmitWork(
-		[&]
-		{
-			for (size_t index = 0u; index < std::size(m_memoryData); ++index)
+	m_threadPool.SubmitWork(std::function{
+			[&]
 			{
-				const MemoryData& memoryData = m_memoryData[index];
+				for (size_t index = 0u; index < std::size(m_memoryData); ++index)
+				{
+					const MemoryData& memoryData = m_memoryData[index];
 
-				if (memoryData.texture)
-					CopyTexture(memoryData);
-				else
-					CopyBuffer(memoryData);
-			}
+					if (memoryData.texture)
+						CopyTexture(memoryData);
+					else
+						CopyBuffer(memoryData);
+				}
 
-			--workCount;
-		}
-	);
+				--workCount;
+			} });
 }

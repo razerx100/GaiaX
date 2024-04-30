@@ -3,13 +3,13 @@
 #include <memory>
 #include <vector>
 #include <atomic>
-#include <IThreadPool.hpp>
+#include <ThreadPool.hpp>
 #include <optional>
 
 class UploadContainer
 {
 public:
-	UploadContainer(IThreadPool& threadPool);
+	UploadContainer(ThreadPool& threadPool);
 
 	void AddMemory(void const* srcMemoryRef, void* dstMemoryRef, size_t size) noexcept;
 	void AddMemory(
@@ -38,6 +38,6 @@ private:
 
 private:
 	std::vector<MemoryData> m_memoryData;
-	IThreadPool& m_threadPool;
+	ThreadPool& m_threadPool;
 };
 #endif

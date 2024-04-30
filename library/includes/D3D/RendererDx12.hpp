@@ -3,15 +3,16 @@
 #include <Renderer.hpp>
 #include <string>
 #include <ObjectManager.hpp>
-#include <IThreadPool.hpp>
+#include <ThreadPool.hpp>
 #include <ISharedDataContainer.hpp>
 
-class RendererDx12 final : public Renderer {
+class RendererDx12 final : public Renderer
+{
 public:
 	RendererDx12(
 		const char* appName,
 		void* windowHandle, std::uint32_t width, std::uint32_t height, std::uint32_t bufferCount,
-		IThreadPool& threadPool, ISharedDataContainer& sharedContainer, RenderEngineType engineType
+		ThreadPool& threadPool, ISharedDataContainer& sharedContainer, RenderEngineType engineType
 	);
 
 	void Resize(std::uint32_t width, std::uint32_t height) override;

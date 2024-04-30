@@ -6,7 +6,7 @@
 RendererDx12::RendererDx12(
 	const char* appName,
 	void* windowHandle, std::uint32_t width, std::uint32_t height, std::uint32_t bufferCount,
-	IThreadPool& threadPool, ISharedDataContainer& sharedContainer, RenderEngineType engineType
+	ThreadPool& threadPool, ISharedDataContainer& sharedContainer, RenderEngineType engineType
 ) : m_appName(appName), m_width(width), m_height(height), m_bufferCount{ bufferCount } {
 
 	m_objectManager.CreateObject(Gaia::device, 3u);
