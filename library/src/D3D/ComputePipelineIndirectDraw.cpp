@@ -162,7 +162,7 @@ void ComputePipelineIndirectDraw::ReserveBuffers(ID3D12Device* device) {
 }
 
 void ComputePipelineIndirectDraw::RecordIndirectArguments(
-	const std::vector<std::shared_ptr<IModel>>& models
+	const std::vector<std::shared_ptr<Model>>& models
 ) noexcept {
 	for (size_t index = 0u; index < std::size(models); ++index) {
 		const auto& model = models[index];

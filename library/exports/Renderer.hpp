@@ -5,9 +5,10 @@
 #include <array>
 #include <string>
 
-#include <IModel.hpp>
+#include <Model.hpp>
 
-enum class RenderEngineType {
+enum class RenderEngineType
+{
 	IndirectDraw,
 	IndividualDraw,
 	MeshDraw
@@ -36,7 +37,7 @@ public:
 	) = 0; // Returns the index of the texture in its Resource Heap
 
 	virtual void AddModelSet(
-		std::vector<std::shared_ptr<IModel>>&& models, const std::wstring& pixelShader
+		std::vector<std::shared_ptr<Model>>&& models, const std::wstring& pixelShader
 	) = 0;
 	virtual void AddMeshletModelSet(
 		std::vector<MeshletModel>&& meshletModels, const std::wstring& pixelShader

@@ -7,7 +7,8 @@
 #include <ViewportAndScissorManager.hpp>
 #include <DepthBuffer.hpp>
 
-class RenderEngineBase : public RenderEngine {
+class RenderEngineBase : public RenderEngine
+{
 public:
 	RenderEngineBase(ID3D12Device* device);
 
@@ -24,7 +25,7 @@ public:
 		std::vector<Vertex>&& gVertices, std::vector<std::uint32_t>&& gIndices
 	) noexcept override;
 	virtual void RecordModelDataSet(
-		const std::vector<std::shared_ptr<IModel>>& models, const std::wstring& pixelShader
+		const std::vector<std::shared_ptr<Model>>& models, const std::wstring& pixelShader
 	) noexcept override;
 	virtual void AddMeshletModelSet(
 		std::vector<MeshletModel>& meshletModels, const std::wstring& pixelShader

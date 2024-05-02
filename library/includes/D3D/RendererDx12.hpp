@@ -29,7 +29,7 @@ public:
 	) override;
 
 	void AddModelSet(
-		std::vector<std::shared_ptr<IModel>>&& models, const std::wstring& pixelShader
+		std::vector<std::shared_ptr<Model>>&& models, const std::wstring& pixelShader
 	) override;
 	void AddMeshletModelSet(
 		std::vector<MeshletModel>&& meshletModels, const std::wstring& pixelShader

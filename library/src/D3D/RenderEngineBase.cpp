@@ -101,7 +101,7 @@ void RenderEngineBase::AddGVerticesAndIndices(
 ) noexcept {}
 
 void RenderEngineBase::RecordModelDataSet(
-	[[maybe_unused]] const std::vector<std::shared_ptr<IModel>>& models,
+	[[maybe_unused]] const std::vector<std::shared_ptr<Model>>& models,
 	[[maybe_unused]] const std::wstring& pixelShader
 ) noexcept {}
 

@@ -147,14 +147,14 @@ void BufferManager::SetGraphicsRootSignatureLayout(RSLayoutType rsLayout) noexce
 	m_graphicsRSLayout = std::move(rsLayout);
 }
 
-void BufferManager::CheckLightSourceAndAddOpaque(std::shared_ptr<IModel>&& model) noexcept {
+void BufferManager::CheckLightSourceAndAddOpaque(std::shared_ptr<Model>&& model) noexcept {
 	if (model->IsLightSource())
 		m_lightModelIndices.emplace_back(std::size(m_opaqueModels));
 
 	m_opaqueModels.emplace_back(std::move(model));
 }
 
-void BufferManager::AddOpaqueModels(std::vector<std::shared_ptr<IModel>>&& models) noexcept {
+void BufferManager::AddOpaqueModels(std::vector<std::shared_ptr<Model>>&& models) noexcept {
 	for (size_t index = 0u; index < std::size(models); ++index)
 		CheckLightSourceAndAddOpaque(std::move(models[index]));
 }

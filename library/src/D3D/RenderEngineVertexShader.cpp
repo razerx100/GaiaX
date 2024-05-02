@@ -168,7 +168,7 @@ void RenderEngineIndirectDraw::ConstructPipelines() {
 }
 
 void RenderEngineIndirectDraw::RecordModelDataSet(
-	const std::vector<std::shared_ptr<IModel>>& models, const std::wstring& pixelShader
+	const std::vector<std::shared_ptr<Model>>& models, const std::wstring& pixelShader
 ) noexcept {
 	auto graphicsPipeline = std::make_unique<GraphicsPipelineIndirectDraw>();
 
@@ -265,7 +265,7 @@ void RenderEngineIndividualDraw::ConstructPipelines() {
 }
 
 void RenderEngineIndividualDraw::RecordModelDataSet(
-	const std::vector<std::shared_ptr<IModel>>& models, const std::wstring& pixelShader
+	const std::vector<std::shared_ptr<Model>>& models, const std::wstring& pixelShader
 ) noexcept {
 	auto graphicsPipeline = std::make_unique<GraphicsPipelineIndividualDraw>();
 
@@ -282,7 +282,7 @@ void RenderEngineIndividualDraw::RecordModelDataSet(
 }
 
 void RenderEngineIndividualDraw::RecordModelArguments(
-	const std::vector<std::shared_ptr<IModel>>& models
+	const std::vector<std::shared_ptr<Model>>& models
 ) noexcept {
 	for (const auto& model : models) {
 		D3D12_DRAW_INDEXED_ARGUMENTS arguments{

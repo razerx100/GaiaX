@@ -60,7 +60,7 @@ public:
 	void ConstructPipelines() final;
 
 	void RecordModelDataSet(
-		const std::vector<std::shared_ptr<IModel>>& models, const std::wstring& pixelShader
+		const std::vector<std::shared_ptr<Model>>& models, const std::wstring& pixelShader
 	) noexcept final;
 
 private:
@@ -97,14 +97,14 @@ public:
 	void ConstructPipelines() final;
 
 	void RecordModelDataSet(
-		const std::vector<std::shared_ptr<IModel>>& models, const std::wstring& pixelShader
+		const std::vector<std::shared_ptr<Model>>& models, const std::wstring& pixelShader
 	) noexcept final;
 	void UpdateModelBuffers(size_t frameIndex) const noexcept final;
 
 private:
 	using GraphicsPipeline = std::unique_ptr<GraphicsPipelineIndividualDraw>;
 
-	void RecordModelArguments(const std::vector<std::shared_ptr<IModel>>& models) noexcept;
+	void RecordModelArguments(const std::vector<std::shared_ptr<Model>>& models) noexcept;
 
 	void ExecutePreRenderStage(
 		ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex

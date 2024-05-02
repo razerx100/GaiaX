@@ -4,7 +4,7 @@
 #include <D3DDescriptorView.hpp>
 #include <RootSignatureDynamic.hpp>
 #include <UploadContainer.hpp>
-#include <IModel.hpp>
+#include <Model.hpp>
 
 class VertexManagerMeshShader {
 public:

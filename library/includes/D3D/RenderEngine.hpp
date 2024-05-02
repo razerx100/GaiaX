@@ -5,9 +5,10 @@
 #include <array>
 #include <memory>
 #include <string>
-#include <IModel.hpp>
+#include <Model.hpp>
 
-class RenderEngine {
+class RenderEngine
+{
 public:
 	RenderEngine() noexcept;
 	virtual ~RenderEngine() = default;
@@ -28,7 +29,7 @@ public:
 		std::vector<Vertex>&& gVertices, std::vector<std::uint32_t>&& gIndices
 	) noexcept = 0;
 	virtual void RecordModelDataSet(
-		const std::vector<std::shared_ptr<IModel>>& models, const std::wstring& pixelShader
+		const std::vector<std::shared_ptr<Model>>& models, const std::wstring& pixelShader
 	) noexcept = 0;
 	virtual void AddMeshletModelSet(
 		std::vector<MeshletModel>& meshletModels, const std::wstring& pixelShader

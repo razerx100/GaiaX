@@ -8,13 +8,13 @@
 #include <D3DPipelineObject.hpp>
 #include <D3DDescriptorView.hpp>
 #include <GaiaDataTypes.hpp>
-#include <IModel.hpp>
+#include <Model.hpp>
 
 class ComputePipelineIndirectDraw {
 public:
 	ComputePipelineIndirectDraw(std::uint32_t frameCount);
 
-	void RecordIndirectArguments(const std::vector<std::shared_ptr<IModel>>& models) noexcept;
+	void RecordIndirectArguments(const std::vector<std::shared_ptr<Model>>& models) noexcept;
 
 	void CreateComputeRootSignature(ID3D12Device* device) noexcept;
 	void CreateComputePipelineObject(

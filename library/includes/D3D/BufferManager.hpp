@@ -5,7 +5,7 @@
 #include <memory>
 #include <vector>
 #include <RootSignatureDynamic.hpp>
-#include <IModel.hpp>
+#include <Model.hpp>
 #include <ISharedDataContainer.hpp>
 
 class BufferManager
@@ -26,7 +26,7 @@ public:
 	void SetComputeRootSignatureLayout(RSLayoutType rsLayout) noexcept;
 	void SetGraphicsRootSignatureLayout(RSLayoutType rsLayout) noexcept;
 
-	void AddOpaqueModels(std::vector<std::shared_ptr<IModel>>&& models) noexcept;
+	void AddOpaqueModels(std::vector<std::shared_ptr<Model>>&& models) noexcept;
 	void AddOpaqueModels(std::vector<MeshletModel>&& meshletModels) noexcept;
 	void ReserveBuffers(ID3D12Device* device) noexcept;
 	void CreateBuffers(ID3D12Device* device);
@@ -87,7 +87,7 @@ private:
 		size_t bufferIndex, const DirectX::XMMATRIX& viewMatrix
 	) const noexcept;
 	void UpdatePixelData(size_t bufferIndex) const noexcept;
-	void CheckLightSourceAndAddOpaque(std::shared_ptr<IModel>&& model) noexcept;
+	void CheckLightSourceAndAddOpaque(std::shared_ptr<Model>&& model) noexcept;
 
 	template<bool modelWithNoBB>
 	void UpdatePerModelData(
@@ -179,7 +179,7 @@ private:
 	RSLayoutType m_graphicsRSLayout;
 	RSLayoutType m_computeRSLayout;
 
-	std::vector<std::shared_ptr<IModel>> m_opaqueModels;
+	std::vector<std::shared_ptr<Model>> m_opaqueModels;
 	std::uint32_t m_frameCount;
 	std::vector<size_t> m_lightModelIndices;
 	bool m_modelDataNoBB;

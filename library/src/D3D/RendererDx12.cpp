@@ -54,7 +54,7 @@ RendererDx12::RendererDx12(
 }
 
 void RendererDx12::AddModelSet(
-	std::vector<std::shared_ptr<IModel>>&& models, const std::wstring& pixelShader
+	std::vector<std::shared_ptr<Model>>&& models, const std::wstring& pixelShader
 ) {
 	Gaia::renderEngine->RecordModelDataSet(models, pixelShader + L".cso");
 	Gaia::bufferManager->AddOpaqueModels(std::move(models));
