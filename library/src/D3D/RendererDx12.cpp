@@ -214,3 +214,9 @@ void RendererDx12::WaitForAsyncTasks() {
 		Gaia::computeFence->WaitOnCPUConditional();
 	}
 }
+
+void RendererDx12::AddMaterial(std::shared_ptr<Material> material)
+{}
+
+void RendererDx12::AddMaterials(std::vector<std::shared_ptr<Material>>&& materials)
+{}

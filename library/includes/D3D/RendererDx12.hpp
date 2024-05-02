@@ -42,6 +42,9 @@ public:
 		std::vector<std::uint32_t>&& gPrimIndices
 	) override;
 
+	void AddMaterial(std::shared_ptr<Material> material) override;
+	void AddMaterials(std::vector<std::shared_ptr<Material>>&& materials) override;
+
 	void Update() override;
 	void Render() override;
 	void WaitForAsyncTasks() override;

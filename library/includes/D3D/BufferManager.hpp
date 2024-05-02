@@ -6,6 +6,7 @@
 #include <vector>
 #include <RootSignatureDynamic.hpp>
 #include <Model.hpp>
+#include <Material.hpp>
 #include <ISharedDataContainer.hpp>
 
 class BufferManager
@@ -126,7 +127,7 @@ private:
 					modelBufferOffset, modelOffset
 				);
 
-			const auto& modelMaterial = model->GetMaterial();
+			/*const auto& modelMaterial = model->GetMaterial();
 
 			MaterialBuffer material{
 				.ambient = modelMaterial.ambient,
@@ -138,7 +139,7 @@ private:
 				.specularTexIndex = model->GetSpecularTexIndex(),
 				.shininess = modelMaterial.shininess
 			};
-			CopyStruct(material, materialBufferOffset, materialOffset);
+			CopyStruct(material, materialBufferOffset, materialOffset);*/
 		}
 	}
 

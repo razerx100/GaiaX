@@ -178,22 +178,22 @@ void BufferManager::UpdateLightData(
 
 	for (auto& lightIndex : m_lightModelIndices) {
 		auto& model = m_opaqueModels[lightIndex];
-		const auto& modelMaterial = model->GetMaterial();
+		/*const auto& modelMaterial = model->GetMaterial();
 
 		LightBuffer light{
 			.ambient = modelMaterial.ambient,
 			.diffuse = modelMaterial.diffuse,
 			.specular = modelMaterial.specular
-		};
+		};*/
 
 		DirectX::XMFLOAT3 modelPosition = model->GetModelOffset();
 		DirectX::XMMATRIX viewSpace = model->GetModelMatrix() * viewMatrix;
 		DirectX::XMVECTOR viewPosition = DirectX::XMVector3Transform(
 			DirectX::XMLoadFloat3(&modelPosition), viewMatrix
 		);
-		DirectX::XMStoreFloat3(&light.position, viewPosition);
+		//DirectX::XMStoreFloat3(&light.position, viewPosition);
 
-		CopyStruct(light, lightBufferOffset, offset);
+		//CopyStruct(light, lightBufferOffset, offset);
 	}
 }
 
