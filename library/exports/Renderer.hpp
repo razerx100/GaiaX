@@ -4,15 +4,10 @@
 #include <memory>
 #include <array>
 #include <string>
+#include <RendererTypes.hpp>
 
 #include <Model.hpp>
 
-enum class RenderEngineType
-{
-	IndirectDraw,
-	IndividualDraw,
-	MeshDraw
-};
 
 class Renderer {
 public:
