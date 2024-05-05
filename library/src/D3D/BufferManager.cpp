@@ -6,14 +6,14 @@
 #include <CameraManager.hpp>
 
 BufferManager::BufferManager(
-	std::uint32_t frameCount, bool modelDataNoBB, ISharedDataContainer& sharedData
+	std::uint32_t frameCount, bool modelDataNoBB
 )
 	: m_cameraBuffer{}, m_pixelDataBuffer{},
 	m_modelBuffers{ ResourceType::cpuWrite, DescriptorType::SRV },
 	m_materialBuffers{ ResourceType::cpuWrite, DescriptorType::SRV },
 	m_lightBuffers{ ResourceType::cpuWrite, DescriptorType::SRV },
 	m_frameCount{ frameCount },
-	m_modelDataNoBB{ modelDataNoBB }, m_sharedData{ sharedData } {}
+	m_modelDataNoBB{ modelDataNoBB } {}
 
 void BufferManager::ReserveBuffers(ID3D12Device* device) noexcept {
 	// Camera
@@ -96,10 +96,6 @@ void BufferManager::SetMemoryAddresses() noexcept {
 	m_pixelDataBuffer.UpdateGPUAddressStart(gpuOffset);
 }
 
-DirectX::XMMATRIX BufferManager::GetViewMatrix() const noexcept {
-	return m_sharedData.GetViewMatrix();
-}
-
 void BufferManager::BindBuffersToGraphics(
 	ID3D12GraphicsCommandList* graphicsCmdList, size_t frameIndex
 ) const noexcept {
@@ -159,10 +155,10 @@ void BufferManager::AddOpaqueModels(std::vector<std::shared_ptr<Model>>&& models
 		CheckLightSourceAndAddOpaque(std::move(models[index]));
 }
 
-void BufferManager::AddOpaqueModels(std::vector<MeshletModel>&& meshletModels) noexcept {
+/*void BufferManager::AddOpaqueModels(std::vector<MeshletModel>&& meshletModels) noexcept {
 	for (size_t index = 0u; index < std::size(meshletModels); ++index)
 		CheckLightSourceAndAddOpaque(std::move(meshletModels[index].model));
-}
+}*/
 
 void BufferManager::UpdateCameraData(size_t bufferIndex) const noexcept {
 	std::uint8_t* cameraCpuHandle = m_cameraBuffer.GetCPUAddressStart(bufferIndex);

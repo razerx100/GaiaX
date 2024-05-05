@@ -2,7 +2,6 @@
 #define CAMERA_MANAGER_HPP_
 #include <cstdint>
 #include <DirectXMath.h>
-#include <ISharedDataContainer.hpp>
 
 struct CameraMatrices {
 	DirectX::XMMATRIX view;
@@ -11,7 +10,7 @@ struct CameraMatrices {
 
 class CameraManager {
 public:
-	CameraManager(ISharedDataContainer& sharedContainer) noexcept;
+	CameraManager() noexcept;
 
 	void CopyData(std::uint8_t* cpuHandle) noexcept;
 
@@ -27,6 +26,5 @@ private:
 	float m_fovRadian;
 	float m_sceneWidth;
 	float m_sceneHeight;
-	ISharedDataContainer& m_sharedData;
 };
 #endif

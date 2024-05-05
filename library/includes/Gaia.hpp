@@ -11,7 +11,6 @@
 #include <DescriptorTableManager.hpp>
 #include <TextureStorage.hpp>
 #include <ThreadPool.hpp>
-#include <ISharedDataContainer.hpp>
 #include <CameraManager.hpp>
 #include <D3DHeap.hpp>
 #include <D3DResourceBuffer.hpp>

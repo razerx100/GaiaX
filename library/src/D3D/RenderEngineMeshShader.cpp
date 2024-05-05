@@ -46,7 +46,7 @@ void RenderEngineMeshDraw::UpdateModelBuffers(size_t frameIndex) const noexcept 
 	Gaia::bufferManager->Update<true>(frameIndex);
 }
 
-void RenderEngineMeshDraw::AddMeshletModelSet(
+/*void RenderEngineMeshDraw::AddMeshletModelSet(
 	std::vector<MeshletModel>& meshletModels, const std::wstring& pixelShader
 ) noexcept {
 	auto graphicsPipeline = std::make_unique<GraphicsPipelineMeshShader>();
@@ -72,7 +72,7 @@ void RenderEngineMeshDraw::AddMeshletModelSet(
 		m_graphicsPipeline0 = std::move(graphicsPipeline);
 	else
 		m_graphicsPipelines.emplace_back(std::move(graphicsPipeline));
-}
+}*/
 
 void RenderEngineMeshDraw::AddGVerticesAndPrimIndices(
 	std::vector<Vertex>&& gVertices, std::vector<std::uint32_t>&& gVerticesIndices,

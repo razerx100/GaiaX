@@ -6,7 +6,7 @@
 RendererDx12::RendererDx12(
 	const char* appName,
 	void* windowHandle, std::uint32_t width, std::uint32_t height, std::uint32_t bufferCount,
-	ThreadPool& threadPool, ISharedDataContainer& sharedContainer, RenderEngineType engineType
+	ThreadPool& threadPool, RenderEngineType engineType
 ) : m_appName(appName), m_width(width), m_height(height), m_bufferCount{ bufferCount } {
 
 	m_objectManager.CreateObject(Gaia::device, 3u);
@@ -46,14 +46,14 @@ RendererDx12::RendererDx12(
 
 	const bool modelDataNoBB = engineType == RenderEngineType::IndirectDraw ? false : true;
 
-	m_objectManager.CreateObject(Gaia::bufferManager, 1u, bufferCount, modelDataNoBB, sharedContainer);
+	//m_objectManager.CreateObject(Gaia::bufferManager, 1u, bufferCount, modelDataNoBB, sharedContainer);
 	m_objectManager.CreateObject(Gaia::textureStorage, 0u);
 
-	m_objectManager.CreateObject(Gaia::cameraManager, 0u, sharedContainer);
+	//m_objectManager.CreateObject(Gaia::cameraManager, 0u, sharedContainer);
 	Gaia::cameraManager->SetSceneResolution(width, height);
 }
 
-void RendererDx12::AddModelSet(
+/*void RendererDx12::AddModelSet(
 	std::vector<std::shared_ptr<Model>>&& models, const std::wstring& pixelShader
 ) {
 	Gaia::renderEngine->RecordModelDataSet(models, pixelShader + L".cso");
@@ -80,7 +80,7 @@ void RendererDx12::AddModelInputs(
 	Gaia::renderEngine->AddGVerticesAndPrimIndices(
 		std::move(gVertices), std::move(gVerticesIndices), std::move(gPrimIndices)
 	);
-}
+}*/
 
 void RendererDx12::Update() {
 	const size_t currentBackIndex = Gaia::swapChain->GetCurrentBackBufferIndex();
@@ -215,8 +215,31 @@ void RendererDx12::WaitForAsyncTasks() {
 	}
 }
 
+void RendererDx12::AddModel(std::shared_ptr<ModelVS>&& model, const std::wstring& pixelShader)
+{}
+
+void RendererDx12::AddModel(std::shared_ptr<ModelMS>&& model, const std::wstring& pixelShader)
+{}
+
+void RendererDx12::AddModelBundle(
+	std::vector<std::shared_ptr<ModelVS>>&& modelBundle, const std::wstring& pixelShader
+) {}
+
+void RendererDx12::AddModelBundle(
+	std::vector<std::shared_ptr<ModelMS>>&& modelBundle, const std::wstring& pixelShader
+) {}
+
+void RendererDx12::AddMeshBundle(std::unique_ptr<MeshBundleVS> meshBundle)
+{}
+
+void RendererDx12::AddMeshBundle(std::unique_ptr<MeshBundleMS> meshBundle)
+{}
+
 void RendererDx12::AddMaterial(std::shared_ptr<Material> material)
 {}
 
 void RendererDx12::AddMaterials(std::vector<std::shared_ptr<Material>>&& materials)
+{}
+
+void RendererDx12::SetCamera(std::shared_ptr<Camera>&& camera)
 {}

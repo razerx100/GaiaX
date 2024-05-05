@@ -8,7 +8,8 @@
 
 #include <Model.hpp>
 #include <Material.hpp>
-
+#include <MeshBundle.hpp>
+#include <Camera.hpp>
 
 class Renderer
 {
@@ -33,22 +34,22 @@ public:
 		std::unique_ptr<std::uint8_t> textureData, size_t width, size_t height
 	) = 0; // Returns the index of the texture in its Resource Heap
 
-	virtual void AddModelSet(
-		std::vector<std::shared_ptr<Model>>&& models, const std::wstring& pixelShader
+	virtual void AddModel(std::shared_ptr<ModelVS>&& model, const std::wstring& pixelShader) = 0;
+	virtual void AddModel(std::shared_ptr<ModelMS>&& model, const std::wstring& pixelShader) = 0;
+	virtual void AddModelBundle(
+		std::vector<std::shared_ptr<ModelVS>>&& modelBundle, const std::wstring& pixelShader
 	) = 0;
-	virtual void AddMeshletModelSet(
-		std::vector<MeshletModel>&& meshletModels, const std::wstring& pixelShader
+	virtual void AddModelBundle(
+		std::vector<std::shared_ptr<ModelMS>>&& modelBundle, const std::wstring& pixelShader
 	) = 0;
-	virtual void AddModelInputs(
-		std::vector<Vertex>&& gVertices, std::vector<std::uint32_t>&& gIndices
-	) = 0;
-	virtual void AddModelInputs(
-		std::vector<Vertex>&& gVertices, std::vector<std::uint32_t>&& gVerticesIndices,
-		std::vector<std::uint32_t>&& gPrimIndices
-	) = 0;
+
+	virtual void AddMeshBundle(std::unique_ptr<MeshBundleVS> meshBundle) = 0;
+	virtual void AddMeshBundle(std::unique_ptr<MeshBundleMS> meshBundle) = 0;
 
 	virtual void AddMaterial(std::shared_ptr<Material> material) = 0;
 	virtual void AddMaterials(std::vector<std::shared_ptr<Material>>&& materials) = 0;
+
+	virtual void SetCamera(std::shared_ptr<Camera>&& camera) = 0;
 
 	virtual void Update() = 0;
 	virtual void Render() = 0;

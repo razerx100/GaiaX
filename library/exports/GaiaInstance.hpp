@@ -2,7 +2,6 @@
 #define GAIA_INSTANCE_HPP_
 #include <Renderer.hpp>
 #include <ThreadPool.hpp>
-#include <ISharedDataContainer.hpp>
 
 #ifdef BUILD_GAIAX
 #define GAIAX_DLL __declspec(dllexport)
@@ -14,7 +13,7 @@ GAIAX_DLL Renderer* __cdecl CreateGaiaInstance(
 	const char* appName,
 	void* windowHandle,
 	std::uint32_t width, std::uint32_t height,
-	ThreadPool& threadPool, ISharedDataContainer& sharedContainer,
+	ThreadPool& threadPool,
 	RenderEngineType engineType, std::uint32_t bufferCount = 2u
 );
 #endif

@@ -5,7 +5,7 @@
 #include <cstdint>
 #include <atomic>
 #include <D3DResourceBuffer.hpp>
-#include <Model.hpp>
+#include <MeshBundle.hpp>
 
 class VertexManagerVertexShader {
 public:

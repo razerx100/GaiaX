@@ -11,9 +11,9 @@ class RenderEngineMeshDraw : public RenderEngineBase
 public:
 	RenderEngineMeshDraw(ID3D12Device* device) noexcept;
 
-	void AddMeshletModelSet(
+	/*void AddMeshletModelSet(
 		std::vector<MeshletModel>& meshletModels, const std::wstring& pixelShader
-	) noexcept final;
+	) noexcept final;*/
 	void AddGVerticesAndPrimIndices(
 		std::vector<Vertex>&& gVertices, std::vector<std::uint32_t>&& gVerticesIndices,
 		std::vector<std::uint32_t>&& gPrimIndices

@@ -286,9 +286,9 @@ void RenderEngineIndividualDraw::RecordModelArguments(
 ) noexcept {
 	for (const auto& model : models) {
 		D3D12_DRAW_INDEXED_ARGUMENTS arguments{
-			.IndexCountPerInstance = model->GetIndexCount(),
+			//.IndexCountPerInstance = model->GetIndexCount(),
 			.InstanceCount = 1u,
-			.StartIndexLocation = model->GetIndexOffset(),
+			//.StartIndexLocation = model->GetIndexOffset(),
 			.BaseVertexLocation = 0u,
 			.StartInstanceLocation = 0u
 		};

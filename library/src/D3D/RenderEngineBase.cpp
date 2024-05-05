@@ -105,10 +105,10 @@ void RenderEngineBase::RecordModelDataSet(
 	[[maybe_unused]] const std::wstring& pixelShader
 ) noexcept {}
 
-void RenderEngineBase::AddMeshletModelSet(
+/*void RenderEngineBase::AddMeshletModelSet(
 	[[maybe_unused]] std::vector<MeshletModel>& meshletModels,
 	[[maybe_unused]] const std::wstring& pixelShader
-) noexcept {}
+) noexcept {} */
 
 void RenderEngineBase::AddGVerticesAndPrimIndices(
 	[[maybe_unused]] std::vector<Vertex>&& gVertices,

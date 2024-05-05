@@ -27,9 +27,9 @@ public:
 	virtual void RecordModelDataSet(
 		const std::vector<std::shared_ptr<Model>>& models, const std::wstring& pixelShader
 	) noexcept override;
-	virtual void AddMeshletModelSet(
+	/*virtual void AddMeshletModelSet(
 		std::vector<MeshletModel>& meshletModels, const std::wstring& pixelShader
-	) noexcept override;
+	) noexcept override;*/
 	virtual void AddGVerticesAndPrimIndices(
 		std::vector<Vertex>&& gVertices, std::vector<std::uint32_t>&& gVerticesIndices,
 		std::vector<std::uint32_t>&& gPrimIndices

@@ -6,13 +6,13 @@
 #include <vector>
 #include <RootSignatureDynamic.hpp>
 #include <Model.hpp>
+#include <MeshBundle.hpp>
 #include <Material.hpp>
-#include <ISharedDataContainer.hpp>
 
 class BufferManager
 {
 public:
-	BufferManager(std::uint32_t frameCount, bool modelDataNoBB, ISharedDataContainer& sharedData);
+	BufferManager(std::uint32_t frameCount, bool modelDataNoBB);
 
 	void BindBuffersToGraphics(
 		ID3D12GraphicsCommandList* graphicsCmdList, size_t frameIndex
@@ -28,17 +28,17 @@ public:
 	void SetGraphicsRootSignatureLayout(RSLayoutType rsLayout) noexcept;
 
 	void AddOpaqueModels(std::vector<std::shared_ptr<Model>>&& models) noexcept;
-	void AddOpaqueModels(std::vector<MeshletModel>&& meshletModels) noexcept;
+	//void AddOpaqueModels(std::vector<MeshletModel>&& meshletModels) noexcept;
 	void ReserveBuffers(ID3D12Device* device) noexcept;
 	void CreateBuffers(ID3D12Device* device);
 
 	template<bool modelWithNoBB>
 	void Update(size_t frameIndex) const noexcept {
-		const DirectX::XMMATRIX viewMatrix = GetViewMatrix();
+		//const DirectX::XMMATRIX viewMatrix = GetViewMatrix();
 
 		UpdateCameraData(frameIndex);
-		UpdatePerModelData<modelWithNoBB>(frameIndex, viewMatrix);
-		UpdateLightData(frameIndex, viewMatrix);
+		//UpdatePerModelData<modelWithNoBB>(frameIndex, viewMatrix);
+		//UpdateLightData(frameIndex, viewMatrix);
 		UpdatePixelData(frameIndex);
 	}
 
@@ -47,7 +47,7 @@ private:
 		DirectX::XMMATRIX modelMatrix;
 		DirectX::XMMATRIX viewNormalMatrix;
 		DirectX::XMFLOAT3 modelOffset;
-		ModelBounds boundingBox;
+		MeshBounds boundingBox;
 	};
 
 	struct ModelBufferNoBB {
@@ -79,8 +79,8 @@ private:
 	};
 
 private:
-	[[nodiscard]]
-	DirectX::XMMATRIX GetViewMatrix() const noexcept;
+//[[nodiscard]]
+	//DirectX::XMMATRIX GetViewMatrix() const noexcept;
 
 	void SetMemoryAddresses() noexcept;
 	void UpdateCameraData(size_t bufferIndex) const noexcept;
@@ -122,7 +122,7 @@ private:
 						DirectX::XMMatrixInverse(nullptr, modelMatrix * viewMatrix)
 					),
 					.modelOffset = model->GetModelOffset(),
-					.boundingBox = model->GetBoundingBox()
+					//.boundingBox = model->GetBoundingBox()
 					},
 					modelBufferOffset, modelOffset
 				);
@@ -184,6 +184,5 @@ private:
 	std::uint32_t m_frameCount;
 	std::vector<size_t> m_lightModelIndices;
 	bool m_modelDataNoBB;
-	ISharedDataContainer& m_sharedData;
 };
 #endif
