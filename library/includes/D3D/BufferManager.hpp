@@ -47,7 +47,7 @@ private:
 		DirectX::XMMATRIX modelMatrix;
 		DirectX::XMMATRIX viewNormalMatrix;
 		DirectX::XMFLOAT3 modelOffset;
-		MeshBounds boundingBox;
+		MeshBound boundingBox;
 	};
 
 	struct ModelBufferNoBB {
