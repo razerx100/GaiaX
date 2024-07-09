@@ -11,7 +11,7 @@ public:
 	RendererDx12(
 		const char* appName,
 		void* windowHandle, std::uint32_t width, std::uint32_t height, std::uint32_t bufferCount,
-		ThreadPool& threadPool, RenderEngineType engineType
+		std::shared_ptr<ThreadPool>&& threadPool, RenderEngineType engineType
 	);
 
 	void Resize(std::uint32_t width, std::uint32_t height) override;

@@ -6,7 +6,7 @@
 RendererDx12::RendererDx12(
 	const char* appName,
 	void* windowHandle, std::uint32_t width, std::uint32_t height, std::uint32_t bufferCount,
-	ThreadPool& threadPool, RenderEngineType engineType
+	std::shared_ptr<ThreadPool>&& threadPool, RenderEngineType engineType
 ) : m_appName(appName), m_width(width), m_height(height), m_bufferCount{ bufferCount } {
 
 	m_objectManager.CreateObject(Gaia::device, 3u);
@@ -16,7 +16,7 @@ RendererDx12::RendererDx12(
 	Gaia::InitRenderEngine(m_objectManager, engineType, deviceRef, bufferCount);
 	Gaia::renderEngine->ResizeViewportAndScissor(width, height);
 
-	Gaia::InitResources(m_objectManager, threadPool);
+	//Gaia::InitResources(m_objectManager, threadPool);
 
 #ifdef _DEBUG
 	m_objectManager.CreateObject(Gaia::debugLogger, 4u, deviceRef);
