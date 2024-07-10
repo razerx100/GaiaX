@@ -82,11 +82,13 @@ void RendererDx12::AddModelInputs(
 	);
 }*/
 
+/*
 void RendererDx12::Update() {
 	const size_t currentBackIndex = Gaia::swapChain->GetCurrentBackBufferIndex();
 
 	Gaia::renderEngine->UpdateModelBuffers(currentBackIndex);
 }
+*/
 
 void RendererDx12::Render() {
 	const size_t currentBackIndex = Gaia::swapChain->GetCurrentBackBufferIndex();
@@ -135,6 +137,10 @@ void RendererDx12::SetShaderPath(const wchar_t* path) noexcept {
 	Gaia::renderEngine->SetShaderPath(path);
 }
 
+void RendererDx12::AddPixelShader(const std::wstring& pixelShader) {}
+void RendererDx12::ChangePixelShader(std::uint32_t modelBundleID, const std::wstring& pixelShader) {}
+
+/*
 void RendererDx12::ProcessData() {
 	ID3D12Device* device = Gaia::device->GetDeviceRef();
 
@@ -196,6 +202,7 @@ void RendererDx12::ProcessData() {
 	Gaia::Resources::uploadHeap.reset();
 	// Release Upload Resource end
 }
+*/
 
 size_t RendererDx12::AddTexture(
 	std::unique_ptr<std::uint8_t> textureData, size_t width, size_t height
@@ -205,6 +212,11 @@ size_t RendererDx12::AddTexture(
 	);
 }
 
+void RendererDx12::UnbindTexture(size_t index) {}
+void RendererDx12::BindTexture(size_t index) {}
+void RendererDx12::RemoveTexture(size_t index) {}
+
+/*
 void RendererDx12::WaitForAsyncTasks() {
 	// Current frame's value is already checked. So, check the rest
 	for (std::uint32_t _ = 0u; _ < m_bufferCount - 1u; ++_) {
@@ -214,32 +226,63 @@ void RendererDx12::WaitForAsyncTasks() {
 		Gaia::computeFence->WaitOnCPUConditional();
 	}
 }
+*/
 
-void RendererDx12::AddModel(std::shared_ptr<ModelVS>&& model, const std::wstring& pixelShader)
-{}
+std::uint32_t RendererDx12::AddModel(std::shared_ptr<ModelVS>&& model, const std::wstring& pixelShader)
+{
+	return 0u;
+}
 
-void RendererDx12::AddModel(std::shared_ptr<ModelMS>&& model, const std::wstring& pixelShader)
-{}
+std::uint32_t RendererDx12::AddModel(std::shared_ptr<ModelMS>&& model, const std::wstring& pixelShader)
+{
+	return 0u;
+}
 
-void RendererDx12::AddModelBundle(
+std::uint32_t RendererDx12::AddModelBundle(
 	std::vector<std::shared_ptr<ModelVS>>&& modelBundle, const std::wstring& pixelShader
-) {}
+) {
+	return 0u;
+}
 
-void RendererDx12::AddModelBundle(
+std::uint32_t RendererDx12::AddModelBundle(
 	std::vector<std::shared_ptr<ModelMS>>&& modelBundle, const std::wstring& pixelShader
-) {}
+) {
+	return 0u;
+}
 
-void RendererDx12::AddMeshBundle(std::unique_ptr<MeshBundleVS> meshBundle)
-{}
+void RendererDx12::RemoveModelBundle(std::uint32_t bundleID) noexcept {}
 
-void RendererDx12::AddMeshBundle(std::unique_ptr<MeshBundleMS> meshBundle)
-{}
+std::uint32_t RendererDx12::AddMeshBundle(std::unique_ptr<MeshBundleVS> meshBundle)
+{
+	return 0u;
+}
 
-void RendererDx12::AddMaterial(std::shared_ptr<Material> material)
-{}
+std::uint32_t RendererDx12::AddMeshBundle(std::unique_ptr<MeshBundleMS> meshBundle)
+{
+	return 0u;
+}
 
-void RendererDx12::AddMaterials(std::vector<std::shared_ptr<Material>>&& materials)
-{}
+void RendererDx12::RemoveMeshBundle(std::uint32_t bundleIndex) noexcept {}
 
-void RendererDx12::SetCamera(std::shared_ptr<Camera>&& camera)
-{}
+size_t RendererDx12::AddMaterial(std::shared_ptr<Material> material)
+{
+	return 0u;
+}
+
+std::vector<size_t> RendererDx12::AddMaterials(std::vector<std::shared_ptr<Material>>&& materials)
+{
+	return {};
+}
+
+void RendererDx12::UpdateMaterial(size_t index) const noexcept {}
+
+void RendererDx12::RemoveMaterial(size_t index) noexcept {}
+
+std::uint32_t RendererDx12::AddCamera(std::shared_ptr<Camera>&& camera) noexcept
+{
+	return 0u;
+}
+
+void RendererDx12::SetCamera(std::uint32_t index) noexcept {}
+
+void RendererDx12::RemoveCamera(std::uint32_t index) noexcept {}
