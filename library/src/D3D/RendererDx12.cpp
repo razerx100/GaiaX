@@ -216,8 +216,8 @@ void RendererDx12::UnbindTexture(size_t index) {}
 void RendererDx12::BindTexture(size_t index) {}
 void RendererDx12::RemoveTexture(size_t index) {}
 
-/*
-void RendererDx12::WaitForAsyncTasks() {
+void RendererDx12::WaitForGPUToFinish()
+{
 	// Current frame's value is already checked. So, check the rest
 	for (std::uint32_t _ = 0u; _ < m_bufferCount - 1u; ++_) {
 		Gaia::graphicsFence->AdvanceValueInQueue();
@@ -226,7 +226,6 @@ void RendererDx12::WaitForAsyncTasks() {
 		Gaia::computeFence->WaitOnCPUConditional();
 	}
 }
-*/
 
 std::uint32_t RendererDx12::AddModel(std::shared_ptr<ModelVS>&& model, const std::wstring& pixelShader)
 {

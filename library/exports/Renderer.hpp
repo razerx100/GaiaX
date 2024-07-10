@@ -76,5 +76,6 @@ public:
 	virtual void RemoveCamera(std::uint32_t index) noexcept = 0;
 
 	virtual void Render() = 0;
+	virtual void WaitForGPUToFinish() = 0;
 };
 #endif
