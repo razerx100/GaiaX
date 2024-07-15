@@ -42,14 +42,14 @@ public:
 	virtual std::uint32_t GetMaterialIndex() const noexcept = 0;
 };
 
-class ModelVS : public virtual Model
+class ModelVS : public Model
 {
 public:
 	[[nodiscard]]
 	virtual const MeshDetailsVS& GetMeshDetailsVS() const noexcept = 0;
 };
 
-class ModelMS : public virtual Model
+class ModelMS : public Model
 {
 public:
 	[[nodiscard]]
