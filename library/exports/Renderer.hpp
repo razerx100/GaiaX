@@ -6,12 +6,12 @@
 #include <string>
 #include <vector>
 #include <RendererTypes.hpp>
+#include <Shader.hpp>
 
 #include <Model.hpp>
 #include <Material.hpp>
 #include <MeshBundle.hpp>
 #include <Camera.hpp>
-#include <Shader.hpp>
 
 class Renderer
 {

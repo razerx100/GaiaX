@@ -12,7 +12,11 @@ enum class ShaderType
 class ShaderName
 {
 public:
+	ShaderName() : m_name{} {}
 	ShaderName(const std::wstring& name) : m_name{ name } {};
+	ShaderName(const wchar_t* name) : m_name{ name } {};
+
+	void SetName(const std::wstring& name) noexcept { m_name = name; }
 
 	[[nodiscard]]
 	std::wstring GetName() const noexcept { return m_name; }
@@ -29,6 +33,8 @@ public:
 		return m_name + extension;
 	}
 
+	bool empty() const noexcept { return std::empty(m_name); }
+
 private:
 	std::wstring m_name;
 
@@ -37,17 +43,21 @@ public:
 	ShaderName& operator=(const ShaderName& other) noexcept
 	{
 		m_name = other.m_name;
+
+		return *this;
 	}
 
 	ShaderName(ShaderName&& other) noexcept : m_name{ std::move(other.m_name) } {}
 	ShaderName& operator=(ShaderName&& other) noexcept
 	{
 		m_name = std::move(other.m_name);
+
+		return *this;
 	}
 
-	auto operator<=>(const ShaderName& other) const noexcept
+	bool operator==(const ShaderName& other) const noexcept
 	{
-		return m_name <=> other.m_name;
+		return m_name == other.m_name;
 	}
 };
 #endif
