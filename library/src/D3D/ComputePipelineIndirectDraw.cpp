@@ -1,5 +1,5 @@
 #include <ComputePipelineIndirectDraw.hpp>
-#include <Shader.hpp>
+#include <D3DShader.hpp>
 #include <D3DResourceBarrier.hpp>
 #include <cmath>
 #include <Gaia.hpp>
@@ -256,7 +256,7 @@ std::unique_ptr<D3DPipelineObject> ComputePipelineIndirectDraw::_createComputePi
 	ID3D12Device2* device, ID3D12RootSignature* computeRootSignature,
 	const std::wstring& shaderPath
 ) const noexcept {
-	auto cs = std::make_unique<Shader>();
+	auto cs = std::make_unique<D3DShader>();
 	cs->LoadBinary(shaderPath + L"ComputeShader.cso");
 
 	auto pso = std::make_unique<D3DPipelineObject>();

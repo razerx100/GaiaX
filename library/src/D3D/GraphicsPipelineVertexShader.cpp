@@ -1,16 +1,16 @@
 #include <GraphicsPipelineVertexShader.hpp>
 #include <VertexLayout.hpp>
-#include <Shader.hpp>
+#include <D3DShader.hpp>
 
 // Vertex Shader
 std::unique_ptr<D3DPipelineObject> GraphicsPipelineVertexShader::CreateGraphicsPipelineObjectVS(
 	ID3D12Device2* device, const std::wstring& shaderPath, const std::wstring& pixelShader,
 	const std::wstring& vertexShader, ID3D12RootSignature* graphicsRootSignature
 ) const noexcept {
-	auto vs = std::make_unique<Shader>();
+	auto vs = std::make_unique<D3DShader>();
 	vs->LoadBinary(shaderPath + vertexShader);
 
-	auto ps = std::make_unique<Shader>();
+	auto ps = std::make_unique<D3DShader>();
 	ps->LoadBinary(shaderPath + pixelShader);
 
 	auto pso = std::make_unique<D3DPipelineObject>();

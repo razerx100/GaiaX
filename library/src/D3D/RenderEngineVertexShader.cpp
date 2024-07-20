@@ -2,7 +2,6 @@
 #include <Gaia.hpp>
 #include <D3DResourceBarrier.hpp>
 #include <VertexLayout.hpp>
-#include <Shader.hpp>
 #include <cassert>
 
 // Vertex Shader

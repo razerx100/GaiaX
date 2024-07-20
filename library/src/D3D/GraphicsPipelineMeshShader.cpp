@@ -1,14 +1,14 @@
 #include <GraphicsPipelineMeshShader.hpp>
-#include <Shader.hpp>
+#include <D3DShader.hpp>
 
 std::unique_ptr<D3DPipelineObject> GraphicsPipelineMeshShader::_createGraphicsPipelineObject(
 	ID3D12Device2* device, const std::wstring& shaderPath, const std::wstring& pixelShader,
 	ID3D12RootSignature* graphicsRootSignature
 ) const noexcept {
-	auto ms = std::make_unique<Shader>();
+	auto ms = std::make_unique<D3DShader>();
 	ms->LoadBinary(shaderPath + L"MeshShader.cso");
 
-	auto ps = std::make_unique<Shader>();
+	auto ps = std::make_unique<D3DShader>();
 	ps->LoadBinary(shaderPath + pixelShader);
 
 	auto pso = std::make_unique<D3DPipelineObject>();
