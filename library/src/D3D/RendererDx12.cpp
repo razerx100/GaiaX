@@ -137,8 +137,8 @@ void RendererDx12::SetShaderPath(const wchar_t* path) noexcept {
 	Gaia::renderEngine->SetShaderPath(path);
 }
 
-void RendererDx12::AddPixelShader(const std::wstring& pixelShader) {}
-void RendererDx12::ChangePixelShader(std::uint32_t modelBundleID, const std::wstring& pixelShader) {}
+void RendererDx12::AddPixelShader(const ShaderName& pixelShader) {}
+void RendererDx12::ChangePixelShader(std::uint32_t modelBundleID, const ShaderName& pixelShader) {}
 
 /*
 void RendererDx12::ProcessData() {
@@ -227,24 +227,24 @@ void RendererDx12::WaitForGPUToFinish()
 	}
 }
 
-std::uint32_t RendererDx12::AddModel(std::shared_ptr<ModelVS>&& model, const std::wstring& pixelShader)
+std::uint32_t RendererDx12::AddModel(std::shared_ptr<ModelVS>&& model, const ShaderName& pixelShader)
 {
 	return 0u;
 }
 
-std::uint32_t RendererDx12::AddModel(std::shared_ptr<ModelMS>&& model, const std::wstring& pixelShader)
+std::uint32_t RendererDx12::AddModel(std::shared_ptr<ModelMS>&& model, const ShaderName& pixelShader)
 {
 	return 0u;
 }
 
 std::uint32_t RendererDx12::AddModelBundle(
-	std::vector<std::shared_ptr<ModelVS>>&& modelBundle, const std::wstring& pixelShader
+	std::vector<std::shared_ptr<ModelVS>>&& modelBundle, const ShaderName& pixelShader
 ) {
 	return 0u;
 }
 
 std::uint32_t RendererDx12::AddModelBundle(
-	std::vector<std::shared_ptr<ModelMS>>&& modelBundle, const std::wstring& pixelShader
+	std::vector<std::shared_ptr<ModelMS>>&& modelBundle, const ShaderName& pixelShader
 ) {
 	return 0u;
 }

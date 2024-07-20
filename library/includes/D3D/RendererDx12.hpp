@@ -21,8 +21,8 @@ public:
 
 	void SetBackgroundColour(const std::array<float, 4>& colour) noexcept override;
 	void SetShaderPath(const wchar_t* path) noexcept override;
-	void AddPixelShader(const std::wstring& pixelShader) override;
-	void ChangePixelShader(std::uint32_t modelBundleID, const std::wstring& pixelShader) override;
+	void AddPixelShader(const ShaderName& pixelShader) override;
+	void ChangePixelShader(std::uint32_t modelBundleID, const ShaderName& pixelShader) override;
 
 	[[nodiscard]]
 	size_t AddTexture(
@@ -33,16 +33,16 @@ public:
 	void RemoveTexture(size_t index) override;
 
 	[[nodiscard]]
-	std::uint32_t AddModel(std::shared_ptr<ModelVS>&& model, const std::wstring& pixelShader) override;
+	std::uint32_t AddModel(std::shared_ptr<ModelVS>&& model, const ShaderName& pixelShader) override;
 	[[nodiscard]]
-	std::uint32_t AddModel(std::shared_ptr<ModelMS>&& model, const std::wstring& pixelShader) override;
+	std::uint32_t AddModel(std::shared_ptr<ModelMS>&& model, const ShaderName& pixelShader) override;
 	[[nodiscard]]
 	std::uint32_t AddModelBundle(
-		std::vector<std::shared_ptr<ModelVS>>&& modelBundle, const std::wstring& pixelShader
+		std::vector<std::shared_ptr<ModelVS>>&& modelBundle, const ShaderName& pixelShader
 	) override;
 	[[nodiscard]]
 	std::uint32_t AddModelBundle(
-		std::vector<std::shared_ptr<ModelMS>>&& modelBundle, const std::wstring& pixelShader
+		std::vector<std::shared_ptr<ModelMS>>&& modelBundle, const ShaderName& pixelShader
 	) override;
 	void RemoveModelBundle(std::uint32_t bundleID) noexcept override;
 
