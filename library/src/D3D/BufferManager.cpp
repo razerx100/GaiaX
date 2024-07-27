@@ -144,7 +144,7 @@ void BufferManager::SetGraphicsRootSignatureLayout(RSLayoutType rsLayout) noexce
 }
 
 void BufferManager::CheckLightSourceAndAddOpaque(std::shared_ptr<Model>&& model) noexcept {
-	if (model->IsLightSource())
+//	if (model->IsLightSource())
 		m_lightModelIndices.emplace_back(std::size(m_opaqueModels));
 
 	m_opaqueModels.emplace_back(std::move(model));

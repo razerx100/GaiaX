@@ -24,6 +24,8 @@ public:
 	void AddPixelShader(const ShaderName& pixelShader) override;
 	void ChangePixelShader(std::uint32_t modelBundleID, const ShaderName& pixelShader) override;
 
+	void SetMeshIndex(std::uint32_t modelBundleID, std::uint32_t meshBundleID) override;
+
 	[[nodiscard]]
 	size_t AddTexture(
 		std::unique_ptr<std::uint8_t> textureData, size_t width, size_t height

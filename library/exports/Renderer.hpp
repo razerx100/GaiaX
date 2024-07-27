@@ -34,6 +34,8 @@ public:
 	virtual void AddPixelShader(const ShaderName& pixelShader) = 0;
 	virtual void ChangePixelShader(std::uint32_t modelBundleID, const ShaderName& pixelShader) = 0;
 
+	virtual void SetMeshIndex(std::uint32_t modelBundleID, std::uint32_t meshBundleID) = 0;
+
 	[[nodiscard]]
 	virtual size_t AddTexture(
 		std::unique_ptr<std::uint8_t> textureData, size_t width, size_t height
