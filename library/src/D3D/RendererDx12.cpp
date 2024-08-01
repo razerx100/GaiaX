@@ -214,7 +214,7 @@ size_t RendererDx12::AddTexture(
 }
 
 void RendererDx12::UnbindTexture(size_t index) {}
-void RendererDx12::BindTexture(size_t index) {}
+std::uint32_t RendererDx12::BindTexture(size_t index) { return 0u; }
 void RendererDx12::RemoveTexture(size_t index) {}
 
 void RendererDx12::WaitForGPUToFinish()

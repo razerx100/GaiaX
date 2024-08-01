@@ -27,11 +27,15 @@ public:
 	void SetMeshIndex(std::uint32_t modelBundleID, std::uint32_t meshBundleID) override;
 
 	[[nodiscard]]
+	// The returned Index is the texture's ID. Not its index in the shader. It should be
+	// used to remove or bind the texture.
 	size_t AddTexture(
 		std::unique_ptr<std::uint8_t> textureData, size_t width, size_t height
 	) override;
 	void UnbindTexture(size_t index) override;
-	void BindTexture(size_t index) override;
+	[[nodiscard]]
+	// The returned index is the index of the texture in the shader.
+	std::uint32_t BindTexture(size_t index) override;
 	void RemoveTexture(size_t index) override;
 
 	[[nodiscard]]
