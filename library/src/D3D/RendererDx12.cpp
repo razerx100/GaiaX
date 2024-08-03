@@ -11,7 +11,8 @@ RendererDx12::RendererDx12(
 
 	m_objectManager.CreateObject(Gaia::device, 3u);
 
-	ID3D12Device4* deviceRef = Gaia::device.get()->GetDeviceRef();
+	Gaia::device->Create();
+	ID3D12Device4* deviceRef = Gaia::device.get()->GetDevice();
 
 	Gaia::InitRenderEngine(m_objectManager, engineType, deviceRef, bufferCount);
 	Gaia::renderEngine->ResizeViewportAndScissor(width, height);
@@ -28,7 +29,7 @@ RendererDx12::RendererDx12(
 
 	SwapChainManager::Args swapChainArguments{
 		.device = deviceRef,
-		.factory = Gaia::device->GetFactoryRef(),
+		.factory = Gaia::device->GetFactory(),
 		.graphicsQueue = Gaia::graphicsQueue->GetQueue(),
 		.windowHandle = static_cast<HWND>(windowHandle),
 		.width = width,
@@ -103,7 +104,7 @@ void RendererDx12::Resize(std::uint32_t width, std::uint32_t height) {
 		m_width = width;
 		m_height = height;
 
-		ID3D12Device* deviceRef = Gaia::device->GetDeviceRef();
+		ID3D12Device* deviceRef = Gaia::device->GetDevice();
 
 		UINT64 fenceValue = Gaia::graphicsFence->GetFrontValue();
 
@@ -123,7 +124,7 @@ void RendererDx12::Resize(std::uint32_t width, std::uint32_t height) {
 
 Renderer::Resolution RendererDx12::GetFirstDisplayCoordinates() const {
 	auto [width, height] = GetDisplayResolution(
-		Gaia::device->GetDeviceRef(), Gaia::device->GetFactoryRef(), 0u
+		Gaia::device->GetDevice(), Gaia::device->GetFactory(), 0u
 	);
 
 	return { width, height };
@@ -209,7 +210,7 @@ size_t RendererDx12::AddTexture(
 	std::unique_ptr<std::uint8_t> textureData, size_t width, size_t height
 ) {
 	return Gaia::textureStorage->AddTexture(
-		Gaia::device->GetDeviceRef(), std::move(textureData), width, height
+		Gaia::device->GetDevice(), std::move(textureData), width, height
 	);
 }
 

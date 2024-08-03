@@ -1,76 +1,75 @@
 #include <DeviceManager.hpp>
 #include <Exception.hpp>
 
-DeviceManager::DeviceManager() {
-    std::uint32_t dxgiFactoryFlags = 0u;
+
+void DeviceManager::Create(D3D_FEATURE_LEVEL featureLevel /* = D3D_FEATURE_LEVEL_12_0 */)
+{
+    UINT dxgiFactoryFlags = 0u;
 
 #ifdef _DEBUG
     {
-        ComPtr<ID3D12Debug> debugController;
+        ComPtr<ID3D12Debug> debugController{};
         D3D12GetDebugInterface(IID_PPV_ARGS(&debugController));
+
         debugController->EnableDebugLayer();
 
         dxgiFactoryFlags |= DXGI_CREATE_FACTORY_DEBUG;
     }
 #endif
 
-    CreateDXGIFactory2(dxgiFactoryFlags, __uuidof(IDXGIFactory4), &m_pFactory);
+    CreateDXGIFactory2(dxgiFactoryFlags, IID_PPV_ARGS(&m_factory));
 
     {
-        ComPtr<IDXGIAdapter1> adapter;
+        GetHardwareAdapter(m_factory.Get(), &m_adapter, featureLevel);
 
-        GetHardwareAdapter(m_pFactory.Get(), &adapter);
-        if (adapter) {
-            DXGI_ADAPTER_DESC1 adapterDescription;
-            if (SUCCEEDED(adapter->GetDesc1(&adapterDescription))) {
-                std::wstring desc = adapterDescription.Description;
-                desc = L"Selected DX12 Adapter: " + desc + L"\n";
-                OutputDebugStringW(desc.c_str());
-            }
-        }
-        D3D12CreateDevice(adapter.Get(), gaiaFeatureLevel,IID_PPV_ARGS(&m_pDevice));
+        D3D12CreateDevice(m_adapter.Get(), featureLevel,IID_PPV_ARGS(&m_device));
     }
 }
 
-ID3D12Device5* DeviceManager::GetDeviceRef() const noexcept {
-	return m_pDevice.Get();
+DXGI_ADAPTER_DESC1 DeviceManager::GetAdapterDesc() const noexcept
+{
+    DXGI_ADAPTER_DESC1 adapterDescription{};
+
+    if (m_adapter)
+        m_adapter->GetDesc1(&adapterDescription);
+
+    return adapterDescription;
 }
 
-IDXGIFactory4* DeviceManager::GetFactoryRef() const noexcept {
-    return m_pFactory.Get();
-}
-
-void DeviceManager::GetHardwareAdapter(IDXGIFactory1* pFactory, IDXGIAdapter1** ppAdapter) {
-    ComPtr<IDXGIFactory6> pFactory6;
+void DeviceManager::GetHardwareAdapter(
+    IDXGIFactory1* pFactory, IDXGIAdapter1** ppAdapter, D3D_FEATURE_LEVEL featureLevel
+) {
+    ComPtr<IDXGIFactory6> factory6{};
     bool found = false;
 
-    if (SUCCEEDED(pFactory->QueryInterface(IID_PPV_ARGS(&pFactory6)))) {
+    if (SUCCEEDED(pFactory->QueryInterface(IID_PPV_ARGS(&factory6))))
+    {
         for (UINT index = 0u;
-            SUCCEEDED(pFactory6->EnumAdapterByGpuPreference(
-                index, DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE,
-                __uuidof(IDXGIAdapter1), reinterpret_cast<void**>(ppAdapter)
+            SUCCEEDED(factory6->EnumAdapterByGpuPreference(
+                index, DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE, IID_PPV_ARGS(ppAdapter)
             ));
-            ++index) {
-
+            ++index)
+        {
             if (SUCCEEDED(
                 D3D12CreateDevice(
-                    *ppAdapter, gaiaFeatureLevel, __uuidof(ID3D12Device), nullptr
-                ))) {
+                    *ppAdapter, featureLevel, __uuidof(ID3D12Device), nullptr
+                )))
+            {
                 found = true;
                 break;
             }
 
         }
-    }
-    else {
+    } else {
         for (UINT index = 0u;
             SUCCEEDED(pFactory->EnumAdapters1(index, ppAdapter));
-            ++index) {
-
+            ++index)
+        {
             if (SUCCEEDED(
                 D3D12CreateDevice(
-                    *ppAdapter, gaiaFeatureLevel,__uuidof(ID3D12Device), nullptr
-                ))) {
+                    *ppAdapter, featureLevel,__uuidof(ID3D12Device), nullptr
+                )))
+            {
                 found = true;
                 break;
             }
@@ -79,6 +78,6 @@ void DeviceManager::GetHardwareAdapter(IDXGIFactory1* pFactory, IDXGIAdapter1** 
 
     if (!found)
         throw Exception(
-            "D3D12 Feature Error", "None of the GPUs have required D3D12 feature support."
+            "D3D12 Feature Error", "None of the GPUs has required D3D12 feature support."
         );
 }

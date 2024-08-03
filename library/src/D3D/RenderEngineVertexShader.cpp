@@ -151,7 +151,7 @@ void RenderEngineIndirectDraw::RecordDrawCommands(
 }
 
 void RenderEngineIndirectDraw::ConstructPipelines() {
-	ID3D12Device2* device = Gaia::device->GetDeviceRef();
+	ID3D12Device2* device = Gaia::device->GetDevice();
 
 	ConstructGraphicsRootSignature(device);
 	CreateGraphicsPipelines(device, m_graphicsPipeline0, m_graphicsPipelines);
@@ -257,7 +257,7 @@ void RenderEngineIndividualDraw::RecordDrawCommands(
 }
 
 void RenderEngineIndividualDraw::ConstructPipelines() {
-	ID3D12Device2* device = Gaia::device->GetDeviceRef();
+	ID3D12Device2* device = Gaia::device->GetDevice();
 
 	ConstructGraphicsRootSignature(device);
 	CreateGraphicsPipelines(device, m_graphicsPipeline0, m_graphicsPipelines);
