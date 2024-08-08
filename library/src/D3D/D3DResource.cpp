@@ -121,6 +121,7 @@ void D3DResourceView::ReserveHeapSpace(ID3D12Device* device) noexcept {
 		0u, 1u, &m_resourceDescription
 	);
 
+	/*
 	if (m_type == ResourceType::gpuOnly)
 		m_heapOffset = Gaia::Resources::gpuOnlyHeap->ReserveSizeAndGetOffset(
 			bufferSize, alignment
@@ -137,6 +138,7 @@ void D3DResourceView::ReserveHeapSpace(ID3D12Device* device) noexcept {
 		m_heapOffset = Gaia::Resources::cpuReadBackHeap->ReserveSizeAndGetOffset(
 			bufferSize, alignment
 		);
+	*/
 }
 
 void D3DResourceView::CreateResource(
@@ -146,13 +148,13 @@ void D3DResourceView::CreateResource(
 	ID3D12Heap* pHeap = nullptr;
 
 	if (m_type == ResourceType::cpuWrite)
-		pHeap = Gaia::Resources::cpuWriteHeap->GetHeap();
+		pHeap = Gaia::Resources::cpuWriteHeap->Get();
 	else if (m_type == ResourceType::upload)
-		pHeap = Gaia::Resources::uploadHeap->GetHeap();
+		pHeap = Gaia::Resources::uploadHeap->Get();
 	else if (m_type == ResourceType::gpuOnly)
-		pHeap = Gaia::Resources::gpuOnlyHeap->GetHeap();
+		pHeap = Gaia::Resources::gpuOnlyHeap->Get();
 	else if (m_type == ResourceType::cpuReadBack)
-		pHeap = Gaia::Resources::cpuReadBackHeap->GetHeap();
+		pHeap = Gaia::Resources::cpuReadBackHeap->Get();
 
 	m_resource.CreateResource(
 		device, pHeap, m_heapOffset, m_resourceDescription, initialState, clearValue

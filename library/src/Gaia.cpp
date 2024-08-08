@@ -83,10 +83,12 @@ namespace Gaia {
 	}
 
 	void InitResources(ObjectManager& om, ThreadPool& threadPooll) {
+		/*
 		om.CreateObject(Resources::uploadHeap, 0u, D3D12_HEAP_TYPE_UPLOAD );
 		om.CreateObject(Resources::cpuWriteHeap, 2u, D3D12_HEAP_TYPE_UPLOAD);
 		om.CreateObject(Resources::cpuReadBackHeap, 2u, D3D12_HEAP_TYPE_READBACK);
 		om.CreateObject(Resources::gpuOnlyHeap, 2u, D3D12_HEAP_TYPE_DEFAULT);
+		*/
 
 		om.CreateObject(Resources::cpuWriteBuffer, 1u, ResourceType::cpuWrite);
 		om.CreateObject(Resources::uploadContainer, 0u, threadPooll);

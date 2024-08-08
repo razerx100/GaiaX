@@ -1,25 +1,42 @@
 #ifndef D3D_HEAP_HPP_
 #define D3D_HEAP_HPP_
 #include <D3DHeaders.hpp>
-#include <optional>
+#include <utility>
 
 class D3DHeap
 {
 public:
-	D3DHeap(D3D12_HEAP_TYPE type);
-
-	void CreateHeap(ID3D12Device* device);
+	D3DHeap(ID3D12Device* device, D3D12_HEAP_TYPE type, UINT64 size, bool msaa = false);
 
 	[[nodiscard]]
-	size_t ReserveSizeAndGetOffset(size_t heapSize, UINT64 alignment) noexcept;
-
+	ID3D12Heap* Get() const noexcept { return m_heap.Get(); }
 	[[nodiscard]]
-	ID3D12Heap* GetHeap() const noexcept;
+	D3D12_HEAP_TYPE Type() const noexcept { return m_type; }
+	[[nodiscard]]
+	UINT64 Size() const noexcept { return m_size; }
 
 private:
-	D3D12_HEAP_TYPE m_heapType;
-	UINT64 m_maxAlignment;
-	UINT64 m_totalHeapSize;
-	ComPtr<ID3D12Heap> m_pHeap;
+	void Allocate(ID3D12Device* device, D3D12_HEAP_TYPE type, UINT64 size, bool msaa);
+
+private:
+	D3D12_HEAP_TYPE    m_type;
+	UINT64             m_size;
+	ComPtr<ID3D12Heap> m_heap;
+
+public:
+	D3DHeap(const D3DHeap&) = delete;
+	D3DHeap& operator=(const D3DHeap&) = delete;
+
+	D3DHeap(D3DHeap&& other) noexcept
+		: m_type{ other.m_type }, m_size{ other.m_size }, m_heap{ std::move(other.m_heap) }
+	{}
+	D3DHeap& operator=(D3DHeap&& other) noexcept
+	{
+		m_type = other.m_type;
+		m_size = other.m_size;
+		m_heap = std::move(other.m_heap);
+
+		return *this;
+	}
 };
 #endif

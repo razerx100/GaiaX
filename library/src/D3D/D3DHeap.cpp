@@ -1,37 +1,37 @@
 #include <D3DHeap.hpp>
-#include <algorithm>
 #include <D3DHelperFunctions.hpp>
 
-D3DHeap::D3DHeap(D3D12_HEAP_TYPE type)
-	: m_heapType{ type }, m_maxAlignment{ 0u }, m_totalHeapSize{ 0u } {}
-
-void D3DHeap::CreateHeap(ID3D12Device* device) {
-	D3D12_HEAP_PROPERTIES heapProp{};
-	heapProp.Type = m_heapType;
-	heapProp.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
-	heapProp.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
-	heapProp.CreationNodeMask = 1u;
-	heapProp.VisibleNodeMask = 1u;
-
-	D3D12_HEAP_DESC desc{};
-	desc.SizeInBytes = Align(m_totalHeapSize, m_maxAlignment);
-	desc.Alignment = m_maxAlignment;
-	desc.Flags = D3D12_HEAP_FLAG_NONE;
-	desc.Properties = heapProp;
-
-	device->CreateHeap(&desc, IID_PPV_ARGS(&m_pHeap));
+D3DHeap::D3DHeap(ID3D12Device* device, D3D12_HEAP_TYPE type, UINT64 size, bool msaa /* = false */)
+	: m_type{ type }, m_size{ size }, m_heap{}
+{
+	Allocate(device, type, size, msaa);
 }
 
-ID3D12Heap* D3DHeap::GetHeap() const noexcept {
-	return m_pHeap.Get();
-}
+void D3DHeap::Allocate(ID3D12Device* device, D3D12_HEAP_TYPE type, UINT64 size, bool msaa)
+{
+	D3D12_HEAP_PROPERTIES heapProperties{
+		.Type                 = type,
+		.CPUPageProperty      = D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
+		.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN,
+		.CreationNodeMask     = 1u,
+		.VisibleNodeMask      = 1u
+	};
 
-size_t D3DHeap::ReserveSizeAndGetOffset(size_t heapSize, UINT64 alignment) noexcept {
-	m_totalHeapSize = Align(m_totalHeapSize, alignment);
-	size_t offset = m_totalHeapSize;
+	UINT64 alignment = D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
 
-	m_maxAlignment = std::max(m_maxAlignment, alignment);
-	m_totalHeapSize += heapSize;
+	if (msaa)
+		alignment = D3D12_DEFAULT_MSAA_RESOURCE_PLACEMENT_ALIGNMENT;
 
-	return offset;
+	// Might want to set the aligned size as m_size. But need to test
+	// if I can use it all first.
+	const UINT64 alignedSize = Align(size, alignment);
+
+	D3D12_HEAP_DESC desc{
+		.SizeInBytes = alignedSize,
+		.Properties  = heapProperties,
+		.Alignment   = alignment,
+		.Flags       = D3D12_HEAP_FLAG_NONE
+	};
+
+	device->CreateHeap(&desc, IID_PPV_ARGS(&m_heap));
 }
