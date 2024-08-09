@@ -19,20 +19,4 @@ D3D12_RESOURCE_BARRIER GetTransitionBarrier(
 constexpr size_t Align(size_t address, size_t alignment) noexcept {
 	return (address + (alignment - 1u)) & ~(alignment - 1u);
 }
-
-constexpr size_t operator"" _B(unsigned long long number) noexcept {
-    return static_cast<size_t>(number);
-}
-
-constexpr size_t operator"" _KB(unsigned long long number) noexcept {
-    return static_cast<size_t>(number * 1024u);
-}
-
-constexpr size_t operator"" _MB(unsigned long long number) noexcept {
-    return static_cast<size_t>(number * 1024u * 1024u);
-}
-
-constexpr size_t operator"" _GB(unsigned long long number) noexcept {
-    return static_cast<size_t>(number * 1024u * 1024u * 1024u);
-}
 #endif
