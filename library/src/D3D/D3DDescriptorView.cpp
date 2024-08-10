@@ -1,6 +1,6 @@
 #include <D3DDescriptorView.hpp>
 #include <Gaia.hpp>
-#include <D3DHelperFunctions.hpp>
+#include <AllocatorBase.hpp>
 
 // D3D Root Descriptor View
 void D3DRootDescriptorView::SetAddressesStart(

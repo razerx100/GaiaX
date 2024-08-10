@@ -1,5 +1,5 @@
 #include <D3DHeap.hpp>
-#include <D3DHelperFunctions.hpp>
+#include <AllocatorBase.hpp>
 
 D3DHeap::D3DHeap(ID3D12Device* device, D3D12_HEAP_TYPE type, UINT64 size, bool msaa /* = false */)
 	: m_type{ type }, m_size{ 0u }, m_heap{}

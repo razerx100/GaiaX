@@ -1,5 +1,5 @@
 #include <AddressContainer.hpp>
-#include <D3DHelperFunctions.hpp>
+#include <AllocatorBase.hpp>
 
 void SingleAddressContainer::_setAddress(
 	size_t addressStart, size_t subAllocationSize, size_t alignment

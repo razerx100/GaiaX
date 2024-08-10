@@ -1,7 +1,7 @@
 #include <D3DResource.hpp>
-#include <D3DHelperFunctions.hpp>
 #include <Gaia.hpp>
 #include <cassert>
+#include <AllocatorBase.hpp>
 
 // D3DResource
 D3DResource::D3DResource() noexcept : m_cpuHandle{ nullptr } {}

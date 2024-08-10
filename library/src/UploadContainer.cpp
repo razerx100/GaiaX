@@ -1,6 +1,7 @@
 #include <UploadContainer.hpp>
 #include <cstring>
-#include <D3DHelperFunctions.hpp>
+#include <AllocatorBase.hpp>
+#include <D3DHeaders.hpp>
 
 UploadContainer::UploadContainer(ThreadPool& threadPool)
 	: m_memoryData{}, m_threadPool{ threadPool } {}
