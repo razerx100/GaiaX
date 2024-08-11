@@ -37,16 +37,22 @@ public:
 	void RemoveTexture(size_t index) override;
 
 	[[nodiscard]]
-	std::uint32_t AddModel(std::shared_ptr<ModelVS>&& model, const ShaderName& pixelShader) override;
+	std::uint32_t AddModel(
+		std::shared_ptr<ModelVS>&& model, const ShaderName& pixelShader, std::uint32_t meshID
+	) override;
 	[[nodiscard]]
-	std::uint32_t AddModel(std::shared_ptr<ModelMS>&& model, const ShaderName& pixelShader) override;
-	[[nodiscard]]
-	std::uint32_t AddModelBundle(
-		std::vector<std::shared_ptr<ModelVS>>&& modelBundle, const ShaderName& pixelShader
+	std::uint32_t AddModel(
+		std::shared_ptr<ModelMS>&& model, const ShaderName& pixelShader, std::uint32_t meshID
 	) override;
 	[[nodiscard]]
 	std::uint32_t AddModelBundle(
-		std::vector<std::shared_ptr<ModelMS>>&& modelBundle, const ShaderName& pixelShader
+		std::vector<std::shared_ptr<ModelVS>>&& modelBundle, const ShaderName& pixelShader,
+		std::uint32_t meshID
+	) override;
+	[[nodiscard]]
+	std::uint32_t AddModelBundle(
+		std::vector<std::shared_ptr<ModelMS>>&& modelBundle, const ShaderName& pixelShader,
+		std::uint32_t meshID
 	) override;
 	void RemoveModelBundle(std::uint32_t bundleID) noexcept override;
 

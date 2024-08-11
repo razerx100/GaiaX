@@ -231,24 +231,28 @@ void RendererDx12::WaitForGPUToFinish()
 	}
 }
 
-std::uint32_t RendererDx12::AddModel(std::shared_ptr<ModelVS>&& model, const ShaderName& pixelShader)
-{
+std::uint32_t RendererDx12::AddModel(
+	std::shared_ptr<ModelVS>&& model, const ShaderName& pixelShader, std::uint32_t meshID
+) {
 	return 0u;
 }
 
-std::uint32_t RendererDx12::AddModel(std::shared_ptr<ModelMS>&& model, const ShaderName& pixelShader)
-{
-	return 0u;
-}
-
-std::uint32_t RendererDx12::AddModelBundle(
-	std::vector<std::shared_ptr<ModelVS>>&& modelBundle, const ShaderName& pixelShader
+std::uint32_t RendererDx12::AddModel(
+	std::shared_ptr<ModelMS>&& model, const ShaderName& pixelShader, std::uint32_t meshID
 ) {
 	return 0u;
 }
 
 std::uint32_t RendererDx12::AddModelBundle(
-	std::vector<std::shared_ptr<ModelMS>>&& modelBundle, const ShaderName& pixelShader
+	std::vector<std::shared_ptr<ModelVS>>&& modelBundle, const ShaderName& pixelShader,
+	std::uint32_t meshID
+) {
+	return 0u;
+}
+
+std::uint32_t RendererDx12::AddModelBundle(
+	std::vector<std::shared_ptr<ModelMS>>&& modelBundle, const ShaderName& pixelShader,
+	std::uint32_t meshID
 ) {
 	return 0u;
 }

@@ -49,17 +49,21 @@ public:
 
 	[[nodiscard]]
 	virtual std::uint32_t AddModel(
-		std::shared_ptr<ModelVS>&& model, const ShaderName& pixelShader
+		std::shared_ptr<ModelVS>&& model, const ShaderName& pixelShader, std::uint32_t meshID
 	) = 0;
 	[[nodiscard]]
-	virtual std::uint32_t AddModel(std::shared_ptr<ModelMS>&& model, const ShaderName& pixelShader) = 0;
-	[[nodiscard]]
-	virtual std::uint32_t AddModelBundle(
-		std::vector<std::shared_ptr<ModelVS>>&& modelBundle, const ShaderName& pixelShader
+	virtual std::uint32_t AddModel(
+		std::shared_ptr<ModelMS>&& model, const ShaderName& pixelShader, std::uint32_t meshID
 	) = 0;
 	[[nodiscard]]
 	virtual std::uint32_t AddModelBundle(
-		std::vector<std::shared_ptr<ModelMS>>&& modelBundle, const ShaderName& pixelShader
+		std::vector<std::shared_ptr<ModelVS>>&& modelBundle, const ShaderName& pixelShader,
+		std::uint32_t meshID
+	) = 0;
+	[[nodiscard]]
+	virtual std::uint32_t AddModelBundle(
+		std::vector<std::shared_ptr<ModelMS>>&& modelBundle, const ShaderName& pixelShader,
+		std::uint32_t meshID
 	) = 0;
 	virtual void RemoveModelBundle(std::uint32_t bundleID) noexcept = 0;
 
