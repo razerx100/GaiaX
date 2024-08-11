@@ -7,6 +7,7 @@
 #include <vector>
 #include <RendererTypes.hpp>
 #include <Shader.hpp>
+#include <Texture.hpp>
 
 #include <Model.hpp>
 #include <Material.hpp>
@@ -39,9 +40,7 @@ public:
 	[[nodiscard]]
 	// The returned Index is the texture's ID. Not its index in the shader. It should be
 	// used to remove or bind the texture.
-	virtual size_t AddTexture(
-		std::unique_ptr<std::uint8_t> textureData, size_t width, size_t height
-	) = 0;
+	virtual size_t AddTexture(STexture&& texture) = 0;
 	virtual void UnbindTexture(size_t index) = 0;
 	[[nodiscard]]
 	// The returned index is the index of the texture in the shader.

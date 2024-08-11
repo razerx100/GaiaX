@@ -206,12 +206,14 @@ void RendererDx12::ProcessData() {
 }
 */
 
-size_t RendererDx12::AddTexture(
-	std::unique_ptr<std::uint8_t> textureData, size_t width, size_t height
-) {
+size_t RendererDx12::AddTexture(STexture&& texture)
+{
+	return 0u;
+	/*
 	return Gaia::textureStorage->AddTexture(
 		Gaia::device->GetDevice(), std::move(textureData), width, height
 	);
+	*/
 }
 
 void RendererDx12::UnbindTexture(size_t index) {}

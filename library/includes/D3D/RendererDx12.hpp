@@ -29,9 +29,7 @@ public:
 	[[nodiscard]]
 	// The returned Index is the texture's ID. Not its index in the shader. It should be
 	// used to remove or bind the texture.
-	size_t AddTexture(
-		std::unique_ptr<std::uint8_t> textureData, size_t width, size_t height
-	) override;
+	size_t AddTexture(STexture&& texture) override;
 	void UnbindTexture(size_t index) override;
 	[[nodiscard]]
 	// The returned index is the index of the texture in the shader.
