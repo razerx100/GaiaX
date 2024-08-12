@@ -35,8 +35,6 @@ public:
 	virtual void AddPixelShader(const ShaderName& pixelShader) = 0;
 	virtual void ChangePixelShader(std::uint32_t modelBundleID, const ShaderName& pixelShader) = 0;
 
-	virtual void SetMeshIndex(std::uint32_t modelBundleID, std::uint32_t meshBundleID) = 0;
-
 	[[nodiscard]]
 	// The returned Index is the texture's ID. Not its index in the shader. It should be
 	// used to remove or bind the texture.
@@ -48,22 +46,12 @@ public:
 	virtual void RemoveTexture(size_t index) = 0;
 
 	[[nodiscard]]
-	virtual std::uint32_t AddModel(
-		std::shared_ptr<ModelVS>&& model, const ShaderName& pixelShader, std::uint32_t meshID
-	) = 0;
-	[[nodiscard]]
-	virtual std::uint32_t AddModel(
-		std::shared_ptr<ModelMS>&& model, const ShaderName& pixelShader, std::uint32_t meshID
+	virtual std::uint32_t AddModelBundle(
+		std::shared_ptr<ModelBundleVS>&& modelBundle, const ShaderName& pixelShader
 	) = 0;
 	[[nodiscard]]
 	virtual std::uint32_t AddModelBundle(
-		std::vector<std::shared_ptr<ModelVS>>&& modelBundle, const ShaderName& pixelShader,
-		std::uint32_t meshID
-	) = 0;
-	[[nodiscard]]
-	virtual std::uint32_t AddModelBundle(
-		std::vector<std::shared_ptr<ModelMS>>&& modelBundle, const ShaderName& pixelShader,
-		std::uint32_t meshID
+		std::shared_ptr<ModelBundleMS>&& modelBundle, const ShaderName& pixelShader
 	) = 0;
 	virtual void RemoveModelBundle(std::uint32_t bundleID) noexcept = 0;
 

@@ -76,6 +76,15 @@ public:
 	virtual UVInfo GetSpecularUVInfo() const noexcept = 0;
 };
 
+class ModelBundle
+{
+public:
+	virtual ~ModelBundle() = default;
+
+	[[nodiscard]]
+	virtual std::uint32_t GetMeshIndex() const noexcept = 0;
+};
+
 class ModelVS : public Model
 {
 public:
@@ -90,5 +99,31 @@ public:
 	// I am keeping this as non const, as I can potentially process the meshlets of multiple models
 	// at once. So, I will need to keep them all in a single container, ie move from here.
 	virtual MeshDetailsMS& GetMeshDetailsMS() noexcept = 0;
+};
+
+class ModelBundleVS : public ModelBundle
+{
+public:
+	virtual ~ModelBundleVS() = default;
+
+	[[nodiscard]]
+	virtual const std::shared_ptr<ModelVS>& GetModel(size_t index) const noexcept = 0;
+	[[nodiscard]]
+	virtual const std::vector<std::shared_ptr<ModelVS>>& GetModels() const noexcept = 0;
+};
+
+class ModelBundleMS : public ModelBundle
+{
+public:
+	virtual ~ModelBundleMS() = default;
+
+	[[nodiscard]]
+	virtual const std::shared_ptr<ModelVS>& GetModel(size_t index) const noexcept = 0;
+	[[nodiscard]]
+	virtual std::shared_ptr<ModelVS>& GetModel(size_t index) noexcept = 0;
+	[[nodiscard]]
+	virtual const std::vector<std::shared_ptr<ModelMS>>& GetModels() const noexcept = 0;
+	[[nodiscard]]
+	virtual std::vector<std::shared_ptr<ModelMS>>& GetModels() noexcept = 0;
 };
 #endif
