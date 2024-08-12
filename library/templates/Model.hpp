@@ -76,15 +76,6 @@ public:
 	virtual UVInfo GetSpecularUVInfo() const noexcept = 0;
 };
 
-class ModelBundle
-{
-public:
-	virtual ~ModelBundle() = default;
-
-	[[nodiscard]]
-	virtual std::uint32_t GetMeshIndex() const noexcept = 0;
-};
-
 class ModelVS : public Model
 {
 public:
@@ -101,24 +92,24 @@ public:
 	virtual MeshDetailsMS& GetMeshDetailsMS() noexcept = 0;
 };
 
-class ModelBundleVS : public ModelBundle
+class ModelBundleVS
 {
 public:
 	virtual ~ModelBundleVS() = default;
 
 	[[nodiscard]]
-	virtual std::shared_ptr<ModelVS>& GetModel(size_t index) noexcept = 0;
+	virtual std::uint32_t GetMeshIndex() const noexcept = 0;
 	[[nodiscard]]
 	virtual const std::vector<std::shared_ptr<ModelVS>>& GetModels() const noexcept = 0;
 };
 
-class ModelBundleMS : public ModelBundle
+class ModelBundleMS
 {
 public:
 	virtual ~ModelBundleMS() = default;
 
 	[[nodiscard]]
-	virtual std::shared_ptr<ModelVS>& GetModel(size_t index) noexcept = 0;
+	virtual std::uint32_t GetMeshIndex() const noexcept = 0;
 	[[nodiscard]]
 	virtual const std::vector<std::shared_ptr<ModelMS>>& GetModels() const noexcept = 0;
 };
