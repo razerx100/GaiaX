@@ -107,7 +107,7 @@ public:
 	virtual ~ModelBundleVS() = default;
 
 	[[nodiscard]]
-	virtual const std::shared_ptr<ModelVS>& GetModel(size_t index) const noexcept = 0;
+	virtual std::shared_ptr<ModelVS>& GetModel(size_t index) noexcept = 0;
 	[[nodiscard]]
 	virtual const std::vector<std::shared_ptr<ModelVS>>& GetModels() const noexcept = 0;
 };
@@ -118,12 +118,8 @@ public:
 	virtual ~ModelBundleMS() = default;
 
 	[[nodiscard]]
-	virtual const std::shared_ptr<ModelVS>& GetModel(size_t index) const noexcept = 0;
-	[[nodiscard]]
 	virtual std::shared_ptr<ModelVS>& GetModel(size_t index) noexcept = 0;
 	[[nodiscard]]
 	virtual const std::vector<std::shared_ptr<ModelMS>>& GetModels() const noexcept = 0;
-	[[nodiscard]]
-	virtual std::vector<std::shared_ptr<ModelMS>>& GetModels() noexcept = 0;
 };
 #endif
