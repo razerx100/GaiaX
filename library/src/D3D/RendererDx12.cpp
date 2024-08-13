@@ -134,7 +134,8 @@ void RendererDx12::SetBackgroundColour(const std::array<float, 4>& colour) noexc
 	Gaia::renderEngine->SetBackgroundColour(colour);
 }
 
-void RendererDx12::SetShaderPath(const wchar_t* path) noexcept {
+void RendererDx12::SetShaderPath(const wchar_t* path)
+{
 	Gaia::renderEngine->SetShaderPath(path);
 }
 

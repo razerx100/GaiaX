@@ -46,7 +46,7 @@ public:
 	virtual void ReleaseUploadResources() noexcept = 0;
 
 	void SetBackgroundColour(const std::array<float, 4>& colour) noexcept;
-	void SetShaderPath(const wchar_t* path) noexcept;
+	void SetShaderPath(const wchar_t* path);
 
 protected:
 	std::array<float, 4> m_backgroundColour;

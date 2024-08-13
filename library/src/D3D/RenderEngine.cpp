@@ -7,6 +7,7 @@ void RenderEngine::SetBackgroundColour(const std::array<float, 4>& colour) noexc
 	m_backgroundColour = colour;
 }
 
-void RenderEngine::SetShaderPath(const wchar_t* path) noexcept {
+void RenderEngine::SetShaderPath(const wchar_t* path)
+{
 	m_shaderPath = path;
 }
