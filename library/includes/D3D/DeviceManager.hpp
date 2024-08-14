@@ -15,7 +15,7 @@ public:
 	[[nodiscard]]
 	IDXGIFactory4* GetFactory() const noexcept { return m_factory.Get(); }
 	[[nodiscard]]
-	IDXGIAdapter1* GetAdapter() const noexcept { return m_adapter.Get(); }
+	IDXGIAdapter3* GetAdapter() const noexcept { return m_adapter.Get(); }
 
 	[[nodiscard]]
 	DXGI_ADAPTER_DESC1 GetAdapterDesc() const noexcept;
@@ -27,7 +27,7 @@ private:
 
 private:
 	ComPtr<ID3D12Device5> m_device;
-	ComPtr<IDXGIAdapter1> m_adapter;
+	ComPtr<IDXGIAdapter3> m_adapter;
     ComPtr<IDXGIFactory4> m_factory;
 
 public:

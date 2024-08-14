@@ -20,7 +20,10 @@ void DeviceManager::Create(D3D_FEATURE_LEVEL featureLevel /* = D3D_FEATURE_LEVEL
     CreateDXGIFactory2(dxgiFactoryFlags, IID_PPV_ARGS(&m_factory));
 
     {
-        GetHardwareAdapter(m_factory.Get(), &m_adapter, featureLevel);
+        ComPtr<IDXGIAdapter1> adapter{};
+        GetHardwareAdapter(m_factory.Get(), &adapter, featureLevel);
+
+        adapter->QueryInterface(IID_PPV_ARGS(&m_adapter));
 
         D3D12CreateDevice(m_adapter.Get(), featureLevel,IID_PPV_ARGS(&m_device));
     }

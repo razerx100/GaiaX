@@ -45,3 +45,11 @@ TEST_F(AllocatorTest, D3DAllocatorTest)
 
 	EXPECT_EQ(allocator.AvailableSize(), 111_MB) << "The available size isn't 111MB.";
 }
+
+TEST_F(AllocatorTest, MemoryManagerTest)
+{
+	ID3D12Device* device   = s_deviceManager->GetDevice();
+	IDXGIAdapter3* adapter = s_deviceManager->GetAdapter();
+
+	MemoryManager memoryManager{ adapter, device, 2_MB, 200_KB };
+}
