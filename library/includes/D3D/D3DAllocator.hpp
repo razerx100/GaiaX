@@ -3,6 +3,7 @@
 #include <Buddy.hpp>
 #include <D3DHeap.hpp>
 #include <optional>
+#include <queue>
 
 class D3DAllocator
 {
@@ -47,6 +48,64 @@ public:
 		m_heap      = std::move(other.m_heap);
 		m_allocator = std::move(other.m_allocator);
 		m_id        = other.m_id;
+
+		return *this;
+	}
+};
+
+class MemoryManager
+{
+public:
+	struct MemoryAllocation
+	{
+		UINT64        heapOffset;
+		ID3D12Heap*   heap;
+		UINT64        size;
+		UINT64        alignment;
+		std::uint16_t memoryID;
+		bool          isValid = false;
+	};
+
+public:
+	MemoryManager(
+		IDXGIAdapter3* adapter, ID3D12Device* device, UINT64 initialBudgetGPU, UINT64 initialBudgetCPU
+	);
+
+private:
+	[[nodiscard]]
+	UINT64 GetAvailableMemory() const noexcept;
+	[[nodiscard]]
+	std::uint16_t GetID(bool cpu) noexcept;
+	[[nodiscard]]
+	D3DHeap CreateHeap(D3D12_HEAP_TYPE type, UINT64 size, bool msaa = false) const;
+
+private:
+	IDXGIAdapter3*            m_adapter;
+	ID3D12Device*             m_device;
+	std::vector<D3DAllocator> m_cpuAllocators;
+	std::vector<D3DAllocator> m_gpuAllocators;
+	std::queue<std::uint16_t> m_availableGPUIndices;
+	std::queue<std::uint16_t> m_availableCPUIndices;
+
+public:
+	MemoryManager(const MemoryManager&) = delete;
+	MemoryManager& operator=(const MemoryManager&) = delete;
+
+	MemoryManager(MemoryManager&& other) noexcept
+		: m_adapter{ other.m_adapter }, m_device{ other.m_device },
+		m_cpuAllocators{ std::move(other.m_cpuAllocators) },
+		m_gpuAllocators{ std::move(other.m_gpuAllocators) },
+		m_availableGPUIndices{ std::move(other.m_availableGPUIndices) },
+		m_availableCPUIndices{ std::move(other.m_availableCPUIndices) }
+	{}
+	MemoryManager& operator=(MemoryManager&& other) noexcept
+	{
+		m_adapter             = other.m_adapter;
+		m_device              = other.m_device;
+		m_cpuAllocators       = std::move(other.m_cpuAllocators);
+		m_gpuAllocators       = std::move(other.m_gpuAllocators);
+		m_availableGPUIndices = std::move(other.m_availableGPUIndices);
+		m_availableCPUIndices = std::move(other.m_availableCPUIndices);
 
 		return *this;
 	}
