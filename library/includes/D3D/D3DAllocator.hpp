@@ -29,6 +29,8 @@ public:
 	{
 		return static_cast<UINT64>(m_allocator.AvailableSize());
 	}
+	[[nodiscard]]
+	ID3D12Heap* GetHeap() const noexcept { return m_heap.Get(); }
 
 private:
 	D3DHeap       m_heap;
@@ -71,6 +73,11 @@ public:
 		IDXGIAdapter3* adapter, ID3D12Device* device, UINT64 initialBudgetGPU, UINT64 initialBudgetCPU
 	);
 
+	[[nodiscard]]
+	MemoryAllocation Allocate(const D3D12_RESOURCE_DESC& resourceDesc, D3D12_HEAP_TYPE heapType);
+
+	void Deallocate(const MemoryAllocation& allocation, D3D12_HEAP_TYPE heapType) noexcept;
+
 private:
 	[[nodiscard]]
 	UINT64 GetAvailableMemory() const noexcept;
@@ -78,6 +85,14 @@ private:
 	std::uint16_t GetID(bool cpu) noexcept;
 	[[nodiscard]]
 	D3DHeap CreateHeap(D3D12_HEAP_TYPE type, UINT64 size, bool msaa = false) const;
+
+	[[nodiscard]]
+	UINT64 GetNewAllocationSize(D3D12_HEAP_TYPE heapType) const noexcept;
+
+	[[nodiscard]]
+	D3D12_RESOURCE_ALLOCATION_INFO GetAllocationInfo(
+		const D3D12_RESOURCE_DESC& resourceDesc
+	) const noexcept;
 
 private:
 	IDXGIAdapter3*            m_adapter;
