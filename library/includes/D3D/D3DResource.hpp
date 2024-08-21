@@ -88,14 +88,15 @@ public:
 
 	Buffer(Buffer&& other) noexcept
 		: Resource{ std::move(other) }, m_buffer{ std::move(other.m_buffer) },
-		m_cpuHandle{ other.m_cpuHandle }, m_device{ other.m_device }, m_bufferSize{ other.m_bufferSize }
+		m_cpuHandle{ std::exchange(other.m_cpuHandle, nullptr) }, m_device{ other.m_device },
+		m_bufferSize{ other.m_bufferSize }
 	{}
 	Buffer& operator=(Buffer&& other) noexcept
 	{
 		Resource::operator=(std::move(other));
 
 		m_buffer     = std::move(other.m_buffer);
-		m_cpuHandle  = other.m_cpuHandle;
+		m_cpuHandle  = std::exchange(other.m_cpuHandle, nullptr);
 		m_device     = other.m_device;
 		m_bufferSize = other.m_bufferSize;
 
