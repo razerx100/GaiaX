@@ -1,5 +1,5 @@
 #include <DeviceManager.hpp>
-#include <D3DAllocator.hpp>
+#include <D3DResource.hpp>
 #include <gtest/gtest.h>
 #include <memory>
 
@@ -52,4 +52,13 @@ TEST_F(AllocatorTest, MemoryManagerTest)
 	IDXGIAdapter3* adapter = s_deviceManager->GetAdapter();
 
 	MemoryManager memoryManager{ adapter, device, 2_MB, 200_KB };
+
+	{
+		Buffer buffer{ device, &memoryManager, D3D12_HEAP_TYPE_DEFAULT };
+		buffer.Create(1_KB, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+
+		EXPECT_NE(buffer.Get(), nullptr) << "Buffer wasn't initialised";
+		EXPECT_EQ(buffer.CPUHandle(), nullptr) << "CPU Pointer isn't null.";
+		EXPECT_EQ(buffer.BufferSize(), 1_KB) << "BufferSize doesn't match.";
+	}
 }

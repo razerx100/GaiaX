@@ -1,7 +1,94 @@
 #include <D3DResource.hpp>
 #include <Gaia.hpp>
 #include <cassert>
-#include <AllocatorBase.hpp>
+#include <Exception.hpp>
+
+// Resource
+Resource::Resource(MemoryManager* memoryManager, D3D12_HEAP_TYPE memoryType)
+	: m_memoryManager{ memoryManager },
+	m_allocationInfo{
+		.heapOffset = 0u,
+		.heap       = nullptr,
+		.size       = 0u,
+		.alignment  = 0u,
+		.memoryID   = 0u,
+		.isValid    = false
+	},
+	m_resourceType{ memoryType }
+{}
+
+Resource::~Resource() noexcept
+{
+	SelfDestruct();
+}
+
+void Resource::Allocate(const D3D12_RESOURCE_DESC& resourceDesc)
+{
+	if (m_memoryManager)
+		m_allocationInfo = m_memoryManager->Allocate(resourceDesc, m_resourceType);
+	else
+		throw Exception("MemoryManager Exception", "Memory manager unavailable.");
+}
+
+void Resource::Deallocate() noexcept
+{
+	if (m_memoryManager && m_allocationInfo.isValid)
+	{
+		m_memoryManager->Deallocate(m_allocationInfo, m_resourceType);
+
+		m_allocationInfo.isValid = false;
+	}
+}
+
+void Resource::SelfDestruct() noexcept
+{
+	Deallocate();
+}
+
+// Buffer
+Buffer::Buffer(ID3D12Device* device, MemoryManager* memoryManager, D3D12_HEAP_TYPE memoryType)
+	: Resource{ memoryManager, memoryType }, m_buffer{ nullptr }, m_cpuHandle{ nullptr },
+	m_device{ device }, m_bufferSize{ 0u }
+{}
+
+void Buffer::Create(UINT64 bufferSize, D3D12_RESOURCE_STATES initialState)
+{
+	D3D12_RESOURCE_DESC bufferDesc
+	{
+		.Dimension        = D3D12_RESOURCE_DIMENSION_BUFFER,
+		.Alignment        = D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT,
+		.Width            = bufferSize,
+		.Height           = 1u,
+		.DepthOrArraySize = 1u,
+		.MipLevels        = 1u,
+		.Format           = DXGI_FORMAT_UNKNOWN,
+		.SampleDesc       = DXGI_SAMPLE_DESC{ .Count = 1u, .Quality = 0u },
+		.Layout           = D3D12_TEXTURE_LAYOUT_ROW_MAJOR,
+		.Flags            = D3D12_RESOURCE_FLAG_NONE
+	};
+
+	Allocate(bufferDesc);
+
+	// If the buffer pointer is already allocated, then free it.
+	if (m_buffer != nullptr)
+		Destroy();
+
+	m_device->CreatePlacedResource(
+		GetHeap(), GetHeapOffset(), &bufferDesc, initialState, nullptr, IID_PPV_ARGS(&m_buffer)
+	);
+
+	// If the buffer is of the type Upload, map the buffer to the cpu handle.
+	if (GetHeapType() == D3D12_HEAP_TYPE_UPLOAD)
+		m_buffer->Map(0u, nullptr, reinterpret_cast<void**>(&m_cpuHandle));
+
+	m_bufferSize = bufferSize;
+}
+
+void Buffer::Destroy() noexcept
+{
+	Deallocate();
+	m_buffer.Reset();
+}
 
 // D3DResource
 D3DResource::D3DResource() noexcept : m_cpuHandle{ nullptr } {}
