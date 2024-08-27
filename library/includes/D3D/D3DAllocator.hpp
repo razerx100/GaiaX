@@ -74,15 +74,23 @@ public:
 	);
 
 	[[nodiscard]]
-	MemoryAllocation Allocate(const D3D12_RESOURCE_DESC& resourceDesc, D3D12_HEAP_TYPE heapType);
+	MemoryAllocation Allocate(
+		const D3D12_RESOURCE_DESC& resourceDesc, D3D12_HEAP_TYPE heapType, bool msaa = false
+	);
 
-	void Deallocate(const MemoryAllocation& allocation, D3D12_HEAP_TYPE heapType) noexcept;
+	void Deallocate(
+		const MemoryAllocation& allocation, D3D12_HEAP_TYPE heapType, bool msaa = false
+	) noexcept;
 
 private:
 	[[nodiscard]]
+	std::vector<D3DAllocator>& GetAllocators(bool cpu, bool msaa = false) noexcept;
+	[[nodiscard]]
+	std::queue<std::uint16_t>& GetAvailableIndices(bool cpu, bool msaa = false) noexcept;
+	[[nodiscard]]
 	UINT64 GetAvailableMemory() const noexcept;
 	[[nodiscard]]
-	std::uint16_t GetID(bool cpu) noexcept;
+	std::uint16_t GetID(bool cpu, bool msaa = false) noexcept;
 	[[nodiscard]]
 	D3DHeap CreateHeap(D3D12_HEAP_TYPE type, UINT64 size, bool msaa = false) const;
 
@@ -99,8 +107,10 @@ private:
 	ID3D12Device*             m_device;
 	std::vector<D3DAllocator> m_cpuAllocators;
 	std::vector<D3DAllocator> m_gpuAllocators;
+	std::vector<D3DAllocator> m_msaaAllocators;
 	std::queue<std::uint16_t> m_availableGPUIndices;
 	std::queue<std::uint16_t> m_availableCPUIndices;
+	std::queue<std::uint16_t> m_availableMsaaIndices;
 
 public:
 	MemoryManager(const MemoryManager&) = delete;
@@ -110,17 +120,21 @@ public:
 		: m_adapter{ other.m_adapter }, m_device{ other.m_device },
 		m_cpuAllocators{ std::move(other.m_cpuAllocators) },
 		m_gpuAllocators{ std::move(other.m_gpuAllocators) },
+		m_msaaAllocators{ std::move(other.m_msaaAllocators) },
 		m_availableGPUIndices{ std::move(other.m_availableGPUIndices) },
-		m_availableCPUIndices{ std::move(other.m_availableCPUIndices) }
+		m_availableCPUIndices{ std::move(other.m_availableCPUIndices) },
+		m_availableMsaaIndices{ std::move(other.m_availableMsaaIndices) }
 	{}
 	MemoryManager& operator=(MemoryManager&& other) noexcept
 	{
-		m_adapter             = other.m_adapter;
-		m_device              = other.m_device;
-		m_cpuAllocators       = std::move(other.m_cpuAllocators);
-		m_gpuAllocators       = std::move(other.m_gpuAllocators);
-		m_availableGPUIndices = std::move(other.m_availableGPUIndices);
-		m_availableCPUIndices = std::move(other.m_availableCPUIndices);
+		m_adapter              = other.m_adapter;
+		m_device               = other.m_device;
+		m_cpuAllocators        = std::move(other.m_cpuAllocators);
+		m_gpuAllocators        = std::move(other.m_gpuAllocators);
+		m_msaaAllocators       = std::move(other.m_msaaAllocators);
+		m_availableGPUIndices  = std::move(other.m_availableGPUIndices);
+		m_availableCPUIndices  = std::move(other.m_availableCPUIndices);
+		m_availableMsaaIndices = std::move(other.m_availableMsaaIndices);
 
 		return *this;
 	}

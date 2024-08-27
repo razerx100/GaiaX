@@ -17,14 +17,13 @@ void D3DHeap::Allocate(ID3D12Device* device, D3D12_HEAP_TYPE type, UINT64 size, 
 		.VisibleNodeMask      = 1u
 	};
 
-	UINT64 alignment = D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
-
-	if (msaa)
-		alignment = D3D12_DEFAULT_MSAA_RESOURCE_PLACEMENT_ALIGNMENT;
+	const UINT64 alignment
+		= msaa ? D3D12_DEFAULT_MSAA_RESOURCE_PLACEMENT_ALIGNMENT : D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
 
 	const UINT64 alignedSize = Align(size, alignment);
 
-	D3D12_HEAP_DESC desc{
+	D3D12_HEAP_DESC desc
+	{
 		.SizeInBytes = alignedSize,
 		.Properties  = heapProperties,
 		.Alignment   = alignment,

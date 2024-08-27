@@ -24,8 +24,8 @@ void D3DAllocator::Deallocate(UINT64 startingAddress, UINT64 bufferSize, UINT64 
 // Memory Manager
 MemoryManager::MemoryManager(
 	IDXGIAdapter3* adapter, ID3D12Device* device, UINT64 initialBudgetGPU, UINT64 initialBudgetCPU
-) : m_adapter{ adapter }, m_device{ device }, m_cpuAllocators{}, m_gpuAllocators{},
-	m_availableCPUIndices{}, m_availableGPUIndices{}
+) : m_adapter{ adapter }, m_device{ device }, m_cpuAllocators{}, m_gpuAllocators{}, m_msaaAllocators{},
+	m_availableCPUIndices{}, m_availableGPUIndices{}, m_availableMsaaIndices{}
 {
 	const UINT64 availableMemory = GetAvailableMemory();
 
@@ -54,10 +54,20 @@ UINT64 MemoryManager::GetAvailableMemory() const noexcept
 	return videoMemoryInfo.Budget - videoMemoryInfo.CurrentUsage;
 }
 
-std::uint16_t MemoryManager::GetID(bool cpu) noexcept
+std::vector<D3DAllocator>& MemoryManager::GetAllocators(bool cpu, bool msaa /* = false */) noexcept
 {
-	std::vector<D3DAllocator>& allocators       = cpu ? m_cpuAllocators : m_gpuAllocators;
-	std::queue<std::uint16_t>& availableIndices = cpu ? m_availableCPUIndices : m_availableGPUIndices;
+	return cpu ? m_cpuAllocators : (msaa ? m_msaaAllocators : m_gpuAllocators);
+}
+
+std::queue<std::uint16_t>& MemoryManager::GetAvailableIndices(bool cpu, bool msaa /* = false */) noexcept
+{
+	return cpu ? m_availableCPUIndices : (msaa ? m_availableMsaaIndices : m_availableGPUIndices);
+}
+
+std::uint16_t MemoryManager::GetID(bool cpu, bool msaa/* = false */) noexcept
+{
+	std::vector<D3DAllocator>& allocators       = GetAllocators(cpu, msaa);
+	std::queue<std::uint16_t>& availableIndices = GetAvailableIndices(cpu, msaa);
 
 	if (std::empty(availableIndices))
 		availableIndices.push(static_cast<std::uint16_t>(std::size(allocators)));
@@ -86,13 +96,13 @@ UINT64 MemoryManager::GetNewAllocationSize(D3D12_HEAP_TYPE heapType) const noexc
 }
 
 MemoryManager::MemoryAllocation MemoryManager::Allocate(
-	const D3D12_RESOURCE_DESC& resourceDesc, D3D12_HEAP_TYPE heapType
+	const D3D12_RESOURCE_DESC& resourceDesc, D3D12_HEAP_TYPE heapType, bool msaa /* = false */
 ) {
 	const D3D12_RESOURCE_ALLOCATION_INFO allocationInfo = GetAllocationInfo(resourceDesc);
 	const UINT64 bufferSize                             = allocationInfo.SizeInBytes;
 	const bool isCPUAccessible                          = heapType == D3D12_HEAP_TYPE_UPLOAD;
 
-	std::vector<D3DAllocator>& allocators = isCPUAccessible ? m_cpuAllocators : m_gpuAllocators;
+	std::vector<D3DAllocator>& allocators = GetAllocators(isCPUAccessible, msaa);
 
 	// Look through the already existing allocators and try to allocate the buffer.
 	// An allocator may still fail even if its total available size is more than the bufferSize.
@@ -140,12 +150,11 @@ MemoryManager::MemoryAllocation MemoryManager::Allocate(
 				throw Exception("MemoryException", "Not Enough memory for allocation.");
 		}
 
-		// Gonna add a different vector of msaa allocators later. Then I would have to change
-		// here.
-
 		// Since this is a new allocator. If the code reaches here, at least the top most
 		// block should have enough memory for allocation.
-		D3DAllocator allocator{ CreateHeap(heapType, newAllocationSize), GetID(isCPUAccessible) };
+		D3DAllocator allocator{
+			CreateHeap(heapType, newAllocationSize, msaa), GetID(isCPUAccessible, msaa)
+		};
 
 		std::optional<UINT64> startingAddress = allocator.Allocate(allocationInfo);
 
@@ -172,10 +181,11 @@ MemoryManager::MemoryAllocation MemoryManager::Allocate(
 	}
 }
 
-void MemoryManager::Deallocate(const MemoryAllocation& allocation, D3D12_HEAP_TYPE heapType) noexcept
-{
+void MemoryManager::Deallocate(
+	const MemoryAllocation& allocation, D3D12_HEAP_TYPE heapType, bool msaa /* = false */
+) noexcept {
 	const bool isCPUAccessible            = heapType == D3D12_HEAP_TYPE_UPLOAD;
-	std::vector<D3DAllocator>& allocators = isCPUAccessible ? m_cpuAllocators : m_gpuAllocators;
+	std::vector<D3DAllocator>& allocators = GetAllocators(isCPUAccessible, msaa);
 
 	auto result = std::ranges::find_if(
 		allocators,
@@ -197,8 +207,7 @@ void MemoryManager::Deallocate(const MemoryAllocation& allocation, D3D12_HEAP_TY
 
 		if (eraseCondition)
 		{
-			std::queue<std::uint16_t>& availableIndices
-				= isCPUAccessible ? m_availableCPUIndices : m_availableGPUIndices;
+			std::queue<std::uint16_t>& availableIndices = GetAvailableIndices(isCPUAccessible, msaa);
 
 			availableIndices.push(allocator.GetID());
 			allocators.erase(result);

@@ -185,8 +185,7 @@ UINT64 Texture::GetBufferSize() const noexcept
 	if (formatSize != std::end(formatSizeMap))
 	{
 		const UINT64 sizePerPixel = formatSize->second;
-
-		const UINT64 rowPitch = Align(m_width * sizePerPixel, D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
+		const UINT64 rowPitch     = Align(m_width * sizePerPixel, D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
 
 		return rowPitch * m_height * m_depth;
 	}
