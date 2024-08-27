@@ -1,5 +1,5 @@
-#ifndef D3D_RESOURCE_HPP_
-#define D3D_RESOURCE_HPP_
+#ifndef D3D_RESOURCES_HPP_
+#define D3D_RESOURCES_HPP_
 #include <cstdint>
 #include <utility>
 #include <D3DHeaders.hpp>

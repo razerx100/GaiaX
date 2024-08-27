@@ -2,7 +2,7 @@
 #define DEPTH_BUFFER_HPP_
 #include <D3DHeaders.hpp>
 #include <cstdint>
-#include <D3DResource.hpp>
+#include <D3DResources.hpp>
 
 class DepthBuffer {
 public:

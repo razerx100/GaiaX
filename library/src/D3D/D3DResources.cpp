@@ -1,4 +1,4 @@
-#include <D3DResource.hpp>
+#include <D3DResources.hpp>
 #include <Gaia.hpp>
 #include <cassert>
 #include <Exception.hpp>

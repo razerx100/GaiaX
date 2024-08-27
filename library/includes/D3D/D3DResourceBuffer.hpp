@@ -1,6 +1,6 @@
 #ifndef D3D_RESOURCE_BUFFER_HPP_
 #define D3D_RESOURCE_BUFFER_HPP_
-#include <D3DResource.hpp>
+#include <D3DResources.hpp>
 #include <LinearAllocator.hpp>
 #include <optional>
 

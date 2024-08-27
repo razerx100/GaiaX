@@ -1,7 +1,7 @@
 #ifndef D3D_DESCRIPTOR_VIEW_HPP_
 #define D3D_DESCRIPTOR_VIEW_HPP_
 #include <AddressContainer.hpp>
-#include <D3DResource.hpp>
+#include <D3DResources.hpp>
 #include <D3DHelperFunctions.hpp>
 #include <UploadContainer.hpp>
 #include <vector>

@@ -1,5 +1,5 @@
 #include <DeviceManager.hpp>
-#include <D3DResource.hpp>
+#include <D3DResources.hpp>
 #include <gtest/gtest.h>
 #include <memory>
 
