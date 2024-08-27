@@ -4,8 +4,8 @@
 #include <Exception.hpp>
 
 // Resource
-Resource::Resource(MemoryManager* memoryManager, D3D12_HEAP_TYPE memoryType)
-	: m_memoryManager{ memoryManager },
+Resource::Resource(ID3D12Device* device, MemoryManager* memoryManager, D3D12_HEAP_TYPE memoryType)
+	: m_resource{ nullptr }, m_device{ device }, m_memoryManager{ memoryManager },
 	m_allocationInfo{
 		.heapOffset = 0u,
 		.heap       = nullptr,
@@ -20,6 +20,12 @@ Resource::Resource(MemoryManager* memoryManager, D3D12_HEAP_TYPE memoryType)
 Resource::~Resource() noexcept
 {
 	SelfDestruct();
+}
+
+void Resource::Destroy() noexcept
+{
+	Deallocate();
+	m_resource.Reset();
 }
 
 void Resource::Allocate(const D3D12_RESOURCE_DESC& resourceDesc)
@@ -45,10 +51,19 @@ void Resource::SelfDestruct() noexcept
 	Deallocate();
 }
 
+void Resource::CreatePlacedResource(
+	const D3D12_RESOURCE_DESC& resourceDesc, D3D12_RESOURCE_STATES initialState,
+	const D3D12_CLEAR_VALUE* clearValue
+) {
+	m_device->CreatePlacedResource(
+		m_allocationInfo.heap, m_allocationInfo.heapOffset,
+		&resourceDesc, initialState, clearValue, IID_PPV_ARGS(&m_resource)
+	);
+}
+
 // Buffer
 Buffer::Buffer(ID3D12Device* device, MemoryManager* memoryManager, D3D12_HEAP_TYPE memoryType)
-	: Resource{ memoryManager, memoryType }, m_buffer{ nullptr }, m_cpuHandle{ nullptr },
-	m_device{ device }, m_bufferSize{ 0u }
+	: Resource{ device, memoryManager, memoryType }, m_cpuHandle{ nullptr }, m_bufferSize{ 0u }
 {}
 
 void Buffer::Create(UINT64 bufferSize, D3D12_RESOURCE_STATES initialState)
@@ -70,24 +85,115 @@ void Buffer::Create(UINT64 bufferSize, D3D12_RESOURCE_STATES initialState)
 	Allocate(bufferDesc);
 
 	// If the buffer pointer is already allocated, then free it.
-	if (m_buffer != nullptr)
+	if (m_resource != nullptr)
 		Destroy();
 
-	m_device->CreatePlacedResource(
-		GetHeap(), GetHeapOffset(), &bufferDesc, initialState, nullptr, IID_PPV_ARGS(&m_buffer)
-	);
+	CreatePlacedResource(bufferDesc, initialState, nullptr);
 
 	// If the buffer is of the type Upload, map the buffer to the cpu handle.
 	if (GetHeapType() == D3D12_HEAP_TYPE_UPLOAD)
-		m_buffer->Map(0u, nullptr, reinterpret_cast<void**>(&m_cpuHandle));
+		m_resource->Map(0u, nullptr, reinterpret_cast<void**>(&m_cpuHandle));
 
 	m_bufferSize = bufferSize;
 }
 
-void Buffer::Destroy() noexcept
+// Texture
+Texture::Texture(ID3D12Device* device, MemoryManager* memoryManager, D3D12_HEAP_TYPE memoryType)
+	: Resource{ device, memoryManager, memoryType }, m_format{ DXGI_FORMAT_UNKNOWN },
+	m_width{ 0u }, m_height{ 0u }, m_depth{ 0u }
+{}
+
+void Texture::Create(
+	UINT64 width, UINT height, UINT16 depth, UINT16 mipLevels, DXGI_FORMAT textureFormat,
+	D3D12_RESOURCE_DIMENSION resourceDimension, D3D12_RESOURCE_STATES initialState,
+	const D3D12_CLEAR_VALUE* clearValue, bool msaa
+) {
+	m_width  = width;
+	m_height = height;
+	m_depth  = depth;
+
+	m_format = textureFormat;
+
+	const UINT64 textureAlignment = msaa ?
+		D3D12_DEFAULT_MSAA_RESOURCE_PLACEMENT_ALIGNMENT : D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
+
+	D3D12_RESOURCE_DESC textureDesc
+	{
+		.Dimension        = resourceDimension,
+		.Alignment        = textureAlignment,
+		.Width            = width,
+		.Height           = height,
+		.DepthOrArraySize = depth,
+		.MipLevels        = mipLevels,
+		.Format           = textureFormat,
+		.SampleDesc       = DXGI_SAMPLE_DESC{ .Count = 1u, .Quality = 0u },
+		.Layout           =	D3D12_TEXTURE_LAYOUT_UNKNOWN,
+		.Flags            = D3D12_RESOURCE_FLAG_NONE
+	};
+
+	Allocate(textureDesc);
+
+	// If the texture pointer is already allocated, then free it.
+	if (m_resource != nullptr)
+		Destroy();
+
+	CreatePlacedResource(textureDesc, initialState, clearValue);
+}
+
+void Texture::Create2D(
+	UINT64 width, UINT height, UINT16 mipLevels, DXGI_FORMAT textureFormat,
+	D3D12_RESOURCE_STATES initialState,
+	bool msaa /* = false */ , const D3D12_CLEAR_VALUE* clearValue /* = nullptr */
+) {
+	Create(
+		width, height, 1u, mipLevels, textureFormat, D3D12_RESOURCE_DIMENSION_TEXTURE2D,
+		initialState, clearValue, msaa
+	);
+}
+
+void Texture::Create3D(
+	UINT64 width, UINT height, UINT16 depth, UINT16 mipLevels, DXGI_FORMAT textureFormat,
+	D3D12_RESOURCE_STATES initialState,
+	bool msaa /* = false */ , const D3D12_CLEAR_VALUE* clearValue /* = nullptr */
+) {
+	Create(
+		width, height, depth, mipLevels, textureFormat, D3D12_RESOURCE_DIMENSION_TEXTURE3D,
+		initialState, clearValue, msaa
+	);
+}
+
+UINT64 Texture::GetBufferSize() const noexcept
 {
-	Deallocate();
-	m_buffer.Reset();
+	// For example: R8G8B8A8 has 4 components, 8bits at each component. So, 4bytes.
+	const static std::unordered_map<DXGI_FORMAT, std::uint32_t> formatSizeMap
+	{
+		{ DXGI_FORMAT_R8G8B8A8_TYPELESS,    4u },
+		{ DXGI_FORMAT_R8G8B8A8_UNORM,       4u },
+		{ DXGI_FORMAT_R8G8B8A8_SNORM,       4u },
+		{ DXGI_FORMAT_R8G8B8A8_UINT,        4u },
+		{ DXGI_FORMAT_R8G8B8A8_SINT,        4u },
+		{ DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,  4u },
+		{ DXGI_FORMAT_B8G8R8A8_TYPELESS,    4u },
+		{ DXGI_FORMAT_B8G8R8A8_UNORM,       4u },
+		{ DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,  4u }
+	};
+
+	const DXGI_FORMAT textureFormat = Format();
+
+	auto formatSize = formatSizeMap.find(textureFormat);
+
+	if (formatSize != std::end(formatSizeMap))
+	{
+		const UINT64 sizePerPixel = formatSize->second;
+
+		const UINT64 rowPitch = Align(m_width * sizePerPixel, D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
+
+		return rowPitch * m_height * m_depth;
+	}
+
+	// Not bothering with adding the size of every single colour format. If an format size isn't
+	// defined here, then 0 will be returned.
+	return 0u;
 }
 
 // D3DResource

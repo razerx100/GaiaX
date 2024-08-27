@@ -8,25 +8,33 @@
 class Resource
 {
 public:
-	Resource(MemoryManager* memoryManager, D3D12_HEAP_TYPE memoryType);
+	Resource(ID3D12Device* device, MemoryManager* memoryManager, D3D12_HEAP_TYPE memoryType);
 	~Resource() noexcept;
+
+	void Destroy() noexcept;
 
 	[[nodiscard]]
 	UINT64 AllocationSize() const noexcept { return m_allocationInfo.size; }
+	[[nodiscard]]
+	ID3D12Resource* Get() const noexcept { return m_resource.Get(); }
 
 protected:
 	[[nodiscard]]
-	UINT64 GetHeapOffset() const noexcept { return m_allocationInfo.heapOffset; }
-	[[nodiscard]]
-	ID3D12Heap* GetHeap() const noexcept { return m_allocationInfo.heap; }
-	[[nodiscard]]
 	D3D12_HEAP_TYPE GetHeapType() const noexcept { return m_resourceType; }
 
+	void CreatePlacedResource(
+		const D3D12_RESOURCE_DESC& resourceDesc, D3D12_RESOURCE_STATES initialState,
+		const D3D12_CLEAR_VALUE* clearValue
+	);
 	void Allocate(const D3D12_RESOURCE_DESC& resourceDesc);
 	void Deallocate() noexcept;
 
 private:
 	void SelfDestruct() noexcept;
+
+protected:
+	ComPtr<ID3D12Resource>          m_resource;
+	ID3D12Device*                   m_device;
 
 private:
 	MemoryManager*                  m_memoryManager;
@@ -38,7 +46,8 @@ public:
 	Resource& operator=(const Resource&) = delete;
 
 	Resource(Resource&& other) noexcept
-		: m_memoryManager{ std::exchange(other.m_memoryManager, nullptr) },
+		: m_resource{ std::move(other.m_resource) }, m_device{ other.m_device },
+		m_memoryManager{ std::exchange(other.m_memoryManager, nullptr) },
 		m_allocationInfo{ other.m_allocationInfo }, m_resourceType{ other.m_resourceType }
 	{
 		// Setting the allocation validity to false, so the other object doesn't deallocate.
@@ -50,6 +59,8 @@ public:
 		// Deallocating the already existing memory.
 		SelfDestruct();
 
+		m_resource       = std::move(other.m_resource);
+		m_device         = other.m_device;
 		m_memoryManager  = std::exchange(other.m_memoryManager, nullptr);
 		m_allocationInfo = other.m_allocationInfo;
 		m_resourceType   = other.m_resourceType;
@@ -67,38 +78,95 @@ public:
 	Buffer(ID3D12Device* device, MemoryManager* memoryManager, D3D12_HEAP_TYPE memoryType);
 
 	void Create(UINT64 bufferSize, D3D12_RESOURCE_STATES initialState);
-	void Destroy() noexcept;
 
-	[[nodiscard]]
-	ID3D12Resource* Get() const noexcept { return m_buffer.Get(); }
 	[[nodiscard]]
 	std::uint8_t* CPUHandle() const noexcept { return m_cpuHandle; }
 	[[nodiscard]]
 	UINT64 BufferSize() const noexcept { return m_bufferSize; }
 
 private:
-	ComPtr<ID3D12Resource> m_buffer;
-	std::uint8_t*          m_cpuHandle;
-	ID3D12Device*          m_device;
-	UINT64                 m_bufferSize;
+	std::uint8_t* m_cpuHandle;
+	UINT64        m_bufferSize;
 
 public:
 	Buffer(const Buffer&) = delete;
 	Buffer& operator=(const Buffer&) = delete;
 
 	Buffer(Buffer&& other) noexcept
-		: Resource{ std::move(other) }, m_buffer{ std::move(other.m_buffer) },
-		m_cpuHandle{ std::exchange(other.m_cpuHandle, nullptr) }, m_device{ other.m_device },
-		m_bufferSize{ other.m_bufferSize }
+		: Resource{ std::move(other) },
+		m_cpuHandle{ std::exchange(other.m_cpuHandle, nullptr) }, m_bufferSize{ other.m_bufferSize }
 	{}
 	Buffer& operator=(Buffer&& other) noexcept
 	{
 		Resource::operator=(std::move(other));
 
-		m_buffer     = std::move(other.m_buffer);
 		m_cpuHandle  = std::exchange(other.m_cpuHandle, nullptr);
-		m_device     = other.m_device;
 		m_bufferSize = other.m_bufferSize;
+
+		return *this;
+	}
+};
+
+class Texture : public Resource
+{
+public:
+	Texture(ID3D12Device* device, MemoryManager* memoryManager, D3D12_HEAP_TYPE memoryType);
+
+	void Create2D(
+		UINT64 width, UINT height, UINT16 mipLevels, DXGI_FORMAT textureFormat,
+		D3D12_RESOURCE_STATES initialState,
+		bool msaa = false, const D3D12_CLEAR_VALUE* clearValue = nullptr
+	);
+	void Create3D(
+		UINT64 width, UINT height, UINT16 depth, UINT16 mipLevels, DXGI_FORMAT textureFormat,
+		D3D12_RESOURCE_STATES initialState, bool msaa = false,
+		const D3D12_CLEAR_VALUE* clearValue = nullptr
+	);
+
+	[[nodiscard]]
+	DXGI_FORMAT Format() const noexcept { return m_format; }
+	[[nodiscard]]
+	UINT64 GetWidth() const noexcept { return m_width; }
+	[[nodiscard]]
+	UINT GetHeight() const noexcept { return m_height; }
+	[[nodiscard]]
+	UINT64 GetDepth() const noexcept { return m_depth; }
+
+	[[nodiscard]]
+	// The allocation size will be different. This will return the Size of the Texture
+	// if it were to fit in a Buffer.
+	UINT64 GetBufferSize() const noexcept;
+
+private:
+	void Create(
+		UINT64 width, UINT height, UINT16 depth, UINT16 mipLevels, DXGI_FORMAT textureFormat,
+		D3D12_RESOURCE_DIMENSION resourceDimension, D3D12_RESOURCE_STATES initialState,
+		const D3D12_CLEAR_VALUE* clearValue, bool msaa
+	);
+
+private:
+	DXGI_FORMAT m_format;
+	UINT64      m_width;
+	UINT        m_height;
+	UINT16      m_depth;
+
+public:
+	Texture(const Texture&) = delete;
+	Texture& operator=(const Texture&) = delete;
+
+	Texture(Texture&& other) noexcept
+		: Resource{ std::move(other) },
+		m_format{ other.m_format }, m_width{ other.m_width }, m_height{ other.m_height },
+		m_depth{ other.m_depth }
+	{}
+	Texture& operator=(Texture&& other) noexcept
+	{
+		Resource::operator=(std::move(other));
+
+		m_format = other.m_format;
+		m_width  = other.m_width;
+		m_height = other.m_height;
+		m_depth  = other.m_depth;
 
 		return *this;
 	}
