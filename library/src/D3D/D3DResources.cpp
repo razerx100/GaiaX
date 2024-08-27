@@ -71,11 +71,11 @@ void Buffer::Create(UINT64 bufferSize, D3D12_RESOURCE_STATES initialState)
 		.Flags            = D3D12_RESOURCE_FLAG_NONE
 	};
 
-	Allocate(bufferDesc, false);
-
 	// If the buffer pointer is already allocated, then free it.
 	if (m_resource != nullptr)
 		Destroy();
+
+	Allocate(bufferDesc, false);
 
 	CreatePlacedResource(bufferDesc, initialState, nullptr);
 
@@ -137,11 +137,11 @@ void Texture::Create(
 		.Flags            = D3D12_RESOURCE_FLAG_NONE
 	};
 
-	Allocate(textureDesc, msaa);
-
 	// If the texture pointer is already allocated, then free it.
 	if (m_resource != nullptr)
 		Destroy();
+
+	Allocate(textureDesc, msaa);
 
 	CreatePlacedResource(textureDesc, initialState, clearValue);
 }
