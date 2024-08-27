@@ -42,7 +42,13 @@ TEST_F(BufferTest, D3DBufferTest)
 	Buffer testTexel{ device, &memoryManager, D3D12_HEAP_TYPE_DEFAULT };
 	testTexel.Create(2_KB, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 
+	EXPECT_EQ(testTexel.BufferSize(), 2_KB) << "Buffer size isn't 2_KB.";
+	EXPECT_NE(testTexel.Get(), nullptr) << "Buffer wasn't created.";
+
 	testTexel.Create(4_KB, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+
+	EXPECT_EQ(testTexel.BufferSize(), 4_KB) << "Buffer size isn't 2_KB.";
+	EXPECT_NE(testTexel.Get(), nullptr) << "Buffer wasn't created.";
 }
 
 TEST_F(BufferTest, TextureTest)
@@ -57,7 +63,17 @@ TEST_F(BufferTest, TextureTest)
 		1280u, 720u, 1u, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
 	);
 
+	EXPECT_EQ(testTexture.GetWidth(), 1280u) << "Texture width isn't 1280.";
+	EXPECT_EQ(testTexture.GetHeight(), 720u) << "Texture width isn't 720.";
+	EXPECT_EQ(testTexture.GetBufferSize(), 3'686'400lu) << "Texture size isn't 3'686'400.";
+	EXPECT_NE(testTexture.Get(), nullptr) << "Texture wasn't created.";
+
 	testTexture.Create2D(
 		1920u, 1080u, 1u, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
 	);
+
+	EXPECT_EQ(testTexture.GetWidth(), 1920u) << "Texture width isn't 1920.";
+	EXPECT_EQ(testTexture.GetHeight(), 1080u) << "Texture width isn't 1080.";
+	EXPECT_EQ(testTexture.GetBufferSize(), 8'294'400lu) << "Texture size isn't 8'294'400.";
+	EXPECT_NE(testTexture.Get(), nullptr) << "Texture wasn't created.";
 }
