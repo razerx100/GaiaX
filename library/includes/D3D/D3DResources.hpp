@@ -9,9 +9,6 @@ class Resource
 {
 public:
 	Resource(ID3D12Device* device, MemoryManager* memoryManager, D3D12_HEAP_TYPE memoryType);
-	~Resource() noexcept;
-
-	void Destroy() noexcept;
 
 	[[nodiscard]]
 	UINT64 AllocationSize() const noexcept { return m_allocationInfo.size; }
@@ -26,11 +23,8 @@ protected:
 		const D3D12_RESOURCE_DESC& resourceDesc, D3D12_RESOURCE_STATES initialState,
 		const D3D12_CLEAR_VALUE* clearValue
 	);
-	void Allocate(const D3D12_RESOURCE_DESC& resourceDesc);
-	void Deallocate() noexcept;
-
-private:
-	void SelfDestruct() noexcept;
+	void Allocate(const D3D12_RESOURCE_DESC& resourceDesc, bool msaa);
+	void Deallocate(bool msaa) noexcept;
 
 protected:
 	ComPtr<ID3D12Resource>          m_resource;
@@ -56,9 +50,6 @@ public:
 	}
 	Resource& operator=(Resource&& other) noexcept
 	{
-		// Deallocating the already existing memory.
-		SelfDestruct();
-
 		m_resource       = std::move(other.m_resource);
 		m_device         = other.m_device;
 		m_memoryManager  = std::exchange(other.m_memoryManager, nullptr);
@@ -76,13 +67,19 @@ class Buffer : public Resource
 {
 public:
 	Buffer(ID3D12Device* device, MemoryManager* memoryManager, D3D12_HEAP_TYPE memoryType);
+	~Buffer() noexcept;
 
 	void Create(UINT64 bufferSize, D3D12_RESOURCE_STATES initialState);
+
+	void Destroy() noexcept;
 
 	[[nodiscard]]
 	std::uint8_t* CPUHandle() const noexcept { return m_cpuHandle; }
 	[[nodiscard]]
 	UINT64 BufferSize() const noexcept { return m_bufferSize; }
+
+private:
+	void SelfDestruct() noexcept;
 
 private:
 	std::uint8_t* m_cpuHandle;
@@ -98,6 +95,9 @@ public:
 	{}
 	Buffer& operator=(Buffer&& other) noexcept
 	{
+		// Deallocating the already existing memory.
+		SelfDestruct();
+
 		Resource::operator=(std::move(other));
 
 		m_cpuHandle  = std::exchange(other.m_cpuHandle, nullptr);
@@ -111,6 +111,7 @@ class Texture : public Resource
 {
 public:
 	Texture(ID3D12Device* device, MemoryManager* memoryManager, D3D12_HEAP_TYPE memoryType);
+	~Texture() noexcept;
 
 	void Create2D(
 		UINT64 width, UINT height, UINT16 mipLevels, DXGI_FORMAT textureFormat,
@@ -122,6 +123,8 @@ public:
 		D3D12_RESOURCE_STATES initialState, bool msaa = false,
 		const D3D12_CLEAR_VALUE* clearValue = nullptr
 	);
+
+	void Destroy() noexcept;
 
 	[[nodiscard]]
 	DXGI_FORMAT Format() const noexcept { return m_format; }
@@ -144,11 +147,14 @@ private:
 		const D3D12_CLEAR_VALUE* clearValue, bool msaa
 	);
 
+	void SelfDestruct() noexcept;
+
 private:
 	DXGI_FORMAT m_format;
 	UINT64      m_width;
 	UINT        m_height;
 	UINT16      m_depth;
+	bool        m_msaa;
 
 public:
 	Texture(const Texture&) = delete;
@@ -157,16 +163,20 @@ public:
 	Texture(Texture&& other) noexcept
 		: Resource{ std::move(other) },
 		m_format{ other.m_format }, m_width{ other.m_width }, m_height{ other.m_height },
-		m_depth{ other.m_depth }
+		m_depth{ other.m_depth }, m_msaa{ other.m_msaa }
 	{}
 	Texture& operator=(Texture&& other) noexcept
 	{
+		// Deallocating the already existing memory.
+		SelfDestruct();
+
 		Resource::operator=(std::move(other));
 
 		m_format = other.m_format;
 		m_width  = other.m_width;
 		m_height = other.m_height;
 		m_depth  = other.m_depth;
+		m_msaa   = other.m_msaa;
 
 		return *this;
 	}

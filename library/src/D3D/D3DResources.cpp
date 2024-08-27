@@ -17,38 +17,22 @@ Resource::Resource(ID3D12Device* device, MemoryManager* memoryManager, D3D12_HEA
 	m_resourceType{ memoryType }
 {}
 
-Resource::~Resource() noexcept
-{
-	SelfDestruct();
-}
-
-void Resource::Destroy() noexcept
-{
-	Deallocate();
-	m_resource.Reset();
-}
-
-void Resource::Allocate(const D3D12_RESOURCE_DESC& resourceDesc)
+void Resource::Allocate(const D3D12_RESOURCE_DESC& resourceDesc, bool msaa)
 {
 	if (m_memoryManager)
-		m_allocationInfo = m_memoryManager->Allocate(resourceDesc, m_resourceType);
+		m_allocationInfo = m_memoryManager->Allocate(resourceDesc, m_resourceType, msaa);
 	else
 		throw Exception("MemoryManager Exception", "Memory manager unavailable.");
 }
 
-void Resource::Deallocate() noexcept
+void Resource::Deallocate(bool msaa) noexcept
 {
 	if (m_memoryManager && m_allocationInfo.isValid)
 	{
-		m_memoryManager->Deallocate(m_allocationInfo, m_resourceType);
+		m_memoryManager->Deallocate(m_allocationInfo, m_resourceType, msaa);
 
 		m_allocationInfo.isValid = false;
 	}
-}
-
-void Resource::SelfDestruct() noexcept
-{
-	Deallocate();
 }
 
 void Resource::CreatePlacedResource(
@@ -66,6 +50,11 @@ Buffer::Buffer(ID3D12Device* device, MemoryManager* memoryManager, D3D12_HEAP_TY
 	: Resource{ device, memoryManager, memoryType }, m_cpuHandle{ nullptr }, m_bufferSize{ 0u }
 {}
 
+Buffer::~Buffer() noexcept
+{
+	SelfDestruct();
+}
+
 void Buffer::Create(UINT64 bufferSize, D3D12_RESOURCE_STATES initialState)
 {
 	D3D12_RESOURCE_DESC bufferDesc
@@ -82,7 +71,7 @@ void Buffer::Create(UINT64 bufferSize, D3D12_RESOURCE_STATES initialState)
 		.Flags            = D3D12_RESOURCE_FLAG_NONE
 	};
 
-	Allocate(bufferDesc);
+	Allocate(bufferDesc, false);
 
 	// If the buffer pointer is already allocated, then free it.
 	if (m_resource != nullptr)
@@ -97,11 +86,27 @@ void Buffer::Create(UINT64 bufferSize, D3D12_RESOURCE_STATES initialState)
 	m_bufferSize = bufferSize;
 }
 
+void Buffer::Destroy() noexcept
+{
+	SelfDestruct();
+	m_resource.Reset();
+}
+
+void Buffer::SelfDestruct() noexcept
+{
+	Deallocate(false);
+}
+
 // Texture
 Texture::Texture(ID3D12Device* device, MemoryManager* memoryManager, D3D12_HEAP_TYPE memoryType)
 	: Resource{ device, memoryManager, memoryType }, m_format{ DXGI_FORMAT_UNKNOWN },
-	m_width{ 0u }, m_height{ 0u }, m_depth{ 0u }
+	m_width{ 0u }, m_height{ 0u }, m_depth{ 0u }, m_msaa{ false }
 {}
+
+Texture::~Texture() noexcept
+{
+	SelfDestruct();
+}
 
 void Texture::Create(
 	UINT64 width, UINT height, UINT16 depth, UINT16 mipLevels, DXGI_FORMAT textureFormat,
@@ -113,6 +118,7 @@ void Texture::Create(
 	m_depth  = depth;
 
 	m_format = textureFormat;
+	m_msaa   = msaa;
 
 	const UINT64 textureAlignment = msaa ?
 		D3D12_DEFAULT_MSAA_RESOURCE_PLACEMENT_ALIGNMENT : D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
@@ -131,7 +137,7 @@ void Texture::Create(
 		.Flags            = D3D12_RESOURCE_FLAG_NONE
 	};
 
-	Allocate(textureDesc);
+	Allocate(textureDesc, msaa);
 
 	// If the texture pointer is already allocated, then free it.
 	if (m_resource != nullptr)
@@ -160,6 +166,17 @@ void Texture::Create3D(
 		width, height, depth, mipLevels, textureFormat, D3D12_RESOURCE_DIMENSION_TEXTURE3D,
 		initialState, clearValue, msaa
 	);
+}
+
+void Texture::Destroy() noexcept
+{
+	SelfDestruct();
+	m_resource.Reset();
+}
+
+void Texture::SelfDestruct() noexcept
+{
+	Deallocate(m_msaa);
 }
 
 UINT64 Texture::GetBufferSize() const noexcept
