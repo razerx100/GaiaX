@@ -11,6 +11,7 @@ RendererDx12::RendererDx12(
 
 	m_objectManager.CreateObject(Gaia::device, 3u);
 
+	Gaia::device->GetDebugLogger().AddCallbackType(DebugCallbackType::FileOut);
 	Gaia::device->Create();
 	ID3D12Device4* deviceRef = Gaia::device.get()->GetDevice();
 
@@ -18,10 +19,6 @@ RendererDx12::RendererDx12(
 	Gaia::renderEngine->ResizeViewportAndScissor(width, height);
 
 	//Gaia::InitResources(m_objectManager, threadPool);
-
-#ifdef _DEBUG
-	m_objectManager.CreateObject(Gaia::debugLogger, 4u, deviceRef);
-#endif
 
 	const bool meshDrawType = engineType == RenderEngineType::MeshDraw ? true : false;
 

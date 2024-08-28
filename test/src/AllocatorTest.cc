@@ -16,6 +16,8 @@ protected:
 void AllocatorTest::SetUpTestSuite()
 {
 	s_deviceManager = std::make_unique<DeviceManager>();
+
+	s_deviceManager->GetDebugLogger().AddCallbackType(DebugCallbackType::StandardError);
 	s_deviceManager->Create(D3D_FEATURE_LEVEL_12_0);
 }
 

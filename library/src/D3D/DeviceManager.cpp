@@ -26,6 +26,10 @@ void DeviceManager::Create(D3D_FEATURE_LEVEL featureLevel /* = D3D_FEATURE_LEVEL
         adapter->QueryInterface(IID_PPV_ARGS(&m_adapter));
 
         D3D12CreateDevice(m_adapter.Get(), featureLevel,IID_PPV_ARGS(&m_device));
+
+#ifdef _DEBUG
+        m_debugLogger.CreateInfoQueue(m_device.Get());
+#endif
     }
 }
 

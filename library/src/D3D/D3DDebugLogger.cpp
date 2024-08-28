@@ -1,9 +1,11 @@
 #include <D3DDebugLogger.hpp>
 #include <fstream>
+#include <iostream>
 #include <array>
 #include <format>
 
-static std::array<const char*, 11u> messageCategories{
+static std::array<const char*, 11u> messageCategories
+{
 	"D3D12_MESSAGE_CATEGORY_APPLICATION_DEFINED",
 	"D3D12_MESSAGE_CATEGORY_MISCELLANEOUS",
 	"D3D12_MESSAGE_CATEGORY_INITIALIZATION",
@@ -17,62 +19,146 @@ static std::array<const char*, 11u> messageCategories{
 	"D3D12_MESSAGE_CATEGORY_SHADER"
 };
 
-static std::array<const char*, 5u> messageSeverity{
+static std::array<const char*, 5u> messageSeverity
+{
 	"D3D12_MESSAGE_SEVERITY_CORRUPTION",
 	"D3D12_MESSAGE_SEVERITY_ERROR",
 	"D3D12_MESSAGE_SEVERITY_WARNING",
 	"D3D12_MESSAGE_SEVERITY_INFO",
 	"D3D12_MESSAGE_SEVERITY_MESSAGE"
 };
-D3DDebugLogger::D3DDebugLogger(ID3D12Device* device)
-	: m_callBackCookie(0)
+
+// Debug Callback Manager
+void DebugCallbackManager::AddDebugCallback(DebugCallbackType type) noexcept
 {
-#ifdef __ID3D12InfoQueue1_INTERFACE_DEFINED__
-	HRESULT hr = device->QueryInterface(IID_PPV_ARGS(&m_debugInfoQueue));
-	std::string errorMessage = "";
-	if (hr == S_OK) {
-		m_debugInfoQueue->RegisterMessageCallback(
-			D3DDebugLogger::MessageCallback, D3D12_MESSAGE_CALLBACK_FLAG_NONE, nullptr,
-			&m_callBackCookie
-		);
-	}
-	else if (hr == E_NOINTERFACE) {
-		errorMessage = std::format("ID3D12InfoQueue1 isn't supported. Upgrade to Windows 11. HRESULT: 0x{0:X}\n", static_cast<unsigned>(hr)).c_str();
-	}
-	else {
-		errorMessage = std::format("Something went wrong while initializing debugInfoQueue. HRESULT:0x{0:X}\n", static_cast<unsigned>(hr)).c_str();
-}
-	if (hr != S_OK) {
-		std::ofstream{ "ErrorLog.txt", std::ios_base::app | std::ios_base::out } << errorMessage;
-		OutputDebugStringA(errorMessage.c_str());
-	}
-#else
-	std::string errorInterfaceNotFoundMessage = "Failed to initalize D3D12DebugLogger: ID3D12InfoQueue1 interface is not defined. Upgrade to Windows 11 or use DX12 Agility SDK from NuGet.\n";
-	OutputDebugStringA(errorInterfaceNotFoundMessage.c_str());
-	std::ofstream{ "ErrorLog.txt", std::ios_base::app | std::ios_base::out } << errorInterfaceNotFoundMessage << std::endl;
-#endif
+	m_callbackTypes.set(static_cast<size_t>(type));
 }
 
-D3DDebugLogger::~D3DDebugLogger() noexcept {
-	UnregisterCallBack();
+D3D12MessageFunc DebugCallbackManager::GetCallback(size_t index) const noexcept
+{
+	auto type = static_cast<DebugCallbackType>(index);
+
+	if (type == DebugCallbackType::FileOut)
+		return &DebugCallbackManager::MessageCallbackTxt;
+	else
+		return &DebugCallbackManager::MessageCallbackStdError;
 }
 
-void D3DDebugLogger::UnregisterCallBack() const noexcept {
-#ifdef __ID3D12InfoQueue1_INTERFACE_DEFINED__
-	if (m_debugInfoQueue) {
-		m_debugInfoQueue->UnregisterMessageCallback(m_callBackCookie);
-	}
-#endif
+std::string DebugCallbackManager::FormatDebugMessage(
+	D3D12_MESSAGE_CATEGORY category, D3D12_MESSAGE_SEVERITY severity,
+	D3D12_MESSAGE_ID id, LPCSTR pDescription
+) {
+	return std::format(
+		"Category : {}    Severity : {}    ID : {}.\nDescription : {}\n",
+		messageCategories[category], messageSeverity[severity], static_cast<int>(id),
+		pDescription
+	);
 }
 
-void D3DDebugLogger::MessageCallback(
+void __stdcall DebugCallbackManager::MessageCallbackTxt(
 	D3D12_MESSAGE_CATEGORY category, D3D12_MESSAGE_SEVERITY severity,
 	D3D12_MESSAGE_ID id, LPCSTR pDescription, [[maybe_unused]] void* pContext
 ) {
 	std::ofstream log("ErrorLog.txt", std::ios_base::app | std::ios_base::out);
-	log << "Category : " << messageCategories[category] << "    "
-		<< "Severity : " << messageSeverity[severity] << "    "
-		<< "ID : " << id << "\n"
-		<< "Description : " << pDescription << "    "
-		<< std::endl;
+	log << FormatDebugMessage(category, severity, id, pDescription);
 }
+
+void __stdcall DebugCallbackManager::MessageCallbackStdError(
+	D3D12_MESSAGE_CATEGORY category, D3D12_MESSAGE_SEVERITY severity,
+	D3D12_MESSAGE_ID id, LPCSTR pDescription, [[maybe_unused]] void* pContext
+) {
+	std::cerr << FormatDebugMessage(category, severity, id, pDescription);
+}
+
+// D3DInfoQueueLogger
+D3DInfoQueueLogger::~D3DInfoQueueLogger() noexcept
+{
+	OutputCurrentMessages();
+}
+
+void D3DInfoQueueLogger::CreateInfoQueue(ID3D12Device* device)
+{
+	device->QueryInterface(IID_PPV_ARGS(&m_debugInfoQueue));
+}
+
+void D3DInfoQueueLogger::AddCallbackType(DebugCallbackType type) noexcept
+{
+	m_callbackManager.AddDebugCallback(type);
+}
+
+void D3DInfoQueueLogger::OutputCurrentMessages()
+{
+	const UINT64 storedMessageCount = m_debugInfoQueue->GetNumStoredMessages();
+
+	std::vector<std::uint8_t> messageBuffer{};
+
+	for (UINT64 index = 0u; index < storedMessageCount; ++index)
+	{
+		SIZE_T messageLength = 0u;
+		m_debugInfoQueue->GetMessage(index, nullptr, &messageLength);
+
+		if (std::size(messageBuffer) < messageLength)
+			messageBuffer.resize(messageLength);
+
+		auto message = reinterpret_cast<D3D12_MESSAGE*>(std::data(messageBuffer));
+		m_debugInfoQueue->GetMessage(index, message, &messageLength);
+
+		for (size_t index = 0u; index < m_callbackManager.GetCallbackCount(); ++index)
+			if (m_callbackManager.DoesCallbackExist(index))
+			{
+				D3D12MessageFunc callback = m_callbackManager.GetCallback(index);
+
+				callback(
+					message->Category, message->Severity, message->ID, message->pDescription, nullptr
+				);
+			}
+	}
+}
+
+// D3DInfoQueue1Logger
+#ifdef __ID3D12InfoQueue1_INTERFACE_DEFINED__
+D3DInfoQueue1Logger::~D3DInfoQueue1Logger() noexcept
+{
+	UnregisterCallbacks();
+}
+
+void D3DInfoQueue1Logger::CreateInfoQueue(ID3D12Device* device)
+{
+	device->QueryInterface(IID_PPV_ARGS(&m_debugInfoQueue));
+
+	CreateDebugCallbacks();
+}
+
+void D3DInfoQueue1Logger::AddCallbackType(DebugCallbackType type) noexcept
+{
+	m_callbackManager.AddDebugCallback(type);
+}
+
+void D3DInfoQueue1Logger::CreateDebugCallbacks()
+{
+	for (size_t index = 0u; index < m_callbackManager.GetCallbackCount(); ++index)
+		if (m_callbackManager.DoesCallbackExist(index))
+		{
+			DWORD& callbackCookie     = m_callbackCookies.emplace_back(0u);
+			D3D12MessageFunc callback = m_callbackManager.GetCallback(index);
+
+			// This could be some user defined data. So, it can be used to send in an
+			// object to a custom logger.
+			// I would want to set it to null but the third parameter has an _In_, so
+			// if I put a nullptr there, it shows a warning. Sending the address to
+			// the cookie, as it should be alive as long as the callbacks are. And
+			// for now that argument isn't used.
+			void* context = &callbackCookie;
+
+			m_debugInfoQueue->RegisterMessageCallback(
+				callback, D3D12_MESSAGE_CALLBACK_FLAG_NONE, context, &callbackCookie
+			);
+		}
+}
+
+void D3DInfoQueue1Logger::UnregisterCallbacks() noexcept
+{
+	for (DWORD callbackCookie : m_callbackCookies)
+		m_debugInfoQueue->UnregisterMessageCallback(callbackCookie);
+}
+#endif // __ID3D12InfoQueue1_INTERFACE_DEFINED__
