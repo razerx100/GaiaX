@@ -40,18 +40,3 @@ Resolution GetDisplayResolution(
 		static_cast<std::uint64_t>(displayData.DesktopCoordinates.bottom)
 	};
 }
-
-D3D12_RESOURCE_BARRIER GetTransitionBarrier(
-	ID3D12Resource* resource, D3D12_RESOURCE_STATES beforeState,
-	D3D12_RESOURCE_STATES afterState
-) noexcept {
-	D3D12_RESOURCE_BARRIER transitionBarrier{};
-	transitionBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-	transitionBarrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-	transitionBarrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-	transitionBarrier.Transition.pResource = resource;
-	transitionBarrier.Transition.StateBefore = beforeState;
-	transitionBarrier.Transition.StateAfter = afterState;
-
-	return transitionBarrier;
-}

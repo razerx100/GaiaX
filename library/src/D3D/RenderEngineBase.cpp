@@ -10,8 +10,10 @@ void RenderEngineBase::Present(size_t frameIndex) {
 	ID3D12GraphicsCommandList* graphicsCommandList = Gaia::graphicsCmdList->GetCommandList();
 
 	D3DResourceBarrier().AddBarrier(
-		Gaia::swapChain->GetRTV(frameIndex),
-		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT
+		ResourceBarrierBuilder{}.Transition(
+			Gaia::swapChain->GetRTV(frameIndex),
+			D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT
+		)
 	).RecordBarriers(graphicsCommandList);
 
 	Gaia::graphicsCmdList->Close();
@@ -34,9 +36,11 @@ void RenderEngineBase::ExecutePreGraphicsStage(
 ) {
 	Gaia::graphicsCmdList->Reset(frameIndex);
 
-	D3DResourceBarrier<1u>().AddBarrier(
-		Gaia::swapChain->GetRTV(frameIndex),
-		D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET
+	D3DResourceBarrier().AddBarrier(
+		ResourceBarrierBuilder{}.Transition(
+			Gaia::swapChain->GetRTV(frameIndex),
+			D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET
+		)
 	).RecordBarriers(graphicsCommandList);
 
 	ID3D12DescriptorHeap* descriptorHeap[] = { Gaia::descriptorTable->GetDescHeapRef() };

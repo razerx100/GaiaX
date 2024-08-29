@@ -201,8 +201,10 @@ void ComputePipelineIndirectDraw::ResetCounterBuffer(
 		); // UAV getting promoted from COMMON to COPY_DEST
 
 	// So need to change it back to UNORDERED_ACCESS
-	D3DResourceBarrier().AddBarrier(
-		counterBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_UNORDERED_ACCESS
+	D3DResourceBarrier{}.AddBarrier(
+		ResourceBarrierBuilder{}.Transition(
+			counterBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_UNORDERED_ACCESS
+		)
 	).RecordBarriers(commandList);
 }
 
