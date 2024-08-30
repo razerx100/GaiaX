@@ -65,3 +65,135 @@ D3D12_GPU_DESCRIPTOR_HANDLE D3DDescriptorHeap::GetGPUHandle(UINT index) const no
 
     return gpuHandle;
 }
+
+// D3D Reusable Descriptor Heap
+UINT D3DReusableDescriptorHeap::CreateSRV(
+    ID3D12Resource* resource, const D3D12_SHADER_RESOURCE_VIEW_DESC& srvDesc
+) {
+    assert(
+        m_descriptorHeap.GetHeapType() == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV
+        && "The heap type isn't CBV_SRV_UAV."
+    );
+
+    const UINT descriptorIndex                  = AllocateDescriptor();
+    const D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = m_descriptorHeap.GetCPUHandle(descriptorIndex);
+
+    m_device->CreateShaderResourceView(resource, &srvDesc, cpuHandle);
+
+    return descriptorIndex;
+}
+
+UINT D3DReusableDescriptorHeap::CreateCBV(const D3D12_CONSTANT_BUFFER_VIEW_DESC& cbvDesc)
+{
+    assert(
+        m_descriptorHeap.GetHeapType() == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV
+        && "The heap type isn't CBV_SRV_UAV."
+    );
+
+    const UINT descriptorIndex                  = AllocateDescriptor();
+    const D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = m_descriptorHeap.GetCPUHandle(descriptorIndex);
+
+    m_device->CreateConstantBufferView(&cbvDesc, cpuHandle);
+
+    return descriptorIndex;
+}
+
+UINT D3DReusableDescriptorHeap::CreateUAV(
+    ID3D12Resource* resource, ID3D12Resource* counterResource,
+    const D3D12_UNORDERED_ACCESS_VIEW_DESC& uavDesc
+) {
+    assert(
+        m_descriptorHeap.GetHeapType() == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV
+        && "The heap type isn't CBV_SRV_UAV."
+    );
+
+    const UINT descriptorIndex                  = AllocateDescriptor();
+    const D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = m_descriptorHeap.GetCPUHandle(descriptorIndex);
+
+    m_device->CreateUnorderedAccessView(resource, counterResource, &uavDesc, cpuHandle);
+
+    return descriptorIndex;
+}
+
+UINT D3DReusableDescriptorHeap::CreateDSV(
+    ID3D12Resource* resource, const D3D12_DEPTH_STENCIL_VIEW_DESC& dsvDesc
+) {
+    assert(
+        m_descriptorHeap.GetHeapType() == D3D12_DESCRIPTOR_HEAP_TYPE_DSV
+        && "The heap type isn't DSV."
+    );
+
+    const UINT descriptorIndex                  = AllocateDescriptor();
+    const D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = m_descriptorHeap.GetCPUHandle(descriptorIndex);
+
+    m_device->CreateDepthStencilView(resource, &dsvDesc, cpuHandle);
+
+    return descriptorIndex;
+}
+
+UINT D3DReusableDescriptorHeap::CreateRTV(
+    ID3D12Resource* resource, const D3D12_RENDER_TARGET_VIEW_DESC& rtvDesc
+) {
+    assert(
+        m_descriptorHeap.GetHeapType() == D3D12_DESCRIPTOR_HEAP_TYPE_RTV
+        && "The heap type isn't RTV."
+    );
+
+    const UINT descriptorIndex                  = AllocateDescriptor();
+    const D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = m_descriptorHeap.GetCPUHandle(descriptorIndex);
+
+    m_device->CreateRenderTargetView(resource, &rtvDesc, cpuHandle);
+
+    return descriptorIndex;
+}
+
+UINT D3DReusableDescriptorHeap::CreateSampler(const D3D12_SAMPLER_DESC& samplerDesc)
+{
+    assert(
+        m_descriptorHeap.GetHeapType() == D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER
+        && "The heap type isn't Sampler."
+    );
+
+    const UINT descriptorIndex                  = AllocateDescriptor();
+    const D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = m_descriptorHeap.GetCPUHandle(descriptorIndex);
+
+    m_device->CreateSampler(&samplerDesc, cpuHandle);
+
+    return descriptorIndex;
+}
+
+UINT D3DReusableDescriptorHeap::GetNextFreeIndex(UINT extraAllocCount/* = 0 */)
+{
+    UINT descriptorIndex  = std::numeric_limits<UINT>::max();
+    auto oDescriptorIndex = m_indicesManager.GetFirstAvailableIndex();
+
+    if (oDescriptorIndex)
+        descriptorIndex = static_cast<UINT>(oDescriptorIndex.value());
+    else
+    {
+        // This part should only be executed when both the availableIndices and elements
+        // containers have the same size. So, getting the size should be fine.
+        descriptorIndex = m_descriptorHeap.GetDescriptorCount();
+
+        // ElementIndex is the previous size, we have the new item, and then the extraAllocations.
+        const UINT newDescriptorCount = descriptorIndex + 1u + extraAllocCount;
+
+        ReserveNewElements(newDescriptorCount);
+    }
+
+    return descriptorIndex;
+}
+
+UINT D3DReusableDescriptorHeap::AllocateDescriptor()
+{
+    const UINT descriptorIndex = GetNextFreeIndex(s_extraAllocationCount);
+    m_indicesManager.ToggleAvailability(descriptorIndex, false);
+
+    return descriptorIndex;
+}
+
+void D3DReusableDescriptorHeap::ReserveNewElements(UINT newDescriptorCount)
+{
+    m_indicesManager.Resize(newDescriptorCount);
+    m_descriptorHeap.Create(newDescriptorCount);
+}

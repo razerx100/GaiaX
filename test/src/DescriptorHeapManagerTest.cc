@@ -1,5 +1,6 @@
 #include <DeviceManager.hpp>
 #include <D3DDescriptorHeapManager.hpp>
+#include <D3DResources.hpp>
 #include <gtest/gtest.h>
 #include <memory>
 
@@ -58,4 +59,47 @@ TEST_F(DescriptorHeapManagerTest, DescriptorHeapTest)
 	EXPECT_NE(srvHeap2.Get(), nullptr) << "Shader visible SRV Heap creation failed.";
 
 	srvHeap2.CopyHeap(srvHeap, 10u, 5u, 10u);
+}
+
+TEST_F(DescriptorHeapManagerTest, ReusableDescriptorHeapTest)
+{
+	ID3D12Device* device   = s_deviceManager->GetDevice();
+	IDXGIAdapter3* adapter = s_deviceManager->GetAdapter();
+
+	MemoryManager memoryManager{ adapter, device, 20_MB, 200_KB };
+
+	D3DReusableDescriptorHeap srvHeap{
+		device, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE
+	};
+
+	Texture testTexture{ device, &memoryManager, D3D12_HEAP_TYPE_DEFAULT };
+	testTexture.Create2D(
+		1280u, 720u, 1u, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
+	);
+
+	D3D12_TEX2D_SRV tex2DSrv
+	{
+		.MipLevels = 1u
+	};
+
+	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc
+	{
+		.Format                  = testTexture.Format(),
+		.ViewDimension           = D3D12_SRV_DIMENSION_TEXTURE2D,
+		.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
+		.Texture2D               = tex2DSrv
+	};
+
+	UINT textureDescIndex  = srvHeap.CreateSRV(testTexture.Get(), srvDesc);
+	UINT textureDescIndex2 = srvHeap.CreateSRV(testTexture.Get(), srvDesc);
+
+	const D3D12_CPU_DESCRIPTOR_HANDLE textureDescHandle = srvHeap.GetCPUHandle(textureDescIndex);
+
+	srvHeap.FreeDescriptor(textureDescIndex);
+
+	UINT textureDescIndex1 = srvHeap.CreateSRV(testTexture.Get(), srvDesc);
+
+	const D3D12_CPU_DESCRIPTOR_HANDLE textureDescHandle1 = srvHeap.GetCPUHandle(textureDescIndex1);
+
+	EXPECT_EQ(textureDescHandle.ptr, textureDescHandle1.ptr) << "Handles are not the same.";
 }
