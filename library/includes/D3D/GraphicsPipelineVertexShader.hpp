@@ -51,8 +51,8 @@ public:
 
 	void DrawModels(
 		ID3D12GraphicsCommandList* graphicsCommandList,
-		const std::vector<ModelDrawArguments>& drawArguments,
-		const RSLayoutType& graphicsRSLayout
+		const std::vector<ModelDrawArguments>& drawArguments//,
+		//const RSLayoutType& graphicsRSLayout
 	) const noexcept;
 
 private:

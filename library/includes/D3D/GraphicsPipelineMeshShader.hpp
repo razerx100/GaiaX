@@ -11,7 +11,7 @@ public:
 		std::uint32_t meshletCount, std::uint32_t meshletOffset, std::uint32_t modelIndex
 	) noexcept;
 	void DrawModels(
-		ID3D12GraphicsCommandList6* graphicsCommandList, const RSLayoutType& graphicsRSLayout
+		ID3D12GraphicsCommandList6* graphicsCommandList//, const RSLayoutType& graphicsRSLayout
 	) const noexcept;
 
 private:

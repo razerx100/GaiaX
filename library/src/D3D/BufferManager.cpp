@@ -96,6 +96,7 @@ void BufferManager::SetMemoryAddresses() noexcept {
 	m_pixelDataBuffer.UpdateGPUAddressStart(gpuOffset);
 }
 
+/*
 void BufferManager::BindBuffersToGraphics(
 	ID3D12GraphicsCommandList* graphicsCmdList, size_t frameIndex
 ) const noexcept {
@@ -142,6 +143,7 @@ void BufferManager::SetComputeRootSignatureLayout(RSLayoutType rsLayout) noexcep
 void BufferManager::SetGraphicsRootSignatureLayout(RSLayoutType rsLayout) noexcept {
 	m_graphicsRSLayout = std::move(rsLayout);
 }
+*/
 
 void BufferManager::CheckLightSourceAndAddOpaque(std::shared_ptr<Model>&& model) noexcept {
 //	if (model->IsLightSource())

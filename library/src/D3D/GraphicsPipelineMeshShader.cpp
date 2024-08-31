@@ -38,14 +38,16 @@ void GraphicsPipelineMeshShader::AddModelDetails(
 }
 
 void GraphicsPipelineMeshShader::DrawModels(
-	ID3D12GraphicsCommandList6* graphicsCommandList, const RSLayoutType& graphicsRSLayout
+	ID3D12GraphicsCommandList6* graphicsCommandList//, const RSLayoutType& graphicsRSLayout
 ) const noexcept {
 	for (const auto& modelDetail : m_modelDetails) {
+		/*
 		static constexpr size_t modelInfoIndex = static_cast<size_t>(RootSigElement::ModelInfo);
 
 		graphicsCommandList->SetGraphicsRoot32BitConstants(
 			graphicsRSLayout[modelInfoIndex], 2u, &modelDetail.modelIndex, 0u
 		);
+		*/
 
 		graphicsCommandList->DispatchMesh(modelDetail.meshletCount, 1u, 1u);
 	}

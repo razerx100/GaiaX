@@ -38,10 +38,12 @@ private:
 		ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex
 	);
 
+	/*
 	[[nodiscard]]
 	std::unique_ptr<RootSignatureDynamic> CreateGraphicsRootSignature(
 		ID3D12Device* device
 	) const noexcept final;
+	*/
 
 private:
 	GraphicsPipeline m_graphicsPipeline0;

@@ -14,6 +14,7 @@ void VertexManagerMeshShader::AddGVerticesAndPrimIndices(
 	m_gPrimIndices = std::move(gPrimIndices);
 }
 
+/*
 void VertexManagerMeshShader::BindVertexBuffers(
 	ID3D12GraphicsCommandList* graphicsCmdList, const RSLayoutType& graphicsRSLayout
 ) const noexcept {
@@ -34,6 +35,7 @@ void VertexManagerMeshShader::BindVertexBuffers(
 		graphicsRSLayout[primIndicesRIndex], m_primIndicesBuffer.GetFirstGPUDescriptorHandle()
 	);
 }
+*/
 
 void VertexManagerMeshShader::ReserveBuffers(ID3D12Device* device) noexcept {
 	const size_t vertexDescriptorOffset =

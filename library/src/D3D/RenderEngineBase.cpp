@@ -66,11 +66,14 @@ void RenderEngineBase::BindCommonGraphicsBuffers(
 	ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex
 ) {
 	Gaia::textureStorage->BindTextures(graphicsCommandList);
+	/*
 	Gaia::bufferManager->BindBuffersToGraphics(graphicsCommandList, frameIndex);
 	Gaia::bufferManager->BindPixelOnlyBuffers(graphicsCommandList, frameIndex);
+	*/
 }
 
 void RenderEngineBase::ConstructGraphicsRootSignature(ID3D12Device* device) {
+	/*
 	auto graphicsRS = CreateGraphicsRootSignature(device);
 
 	m_graphicsRSLayout = graphicsRS->GetElementLayout();
@@ -78,6 +81,7 @@ void RenderEngineBase::ConstructGraphicsRootSignature(ID3D12Device* device) {
 
 	Gaia::bufferManager->SetGraphicsRootSignatureLayout(m_graphicsRSLayout);
 	Gaia::textureStorage->SetGraphicsRootSignatureLayout(m_graphicsRSLayout);
+	*/
 }
 
 void RenderEngineBase::ResizeViewportAndScissor(

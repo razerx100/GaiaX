@@ -39,18 +39,20 @@ public:
 	UINT GetCurrentModelCount() const noexcept;
 	[[nodiscard]]
 	size_t GetCounterCount() const noexcept;
-	[[nodiscard]]
-	RSLayoutType GetComputeRSLayout() const noexcept;
+	//[[nodiscard]]
+	//RSLayoutType GetComputeRSLayout() const noexcept;
 	[[nodiscard]]
 	ID3D12Resource* GetArgumentBuffer(size_t frameIndex) const noexcept;
 	[[nodiscard]]
 	ID3D12Resource* GetCounterBuffer(size_t frameIndex) const noexcept;
 
 private:
+	/*
 	[[nodiscard]]
 	std::unique_ptr<RootSignatureDynamic> _createComputeRootSignature(
 		ID3D12Device* device
 	) const noexcept;
+	*/
 	[[nodiscard]]
 	std::unique_ptr<D3DPipelineObject> _createComputePipelineObject(
 		ID3D12Device2* device, ID3D12RootSignature* computeRootSignature,
@@ -58,9 +60,9 @@ private:
 	) const noexcept;
 
 private:
-	std::unique_ptr<RootSignatureBase> m_computeRS;
+	//std::unique_ptr<RootSignatureBase> m_computeRS;
 	std::unique_ptr<D3DPipelineObject> m_computePSO;
-	RSLayoutType m_computeRSLayout;
+	//RSLayoutType m_computeRSLayout;
 
 	D3DUploadResourceDescriptorView m_argumentBufferSRV;
 	std::vector<D3DDescriptorView> m_argumentBufferUAVs;

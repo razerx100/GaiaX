@@ -3,6 +3,7 @@
 #include <fstream>
 #include <cassert>
 
+/*
 RootSignatureDynamic::RootSignatureDynamic() noexcept :
 	m_elementLayout(static_cast<size_t>(RootSigElement::ElementCount)) {}
 
@@ -154,7 +155,7 @@ RootSignatureDynamic& RootSignatureDynamic::CompileSignature(bool staticSampler)
 	D3DX12SerializeVersionedRootSignature(
 		&rootSigDesc,
 		D3D_ROOT_SIGNATURE_VERSION_1_1,
-		&m_pSignatureBinary,
+		&m_signatureBinary,
 		&error
 	);
 
@@ -181,3 +182,4 @@ void RootSignatureDynamic::AddElementType(RootSigElement elementType) noexcept {
 RSLayoutType RootSignatureDynamic::GetElementLayout() const noexcept {
 	return m_elementLayout;
 }
+*/

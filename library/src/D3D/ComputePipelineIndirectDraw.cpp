@@ -15,25 +15,28 @@ void ComputePipelineIndirectDraw::BindComputePipeline(
 	ID3D12GraphicsCommandList* computeCommandList
 ) const noexcept {
 	computeCommandList->SetPipelineState(m_computePSO->Get());
-	computeCommandList->SetComputeRootSignature(m_computeRS->Get());
+	//computeCommandList->SetComputeRootSignature(m_computeRS->Get());
 }
 
 void ComputePipelineIndirectDraw::CreateComputeRootSignature(ID3D12Device* device) noexcept {
+	/*
 	auto computeRS = _createComputeRootSignature(device);
 	m_computeRSLayout = computeRS->GetElementLayout();
 
 	m_computeRS = std::move(computeRS);
+	*/
 }
 
 void ComputePipelineIndirectDraw::CreateComputePipelineObject(
 	ID3D12Device2* device, const std::wstring& shaderPath
 ) noexcept {
-	m_computePSO = _createComputePipelineObject(device, m_computeRS->Get(), shaderPath);
+	//m_computePSO = _createComputePipelineObject(device, m_computeRS->Get(), shaderPath);
 }
 
 void ComputePipelineIndirectDraw::DispatchCompute(
 	ID3D12GraphicsCommandList* computeCommandList, size_t frameIndex
 ) const noexcept {
+	/*
 	static constexpr auto argumentBufferSRVIndex =
 		static_cast<size_t>(RootSigElement::IndirectArgsSRV);
 	static constexpr auto argumentBufferUAVIndex =
@@ -62,6 +65,7 @@ void ComputePipelineIndirectDraw::DispatchCompute(
 	computeCommandList->Dispatch(
 		static_cast<UINT>(std::ceil(m_modelCount / THREADBLOCKSIZE)), 1u, 1u
 	);
+	*/
 }
 
 void ComputePipelineIndirectDraw::CreateBuffers(ID3D12Device* device) {
@@ -228,6 +232,7 @@ void ComputePipelineIndirectDraw::ReleaseUploadResource() noexcept {
 	m_indirectArguments = std::vector<ModelDrawArguments>();
 }
 
+/*
 std::unique_ptr<RootSignatureDynamic> ComputePipelineIndirectDraw::_createComputeRootSignature(
 	ID3D12Device* device
 ) const noexcept {
@@ -253,6 +258,7 @@ std::unique_ptr<RootSignatureDynamic> ComputePipelineIndirectDraw::_createComput
 
 	return signature;
 }
+*/
 
 std::unique_ptr<D3DPipelineObject> ComputePipelineIndirectDraw::_createComputePipelineObject(
 	ID3D12Device2* device, ID3D12RootSignature* computeRootSignature,
@@ -267,9 +273,11 @@ std::unique_ptr<D3DPipelineObject> ComputePipelineIndirectDraw::_createComputePi
 	return pso;
 }
 
+/*
 RSLayoutType ComputePipelineIndirectDraw::GetComputeRSLayout() const noexcept {
 	return m_computeRSLayout;
 }
+*/
 
 ID3D12Resource* ComputePipelineIndirectDraw::GetArgumentBuffer(
 	size_t frameIndex

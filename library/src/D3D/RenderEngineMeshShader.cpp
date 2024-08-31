@@ -17,17 +17,20 @@ void RenderEngineMeshDraw::BindGraphicsBuffers(
 	ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex
 ) {
 	BindCommonGraphicsBuffers(graphicsCommandList, frameIndex);
+	/*
 	m_vertexManager.BindVertexBuffers(graphicsCommandList, m_graphicsRSLayout);
 
 	static constexpr auto meshletsIndex = static_cast<size_t>(RootSigElement::Meshlets);
 	graphicsCommandList->SetGraphicsRootDescriptorTable(
 		m_graphicsRSLayout[meshletsIndex], m_meshletBuffer.GetFirstGPUDescriptorHandle()
 	);
+	*/
 }
 
 void RenderEngineMeshDraw::RecordDrawCommands(
 	ID3D12GraphicsCommandList6* graphicsCommandList, size_t frameIndex
 ) {
+	/*
 	ID3D12RootSignature* graphicsRS = m_graphicsRS->Get();
 
 	// One Pipeline needs to be bound before Descriptors can be bound.
@@ -40,6 +43,7 @@ void RenderEngineMeshDraw::RecordDrawCommands(
 		graphicsPipeline->BindGraphicsPipeline(graphicsCommandList, graphicsRS);
 		graphicsPipeline->DrawModels(graphicsCommandList, m_graphicsRSLayout);
 	}
+	*/
 }
 
 void RenderEngineMeshDraw::UpdateModelBuffers(size_t frameIndex) const noexcept {
@@ -116,9 +120,10 @@ void RenderEngineMeshDraw::ConstructPipelines() {
 	ID3D12Device2* device = Gaia::device->GetDevice();
 
 	ConstructGraphicsRootSignature(device);
-	CreateGraphicsPipelines(device, m_graphicsPipeline0, m_graphicsPipelines);
+	//CreateGraphicsPipelines(device, m_graphicsPipeline0, m_graphicsPipelines);
 }
 
+/*
 std::unique_ptr<RootSignatureDynamic> RenderEngineMeshDraw::CreateGraphicsRootSignature(
 	ID3D12Device* device
 ) const noexcept {
@@ -158,3 +163,4 @@ std::unique_ptr<RootSignatureDynamic> RenderEngineMeshDraw::CreateGraphicsRootSi
 
 	return signature;
 }
+*/

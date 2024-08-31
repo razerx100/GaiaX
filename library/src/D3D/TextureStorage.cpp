@@ -57,11 +57,13 @@ void TextureStorage::CreateBufferViews(ID3D12Device* device) {
 }
 
 void TextureStorage::BindTextures(ID3D12GraphicsCommandList* graphicsList) const noexcept {
+/*
 	static constexpr size_t texturesIndex = static_cast<size_t>(RootSigElement::Textures);
 
 	graphicsList->SetGraphicsRootDescriptorTable(
 		m_graphicsRSLayout[texturesIndex], m_textureDescriptorStart
 	);
+	*/
 }
 
 void TextureStorage::RecordResourceUpload(ID3D12GraphicsCommandList* copyList) noexcept {

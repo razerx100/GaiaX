@@ -20,10 +20,12 @@ public:
 	void ReleaseUploadResources() noexcept final;
 
 protected:
+	/*
 	[[nodiscard]]
 	std::unique_ptr<RootSignatureDynamic> CreateGraphicsRootSignature(
 		ID3D12Device* device
 	) const noexcept final;
+	*/
 
 	void ReserveBuffersDerived(ID3D12Device* device) final;
 

@@ -14,6 +14,7 @@ class BufferManager
 public:
 	BufferManager(std::uint32_t frameCount, bool modelDataNoBB);
 
+	/*
 	void BindBuffersToGraphics(
 		ID3D12GraphicsCommandList* graphicsCmdList, size_t frameIndex
 	) const noexcept;
@@ -23,9 +24,10 @@ public:
 	void BindPixelOnlyBuffers(
 		ID3D12GraphicsCommandList* graphicsCmdList, size_t frameIndex
 	) const noexcept;
+	*/
 
-	void SetComputeRootSignatureLayout(RSLayoutType rsLayout) noexcept;
-	void SetGraphicsRootSignatureLayout(RSLayoutType rsLayout) noexcept;
+	//void SetComputeRootSignatureLayout(RSLayoutType rsLayout) noexcept;
+	//void SetGraphicsRootSignatureLayout(RSLayoutType rsLayout) noexcept;
 
 	void AddOpaqueModels(std::vector<std::shared_ptr<Model>>&& models) noexcept;
 	//void AddOpaqueModels(std::vector<MeshletModel>&& meshletModels) noexcept;
@@ -143,6 +145,7 @@ private:
 		}
 	}
 
+	/*
 	template<void(__stdcall ID3D12GraphicsCommandList::* RCBV)(UINT, D3D12_GPU_VIRTUAL_ADDRESS),
 		void(__stdcall ID3D12GraphicsCommandList::* RDT)(UINT, D3D12_GPU_DESCRIPTOR_HANDLE)>
 	void BindBuffers(
@@ -159,6 +162,7 @@ private:
 			rsLayout[modelBufferTypeIndex], m_modelBuffers.GetGPUDescriptorHandle(frameIndex)
 			);
 	}
+	*/
 
 	template<typename T>
 	void CopyStruct(
@@ -177,8 +181,8 @@ private:
 	D3DDescriptorView m_materialBuffers;
 	D3DDescriptorView m_lightBuffers;
 
-	RSLayoutType m_graphicsRSLayout;
-	RSLayoutType m_computeRSLayout;
+	//RSLayoutType m_graphicsRSLayout;
+	//RSLayoutType m_computeRSLayout;
 
 	std::vector<std::shared_ptr<Model>> m_opaqueModels;
 	std::uint32_t m_frameCount;

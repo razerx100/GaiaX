@@ -74,17 +74,19 @@ void GraphicsPipelineIndividualDraw::ConfigureGraphicsPipelineObject(
 
 void GraphicsPipelineIndividualDraw::DrawModels(
 	ID3D12GraphicsCommandList* graphicsCommandList,
-	const std::vector<ModelDrawArguments>& drawArguments,
-	const RSLayoutType& graphicsRSLayout
+	const std::vector<ModelDrawArguments>& drawArguments//,
+	//const RSLayoutType& graphicsRSLayout
 ) const noexcept {
 	for (size_t index = 0u; index < m_modelCount; ++index) {
 		const auto& modelArgs = drawArguments[m_modelOffset + index];
 
+		/*
 		static constexpr size_t modelInfoIndex = static_cast<size_t>(RootSigElement::ModelInfo);
 
 		graphicsCommandList->SetGraphicsRoot32BitConstant(
 			graphicsRSLayout[modelInfoIndex], modelArgs.modelIndex, 0u
 		);
+		*/
 
 		const D3D12_DRAW_INDEXED_ARGUMENTS& args = modelArgs.drawIndexed;
 

@@ -1,9 +1,10 @@
 #ifndef ROOT_SIGNATURE_DYNAMIC_HPP_
 #define ROOT_SIGNATURE_DYNAMIC_HPP_
-#include <RootSignatureBase.hpp>
+//#include <RootSignatureBase.hpp>
 #include <vector>
 #include <memory>
 
+/*
 enum class RootSigElement {
 	Camera,
 	ModelData,
@@ -71,4 +72,5 @@ private:
 	std::vector<std::unique_ptr<D3D12_DESCRIPTOR_RANGE1>> m_rangePreserver;
 	RSLayoutType m_elementLayout;
 };
+*/
 #endif

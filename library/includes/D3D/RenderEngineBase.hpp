@@ -43,15 +43,18 @@ protected:
 		ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex
 	);
 
+	/*
 	[[nodiscard]]
 	virtual std::unique_ptr<RootSignatureDynamic> CreateGraphicsRootSignature(
 		ID3D12Device* device
 	) const noexcept = 0;
+	*/
 
 	virtual void ReserveBuffersDerived(ID3D12Device* device);
 
 	void ConstructGraphicsRootSignature(ID3D12Device* device);
 
+	/*
 	template<std::derived_from<GraphicsPipelineBase> Pipeline>
 	void CreateGraphicsPipelines(
 		ID3D12Device2* device, std::unique_ptr<Pipeline>& graphicsPipeline0,
@@ -63,10 +66,11 @@ protected:
 		for (auto& graphicsPipeline : graphicsPipelines)
 			graphicsPipeline->CreateGraphicsPipeline(device, graphicsRootSig, m_shaderPath);
 	}
+	*/
 
 protected:
-	std::unique_ptr<RootSignatureBase> m_graphicsRS;
-	RSLayoutType m_graphicsRSLayout;
+	//std::unique_ptr<RootSignatureBase> m_graphicsRS;
+	//RSLayoutType m_graphicsRSLayout;
 
 private:
 	ViewportAndScissorManager m_viewportAndScissor;
