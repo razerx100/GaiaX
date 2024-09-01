@@ -146,30 +146,25 @@ class D3DRootSignatureDynamic
 public:
 	D3DRootSignatureDynamic() : m_binaryRootSignature{}, m_rootParameters{}, m_descriptorRanges{} {}
 
-	[[nodiscard]]
 	D3DRootSignatureDynamic& AddConstants(
 		UINT numOfValues, D3D12_SHADER_VISIBILITY visibility, UINT registerNumber, UINT registerSpace = 0u
 	) noexcept;
 
-	[[nodiscard]]
 	D3DRootSignatureDynamic& AddRootCBV(
 		D3D12_SHADER_VISIBILITY visibility, UINT registerNumber, UINT registerSpace = 0u
 	) noexcept {
 		return AddRootDescriptor<D3D12_ROOT_PARAMETER_TYPE_CBV>(visibility, registerNumber, registerSpace);
 	}
-	[[nodiscard]]
 	D3DRootSignatureDynamic& AddRootSRV(
 		D3D12_SHADER_VISIBILITY visibility, UINT registerNumber, UINT registerSpace = 0u
 	) noexcept {
 		return AddRootDescriptor<D3D12_ROOT_PARAMETER_TYPE_SRV>(visibility, registerNumber, registerSpace);
 	}
-	[[nodiscard]]
 	D3DRootSignatureDynamic& AddRootUAV(
 		D3D12_SHADER_VISIBILITY visibility, UINT registerNumber, UINT registerSpace = 0u
 	) noexcept {
 		return AddRootDescriptor<D3D12_ROOT_PARAMETER_TYPE_UAV>(visibility, registerNumber, registerSpace);
 	}
-	[[nodiscard]]
 	D3DRootSignatureDynamic& AddDescriptorTable(
 		D3D12_DESCRIPTOR_RANGE_TYPE descriptorType,
 		UINT descriptorsAmount, D3D12_SHADER_VISIBILITY visibility,
