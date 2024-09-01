@@ -4,7 +4,6 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include <RootSignatureDynamic.hpp>
 #include <D3DPipelineObject.hpp>
 #include <D3DDescriptorView.hpp>
 #include <GaiaDataTypes.hpp>

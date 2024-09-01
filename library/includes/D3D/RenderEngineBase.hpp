@@ -2,7 +2,6 @@
 #define RENDER_ENGINE_BASE_HPP_
 #include <concepts>
 #include <RenderEngine.hpp>
-#include <RootSignatureDynamic.hpp>
 #include <GraphicsPipelineBase.hpp>
 #include <ViewportAndScissorManager.hpp>
 #include <DepthBuffer.hpp>

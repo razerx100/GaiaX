@@ -3,7 +3,6 @@
 #include <vector>
 #include <GraphicsPipelineBase.hpp>
 #include <GaiaDataTypes.hpp>
-#include <RootSignatureDynamic.hpp>
 
 class GraphicsPipelineVertexShader : public GraphicsPipelineBase {
 protected:

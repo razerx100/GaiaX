@@ -2,7 +2,6 @@
 #define GRAPHICS_PIPELINE_MESH_SHADER_HPP_
 #include <vector>
 #include <GraphicsPipelineBase.hpp>
-#include <RootSignatureDynamic.hpp>
 
 class GraphicsPipelineMeshShader : public GraphicsPipelineBase {
 public:

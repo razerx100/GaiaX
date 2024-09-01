@@ -4,7 +4,6 @@
 #include <D3DDescriptorView.hpp>
 #include <memory>
 #include <vector>
-#include <RootSignatureDynamic.hpp>
 #include <Model.hpp>
 #include <MeshBundle.hpp>
 #include <Material.hpp>

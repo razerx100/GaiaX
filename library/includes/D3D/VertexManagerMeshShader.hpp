@@ -2,7 +2,6 @@
 #define VERTEX_MANAGER_MESH_SHADER_HPP_
 #include <atomic>
 #include <D3DDescriptorView.hpp>
-#include <RootSignatureDynamic.hpp>
 #include <UploadContainer.hpp>
 #include <MeshBundle.hpp>
 
@@ -15,9 +14,11 @@ public:
 		std::vector<std::uint32_t>&& gPrimIndices
 	) noexcept;
 
+	/*
 	void BindVertexBuffers(
 		ID3D12GraphicsCommandList* graphicsCmdList//, const RSLayoutType& graphicsRSLayout
 	) const noexcept;
+	*/
 
 	void ReserveBuffers(ID3D12Device* device) noexcept;
 	void CreateBuffers(ID3D12Device* device);
