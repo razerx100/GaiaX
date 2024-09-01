@@ -3,13 +3,15 @@
 #include <D3DHeaders.hpp>
 #include <string>
 #include <vector>
+#include <deque>
 
-class VertexLayout {
+class VertexLayout
+{
 public:
-	VertexLayout() noexcept;
+	VertexLayout() : m_inputDescs{}, m_semanticNames{}, m_vertexOffset{ 0u } {}
 
 	VertexLayout& AddInputElement(
-		const char* inputName, DXGI_FORMAT format, UINT sizeInBytes
+		std::string semanticName, DXGI_FORMAT format, UINT sizeInBytes
 	) noexcept;
 
 	[[nodiscard]]
@@ -17,7 +19,37 @@ public:
 
 private:
 	std::vector<D3D12_INPUT_ELEMENT_DESC> m_inputDescs;
+	// Need this because the D3D12_INPUT_ELEMENT_DESC struct takes a char pointer.
+	// So, unless a string literal is passed, it might go out of scope.
+	std::deque<std::string>               m_semanticNames;
+	UINT                                  m_vertexOffset;
 
-	UINT m_vertexOffset;
+public:
+	VertexLayout(const VertexLayout& other) noexcept
+		: m_inputDescs{ other.m_inputDescs }, m_semanticNames{ other.m_semanticNames },
+		m_vertexOffset{ other.m_vertexOffset }
+	{}
+	VertexLayout& operator=(const VertexLayout& other) noexcept
+	{
+		m_inputDescs    = other.m_inputDescs;
+		m_semanticNames = other.m_semanticNames;
+		m_vertexOffset  = other.m_vertexOffset;
+
+		return *this;
+	}
+
+	VertexLayout(VertexLayout&& other) noexcept
+		: m_inputDescs{ std::move(other.m_inputDescs) },
+		m_semanticNames{ std::move(other.m_semanticNames) },
+		m_vertexOffset{ other.m_vertexOffset }
+	{}
+	VertexLayout& operator=(VertexLayout&& other) noexcept
+	{
+		m_inputDescs    = std::move(other.m_inputDescs);
+		m_semanticNames = std::move(other.m_semanticNames);
+		m_vertexOffset  = other.m_vertexOffset;
+
+		return *this;
+	}
 };
 #endif
