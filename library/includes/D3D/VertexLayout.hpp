@@ -3,7 +3,6 @@
 #include <D3DHeaders.hpp>
 #include <string>
 #include <vector>
-#include <deque>
 
 class VertexLayout
 {
@@ -15,13 +14,11 @@ public:
 	) noexcept;
 
 	[[nodiscard]]
-	D3D12_INPUT_LAYOUT_DESC GetLayoutDesc() const noexcept;
+	D3D12_INPUT_LAYOUT_DESC GetLayoutDesc() noexcept;
 
 private:
 	std::vector<D3D12_INPUT_ELEMENT_DESC> m_inputDescs;
-	// Need this because the D3D12_INPUT_ELEMENT_DESC struct takes a char pointer.
-	// So, unless a string literal is passed, it might go out of scope.
-	std::deque<std::string>               m_semanticNames;
+	std::vector<std::string>              m_semanticNames;
 	UINT                                  m_vertexOffset;
 
 public:
