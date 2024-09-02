@@ -46,7 +46,7 @@ TEST_F(DynamicRootSignatureTest, D3DRootSignatureDynamicTest)
 		D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 10u, D3D12_SHADER_VISIBILITY_PIXEL, true, 4u
 	);
 
-	dynamicRS.CompileSignature(false);
+	dynamicRS.CompileSignature(RSCompileFlagBuilder{}.VertexShader(), BindlessLevel::None);
 
 	D3DRootSignature rs{};
 	rs.CreateSignature(device, dynamicRS);

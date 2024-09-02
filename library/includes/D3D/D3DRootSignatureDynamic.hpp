@@ -122,6 +122,82 @@ private:
 	std::array<FLOAT, 4u>     m_borderColour;
 };
 
+enum BindlessLevel
+{
+	UnboundArray,
+	DirectDescriptorHeapAccess,
+	None
+};
+
+struct RSCompileFlagBuilder
+{
+	D3D12_ROOT_SIGNATURE_FLAGS rootSigFlags = D3D12_ROOT_SIGNATURE_FLAG_NONE;
+
+	RSCompileFlagBuilder& ComputeShader() noexcept
+	{
+		rootSigFlags |=
+			D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS |
+			D3D12_ROOT_SIGNATURE_FLAG_DENY_AMPLIFICATION_SHADER_ROOT_ACCESS |
+			D3D12_ROOT_SIGNATURE_FLAG_DENY_MESH_SHADER_ROOT_ACCESS |
+			D3D12_ROOT_SIGNATURE_FLAG_DENY_VERTEX_SHADER_ROOT_ACCESS |
+			D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
+			D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS |
+			D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS;
+
+		return *this;
+	}
+
+	RSCompileFlagBuilder& MeshShader() noexcept
+	{
+		rootSigFlags |=
+			D3D12_ROOT_SIGNATURE_FLAG_DENY_VERTEX_SHADER_ROOT_ACCESS |
+			D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
+			D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS |
+			D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS;
+
+		return *this;
+	}
+
+	RSCompileFlagBuilder& VertexShader() noexcept
+	{
+		rootSigFlags |=
+			D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
+			D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
+			D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS |
+			D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
+			D3D12_ROOT_SIGNATURE_FLAG_DENY_AMPLIFICATION_SHADER_ROOT_ACCESS |
+			D3D12_ROOT_SIGNATURE_FLAG_DENY_MESH_SHADER_ROOT_ACCESS;
+
+		return *this;
+	}
+
+	RSCompileFlagBuilder& Bindless(BindlessLevel level) noexcept
+	{
+		if (level == BindlessLevel::DirectDescriptorHeapAccess)
+			rootSigFlags |=
+			D3D12_ROOT_SIGNATURE_FLAG_CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED |
+			D3D12_ROOT_SIGNATURE_FLAG_SAMPLER_HEAP_DIRECTLY_INDEXED;
+
+		return *this;
+	}
+
+	[[nodiscard]]
+	D3D12_ROOT_SIGNATURE_FLAGS Get(BindlessLevel level) const noexcept
+	{
+		D3D12_ROOT_SIGNATURE_FLAGS rootSigFlagsTemp = rootSigFlags;
+
+		if (level == BindlessLevel::DirectDescriptorHeapAccess)
+			rootSigFlagsTemp |=
+			D3D12_ROOT_SIGNATURE_FLAG_CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED |
+			D3D12_ROOT_SIGNATURE_FLAG_SAMPLER_HEAP_DIRECTLY_INDEXED;
+
+		return rootSigFlagsTemp;
+	}
+
+	[[nodiscard]]
+	D3D12_ROOT_SIGNATURE_FLAGS Get() const noexcept { return rootSigFlags; }
+};
+
 class D3DRootSignatureDynamic
 {
 	template<D3D12_ROOT_PARAMETER_TYPE RootDescriptorType>
@@ -168,11 +244,11 @@ public:
 	D3DRootSignatureDynamic& AddDescriptorTable(
 		D3D12_DESCRIPTOR_RANGE_TYPE descriptorType,
 		UINT descriptorsAmount, D3D12_SHADER_VISIBILITY visibility,
-		bool bindless, UINT baseRegister, UINT registerSpace = 0u
+		UINT baseRegister, UINT registerSpace = 0u
 	) noexcept;
 
 	void CompileSignature(
-		bool meshShader,
+		const RSCompileFlagBuilder& flagBuilder, BindlessLevel bindlessLevel,
 		bool staticSampler = true, const SamplerBuilder& builder = {}
 	);
 

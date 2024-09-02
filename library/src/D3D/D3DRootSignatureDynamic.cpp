@@ -79,27 +79,25 @@ D3D12_SAMPLER_DESC SamplerBuilder::GetSamplerDesc(
 
 // D3DRootSignatureDynamic
 void D3DRootSignatureDynamic::CompileSignature(
-	bool meshShader,
-	bool staticSampler/* = true */, const SamplerBuilder& builder/* = {} */
+	const RSCompileFlagBuilder& flagBuilder, BindlessLevel bindlessLevel,
+	bool staticSampler /* = true */ , const SamplerBuilder& builder/* = {} */
 ) {
 	// Should be fine to assign the pointers now, as there wouldn't be any new entries to
 	// the Ranges vector.
 	for (size_t index = 0u, rangeIndex = 0u; index < std::size(m_rootParameters); ++index)
 		if (m_rootParameters[index].ParameterType == D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE)
 		{
-			m_rootParameters[index].DescriptorTable.pDescriptorRanges = &m_descriptorRanges[rangeIndex];
+			D3D12_DESCRIPTOR_RANGE1& descriptorRange = m_descriptorRanges[rangeIndex];
+
+			if (bindlessLevel != BindlessLevel::None)
+				descriptorRange.Flags |= D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE;
+
+			m_rootParameters[index].DescriptorTable.pDescriptorRanges = &descriptorRange;
 
 			++rangeIndex;
 		}
 
-	D3D12_ROOT_SIGNATURE_FLAGS rootSigFlags = D3D12_ROOT_SIGNATURE_FLAG_NONE;
-
-	if (!meshShader)
-		rootSigFlags =
-		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
-		D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
-		D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS |
-		D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS;
+	D3D12_ROOT_SIGNATURE_FLAGS rootSigFlags = flagBuilder.Get(bindlessLevel);
 
 	D3D12_VERSIONED_ROOT_SIGNATURE_DESC rootSigDesc
 	{
@@ -155,12 +153,9 @@ D3DRootSignatureDynamic& D3DRootSignatureDynamic::AddConstants(
 D3DRootSignatureDynamic& D3DRootSignatureDynamic::AddDescriptorTable(
 	D3D12_DESCRIPTOR_RANGE_TYPE descriptorType,
 	UINT descriptorsAmount, D3D12_SHADER_VISIBILITY visibility,
-	bool bindless, UINT baseRegister, UINT registerSpace /* = 0u */
+	UINT baseRegister, UINT registerSpace /* = 0u */
 ) noexcept {
 	D3D12_DESCRIPTOR_RANGE_FLAGS rangeFlag = D3D12_DESCRIPTOR_RANGE_FLAG_NONE;
-
-	if (bindless)
-		rangeFlag |= D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE;
 
 	m_descriptorRanges.emplace_back(D3D12_DESCRIPTOR_RANGE1
 	{
