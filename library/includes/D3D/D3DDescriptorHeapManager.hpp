@@ -3,6 +3,8 @@
 #include <D3DHeaders.hpp>
 #include <utility>
 #include <IndicesManager.hpp>
+#include <D3DRootSignatureDynamic.hpp>
+#include <memory>
 
 class D3DDescriptorHeap
 {
@@ -196,6 +198,124 @@ public:
 	{
 		m_singleDescriptors = std::move(other.m_singleDescriptors);
 		m_descriptorTables  = std::move(other.m_descriptorTables);
+
+		return *this;
+	}
+};
+
+class D3DDescriptorLayout
+{
+public:
+	struct DescriptorDetails
+	{
+		D3D12_SHADER_VISIBILITY     visibility;
+		D3D12_DESCRIPTOR_RANGE_TYPE type;
+		UINT                        descriptorCount;
+	};
+
+public:
+	D3DDescriptorLayout() : m_descriptorDetails{} {}
+
+	D3DDescriptorLayout& AddCBV(
+		size_t registerSlot, UINT descriptorCount, D3D12_SHADER_VISIBILITY shaderStage
+	) noexcept;
+	D3DDescriptorLayout& AddSRV(
+		size_t registerSlot, UINT descriptorCount, D3D12_SHADER_VISIBILITY shaderStage
+	) noexcept;
+	D3DDescriptorLayout& AddUAV(
+		size_t registerSlot, UINT descriptorCount, D3D12_SHADER_VISIBILITY shaderStage
+	) noexcept;
+
+	[[nodiscard]]
+	const std::vector<DescriptorDetails>& GetDetails() const noexcept { return m_descriptorDetails; }
+
+	[[nodiscard]]
+	UINT GetTotalDescriptorCount() const noexcept;
+
+private:
+	void AddView(size_t registerSlot, const DescriptorDetails& details) noexcept;
+
+private:
+	std::vector<DescriptorDetails> m_descriptorDetails;
+};
+
+class D3DDescriptorManager
+{
+public:
+	D3DDescriptorManager(ID3D12Device* device, size_t layoutCount)
+		: m_rtvHeap{ device, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE },
+		m_resourceHeapGPU{
+			device, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE
+		}, m_descriptorMap{},
+		m_dsvHeap{ device, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE },
+		m_resourceHeapCPU{
+			device, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE
+		}, m_descriptorLayouts{ layoutCount, D3DDescriptorLayout{} }
+	{}
+
+	D3DDescriptorManager& AddCBV(
+		size_t registerSlot, size_t registerSpace, UINT descriptorCount,
+		D3D12_SHADER_VISIBILITY shaderStage
+	) noexcept {
+		m_descriptorLayouts.at(registerSpace).AddCBV(registerSlot, descriptorCount, shaderStage);
+
+		return *this;
+	}
+	D3DDescriptorManager& AddSRV(
+		size_t registerSlot, size_t registerSpace, UINT descriptorCount,
+		D3D12_SHADER_VISIBILITY shaderStage
+	) noexcept {
+		m_descriptorLayouts.at(registerSpace).AddSRV(registerSlot, descriptorCount, shaderStage);
+
+		return *this;
+	}
+	D3DDescriptorManager& AddUAV(
+		size_t registerSlot, size_t registerSpace, UINT descriptorCount,
+		D3D12_SHADER_VISIBILITY shaderStage
+	) noexcept {
+		m_descriptorLayouts.at(registerSpace).AddUAV(registerSlot, descriptorCount, shaderStage);
+
+		return *this;
+	}
+
+	void CreateDescriptors();
+
+	[[nodiscard]]
+	D3DReusableDescriptorHeap& GetRTVHeap() noexcept { return m_rtvHeap; }
+	[[nodiscard]]
+	D3DReusableDescriptorHeap& GetDSVHeap() noexcept { return m_dsvHeap; }
+
+	[[nodiscard]]
+	const std::vector<D3DDescriptorLayout> GetLayouts() const noexcept { return m_descriptorLayouts; }
+
+private:
+	D3DReusableDescriptorHeap        m_rtvHeap;
+	D3DDescriptorHeap                m_resourceHeapGPU;
+	D3DDescriptorMap                 m_descriptorMap;
+	D3DReusableDescriptorHeap        m_dsvHeap;
+	D3DDescriptorHeap                m_resourceHeapCPU;
+	std::vector<D3DDescriptorLayout> m_descriptorLayouts;
+
+public:
+	D3DDescriptorManager(const D3DDescriptorManager&) = delete;
+	D3DDescriptorManager& operator=(const D3DDescriptorManager&) = delete;
+
+	D3DDescriptorManager(D3DDescriptorManager&& other) noexcept
+		: m_rtvHeap{ std::move(other.m_rtvHeap) },
+		m_resourceHeapGPU{ std::move(other.m_resourceHeapGPU) },
+		m_descriptorMap{ std::move(other.m_descriptorMap) },
+		m_dsvHeap{ std::move(other.m_dsvHeap) },
+		m_resourceHeapCPU{ std::move(other.m_resourceHeapCPU) },
+		m_descriptorLayouts{ std::move(other.m_descriptorLayouts) }
+	{}
+	D3DDescriptorManager& operator=(D3DDescriptorManager&& other) noexcept
+	{
+		m_rtvHeap           = std::move(other.m_rtvHeap);
+		m_resourceHeapGPU   = std::move(other.m_resourceHeapGPU);
+		m_descriptorMap     = std::move(other.m_descriptorMap);
+		m_dsvHeap           = std::move(other.m_dsvHeap);
+		m_resourceHeapCPU   = std::move(other.m_resourceHeapCPU);
+		m_descriptorLayouts = std::move(other.m_descriptorLayouts);
 
 		return *this;
 	}
