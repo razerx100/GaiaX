@@ -93,7 +93,10 @@ TEST_F(DescriptorHeapManagerTest, ReusableDescriptorHeapTest)
 	UINT textureDescIndex  = srvHeap.CreateSRV(testTexture.Get(), srvDesc);
 	UINT textureDescIndex2 = srvHeap.CreateSRV(testTexture.Get(), srvDesc);
 
-	const D3D12_CPU_DESCRIPTOR_HANDLE textureDescHandle = srvHeap.GetCPUHandle(textureDescIndex);
+	const D3D12_CPU_DESCRIPTOR_HANDLE textureDescHandle  = srvHeap.GetCPUHandle(textureDescIndex);
+	const D3D12_CPU_DESCRIPTOR_HANDLE textureDescHandle2 = srvHeap.GetCPUHandle(textureDescIndex2);
+
+	EXPECT_NE(textureDescHandle2.ptr, 0u) << "Texture wasn't created.";
 
 	srvHeap.FreeDescriptor(textureDescIndex);
 
