@@ -132,9 +132,46 @@ void D3DRootSignatureDynamic::CompileSignature(
 	}
 }
 
+void D3DRootSignatureDynamic::PopulateFromLayouts(const std::vector<D3DDescriptorLayout>& layouts)
+{
+	for (size_t index = 0u; index < std::size(layouts); ++index)
+	{
+		const D3DDescriptorLayout& layout = layouts[index];
+
+		const auto registerSpace  = static_cast<UINT>(index);
+		const size_t detailsCount = layout.GetDescriptorDetailsCount();
+
+		for (size_t detailsIndex = 0u; detailsIndex < detailsCount; ++detailsIndex)
+		{
+			const D3DDescriptorLayout::DescriptorDetails descriptorDetails = layout.GetDescriptorDetails(
+				detailsIndex
+			);
+
+			const auto registerIndex = static_cast<UINT>(detailsIndex);
+
+			if (descriptorDetails.descriptorCount > 1u)
+				AddDescriptorTable(
+					descriptorDetails.type, descriptorDetails.descriptorCount,
+					descriptorDetails.visibility, registerIndex, registerSpace
+				);
+			else if (descriptorDetails.type == D3D12_DESCRIPTOR_RANGE_TYPE_CBV)
+				AddRootCBV(descriptorDetails.visibility, registerIndex, registerSpace);
+			else if (descriptorDetails.type == D3D12_DESCRIPTOR_RANGE_TYPE_SRV)
+				AddRootSRV(descriptorDetails.visibility, registerIndex, registerSpace);
+			else if (descriptorDetails.type == D3D12_DESCRIPTOR_RANGE_TYPE_UAV)
+				AddRootUAV(descriptorDetails.visibility, registerIndex, registerSpace);
+		}
+	}
+}
+
 D3DRootSignatureDynamic& D3DRootSignatureDynamic::AddConstants(
 	UINT numOfValues, D3D12_SHADER_VISIBILITY visibility, UINT registerNumber, UINT registerSpace/* = 0u */
-) noexcept {
+) {
+	assert(
+		m_rsSizeLimit >= numOfValues
+		&& "Each constant value takes a dword. Not enough available dwords."
+	);
+
 	m_rootParameters.emplace_back(D3D12_ROOT_PARAMETER1
 	{
 		.ParameterType    = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS,
@@ -147,6 +184,8 @@ D3DRootSignatureDynamic& D3DRootSignatureDynamic::AddConstants(
 		.ShaderVisibility = visibility
 	});
 
+	m_rsSizeLimit -= numOfValues;
+
 	return *this;
 }
 
@@ -154,7 +193,11 @@ D3DRootSignatureDynamic& D3DRootSignatureDynamic::AddDescriptorTable(
 	D3D12_DESCRIPTOR_RANGE_TYPE descriptorType,
 	UINT descriptorsAmount, D3D12_SHADER_VISIBILITY visibility,
 	UINT baseRegister, UINT registerSpace /* = 0u */
-) noexcept {
+) {
+	assert(
+		m_rsSizeLimit >= 1u && "Each table takes a dword. Not enough available dwords."
+	);
+
 	D3D12_DESCRIPTOR_RANGE_FLAGS rangeFlag = D3D12_DESCRIPTOR_RANGE_FLAG_NONE;
 
 	m_descriptorRanges.emplace_back(D3D12_DESCRIPTOR_RANGE1
@@ -178,6 +221,8 @@ D3DRootSignatureDynamic& D3DRootSignatureDynamic::AddDescriptorTable(
 		},
 		.ShaderVisibility = visibility
 	});
+
+	--m_rsSizeLimit;
 
 	return *this;
 }

@@ -1,9 +1,11 @@
 #ifndef D3D_ROOT_SIGNATURE_DYNAMIC_HPP_
 #define D3D_ROOT_SIGNATURE_DYNAMIC_HPP_
 #include <D3DHeaders.hpp>
+#include <D3DDescriptorLayout.hpp>
 #include <vector>
 #include <memory>
 #include <array>
+#include <cassert>
 
 // Probably should move this to somewhere better at some point.
 class SamplerBuilder
@@ -203,7 +205,9 @@ class D3DRootSignatureDynamic
 	template<D3D12_ROOT_PARAMETER_TYPE RootDescriptorType>
 	D3DRootSignatureDynamic& AddRootDescriptor(
 		D3D12_SHADER_VISIBILITY visibility, UINT registerNumber, UINT registerSpace = 0u
-	) noexcept {
+	) {
+		assert(m_rsSizeLimit >= 2u && "Each root descriptor takes 2 Dwords. Not enough available Dwords.");
+
 		m_rootParameters.emplace_back(D3D12_ROOT_PARAMETER1
 			{
 				.ParameterType    = RootDescriptorType,
@@ -216,41 +220,47 @@ class D3DRootSignatureDynamic
 				.ShaderVisibility = visibility
 			});
 
+		m_rsSizeLimit -= 2u;
+
 		return *this;
 	}
 
 public:
-	D3DRootSignatureDynamic() : m_binaryRootSignature{}, m_rootParameters{}, m_descriptorRanges{} {}
+	D3DRootSignatureDynamic()
+		// A root signature can have a maximum size of 64 Dwords.
+		: m_binaryRootSignature{}, m_rootParameters{}, m_descriptorRanges{}, m_rsSizeLimit{ 64u } {}
 
 	D3DRootSignatureDynamic& AddConstants(
 		UINT numOfValues, D3D12_SHADER_VISIBILITY visibility, UINT registerNumber, UINT registerSpace = 0u
-	) noexcept;
+	);
 
 	D3DRootSignatureDynamic& AddRootCBV(
 		D3D12_SHADER_VISIBILITY visibility, UINT registerNumber, UINT registerSpace = 0u
-	) noexcept {
+	) {
 		return AddRootDescriptor<D3D12_ROOT_PARAMETER_TYPE_CBV>(visibility, registerNumber, registerSpace);
 	}
 	D3DRootSignatureDynamic& AddRootSRV(
 		D3D12_SHADER_VISIBILITY visibility, UINT registerNumber, UINT registerSpace = 0u
-	) noexcept {
+	) {
 		return AddRootDescriptor<D3D12_ROOT_PARAMETER_TYPE_SRV>(visibility, registerNumber, registerSpace);
 	}
 	D3DRootSignatureDynamic& AddRootUAV(
 		D3D12_SHADER_VISIBILITY visibility, UINT registerNumber, UINT registerSpace = 0u
-	) noexcept {
+	) {
 		return AddRootDescriptor<D3D12_ROOT_PARAMETER_TYPE_UAV>(visibility, registerNumber, registerSpace);
 	}
 	D3DRootSignatureDynamic& AddDescriptorTable(
 		D3D12_DESCRIPTOR_RANGE_TYPE descriptorType,
 		UINT descriptorsAmount, D3D12_SHADER_VISIBILITY visibility,
 		UINT baseRegister, UINT registerSpace = 0u
-	) noexcept;
+	);
 
 	void CompileSignature(
 		const RSCompileFlagBuilder& flagBuilder, BindlessLevel bindlessLevel,
 		bool staticSampler = true, const SamplerBuilder& builder = {}
 	);
+
+	void PopulateFromLayouts(const std::vector<D3DDescriptorLayout>& layouts);
 
 	[[nodiscard]]
 	ID3DBlob* GetBinary() const noexcept { return m_binaryRootSignature.Get(); }
@@ -259,6 +269,7 @@ private:
 	ComPtr<ID3DBlob>                     m_binaryRootSignature;
 	std::vector<D3D12_ROOT_PARAMETER1>   m_rootParameters;
 	std::vector<D3D12_DESCRIPTOR_RANGE1> m_descriptorRanges;
+	UINT                                 m_rsSizeLimit;
 
 public:
 	D3DRootSignatureDynamic(const D3DRootSignatureDynamic&) = delete;
@@ -267,13 +278,15 @@ public:
 	D3DRootSignatureDynamic(D3DRootSignatureDynamic&& other) noexcept
 		: m_binaryRootSignature{ std::move(other.m_binaryRootSignature) },
 		m_rootParameters{ std::move(other.m_rootParameters) },
-		m_descriptorRanges{ std::move(other.m_descriptorRanges) }
+		m_descriptorRanges{ std::move(other.m_descriptorRanges) },
+		m_rsSizeLimit{ other.m_rsSizeLimit }
 	{}
 	D3DRootSignatureDynamic& operator=(D3DRootSignatureDynamic&& other) noexcept
 	{
 		m_binaryRootSignature = std::move(other.m_binaryRootSignature);
 		m_rootParameters      = std::move(other.m_rootParameters);
 		m_descriptorRanges    = std::move(other.m_descriptorRanges);
+		m_rsSizeLimit         = other.m_rsSizeLimit;
 
 		return *this;
 	}

@@ -32,6 +32,8 @@ public:
 		return m_descriptorDetails[registerSlot];
 	}
 	[[nodiscard]]
+	size_t GetDescriptorDetailsCount() const noexcept { return std::size(m_descriptorDetails); }
+	[[nodiscard]]
 	UINT GetSlotOffset(size_t registerSlot) const noexcept { return m_offsets[registerSlot]; }
 	[[nodiscard]]
 	UINT GetTotalDescriptorCount() const noexcept { return m_offsets.back(); }
