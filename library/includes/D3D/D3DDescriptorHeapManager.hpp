@@ -225,11 +225,9 @@ class D3DDescriptorManager
 {
 public:
 	D3DDescriptorManager(ID3D12Device* device, size_t layoutCount)
-		: m_rtvHeap{ device, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE },
-		m_resourceHeapGPU{
+		: m_resourceHeapGPU{
 			device, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE
 		}, m_descriptorMap{},
-		m_dsvHeap{ device, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE },
 		m_resourceHeapCPU{
 			device, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE
 		}, m_descriptorLayouts{ layoutCount, D3DDescriptorLayout{} }
@@ -286,10 +284,6 @@ public:
 	D3D12_GPU_DESCRIPTOR_HANDLE GetGPUHandle(
 		size_t registerSlot, size_t registerSpace, UINT descriptorIndex
 	) const noexcept;
-	[[nodiscard]]
-	D3DReusableDescriptorHeap& GetRTVHeap() noexcept { return m_rtvHeap; }
-	[[nodiscard]]
-	D3DReusableDescriptorHeap& GetDSVHeap() noexcept { return m_dsvHeap; }
 
 	[[nodiscard]]
 	const std::vector<D3DDescriptorLayout> GetLayouts() const noexcept { return m_descriptorLayouts; }
@@ -303,10 +297,8 @@ private:
 	UINT GetDescriptorOffset(size_t slotIndex, size_t layoutIndex, UINT descriptorIndex) const noexcept;
 
 private:
-	D3DReusableDescriptorHeap        m_rtvHeap;
 	D3DDescriptorHeap                m_resourceHeapGPU;
 	D3DDescriptorMap                 m_descriptorMap;
-	D3DReusableDescriptorHeap        m_dsvHeap;
 	D3DDescriptorHeap                m_resourceHeapCPU;
 	std::vector<D3DDescriptorLayout> m_descriptorLayouts;
 
@@ -315,19 +307,15 @@ public:
 	D3DDescriptorManager& operator=(const D3DDescriptorManager&) = delete;
 
 	D3DDescriptorManager(D3DDescriptorManager&& other) noexcept
-		: m_rtvHeap{ std::move(other.m_rtvHeap) },
-		m_resourceHeapGPU{ std::move(other.m_resourceHeapGPU) },
+		: m_resourceHeapGPU{ std::move(other.m_resourceHeapGPU) },
 		m_descriptorMap{ std::move(other.m_descriptorMap) },
-		m_dsvHeap{ std::move(other.m_dsvHeap) },
 		m_resourceHeapCPU{ std::move(other.m_resourceHeapCPU) },
 		m_descriptorLayouts{ std::move(other.m_descriptorLayouts) }
 	{}
 	D3DDescriptorManager& operator=(D3DDescriptorManager&& other) noexcept
 	{
-		m_rtvHeap           = std::move(other.m_rtvHeap);
 		m_resourceHeapGPU   = std::move(other.m_resourceHeapGPU);
 		m_descriptorMap     = std::move(other.m_descriptorMap);
-		m_dsvHeap           = std::move(other.m_dsvHeap);
 		m_resourceHeapCPU   = std::move(other.m_resourceHeapCPU);
 		m_descriptorLayouts = std::move(other.m_descriptorLayouts);
 
