@@ -58,7 +58,7 @@ TEST_F(DescriptorHeapManagerTest, DescriptorHeapTest)
 	srvHeap2.Create(20u);
 	EXPECT_NE(srvHeap2.Get(), nullptr) << "Shader visible SRV Heap creation failed.";
 
-	srvHeap2.CopyHeap(srvHeap, 10u, 5u, 10u);
+	srvHeap2.CopyDescriptors(srvHeap, 10u, 5u, 10u);
 }
 
 TEST_F(DescriptorHeapManagerTest, ReusableDescriptorHeapTest)

@@ -30,9 +30,9 @@ void D3DDescriptorHeap::Create(UINT descriptorCount)
     m_descriptorHeap = std::move(newDescriptorHeap);
 }
 
-void D3DDescriptorHeap::CopyHeap(
+void D3DDescriptorHeap::CopyDescriptors(
     const D3DDescriptorHeap& src, UINT descriptorCount, UINT srcOffset, UINT dstOffset
-) {
+) const {
     assert(src.m_descriptorDesc.Type == m_descriptorDesc.Type && "Descriptor heaps have different types.");
     assert(
         src.m_descriptorDesc.NumDescriptors >= srcOffset + descriptorCount
@@ -68,34 +68,100 @@ D3D12_GPU_DESCRIPTOR_HANDLE D3DDescriptorHeap::GetGPUHandle(UINT index) const no
     return gpuHandle;
 }
 
+void D3DDescriptorHeap::CreateSRV(
+    ID3D12Resource* resource, const D3D12_SHADER_RESOURCE_VIEW_DESC& srvDesc, UINT descriptorIndex
+) const {
+    assert(
+        GetHeapType() == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV
+        && "The heap type isn't CBV_SRV_UAV."
+    );
+
+    const D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = GetCPUHandle(descriptorIndex);
+
+    m_device->CreateShaderResourceView(resource, &srvDesc, cpuHandle);
+}
+
+void D3DDescriptorHeap::CreateCBV(
+    const D3D12_CONSTANT_BUFFER_VIEW_DESC& cbvDesc, UINT descriptorIndex
+) const {
+    assert(
+        GetHeapType() == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV
+        && "The heap type isn't CBV_SRV_UAV."
+    );
+
+    const D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = GetCPUHandle(descriptorIndex);
+
+    m_device->CreateConstantBufferView(&cbvDesc, cpuHandle);
+}
+
+void D3DDescriptorHeap::CreateUAV(
+    ID3D12Resource* resource, ID3D12Resource* counterResource,
+    const D3D12_UNORDERED_ACCESS_VIEW_DESC& uavDesc, UINT descriptorIndex
+) const {
+    assert(
+        GetHeapType() == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV
+        && "The heap type isn't CBV_SRV_UAV."
+    );
+
+    const D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = GetCPUHandle(descriptorIndex);
+
+    m_device->CreateUnorderedAccessView(resource, counterResource, &uavDesc, cpuHandle);
+}
+
+void D3DDescriptorHeap::CreateDSV(
+    ID3D12Resource* resource, const D3D12_DEPTH_STENCIL_VIEW_DESC& dsvDesc, UINT descriptorIndex
+) const {
+    assert(
+        GetHeapType() == D3D12_DESCRIPTOR_HEAP_TYPE_DSV
+        && "The heap type isn't DSV."
+    );
+
+    const D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = GetCPUHandle(descriptorIndex);
+
+    m_device->CreateDepthStencilView(resource, &dsvDesc, cpuHandle);
+}
+
+void D3DDescriptorHeap::CreateRTV(
+    ID3D12Resource* resource, const D3D12_RENDER_TARGET_VIEW_DESC& rtvDesc, UINT descriptorIndex
+) const {
+    assert(
+        GetHeapType() == D3D12_DESCRIPTOR_HEAP_TYPE_RTV
+        && "The heap type isn't RTV."
+    );
+
+    const D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = GetCPUHandle(descriptorIndex);
+
+    m_device->CreateRenderTargetView(resource, &rtvDesc, cpuHandle);
+}
+
+void D3DDescriptorHeap::CreateSampler(const D3D12_SAMPLER_DESC& samplerDesc, UINT descriptorIndex) const
+{
+    assert(
+        GetHeapType() == D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER
+        && "The heap type isn't Sampler."
+    );
+
+    const D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = GetCPUHandle(descriptorIndex);
+
+    m_device->CreateSampler(&samplerDesc, cpuHandle);
+}
+
 // D3D Reusable Descriptor Heap
 UINT D3DReusableDescriptorHeap::CreateSRV(
     ID3D12Resource* resource, const D3D12_SHADER_RESOURCE_VIEW_DESC& srvDesc
 ) {
-    assert(
-        m_descriptorHeap.GetHeapType() == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV
-        && "The heap type isn't CBV_SRV_UAV."
-    );
+    const UINT descriptorIndex = AllocateDescriptor();
 
-    const UINT descriptorIndex                  = AllocateDescriptor();
-    const D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = m_descriptorHeap.GetCPUHandle(descriptorIndex);
-
-    m_device->CreateShaderResourceView(resource, &srvDesc, cpuHandle);
+    m_descriptorHeap.CreateSRV(resource, srvDesc, descriptorIndex);
 
     return descriptorIndex;
 }
 
 UINT D3DReusableDescriptorHeap::CreateCBV(const D3D12_CONSTANT_BUFFER_VIEW_DESC& cbvDesc)
 {
-    assert(
-        m_descriptorHeap.GetHeapType() == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV
-        && "The heap type isn't CBV_SRV_UAV."
-    );
+    const UINT descriptorIndex = AllocateDescriptor();
 
-    const UINT descriptorIndex                  = AllocateDescriptor();
-    const D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = m_descriptorHeap.GetCPUHandle(descriptorIndex);
-
-    m_device->CreateConstantBufferView(&cbvDesc, cpuHandle);
+    m_descriptorHeap.CreateCBV(cbvDesc, descriptorIndex);
 
     return descriptorIndex;
 }
@@ -104,15 +170,9 @@ UINT D3DReusableDescriptorHeap::CreateUAV(
     ID3D12Resource* resource, ID3D12Resource* counterResource,
     const D3D12_UNORDERED_ACCESS_VIEW_DESC& uavDesc
 ) {
-    assert(
-        m_descriptorHeap.GetHeapType() == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV
-        && "The heap type isn't CBV_SRV_UAV."
-    );
+    const UINT descriptorIndex = AllocateDescriptor();
 
-    const UINT descriptorIndex                  = AllocateDescriptor();
-    const D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = m_descriptorHeap.GetCPUHandle(descriptorIndex);
-
-    m_device->CreateUnorderedAccessView(resource, counterResource, &uavDesc, cpuHandle);
+    m_descriptorHeap.CreateUAV(resource, counterResource, uavDesc, descriptorIndex);
 
     return descriptorIndex;
 }
@@ -120,15 +180,9 @@ UINT D3DReusableDescriptorHeap::CreateUAV(
 UINT D3DReusableDescriptorHeap::CreateDSV(
     ID3D12Resource* resource, const D3D12_DEPTH_STENCIL_VIEW_DESC& dsvDesc
 ) {
-    assert(
-        m_descriptorHeap.GetHeapType() == D3D12_DESCRIPTOR_HEAP_TYPE_DSV
-        && "The heap type isn't DSV."
-    );
+    const UINT descriptorIndex = AllocateDescriptor();
 
-    const UINT descriptorIndex                  = AllocateDescriptor();
-    const D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = m_descriptorHeap.GetCPUHandle(descriptorIndex);
-
-    m_device->CreateDepthStencilView(resource, &dsvDesc, cpuHandle);
+    m_descriptorHeap.CreateDSV(resource, dsvDesc, descriptorIndex);
 
     return descriptorIndex;
 }
@@ -136,30 +190,18 @@ UINT D3DReusableDescriptorHeap::CreateDSV(
 UINT D3DReusableDescriptorHeap::CreateRTV(
     ID3D12Resource* resource, const D3D12_RENDER_TARGET_VIEW_DESC& rtvDesc
 ) {
-    assert(
-        m_descriptorHeap.GetHeapType() == D3D12_DESCRIPTOR_HEAP_TYPE_RTV
-        && "The heap type isn't RTV."
-    );
+    const UINT descriptorIndex = AllocateDescriptor();
 
-    const UINT descriptorIndex                  = AllocateDescriptor();
-    const D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = m_descriptorHeap.GetCPUHandle(descriptorIndex);
-
-    m_device->CreateRenderTargetView(resource, &rtvDesc, cpuHandle);
+    m_descriptorHeap.CreateRTV(resource, rtvDesc, descriptorIndex);
 
     return descriptorIndex;
 }
 
 UINT D3DReusableDescriptorHeap::CreateSampler(const D3D12_SAMPLER_DESC& samplerDesc)
 {
-    assert(
-        m_descriptorHeap.GetHeapType() == D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER
-        && "The heap type isn't Sampler."
-    );
+    const UINT descriptorIndex = AllocateDescriptor();
 
-    const UINT descriptorIndex                  = AllocateDescriptor();
-    const D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = m_descriptorHeap.GetCPUHandle(descriptorIndex);
-
-    m_device->CreateSampler(&samplerDesc, cpuHandle);
+    m_descriptorHeap.CreateSampler(samplerDesc, descriptorIndex);
 
     return descriptorIndex;
 }
@@ -326,5 +368,98 @@ D3DDescriptorMap& D3DDescriptorMap::AddDescTableCom(UINT rootIndex, UINT descrip
 // D3D Descriptor Manager
 void D3DDescriptorManager::CreateDescriptors()
 {
+    UINT totalDescriptorCount = 0u;
 
+    for (const D3DDescriptorLayout& layout : m_descriptorLayouts)
+        totalDescriptorCount += layout.GetTotalDescriptorCount();
+
+    m_resourceHeapCPU.Create(totalDescriptorCount);
+    m_resourceHeapGPU.Create(totalDescriptorCount);
+}
+
+void D3DDescriptorManager::Bind(ID3D12GraphicsCommandList* commandList) const noexcept
+{
+    m_resourceHeapGPU.Bind(commandList);
+}
+
+void D3DDescriptorManager::SetCBV(
+    size_t registerSlot, size_t registerSpace, UINT descriptorIndex,
+    const D3D12_CONSTANT_BUFFER_VIEW_DESC& cbvDesc
+) const {
+    const UINT descriptorIndexInHeap = GetDescriptorOffset(registerSlot, registerSpace, descriptorIndex);
+
+    m_resourceHeapCPU.CreateCBV(cbvDesc, descriptorIndexInHeap);
+
+    m_resourceHeapGPU.CopyDescriptors(
+        m_resourceHeapCPU, 1u, descriptorIndexInHeap, descriptorIndexInHeap
+    );
+}
+
+void D3DDescriptorManager::SetSRV(
+    size_t registerSlot, size_t registerSpace, UINT descriptorIndex,
+    ID3D12Resource* resource, const D3D12_SHADER_RESOURCE_VIEW_DESC& srvDesc
+) const {
+    const UINT descriptorIndexInHeap = GetDescriptorOffset(registerSlot, registerSpace, descriptorIndex);
+
+    m_resourceHeapCPU.CreateSRV(resource, srvDesc, descriptorIndexInHeap);
+
+    m_resourceHeapGPU.CopyDescriptors(
+        m_resourceHeapCPU, 1u, descriptorIndexInHeap, descriptorIndexInHeap
+    );
+}
+
+void D3DDescriptorManager::SetUAV(
+    size_t registerSlot, size_t registerSpace, UINT descriptorIndex,
+    ID3D12Resource* resource, ID3D12Resource* counterResource,
+    const D3D12_UNORDERED_ACCESS_VIEW_DESC& uavDesc
+) const {
+    const UINT descriptorIndexInHeap = GetDescriptorOffset(registerSlot, registerSpace, descriptorIndex);
+
+    m_resourceHeapCPU.CreateUAV(resource, counterResource, uavDesc, descriptorIndexInHeap);
+
+    m_resourceHeapGPU.CopyDescriptors(
+        m_resourceHeapCPU, 1u, descriptorIndexInHeap, descriptorIndexInHeap
+    );
+}
+
+UINT D3DDescriptorManager::GetLayoutOffset(size_t layoutIndex) const noexcept
+{
+    UINT layoutOffset = 0u;
+
+    for (size_t index = 0u; index < std::size(m_descriptorLayouts); ++index)
+    {
+        if (layoutIndex == index)
+            break;
+
+        layoutOffset += m_descriptorLayouts[index].GetTotalDescriptorCount();
+    }
+
+    return layoutOffset;
+}
+
+UINT D3DDescriptorManager::GetSlotOffset(size_t slotIndex, size_t layoutIndex) const noexcept
+{
+    return GetLayoutOffset(layoutIndex) + m_descriptorLayouts[layoutIndex].GetSlotOffset(slotIndex);
+}
+
+UINT D3DDescriptorManager::GetDescriptorOffset(
+    size_t slotIndex, size_t layoutIndex, UINT descriptorIndex
+) const noexcept {
+    return GetSlotOffset(slotIndex, layoutIndex) + descriptorIndex;
+}
+
+D3D12_CPU_DESCRIPTOR_HANDLE D3DDescriptorManager::GetCPUHandle(
+    size_t registerSlot, size_t registerSpace, UINT descriptorIndex
+) const noexcept {
+    return m_resourceHeapCPU.GetCPUHandle(
+        GetDescriptorOffset(registerSlot, registerSpace, descriptorIndex)
+    );
+}
+
+D3D12_GPU_DESCRIPTOR_HANDLE D3DDescriptorManager::GetGPUHandle(
+    size_t registerSlot, size_t registerSpace, UINT descriptorIndex
+) const noexcept {
+    return m_resourceHeapGPU.GetGPUHandle(
+        GetDescriptorOffset(registerSlot, registerSpace, descriptorIndex)
+    );
 }

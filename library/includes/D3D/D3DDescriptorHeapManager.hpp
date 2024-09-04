@@ -16,11 +16,31 @@ public:
 	void Create(UINT descriptorCount);
 
 	// The heap type must be the same.
-	void CopyHeap(
+	void CopyDescriptors(
 		const D3DDescriptorHeap& src, UINT descriptorCount, UINT srcOffset, UINT dstOffset
-	);
+	) const;
 
 	void Bind(ID3D12GraphicsCommandList* commandList) const noexcept;
+
+	void CreateSRV(
+		ID3D12Resource* resource, const D3D12_SHADER_RESOURCE_VIEW_DESC& srvDesc, UINT descriptorIndex
+	) const;
+	void CreateCBV(
+		const D3D12_CONSTANT_BUFFER_VIEW_DESC& cbvDesc, UINT descriptorIndex
+	) const;
+	void CreateUAV(
+		ID3D12Resource* resource, ID3D12Resource* counterResource,
+		const D3D12_UNORDERED_ACCESS_VIEW_DESC& uavDesc, UINT descriptorIndex
+	) const;
+	void CreateDSV(
+		ID3D12Resource* resource, const D3D12_DEPTH_STENCIL_VIEW_DESC& dsvDesc, UINT descriptorIndex
+	) const;
+	void CreateRTV(
+		ID3D12Resource* resource, const D3D12_RENDER_TARGET_VIEW_DESC& rtvDesc, UINT descriptorIndex
+	) const;
+	void CreateSampler(
+		const D3D12_SAMPLER_DESC& samplerDesc, UINT descriptorIndex
+	) const;
 
 	[[nodiscard]]
 	D3D12_DESCRIPTOR_HEAP_TYPE GetHeapType() const noexcept { return m_descriptorDesc.Type; }
@@ -67,7 +87,7 @@ class D3DReusableDescriptorHeap
 public:
 	D3DReusableDescriptorHeap(
 		ID3D12Device* device, D3D12_DESCRIPTOR_HEAP_TYPE type, D3D12_DESCRIPTOR_HEAP_FLAGS flag
-	) : m_descriptorHeap{ device, type, flag }, m_device{ device }, m_indicesManager{}
+	) : m_descriptorHeap{ device, type, flag }, m_indicesManager{}
 	{}
 
 	UINT CreateSRV(ID3D12Resource* resource, const D3D12_SHADER_RESOURCE_VIEW_DESC& srvDesc);
@@ -105,7 +125,6 @@ private:
 
 private:
 	D3DDescriptorHeap m_descriptorHeap;
-	ID3D12Device*     m_device;
 	IndicesManager    m_indicesManager;
 
 public:
@@ -114,12 +133,11 @@ public:
 
 	D3DReusableDescriptorHeap(D3DReusableDescriptorHeap&& other) noexcept
 		: m_descriptorHeap{ std::move(other.m_descriptorHeap) },
-		m_device{ other.m_device }, m_indicesManager{ std::move(other.m_indicesManager) }
+		m_indicesManager{ std::move(other.m_indicesManager) }
 	{}
 	D3DReusableDescriptorHeap& operator=(D3DReusableDescriptorHeap&& other) noexcept
 	{
 		m_descriptorHeap = std::move(other.m_descriptorHeap);
-		m_device         = other.m_device;
 		m_indicesManager = std::move(other.m_indicesManager);
 
 		return *this;
@@ -244,6 +262,30 @@ public:
 
 	void CreateDescriptors();
 
+	void Bind(ID3D12GraphicsCommandList* commandList) const noexcept;
+
+	void SetCBV(
+		size_t registerSlot, size_t registerSpace, UINT descriptorIndex,
+		const D3D12_CONSTANT_BUFFER_VIEW_DESC& cbvDesc
+	) const;
+	void SetSRV(
+		size_t registerSlot, size_t registerSpace, UINT descriptorIndex,
+		ID3D12Resource* resource, const D3D12_SHADER_RESOURCE_VIEW_DESC& srvDesc
+	) const;
+	void SetUAV(
+		size_t registerSlot, size_t registerSpace, UINT descriptorIndex,
+		ID3D12Resource* resource, ID3D12Resource* counterResource,
+		const D3D12_UNORDERED_ACCESS_VIEW_DESC& uavDesc
+	) const;
+
+	[[nodiscard]]
+	D3D12_CPU_DESCRIPTOR_HANDLE GetCPUHandle(
+		size_t registerSlot, size_t registerSpace, UINT descriptorIndex
+	) const noexcept;
+	[[nodiscard]]
+	D3D12_GPU_DESCRIPTOR_HANDLE GetGPUHandle(
+		size_t registerSlot, size_t registerSpace, UINT descriptorIndex
+	) const noexcept;
 	[[nodiscard]]
 	D3DReusableDescriptorHeap& GetRTVHeap() noexcept { return m_rtvHeap; }
 	[[nodiscard]]
@@ -251,6 +293,14 @@ public:
 
 	[[nodiscard]]
 	const std::vector<D3DDescriptorLayout> GetLayouts() const noexcept { return m_descriptorLayouts; }
+
+private:
+	[[nodiscard]]
+	UINT GetLayoutOffset(size_t layoutIndex) const noexcept;
+	[[nodiscard]]
+	UINT GetSlotOffset(size_t slotIndex, size_t layoutIndex) const noexcept;
+	[[nodiscard]]
+	UINT GetDescriptorOffset(size_t slotIndex, size_t layoutIndex, UINT descriptorIndex) const noexcept;
 
 private:
 	D3DReusableDescriptorHeap        m_rtvHeap;
