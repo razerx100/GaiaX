@@ -21,6 +21,8 @@ D3DDescriptorLayout& D3DDescriptorLayout::AddCBV(
         }
     );
 
+    m_offsets.emplace_back(descriptorCount);
+
     return *this;
 }
 
@@ -35,6 +37,8 @@ D3DDescriptorLayout& D3DDescriptorLayout::AddSRV(
             .descriptorCount = descriptorCount
         }
     );
+
+    m_offsets.emplace_back(descriptorCount);
 
     return *this;
 }
@@ -51,15 +55,7 @@ D3DDescriptorLayout& D3DDescriptorLayout::AddUAV(
         }
     );
 
+    m_offsets.emplace_back(descriptorCount);
+
     return *this;
-}
-
-UINT D3DDescriptorLayout::GetTotalDescriptorCount() const noexcept
-{
-    UINT sum = 0u;
-
-    for (const auto& details : m_descriptorDetails)
-        sum += details.descriptorCount;
-
-    return sum;
 }

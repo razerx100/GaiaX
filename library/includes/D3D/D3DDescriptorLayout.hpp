@@ -14,7 +14,7 @@ public:
 	};
 
 public:
-	D3DDescriptorLayout() : m_descriptorDetails{} {}
+	D3DDescriptorLayout() : m_descriptorDetails{}, m_offsets{ 0u } {}
 
 	D3DDescriptorLayout& AddCBV(
 		size_t registerSlot, UINT descriptorCount, D3D12_SHADER_VISIBILITY shaderStage
@@ -28,14 +28,39 @@ public:
 
 	[[nodiscard]]
 	const std::vector<DescriptorDetails>& GetDetails() const noexcept { return m_descriptorDetails; }
-
 	[[nodiscard]]
-	UINT GetTotalDescriptorCount() const noexcept;
+	UINT GetSlotOffset(size_t registerSlot) const noexcept { return m_offsets[registerSlot]; }
+	[[nodiscard]]
+	UINT GetTotalDescriptorCount() const noexcept { return m_offsets.back(); }
 
 private:
 	void AddView(size_t registerSlot, const DescriptorDetails& details) noexcept;
 
 private:
 	std::vector<DescriptorDetails> m_descriptorDetails;
+	std::vector<UINT>              m_offsets;
+
+public:
+	D3DDescriptorLayout(const D3DDescriptorLayout& other) noexcept
+		: m_descriptorDetails{ other.m_descriptorDetails }, m_offsets{ other.m_offsets }
+	{}
+	D3DDescriptorLayout& operator=(const D3DDescriptorLayout& other) noexcept
+	{
+		m_descriptorDetails = other.m_descriptorDetails ;
+		m_offsets           = other.m_offsets;
+
+		return *this;
+	}
+	D3DDescriptorLayout(D3DDescriptorLayout&& other) noexcept
+		: m_descriptorDetails{ std::move(other.m_descriptorDetails) },
+		m_offsets{ std::move(other.m_offsets) }
+	{}
+	D3DDescriptorLayout& operator=(D3DDescriptorLayout&& other) noexcept
+	{
+		m_descriptorDetails = std::move(other.m_descriptorDetails) ;
+		m_offsets           = std::move(other.m_offsets);
+
+		return *this;
+	}
 };
 #endif
