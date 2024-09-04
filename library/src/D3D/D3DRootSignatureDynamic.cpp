@@ -154,12 +154,15 @@ void D3DRootSignatureDynamic::PopulateFromLayouts(const std::vector<D3DDescripto
 					descriptorDetails.type, descriptorDetails.descriptorCount,
 					descriptorDetails.visibility, registerIndex, registerSpace
 				);
-			else if (descriptorDetails.type == D3D12_DESCRIPTOR_RANGE_TYPE_CBV)
-				AddRootCBV(descriptorDetails.visibility, registerIndex, registerSpace);
-			else if (descriptorDetails.type == D3D12_DESCRIPTOR_RANGE_TYPE_SRV)
-				AddRootSRV(descriptorDetails.visibility, registerIndex, registerSpace);
-			else if (descriptorDetails.type == D3D12_DESCRIPTOR_RANGE_TYPE_UAV)
-				AddRootUAV(descriptorDetails.visibility, registerIndex, registerSpace);
+			else if (descriptorDetails.descriptorCount == 1u)
+			{
+				if (descriptorDetails.type == D3D12_DESCRIPTOR_RANGE_TYPE_CBV)
+					AddRootCBV(descriptorDetails.visibility, registerIndex, registerSpace);
+				else if (descriptorDetails.type == D3D12_DESCRIPTOR_RANGE_TYPE_SRV)
+					AddRootSRV(descriptorDetails.visibility, registerIndex, registerSpace);
+				else if (descriptorDetails.type == D3D12_DESCRIPTOR_RANGE_TYPE_UAV)
+					AddRootUAV(descriptorDetails.visibility, registerIndex, registerSpace);
+			}
 		}
 	}
 }

@@ -258,23 +258,25 @@ public:
 		return *this;
 	}
 
-	void CreateDescriptors();
+	void CreateDescriptors(bool graphicsQueue);
 
 	void Bind(ID3D12GraphicsCommandList* commandList) const noexcept;
 
 	void SetCBV(
 		size_t registerSlot, size_t registerSpace, UINT descriptorIndex,
-		const D3D12_CONSTANT_BUFFER_VIEW_DESC& cbvDesc
-	) const;
+		ID3D12Resource* resource, const D3D12_CONSTANT_BUFFER_VIEW_DESC& cbvDesc,
+		bool graphicsQueue
+	);
 	void SetSRV(
 		size_t registerSlot, size_t registerSpace, UINT descriptorIndex,
-		ID3D12Resource* resource, const D3D12_SHADER_RESOURCE_VIEW_DESC& srvDesc
-	) const;
+		ID3D12Resource* resource, const D3D12_SHADER_RESOURCE_VIEW_DESC& srvDesc,
+		bool graphicsQueue
+	);
 	void SetUAV(
 		size_t registerSlot, size_t registerSpace, UINT descriptorIndex,
 		ID3D12Resource* resource, ID3D12Resource* counterResource,
-		const D3D12_UNORDERED_ACCESS_VIEW_DESC& uavDesc
-	) const;
+		const D3D12_UNORDERED_ACCESS_VIEW_DESC& uavDesc, bool graphicsQueue
+	);
 
 	[[nodiscard]]
 	D3D12_CPU_DESCRIPTOR_HANDLE GetCPUHandle(
@@ -295,6 +297,8 @@ private:
 	UINT GetSlotOffset(size_t slotIndex, size_t layoutIndex) const noexcept;
 	[[nodiscard]]
 	UINT GetDescriptorOffset(size_t slotIndex, size_t layoutIndex, UINT descriptorIndex) const noexcept;
+	[[nodiscard]]
+	UINT GetRootIndex(size_t slotIndex, size_t layoutIndex) const noexcept;
 
 private:
 	D3DDescriptorHeap                m_resourceHeapGPU;

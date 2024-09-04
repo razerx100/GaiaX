@@ -126,3 +126,18 @@ TEST_F(DescriptorHeapManagerTest, DescriptorLayoutTest)
 	EXPECT_EQ(layout.GetSlotOffset(1u), 10u) << "Slot offset for the slot 1 isn't 10.";
 	EXPECT_EQ(layout.GetSlotOffset(2u), 21u) << "Slot offset for the slot 2 isn't 21.";
 }
+
+TEST_F(DescriptorHeapManagerTest, DescriptorManagerTest)
+{
+	ID3D12Device* device = s_deviceManager->GetDevice();
+
+	{
+		const size_t layoutCount = 2u;
+
+		D3DDescriptorManager descriptorManger{ device, layoutCount };
+
+		descriptorManger.AddSRV(0u, 1u, 5u, D3D12_SHADER_VISIBILITY_MESH);
+
+		descriptorManger.CreateDescriptors(true);
+	}
+}
