@@ -27,7 +27,10 @@ public:
 	) noexcept;
 
 	[[nodiscard]]
-	const std::vector<DescriptorDetails>& GetDetails() const noexcept { return m_descriptorDetails; }
+	DescriptorDetails GetDescriptorDetails(size_t registerSlot) const noexcept
+	{
+		return m_descriptorDetails[registerSlot];
+	}
 	[[nodiscard]]
 	UINT GetSlotOffset(size_t registerSlot) const noexcept { return m_offsets[registerSlot]; }
 	[[nodiscard]]

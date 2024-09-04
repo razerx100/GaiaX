@@ -111,11 +111,17 @@ TEST_F(DescriptorHeapManagerTest, DescriptorLayoutTest)
 {
 	D3DDescriptorLayout layout{};
 
-	layout.AddSRV(0u, 10, D3D12_SHADER_VISIBILITY_AMPLIFICATION);
-	layout.AddUAV(2u, 12, D3D12_SHADER_VISIBILITY_AMPLIFICATION);
-	layout.AddCBV(1u, 11, D3D12_SHADER_VISIBILITY_AMPLIFICATION);
+	EXPECT_EQ(layout.GetTotalDescriptorCount(), 0u) << "Total descriptor count isn't 0.";
 
+	layout.AddSRV(0u, 10, D3D12_SHADER_VISIBILITY_AMPLIFICATION);
+	EXPECT_EQ(layout.GetTotalDescriptorCount(), 10u) << "Total descriptor count isn't 10.";
+
+	layout.AddUAV(2u, 12, D3D12_SHADER_VISIBILITY_AMPLIFICATION);
+	EXPECT_EQ(layout.GetTotalDescriptorCount(), 22u) << "Total descriptor count isn't 22.";
+
+	layout.AddCBV(1u, 11, D3D12_SHADER_VISIBILITY_AMPLIFICATION);
 	EXPECT_EQ(layout.GetTotalDescriptorCount(), 33u) << "Total descriptor count isn't 33.";
+
 	EXPECT_EQ(layout.GetSlotOffset(0u), 0u) << "Slot offset for the slot 0 isn't 0.";
 	EXPECT_EQ(layout.GetSlotOffset(1u), 10u) << "Slot offset for the slot 1 isn't 10.";
 	EXPECT_EQ(layout.GetSlotOffset(2u), 21u) << "Slot offset for the slot 2 isn't 21.";
