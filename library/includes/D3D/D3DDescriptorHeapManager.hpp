@@ -1,10 +1,13 @@
 #ifndef D3D_DESCRIPTOR_HEAP_MANAGER_HPP_
 #define D3D_DESCRIPTOR_HEAP_MANAGER_HPP_
 #include <D3DHeaders.hpp>
+#include <ranges>
+#include <algorithm>
 #include <utility>
 #include <IndicesManager.hpp>
 #include <D3DDescriptorLayout.hpp>
 #include <memory>
+#include <optional>
 
 class D3DDescriptorHeap
 {
@@ -149,17 +152,17 @@ class D3DDescriptorMap
 public:
 	D3DDescriptorMap() : m_singleDescriptors{}, m_descriptorTables{} {}
 
-	D3DDescriptorMap& AddCBVGfx(UINT rootIndex, D3D12_GPU_VIRTUAL_ADDRESS bufferAddress) noexcept;
-	D3DDescriptorMap& AddCBVCom(UINT rootIndex, D3D12_GPU_VIRTUAL_ADDRESS bufferAddress) noexcept;
+	D3DDescriptorMap& SetCBVGfx(UINT rootIndex, D3D12_GPU_VIRTUAL_ADDRESS bufferAddress) noexcept;
+	D3DDescriptorMap& SetCBVCom(UINT rootIndex, D3D12_GPU_VIRTUAL_ADDRESS bufferAddress) noexcept;
 
-	D3DDescriptorMap& AddUAVGfx(UINT rootIndex, D3D12_GPU_VIRTUAL_ADDRESS bufferAddress) noexcept;
-	D3DDescriptorMap& AddUAVCom(UINT rootIndex, D3D12_GPU_VIRTUAL_ADDRESS bufferAddress) noexcept;
+	D3DDescriptorMap& SetUAVGfx(UINT rootIndex, D3D12_GPU_VIRTUAL_ADDRESS bufferAddress) noexcept;
+	D3DDescriptorMap& SetUAVCom(UINT rootIndex, D3D12_GPU_VIRTUAL_ADDRESS bufferAddress) noexcept;
 
-	D3DDescriptorMap& AddSRVGfx(UINT rootIndex, D3D12_GPU_VIRTUAL_ADDRESS bufferAddress) noexcept;
-	D3DDescriptorMap& AddSRVCom(UINT rootIndex, D3D12_GPU_VIRTUAL_ADDRESS bufferAddress) noexcept;
+	D3DDescriptorMap& SetSRVGfx(UINT rootIndex, D3D12_GPU_VIRTUAL_ADDRESS bufferAddress) noexcept;
+	D3DDescriptorMap& SetSRVCom(UINT rootIndex, D3D12_GPU_VIRTUAL_ADDRESS bufferAddress) noexcept;
 
-	D3DDescriptorMap& AddDescTableGfx(UINT rootIndex, UINT descriptorIndex) noexcept;
-	D3DDescriptorMap& AddDescTableCom(UINT rootIndex, UINT descriptorIndex) noexcept;
+	D3DDescriptorMap& SetDescTableGfx(UINT rootIndex, UINT descriptorIndex) noexcept;
+	D3DDescriptorMap& SetDescTableCom(UINT rootIndex, UINT descriptorIndex) noexcept;
 
 	void Bind(const D3DDescriptorHeap& descriptorHeap, ID3D12GraphicsCommandList* commandList) const;
 
@@ -190,6 +193,36 @@ private:
 		UINT descriptorIndex;
 		void(*bindTableFunction)(ID3D12GraphicsCommandList*, UINT, D3D12_GPU_DESCRIPTOR_HANDLE);
 	};
+
+	template<typename T>
+	[[nodiscard]]
+	std::optional<size_t> FindRootIndex(UINT rootIndex) const noexcept
+	{
+		std::optional<size_t> result{};
+
+		auto DescriptorsGetter = [this]<typename U>()-> const std::vector<U>&
+		{
+			if constexpr (std::is_same_v<U, SingleDescriptorMap>)
+				return m_singleDescriptors;
+			else
+				return m_descriptorTables;
+		};
+
+		auto& descriptors = DescriptorsGetter.template operator()<T>();
+
+		auto fResult = std::ranges::find(
+            descriptors, rootIndex,
+            [](const T& tableMap)
+            {
+                return tableMap.rootIndex;
+            }
+        );
+
+        if (fResult != std::end(descriptors))
+            result = std::distance(std::begin(descriptors), fResult);
+
+		return result;
+	}
 
 private:
 	std::vector<SingleDescriptorMap> m_singleDescriptors;
