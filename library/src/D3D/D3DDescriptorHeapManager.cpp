@@ -366,33 +366,12 @@ D3DDescriptorMap& D3DDescriptorMap::AddDescTableCom(UINT rootIndex, UINT descrip
 }
 
 // D3D Descriptor Manager
-void D3DDescriptorManager::CreateDescriptors(bool graphicsQueue)
+void D3DDescriptorManager::CreateDescriptors()
 {
     UINT totalDescriptorCount = 0u;
 
-    for (size_t index = 0u; index < std::size(m_descriptorLayouts); ++index)
-    {
-        const D3DDescriptorLayout& layout = m_descriptorLayouts[index];
-        const size_t detailsCount         = layout.GetDescriptorDetailsCount();
-        totalDescriptorCount             += layout.GetTotalDescriptorCount();
-
-        for (size_t detailsIndex = 0u; detailsIndex < detailsCount; ++detailsIndex)
-        {
-            D3DDescriptorLayout::DescriptorDetails details = layout.GetDescriptorDetails(detailsIndex);
-
-            if (details.descriptorCount > 1u)
-            {
-                if (!graphicsQueue)
-                    m_descriptorMap.AddDescTableCom(
-                        GetRootIndex(detailsIndex, index), GetSlotOffset(detailsIndex, index)
-                    );
-                else
-                    m_descriptorMap.AddDescTableGfx(
-                        GetRootIndex(detailsIndex, index), GetSlotOffset(detailsIndex, index)
-                    );
-            }
-        }
-    }
+    for (const D3DDescriptorLayout& layout : m_descriptorLayouts)
+        totalDescriptorCount += layout.GetTotalDescriptorCount();
 
     m_resourceHeapCPU.Create(totalDescriptorCount);
     m_resourceHeapGPU.Create(totalDescriptorCount);
@@ -407,11 +386,10 @@ void D3DDescriptorManager::Bind(ID3D12GraphicsCommandList* commandList) const no
     m_descriptorMap.Bind(m_resourceHeapGPU, commandList);
 }
 
-void D3DDescriptorManager::SetCBV(
+void D3DDescriptorManager::CreateCBV(
     size_t registerSlot, size_t registerSpace, UINT descriptorIndex,
-    ID3D12Resource* resource, const D3D12_CONSTANT_BUFFER_VIEW_DESC& cbvDesc,
-    bool graphicsQueue
-) {
+    const D3D12_CONSTANT_BUFFER_VIEW_DESC& cbvDesc
+) const {
     const UINT descriptorIndexInHeap = GetDescriptorOffset(registerSlot, registerSpace, descriptorIndex);
 
     m_resourceHeapCPU.CreateCBV(cbvDesc, descriptorIndexInHeap);
@@ -419,31 +397,12 @@ void D3DDescriptorManager::SetCBV(
     m_resourceHeapGPU.CopyDescriptors(
         m_resourceHeapCPU, 1u, descriptorIndexInHeap, descriptorIndexInHeap
     );
-
-    {
-        const D3DDescriptorLayout::DescriptorDetails details
-            = m_descriptorLayouts[registerSpace].GetDescriptorDetails(registerSlot);
-
-        // Only add the descriptor to the descriptor map, if the slot wasn't created for
-        // multiple descriptors or a table.
-        if (details.descriptorCount == 1u)
-        {
-            if (!graphicsQueue)
-                m_descriptorMap.AddCBVCom(
-                    GetRootIndex(registerSlot, registerSpace), resource->GetGPUVirtualAddress()
-                );
-            else
-                m_descriptorMap.AddCBVGfx(
-                    GetRootIndex(registerSlot, registerSpace), resource->GetGPUVirtualAddress()
-                );
-        }
-    }
 }
 
-void D3DDescriptorManager::SetSRV(
+void D3DDescriptorManager::CreateSRV(
     size_t registerSlot, size_t registerSpace, UINT descriptorIndex,
-    ID3D12Resource* resource, const D3D12_SHADER_RESOURCE_VIEW_DESC& srvDesc, bool graphicsQueue
-) {
+    ID3D12Resource* resource, const D3D12_SHADER_RESOURCE_VIEW_DESC& srvDesc
+) const {
     const UINT descriptorIndexInHeap = GetDescriptorOffset(registerSlot, registerSpace, descriptorIndex);
 
     m_resourceHeapCPU.CreateSRV(resource, srvDesc, descriptorIndexInHeap);
@@ -451,32 +410,13 @@ void D3DDescriptorManager::SetSRV(
     m_resourceHeapGPU.CopyDescriptors(
         m_resourceHeapCPU, 1u, descriptorIndexInHeap, descriptorIndexInHeap
     );
-
-    {
-        const D3DDescriptorLayout::DescriptorDetails details
-            = m_descriptorLayouts[registerSpace].GetDescriptorDetails(registerSlot);
-
-        // Only add the descriptor to the descriptor map, if the slot wasn't created for
-        // multiple descriptors or a table.
-        if (details.descriptorCount == 1u)
-        {
-            if (!graphicsQueue)
-                m_descriptorMap.AddSRVCom(
-                    GetRootIndex(registerSlot, registerSpace), resource->GetGPUVirtualAddress()
-                );
-            else
-                m_descriptorMap.AddSRVGfx(
-                    GetRootIndex(registerSlot, registerSpace), resource->GetGPUVirtualAddress()
-                );
-        }
-    }
 }
 
-void D3DDescriptorManager::SetUAV(
+void D3DDescriptorManager::CreateUAV(
     size_t registerSlot, size_t registerSpace, UINT descriptorIndex,
     ID3D12Resource* resource, ID3D12Resource* counterResource,
-    const D3D12_UNORDERED_ACCESS_VIEW_DESC& uavDesc, bool graphicsQueue
-) {
+    const D3D12_UNORDERED_ACCESS_VIEW_DESC& uavDesc
+) const {
     const UINT descriptorIndexInHeap = GetDescriptorOffset(registerSlot, registerSpace, descriptorIndex);
 
     m_resourceHeapCPU.CreateUAV(resource, counterResource, uavDesc, descriptorIndexInHeap);
@@ -484,26 +424,51 @@ void D3DDescriptorManager::SetUAV(
     m_resourceHeapGPU.CopyDescriptors(
         m_resourceHeapCPU, 1u, descriptorIndexInHeap, descriptorIndexInHeap
     );
+}
 
-    {
-        const D3DDescriptorLayout::DescriptorDetails details
-            = m_descriptorLayouts[registerSpace].GetDescriptorDetails(registerSlot);
+void D3DDescriptorManager::SetRootCBV(
+    size_t registerSlot, size_t registerSpace, D3D12_GPU_VIRTUAL_ADDRESS resourceAddress,
+    bool graphicsQueue
+) {
+    if (!graphicsQueue)
+        m_descriptorMap.AddCBVCom(GetRootIndex(registerSlot, registerSpace), resourceAddress);
+    else
+        m_descriptorMap.AddCBVGfx(GetRootIndex(registerSlot, registerSpace), resourceAddress);
+}
 
-        // Only add the descriptor to the descriptor map, if the slot wasn't created for
-        // multiple descriptors or a table.
-        // Dunno how the counter buffer gets bound. Maybe I will need to make these into tables?
-        if (details.descriptorCount == 1u)
-        {
-            if (!graphicsQueue)
-                m_descriptorMap.AddUAVCom(
-                    GetRootIndex(registerSlot, registerSpace), resource->GetGPUVirtualAddress()
-                );
-            else
-                m_descriptorMap.AddUAVGfx(
-                    GetRootIndex(registerSlot, registerSpace), resource->GetGPUVirtualAddress()
-                );
-        }
-    }
+void D3DDescriptorManager::SetRootSRV(
+    size_t registerSlot, size_t registerSpace, D3D12_GPU_VIRTUAL_ADDRESS resourceAddress,
+    bool graphicsQueue
+) {
+    if (!graphicsQueue)
+        m_descriptorMap.AddSRVCom(GetRootIndex(registerSlot, registerSpace), resourceAddress);
+    else
+        m_descriptorMap.AddSRVGfx(GetRootIndex(registerSlot, registerSpace), resourceAddress);
+}
+
+void D3DDescriptorManager::SetRootUAV(
+    size_t registerSlot, size_t registerSpace, D3D12_GPU_VIRTUAL_ADDRESS resourceAddress,
+    bool graphicsQueue
+) {
+    if (!graphicsQueue)
+        m_descriptorMap.AddUAVCom(GetRootIndex(registerSlot, registerSpace), resourceAddress);
+    else
+        m_descriptorMap.AddUAVGfx(GetRootIndex(registerSlot, registerSpace), resourceAddress);
+}
+
+void D3DDescriptorManager::SetDescriptorTable(
+    size_t registerSlot, size_t registerSpace, UINT descriptorIndex, bool graphicsQueue
+) {
+    if (!graphicsQueue)
+        m_descriptorMap.AddDescTableCom(
+            GetRootIndex(registerSlot, registerSpace),
+            GetDescriptorOffset(registerSlot, registerSpace, descriptorIndex)
+        );
+    else
+        m_descriptorMap.AddDescTableGfx(
+            GetRootIndex(registerSlot, registerSpace),
+            GetDescriptorOffset(registerSlot, registerSpace, descriptorIndex)
+        );
 }
 
 UINT D3DDescriptorManager::GetLayoutOffset(size_t layoutIndex) const noexcept

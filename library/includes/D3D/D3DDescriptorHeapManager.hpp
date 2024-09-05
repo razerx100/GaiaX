@@ -258,24 +258,38 @@ public:
 		return *this;
 	}
 
-	void CreateDescriptors(bool graphicsQueue);
+	void CreateDescriptors();
 
 	void Bind(ID3D12GraphicsCommandList* commandList) const noexcept;
 
-	void SetCBV(
+	void CreateCBV(
 		size_t registerSlot, size_t registerSpace, UINT descriptorIndex,
-		ID3D12Resource* resource, const D3D12_CONSTANT_BUFFER_VIEW_DESC& cbvDesc,
-		bool graphicsQueue
-	);
-	void SetSRV(
+		const D3D12_CONSTANT_BUFFER_VIEW_DESC& cbvDesc
+	) const;
+	void CreateSRV(
 		size_t registerSlot, size_t registerSpace, UINT descriptorIndex,
-		ID3D12Resource* resource, const D3D12_SHADER_RESOURCE_VIEW_DESC& srvDesc,
-		bool graphicsQueue
-	);
-	void SetUAV(
+		ID3D12Resource* resource, const D3D12_SHADER_RESOURCE_VIEW_DESC& srvDesc
+	) const;
+	void CreateUAV(
 		size_t registerSlot, size_t registerSpace, UINT descriptorIndex,
 		ID3D12Resource* resource, ID3D12Resource* counterResource,
-		const D3D12_UNORDERED_ACCESS_VIEW_DESC& uavDesc, bool graphicsQueue
+		const D3D12_UNORDERED_ACCESS_VIEW_DESC& uavDesc
+	) const;
+
+	void SetRootCBV(
+		size_t registerSlot, size_t registerSpace, D3D12_GPU_VIRTUAL_ADDRESS resourceAddress,
+		bool graphicsQueue
+	);
+	void SetRootSRV(
+		size_t registerSlot, size_t registerSpace, D3D12_GPU_VIRTUAL_ADDRESS resourceAddress,
+		bool graphicsQueue
+	);
+	void SetRootUAV(
+		size_t registerSlot, size_t registerSpace, D3D12_GPU_VIRTUAL_ADDRESS resourceAddress,
+		bool graphicsQueue
+	);
+	void SetDescriptorTable(
+		size_t registerSlot, size_t registerSpace, UINT descriptorIndex, bool graphicsQueue
 	);
 
 	[[nodiscard]]

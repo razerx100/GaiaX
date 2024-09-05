@@ -138,6 +138,6 @@ TEST_F(DescriptorHeapManagerTest, DescriptorManagerTest)
 
 		descriptorManger.AddSRV(0u, 1u, 5u, D3D12_SHADER_VISIBILITY_MESH);
 
-		descriptorManger.CreateDescriptors(true);
+		descriptorManger.CreateDescriptors();
 	}
 }
