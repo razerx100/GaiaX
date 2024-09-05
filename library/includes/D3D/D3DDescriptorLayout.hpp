@@ -11,19 +11,23 @@ public:
 		D3D12_SHADER_VISIBILITY     visibility;
 		D3D12_DESCRIPTOR_RANGE_TYPE type;
 		UINT                        descriptorCount;
+		bool                        descriptorTable;
 	};
 
 public:
 	D3DDescriptorLayout() : m_descriptorDetails{}, m_offsets{ 0u } {}
 
 	D3DDescriptorLayout& AddCBV(
-		size_t registerSlot, UINT descriptorCount, D3D12_SHADER_VISIBILITY shaderStage
+		size_t registerSlot, UINT descriptorCount, D3D12_SHADER_VISIBILITY shaderStage,
+		bool descriptorTable
 	) noexcept;
 	D3DDescriptorLayout& AddSRV(
-		size_t registerSlot, UINT descriptorCount, D3D12_SHADER_VISIBILITY shaderStage
+		size_t registerSlot, UINT descriptorCount, D3D12_SHADER_VISIBILITY shaderStage,
+		bool descriptorTable
 	) noexcept;
 	D3DDescriptorLayout& AddUAV(
-		size_t registerSlot, UINT descriptorCount, D3D12_SHADER_VISIBILITY shaderStage
+		size_t registerSlot, UINT descriptorCount, D3D12_SHADER_VISIBILITY shaderStage,
+		bool descriptorTable
 	) noexcept;
 
 	[[nodiscard]]

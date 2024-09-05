@@ -268,25 +268,31 @@ public:
 
 	D3DDescriptorManager& AddCBV(
 		size_t registerSlot, size_t registerSpace, UINT descriptorCount,
-		D3D12_SHADER_VISIBILITY shaderStage
+		D3D12_SHADER_VISIBILITY shaderStage, bool descriptorTable
 	) noexcept {
-		m_descriptorLayouts.at(registerSpace).AddCBV(registerSlot, descriptorCount, shaderStage);
+		m_descriptorLayouts.at(registerSpace).AddCBV(
+			registerSlot, descriptorCount, shaderStage, descriptorTable
+		);
 
 		return *this;
 	}
 	D3DDescriptorManager& AddSRV(
 		size_t registerSlot, size_t registerSpace, UINT descriptorCount,
-		D3D12_SHADER_VISIBILITY shaderStage
+		D3D12_SHADER_VISIBILITY shaderStage, bool descriptorTable
 	) noexcept {
-		m_descriptorLayouts.at(registerSpace).AddSRV(registerSlot, descriptorCount, shaderStage);
+		m_descriptorLayouts.at(registerSpace).AddSRV(
+			registerSlot, descriptorCount, shaderStage, descriptorTable
+		);
 
 		return *this;
 	}
 	D3DDescriptorManager& AddUAV(
 		size_t registerSlot, size_t registerSpace, UINT descriptorCount,
-		D3D12_SHADER_VISIBILITY shaderStage
+		D3D12_SHADER_VISIBILITY shaderStage, bool descriptorTable
 	) noexcept {
-		m_descriptorLayouts.at(registerSpace).AddUAV(registerSlot, descriptorCount, shaderStage);
+		m_descriptorLayouts.at(registerSpace).AddUAV(
+			registerSlot, descriptorCount, shaderStage, descriptorTable
+		);
 
 		return *this;
 	}

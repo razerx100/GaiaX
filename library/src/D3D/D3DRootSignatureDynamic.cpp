@@ -149,12 +149,12 @@ void D3DRootSignatureDynamic::PopulateFromLayouts(const std::vector<D3DDescripto
 
 			const auto registerIndex = static_cast<UINT>(detailsIndex);
 
-			if (descriptorDetails.descriptorCount > 1u)
+			if (descriptorDetails.descriptorTable)
 				AddDescriptorTable(
 					descriptorDetails.type, descriptorDetails.descriptorCount,
 					descriptorDetails.visibility, registerIndex, registerSpace
 				);
-			else if (descriptorDetails.descriptorCount == 1u)
+			else
 			{
 				if (descriptorDetails.type == D3D12_DESCRIPTOR_RANGE_TYPE_CBV)
 					AddRootCBV(descriptorDetails.visibility, registerIndex, registerSpace);

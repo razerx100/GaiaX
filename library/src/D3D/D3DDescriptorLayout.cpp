@@ -11,7 +11,8 @@ void D3DDescriptorLayout::AddView(size_t registerSlot, const DescriptorDetails& 
             newSize, DescriptorDetails{
                 .visibility      = D3D12_SHADER_VISIBILITY_ALL,
                 .type            = D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
-                .descriptorCount = 0u
+                .descriptorCount = 0u,
+                .descriptorTable = true
             }
         );
         m_offsets.resize(newSize + 1u, 0u);
@@ -32,14 +33,16 @@ void D3DDescriptorLayout::AddView(size_t registerSlot, const DescriptorDetails& 
 }
 
 D3DDescriptorLayout& D3DDescriptorLayout::AddCBV(
-    size_t registerSlot, UINT descriptorCount, D3D12_SHADER_VISIBILITY shaderStage
+    size_t registerSlot, UINT descriptorCount, D3D12_SHADER_VISIBILITY shaderStage,
+    bool descriptorTable
 ) noexcept {
     AddView(
         registerSlot,
         DescriptorDetails{
             .visibility      = shaderStage,
             .type            = D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
-            .descriptorCount = descriptorCount
+            .descriptorCount = descriptorCount,
+            .descriptorTable = descriptorTable
         }
     );
 
@@ -47,14 +50,16 @@ D3DDescriptorLayout& D3DDescriptorLayout::AddCBV(
 }
 
 D3DDescriptorLayout& D3DDescriptorLayout::AddSRV(
-    size_t registerSlot, UINT descriptorCount, D3D12_SHADER_VISIBILITY shaderStage
+    size_t registerSlot, UINT descriptorCount, D3D12_SHADER_VISIBILITY shaderStage,
+    bool descriptorTable
 ) noexcept {
     AddView(
         registerSlot,
         DescriptorDetails{
             .visibility      = shaderStage,
             .type            = D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
-            .descriptorCount = descriptorCount
+            .descriptorCount = descriptorCount,
+            .descriptorTable = descriptorTable
         }
     );
 
@@ -62,14 +67,16 @@ D3DDescriptorLayout& D3DDescriptorLayout::AddSRV(
 }
 
 D3DDescriptorLayout& D3DDescriptorLayout::AddUAV(
-    size_t registerSlot, UINT descriptorCount, D3D12_SHADER_VISIBILITY shaderStage
+    size_t registerSlot, UINT descriptorCount, D3D12_SHADER_VISIBILITY shaderStage,
+    bool descriptorTable
 ) noexcept {
     AddView(
         registerSlot,
         DescriptorDetails{
             .visibility      = shaderStage,
             .type            = D3D12_DESCRIPTOR_RANGE_TYPE_UAV,
-            .descriptorCount = descriptorCount
+            .descriptorCount = descriptorCount,
+            .descriptorTable = descriptorTable
         }
     );
 
