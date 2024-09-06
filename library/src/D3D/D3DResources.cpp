@@ -55,8 +55,10 @@ Buffer::~Buffer() noexcept
 	SelfDestruct();
 }
 
-void Buffer::Create(UINT64 bufferSize, D3D12_RESOURCE_STATES initialState)
-{
+void Buffer::Create(
+	UINT64 bufferSize, D3D12_RESOURCE_STATES initialState,
+	D3D12_RESOURCE_FLAGS flags /* = D3D12_RESOURCE_FLAG_NONE */
+) {
 	D3D12_RESOURCE_DESC bufferDesc
 	{
 		.Dimension        = D3D12_RESOURCE_DIMENSION_BUFFER,
@@ -68,7 +70,7 @@ void Buffer::Create(UINT64 bufferSize, D3D12_RESOURCE_STATES initialState)
 		.Format           = DXGI_FORMAT_UNKNOWN,
 		.SampleDesc       = DXGI_SAMPLE_DESC{ .Count = 1u, .Quality = 0u },
 		.Layout           = D3D12_TEXTURE_LAYOUT_ROW_MAJOR,
-		.Flags            = D3D12_RESOURCE_FLAG_NONE
+		.Flags            = flags
 	};
 
 	// If the buffer pointer is already allocated, then free it.
@@ -97,6 +99,50 @@ void Buffer::SelfDestruct() noexcept
 	Deallocate(false);
 }
 
+D3D12_UNORDERED_ACCESS_VIEW_DESC Buffer::GetUAVDesc(
+	UINT elementCount, UINT strideSize, UINT64 firstElement/* = 0u */, bool raw/* = false */
+) noexcept {
+	return D3D12_UNORDERED_ACCESS_VIEW_DESC
+	{
+		.Format        = DXGI_FORMAT_UNKNOWN,
+		.ViewDimension = D3D12_UAV_DIMENSION_BUFFER,
+		.Buffer        = D3D12_BUFFER_UAV
+		{
+			.FirstElement        = firstElement,
+			.NumElements         = elementCount,
+			.StructureByteStride = strideSize,
+			.Flags               = raw ? D3D12_BUFFER_UAV_FLAG_RAW : D3D12_BUFFER_UAV_FLAG_NONE
+		}
+	};
+}
+
+D3D12_SHADER_RESOURCE_VIEW_DESC Buffer::GetSRVDesc(
+	UINT elementCount, UINT strideSize, UINT64 firstElement/* = 0u */, bool raw/* = false */
+) noexcept {
+	return D3D12_SHADER_RESOURCE_VIEW_DESC
+	{
+		.Format                  = DXGI_FORMAT_UNKNOWN,
+		.ViewDimension           = D3D12_SRV_DIMENSION_BUFFER,
+		.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
+		.Buffer                  = D3D12_BUFFER_SRV
+		{
+			.FirstElement        = firstElement,
+			.NumElements         = elementCount,
+			.StructureByteStride = strideSize,
+			.Flags               = raw ? D3D12_BUFFER_SRV_FLAG_RAW : D3D12_BUFFER_SRV_FLAG_NONE
+		}
+	};
+}
+
+D3D12_CONSTANT_BUFFER_VIEW_DESC Buffer::GetCBVDesc(UINT64 startingOffset, UINT bufferSize) const noexcept
+{
+	return D3D12_CONSTANT_BUFFER_VIEW_DESC
+	{
+		.BufferLocation = m_resource->GetGPUVirtualAddress() + startingOffset,
+		.SizeInBytes    = bufferSize
+	};
+}
+
 // Texture
 Texture::Texture(ID3D12Device* device, MemoryManager* memoryManager, D3D12_HEAP_TYPE memoryType)
 	: Resource{ device, memoryManager, memoryType }, m_format{ DXGI_FORMAT_UNKNOWN },
@@ -111,7 +157,7 @@ Texture::~Texture() noexcept
 void Texture::Create(
 	UINT64 width, UINT height, UINT16 depth, UINT16 mipLevels, DXGI_FORMAT textureFormat,
 	D3D12_RESOURCE_DIMENSION resourceDimension, D3D12_RESOURCE_STATES initialState,
-	const D3D12_CLEAR_VALUE* clearValue, bool msaa
+	D3D12_RESOURCE_FLAGS flags, const D3D12_CLEAR_VALUE* clearValue, bool msaa
 ) {
 	m_width  = width;
 	m_height = height;
@@ -134,7 +180,7 @@ void Texture::Create(
 		.Format           = textureFormat,
 		.SampleDesc       = DXGI_SAMPLE_DESC{ .Count = 1u, .Quality = 0u },
 		.Layout           =	D3D12_TEXTURE_LAYOUT_UNKNOWN,
-		.Flags            = D3D12_RESOURCE_FLAG_NONE
+		.Flags            = flags
 	};
 
 	// If the texture pointer is already allocated, then free it.
@@ -149,22 +195,24 @@ void Texture::Create(
 void Texture::Create2D(
 	UINT64 width, UINT height, UINT16 mipLevels, DXGI_FORMAT textureFormat,
 	D3D12_RESOURCE_STATES initialState,
+	D3D12_RESOURCE_FLAGS flags /* = D3D12_RESOURCE_FLAG_NONE */,
 	bool msaa /* = false */ , const D3D12_CLEAR_VALUE* clearValue /* = nullptr */
 ) {
 	Create(
 		width, height, 1u, mipLevels, textureFormat, D3D12_RESOURCE_DIMENSION_TEXTURE2D,
-		initialState, clearValue, msaa
+		initialState, flags, clearValue, msaa
 	);
 }
 
 void Texture::Create3D(
 	UINT64 width, UINT height, UINT16 depth, UINT16 mipLevels, DXGI_FORMAT textureFormat,
 	D3D12_RESOURCE_STATES initialState,
+	D3D12_RESOURCE_FLAGS flags /* = D3D12_RESOURCE_FLAG_NONE */,
 	bool msaa /* = false */ , const D3D12_CLEAR_VALUE* clearValue /* = nullptr */
 ) {
 	Create(
 		width, height, depth, mipLevels, textureFormat, D3D12_RESOURCE_DIMENSION_TEXTURE3D,
-		initialState, clearValue, msaa
+		initialState, flags, clearValue, msaa
 	);
 }
 
@@ -177,6 +225,64 @@ void Texture::Destroy() noexcept
 void Texture::SelfDestruct() noexcept
 {
 	Deallocate(m_msaa);
+}
+
+D3D12_SHADER_RESOURCE_VIEW_DESC Texture::GetSRVDesc(
+	UINT mostDetailedMip /* = 0u */, UINT mipLevels /* = 1u */
+) const noexcept {
+	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc
+	{
+		.Format                  = m_format,
+		.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING
+	};
+
+	if (m_depth > 1u)
+	{
+		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE3D,
+		srvDesc.Texture3D     = D3D12_TEX3D_SRV
+		{
+			.MostDetailedMip = mostDetailedMip,
+			.MipLevels       = mipLevels
+		};
+	}
+	else
+	{
+		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D,
+		srvDesc.Texture2D     = D3D12_TEX2D_SRV
+		{
+			.MostDetailedMip = mostDetailedMip,
+			.MipLevels       = mipLevels
+		};
+	}
+
+	return srvDesc;
+}
+
+D3D12_UNORDERED_ACCESS_VIEW_DESC Texture::GetUAVDesc(UINT mipSlice/* = 0u */) const noexcept
+{
+	D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc
+	{
+		.Format = m_format
+	};
+
+	if (m_depth > 1u)
+	{
+		uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE3D,
+		uavDesc.Texture3D     = D3D12_TEX3D_UAV
+		{
+			.MipSlice = mipSlice
+		};
+	}
+	else
+	{
+		uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D,
+		uavDesc.Texture2D     = D3D12_TEX2D_UAV
+		{
+			.MipSlice = mipSlice
+		};
+	}
+
+	return uavDesc;
 }
 
 UINT64 Texture::GetBufferSize() const noexcept

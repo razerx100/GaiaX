@@ -69,7 +69,10 @@ public:
 	Buffer(ID3D12Device* device, MemoryManager* memoryManager, D3D12_HEAP_TYPE memoryType);
 	~Buffer() noexcept;
 
-	void Create(UINT64 bufferSize, D3D12_RESOURCE_STATES initialState);
+	void Create(
+		UINT64 bufferSize, D3D12_RESOURCE_STATES initialState,
+		D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE
+	);
 
 	void Destroy() noexcept;
 
@@ -77,6 +80,22 @@ public:
 	std::uint8_t* CPUHandle() const noexcept { return m_cpuHandle; }
 	[[nodiscard]]
 	UINT64 BufferSize() const noexcept { return m_bufferSize; }
+	[[nodiscard]]
+	D3D12_GPU_VIRTUAL_ADDRESS GetGPUAddress() const noexcept
+	{
+		return m_resource->GetGPUVirtualAddress();
+	}
+
+	[[nodiscard]]
+	static D3D12_UNORDERED_ACCESS_VIEW_DESC GetUAVDesc(
+		UINT elementCount, UINT strideSize, UINT64 firstElement = 0u, bool raw = false
+	) noexcept;
+	[[nodiscard]]
+	static D3D12_SHADER_RESOURCE_VIEW_DESC GetSRVDesc(
+		UINT elementCount, UINT strideSize, UINT64 firstElement = 0u, bool raw = false
+	) noexcept;
+	[[nodiscard]]
+	D3D12_CONSTANT_BUFFER_VIEW_DESC GetCBVDesc(UINT64 startingOffset, UINT bufferSize) const noexcept;
 
 private:
 	void SelfDestruct() noexcept;
@@ -116,11 +135,14 @@ public:
 	void Create2D(
 		UINT64 width, UINT height, UINT16 mipLevels, DXGI_FORMAT textureFormat,
 		D3D12_RESOURCE_STATES initialState,
+		D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE,
 		bool msaa = false, const D3D12_CLEAR_VALUE* clearValue = nullptr
 	);
 	void Create3D(
 		UINT64 width, UINT height, UINT16 depth, UINT16 mipLevels, DXGI_FORMAT textureFormat,
-		D3D12_RESOURCE_STATES initialState, bool msaa = false,
+		D3D12_RESOURCE_STATES initialState,
+		D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE,
+		bool msaa = false,
 		const D3D12_CLEAR_VALUE* clearValue = nullptr
 	);
 
@@ -136,6 +158,13 @@ public:
 	UINT64 GetDepth() const noexcept { return m_depth; }
 
 	[[nodiscard]]
+	D3D12_SHADER_RESOURCE_VIEW_DESC GetSRVDesc(
+		UINT mostDetailedMip = 0u, UINT mipLevels = 1u
+	) const noexcept;
+	[[nodiscard]]
+	D3D12_UNORDERED_ACCESS_VIEW_DESC GetUAVDesc(UINT mipSlice = 0u) const noexcept;
+
+	[[nodiscard]]
 	// The allocation size will be different. This will return the Size of the Texture
 	// if it were to fit in a Buffer.
 	UINT64 GetBufferSize() const noexcept;
@@ -144,7 +173,7 @@ private:
 	void Create(
 		UINT64 width, UINT height, UINT16 depth, UINT16 mipLevels, DXGI_FORMAT textureFormat,
 		D3D12_RESOURCE_DIMENSION resourceDimension, D3D12_RESOURCE_STATES initialState,
-		const D3D12_CLEAR_VALUE* clearValue, bool msaa
+		D3D12_RESOURCE_FLAGS flags, const D3D12_CLEAR_VALUE* clearValue, bool msaa
 	);
 
 	void SelfDestruct() noexcept;
