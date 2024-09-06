@@ -25,7 +25,11 @@ void D3DDescriptorLayout::AddView(size_t registerSlot, const DescriptorDetails& 
     for (size_t index = 0u; index < std::size(m_descriptorDetails); ++index)
     {
         m_offsets[index] = offset;
-        offset          += m_descriptorDetails[index].descriptorCount;
+
+        const DescriptorDetails& descDetails = m_descriptorDetails[index];
+        // Root descriptors don't need descriptor handles. So, no need to add the descriptor count.
+        if (descDetails.descriptorTable)
+            offset += descDetails.descriptorCount;
     }
 
     // The last offset will be used as the total descriptor count.
