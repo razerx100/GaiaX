@@ -36,9 +36,8 @@ void D3DDescriptorLayout::AddView(size_t registerSlot, const DescriptorDetails& 
     m_offsets.back() = offset;
 }
 
-D3DDescriptorLayout& D3DDescriptorLayout::AddCBV(
-    size_t registerSlot, UINT descriptorCount, D3D12_SHADER_VISIBILITY shaderStage,
-    bool descriptorTable
+D3DDescriptorLayout& D3DDescriptorLayout::AddCBVTable(
+    size_t registerSlot, UINT descriptorCount, D3D12_SHADER_VISIBILITY shaderStage
 ) noexcept {
     AddView(
         registerSlot,
@@ -46,16 +45,15 @@ D3DDescriptorLayout& D3DDescriptorLayout::AddCBV(
             .visibility      = shaderStage,
             .type            = D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
             .descriptorCount = descriptorCount,
-            .descriptorTable = descriptorTable
+            .descriptorTable = true
         }
     );
 
     return *this;
 }
 
-D3DDescriptorLayout& D3DDescriptorLayout::AddSRV(
-    size_t registerSlot, UINT descriptorCount, D3D12_SHADER_VISIBILITY shaderStage,
-    bool descriptorTable
+D3DDescriptorLayout& D3DDescriptorLayout::AddSRVTable(
+    size_t registerSlot, UINT descriptorCount, D3D12_SHADER_VISIBILITY shaderStage
 ) noexcept {
     AddView(
         registerSlot,
@@ -63,16 +61,15 @@ D3DDescriptorLayout& D3DDescriptorLayout::AddSRV(
             .visibility      = shaderStage,
             .type            = D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
             .descriptorCount = descriptorCount,
-            .descriptorTable = descriptorTable
+            .descriptorTable = true
         }
     );
 
     return *this;
 }
 
-D3DDescriptorLayout& D3DDescriptorLayout::AddUAV(
-    size_t registerSlot, UINT descriptorCount, D3D12_SHADER_VISIBILITY shaderStage,
-    bool descriptorTable
+D3DDescriptorLayout& D3DDescriptorLayout::AddUAVTable(
+    size_t registerSlot, UINT descriptorCount, D3D12_SHADER_VISIBILITY shaderStage
 ) noexcept {
     AddView(
         registerSlot,
@@ -80,7 +77,55 @@ D3DDescriptorLayout& D3DDescriptorLayout::AddUAV(
             .visibility      = shaderStage,
             .type            = D3D12_DESCRIPTOR_RANGE_TYPE_UAV,
             .descriptorCount = descriptorCount,
-            .descriptorTable = descriptorTable
+            .descriptorTable = true
+        }
+    );
+
+    return *this;
+}
+
+D3DDescriptorLayout& D3DDescriptorLayout::AddRootCBV(
+    size_t registerSlot, D3D12_SHADER_VISIBILITY shaderStage
+) noexcept {
+    AddView(
+        registerSlot,
+        DescriptorDetails{
+            .visibility      = shaderStage,
+            .type            = D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
+            .descriptorCount = 0u,
+            .descriptorTable = false
+        }
+    );
+
+    return *this;
+}
+
+D3DDescriptorLayout& D3DDescriptorLayout::AddRootSRV(
+    size_t registerSlot, D3D12_SHADER_VISIBILITY shaderStage
+) noexcept {
+    AddView(
+        registerSlot,
+        DescriptorDetails{
+            .visibility      = shaderStage,
+            .type            = D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
+            .descriptorCount = 0u,
+            .descriptorTable = false
+        }
+    );
+
+    return *this;
+}
+
+D3DDescriptorLayout& D3DDescriptorLayout::AddRootUAV(
+    size_t registerSlot, D3D12_SHADER_VISIBILITY shaderStage
+) noexcept {
+    AddView(
+        registerSlot,
+        DescriptorDetails{
+            .visibility      = shaderStage,
+            .type            = D3D12_DESCRIPTOR_RANGE_TYPE_UAV,
+            .descriptorCount = 0u,
+            .descriptorTable = false
         }
     );
 

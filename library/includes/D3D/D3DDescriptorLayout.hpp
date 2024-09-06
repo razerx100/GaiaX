@@ -17,18 +17,18 @@ public:
 public:
 	D3DDescriptorLayout() : m_descriptorDetails{}, m_offsets{ 0u } {}
 
-	D3DDescriptorLayout& AddCBV(
-		size_t registerSlot, UINT descriptorCount, D3D12_SHADER_VISIBILITY shaderStage,
-		bool descriptorTable
+	D3DDescriptorLayout& AddCBVTable(
+		size_t registerSlot, UINT descriptorCount, D3D12_SHADER_VISIBILITY shaderStage
 	) noexcept;
-	D3DDescriptorLayout& AddSRV(
-		size_t registerSlot, UINT descriptorCount, D3D12_SHADER_VISIBILITY shaderStage,
-		bool descriptorTable
+	D3DDescriptorLayout& AddSRVTable(
+		size_t registerSlot, UINT descriptorCount, D3D12_SHADER_VISIBILITY shaderStage
 	) noexcept;
-	D3DDescriptorLayout& AddUAV(
-		size_t registerSlot, UINT descriptorCount, D3D12_SHADER_VISIBILITY shaderStage,
-		bool descriptorTable
+	D3DDescriptorLayout& AddUAVTable(
+		size_t registerSlot, UINT descriptorCount, D3D12_SHADER_VISIBILITY shaderStage
 	) noexcept;
+	D3DDescriptorLayout& AddRootCBV(size_t registerSlot, D3D12_SHADER_VISIBILITY shaderStage) noexcept;
+	D3DDescriptorLayout& AddRootSRV(size_t registerSlot, D3D12_SHADER_VISIBILITY shaderStage) noexcept;
+	D3DDescriptorLayout& AddRootUAV(size_t registerSlot, D3D12_SHADER_VISIBILITY shaderStage) noexcept;
 
 	[[nodiscard]]
 	DescriptorDetails GetDescriptorDetails(size_t registerSlot) const noexcept

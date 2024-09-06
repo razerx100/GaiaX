@@ -412,6 +412,15 @@ D3DDescriptorMap& D3DDescriptorMap::SetDescTableCom(UINT rootIndex, UINT descrip
 }
 
 // D3D Descriptor Manager
+D3DDescriptorManager::D3DDescriptorManager(ID3D12Device* device, size_t layoutCount)
+    : m_resourceHeapGPU{
+        device, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE
+    }, m_descriptorMap{},
+    m_resourceHeapCPU{
+        device, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE
+    }, m_descriptorLayouts{ layoutCount, D3DDescriptorLayout{} }
+{}
+
 void D3DDescriptorManager::CreateDescriptors()
 {
     UINT totalDescriptorCount = 0u;
@@ -549,7 +558,7 @@ UINT D3DDescriptorManager::GetRootIndex(size_t slotIndex, size_t layoutIndex) co
     auto rootIndex = static_cast<UINT>(slotIndex);
 
     for (size_t index = 0u; index < layoutIndex; ++index)
-        rootIndex += m_descriptorLayouts[index].GetDescriptorDetailsCount();
+        rootIndex += static_cast<UINT>(m_descriptorLayouts[index].GetDescriptorDetailsCount());
 
     return rootIndex;
 }

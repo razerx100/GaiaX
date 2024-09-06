@@ -257,42 +257,50 @@ public:
 class D3DDescriptorManager
 {
 public:
-	D3DDescriptorManager(ID3D12Device* device, size_t layoutCount)
-		: m_resourceHeapGPU{
-			device, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE
-		}, m_descriptorMap{},
-		m_resourceHeapCPU{
-			device, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE
-		}, m_descriptorLayouts{ layoutCount, D3DDescriptorLayout{} }
-	{}
+	D3DDescriptorManager(ID3D12Device* device, size_t layoutCount);
 
-	D3DDescriptorManager& AddCBV(
+	D3DDescriptorManager& AddCBVTable(
 		size_t registerSlot, size_t registerSpace, UINT descriptorCount,
-		D3D12_SHADER_VISIBILITY shaderStage, bool descriptorTable
+		D3D12_SHADER_VISIBILITY shaderStage
 	) noexcept {
-		m_descriptorLayouts.at(registerSpace).AddCBV(
-			registerSlot, descriptorCount, shaderStage, descriptorTable
-		);
+		m_descriptorLayouts.at(registerSpace).AddCBVTable(registerSlot, descriptorCount, shaderStage);
 
 		return *this;
 	}
-	D3DDescriptorManager& AddSRV(
+	D3DDescriptorManager& AddSRVTable(
 		size_t registerSlot, size_t registerSpace, UINT descriptorCount,
-		D3D12_SHADER_VISIBILITY shaderStage, bool descriptorTable
+		D3D12_SHADER_VISIBILITY shaderStage
 	) noexcept {
-		m_descriptorLayouts.at(registerSpace).AddSRV(
-			registerSlot, descriptorCount, shaderStage, descriptorTable
-		);
+		m_descriptorLayouts.at(registerSpace).AddSRVTable(registerSlot, descriptorCount, shaderStage);
 
 		return *this;
 	}
-	D3DDescriptorManager& AddUAV(
+	D3DDescriptorManager& AddUAVTable(
 		size_t registerSlot, size_t registerSpace, UINT descriptorCount,
-		D3D12_SHADER_VISIBILITY shaderStage, bool descriptorTable
+		D3D12_SHADER_VISIBILITY shaderStage
 	) noexcept {
-		m_descriptorLayouts.at(registerSpace).AddUAV(
-			registerSlot, descriptorCount, shaderStage, descriptorTable
-		);
+		m_descriptorLayouts.at(registerSpace).AddUAVTable(registerSlot, descriptorCount, shaderStage);
+
+		return *this;
+	}
+	D3DDescriptorManager& AddRootCBV(
+		size_t registerSlot, size_t registerSpace, D3D12_SHADER_VISIBILITY shaderStage
+	) noexcept {
+		m_descriptorLayouts.at(registerSpace).AddRootCBV(registerSlot, shaderStage);
+
+		return *this;
+	}
+	D3DDescriptorManager& AddRootSRV(
+		size_t registerSlot, size_t registerSpace, D3D12_SHADER_VISIBILITY shaderStage
+	) noexcept {
+		m_descriptorLayouts.at(registerSpace).AddRootSRV(registerSlot, shaderStage);
+
+		return *this;
+	}
+	D3DDescriptorManager& AddRootUAV(
+		size_t registerSlot, size_t registerSpace, D3D12_SHADER_VISIBILITY shaderStage
+	) noexcept {
+		m_descriptorLayouts.at(registerSpace).AddRootUAV(registerSlot, shaderStage);
 
 		return *this;
 	}

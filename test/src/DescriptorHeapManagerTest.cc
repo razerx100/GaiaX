@@ -114,13 +114,13 @@ TEST_F(DescriptorHeapManagerTest, DescriptorLayoutTest)
 
 	EXPECT_EQ(layout.GetTotalDescriptorCount(), 0u) << "Total descriptor count isn't 0.";
 
-	layout.AddSRV(0u, 10, D3D12_SHADER_VISIBILITY_AMPLIFICATION, true);
+	layout.AddSRVTable(0u, 10, D3D12_SHADER_VISIBILITY_AMPLIFICATION);
 	EXPECT_EQ(layout.GetTotalDescriptorCount(), 10u) << "Total descriptor count isn't 10.";
 
-	layout.AddUAV(2u, 12, D3D12_SHADER_VISIBILITY_AMPLIFICATION, true);
+	layout.AddUAVTable(2u, 12, D3D12_SHADER_VISIBILITY_AMPLIFICATION);
 	EXPECT_EQ(layout.GetTotalDescriptorCount(), 22u) << "Total descriptor count isn't 22.";
 
-	layout.AddCBV(1u, 11, D3D12_SHADER_VISIBILITY_AMPLIFICATION, true);
+	layout.AddCBVTable(1u, 11, D3D12_SHADER_VISIBILITY_AMPLIFICATION);
 	EXPECT_EQ(layout.GetTotalDescriptorCount(), 33u) << "Total descriptor count isn't 33.";
 
 	EXPECT_EQ(layout.GetSlotOffset(0u), 0u) << "Slot offset for the slot 0 isn't 0.";
@@ -138,12 +138,12 @@ TEST_F(DescriptorHeapManagerTest, DescriptorManagerTest)
 
 		D3DDescriptorManager descriptorManger{ device, layoutCount };
 
-		descriptorManger.AddSRV(0u, 1u, 5u, D3D12_SHADER_VISIBILITY_PIXEL, true);
-		descriptorManger.AddUAV(0u, 0u, 1u, D3D12_SHADER_VISIBILITY_MESH, true);
-		descriptorManger.AddUAV(1u, 0u, 2u, D3D12_SHADER_VISIBILITY_MESH, true);
-		descriptorManger.AddSRV(2u, 0u, 1u, D3D12_SHADER_VISIBILITY_MESH, false);
-		descriptorManger.AddCBV(3u, 0u, 1u, D3D12_SHADER_VISIBILITY_MESH, false);
-		descriptorManger.AddSRV(0u, 2u, 1u, D3D12_SHADER_VISIBILITY_MESH, true);
+		descriptorManger.AddSRVTable(0u, 1u, 5u, D3D12_SHADER_VISIBILITY_PIXEL);
+		descriptorManger.AddUAVTable(0u, 0u, 1u, D3D12_SHADER_VISIBILITY_MESH);
+		descriptorManger.AddUAVTable(1u, 0u, 2u, D3D12_SHADER_VISIBILITY_MESH);
+		descriptorManger.AddRootSRV(2u, 0u, D3D12_SHADER_VISIBILITY_MESH);
+		descriptorManger.AddRootCBV(3u, 0u, D3D12_SHADER_VISIBILITY_MESH);
+		descriptorManger.AddSRVTable(0u, 2u, 1u, D3D12_SHADER_VISIBILITY_MESH);
 
 		descriptorManger.CreateDescriptors();
 
