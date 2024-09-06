@@ -341,7 +341,7 @@ public:
 	) const noexcept;
 
 	[[nodiscard]]
-	const std::vector<D3DDescriptorLayout> GetLayouts() const noexcept { return m_descriptorLayouts; }
+	const std::vector<D3DDescriptorLayout>& GetLayouts() const noexcept { return m_descriptorLayouts; }
 
 private:
 	[[nodiscard]]
