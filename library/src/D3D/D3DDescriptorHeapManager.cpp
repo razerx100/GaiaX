@@ -549,7 +549,7 @@ UINT D3DDescriptorManager::GetRootIndex(size_t slotIndex, size_t layoutIndex) co
     auto rootIndex = static_cast<UINT>(slotIndex);
 
     for (size_t index = 0u; index < layoutIndex; ++index)
-        rootIndex += m_descriptorLayouts[index].GetTotalDescriptorCount();
+        rootIndex += m_descriptorLayouts[index].GetDescriptorDetailsCount();
 
     return rootIndex;
 }
