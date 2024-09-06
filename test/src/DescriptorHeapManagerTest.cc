@@ -1,6 +1,7 @@
 #include <DeviceManager.hpp>
 #include <D3DDescriptorHeapManager.hpp>
 #include <D3DResources.hpp>
+#include <D3DRootSignature.hpp>
 #include <gtest/gtest.h>
 #include <memory>
 
@@ -129,15 +130,78 @@ TEST_F(DescriptorHeapManagerTest, DescriptorLayoutTest)
 
 TEST_F(DescriptorHeapManagerTest, DescriptorManagerTest)
 {
-	ID3D12Device* device = s_deviceManager->GetDevice();
+	ID3D12Device* device   = s_deviceManager->GetDevice();
+	IDXGIAdapter3* adapter = s_deviceManager->GetAdapter();
 
 	{
-		const size_t layoutCount = 2u;
+		const size_t layoutCount = 3u;
 
 		D3DDescriptorManager descriptorManger{ device, layoutCount };
 
-		descriptorManger.AddSRV(0u, 1u, 5u, D3D12_SHADER_VISIBILITY_MESH, true);
+		descriptorManger.AddSRV(0u, 1u, 5u, D3D12_SHADER_VISIBILITY_PIXEL, true);
+		descriptorManger.AddUAV(0u, 0u, 1u, D3D12_SHADER_VISIBILITY_MESH, true);
+		descriptorManger.AddUAV(1u, 0u, 2u, D3D12_SHADER_VISIBILITY_MESH, true);
+		descriptorManger.AddSRV(2u, 0u, 1u, D3D12_SHADER_VISIBILITY_MESH, false);
+		descriptorManger.AddCBV(3u, 0u, 1u, D3D12_SHADER_VISIBILITY_MESH, false);
+		descriptorManger.AddSRV(0u, 2u, 1u, D3D12_SHADER_VISIBILITY_MESH, true);
 
 		descriptorManger.CreateDescriptors();
+
+		MemoryManager memoryManager{ adapter, device, 20_MB, 200_KB };
+
+		Buffer testBuffer1{ device, &memoryManager, D3D12_HEAP_TYPE_DEFAULT };
+		testBuffer1.Create(
+			200_B, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
+			D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS
+		);
+
+		Buffer testBuffer2{ device, &memoryManager, D3D12_HEAP_TYPE_DEFAULT };
+		testBuffer2.Create(
+			200_B, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
+			D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS
+		);
+
+		Buffer testBuffer3{ device, &memoryManager, D3D12_HEAP_TYPE_DEFAULT };
+		testBuffer3.Create(200_B, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+
+		Buffer testBuffer4{ device, &memoryManager, D3D12_HEAP_TYPE_DEFAULT };
+		testBuffer4.Create(200_B, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+
+		Buffer testBuffer5{ device, &memoryManager, D3D12_HEAP_TYPE_DEFAULT };
+		testBuffer5.Create(200_B, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+
+		Texture testTexture{ device, &memoryManager, D3D12_HEAP_TYPE_DEFAULT };
+		testTexture.Create2D(
+			1280u, 720u, 1u, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
+		);
+
+		Texture testTexture1{ device, &memoryManager, D3D12_HEAP_TYPE_DEFAULT };
+		testTexture1.Create3D(
+			1280u, 720u, 5u, 1u, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
+		);
+
+		descriptorManger.SetDescriptorTable(0u, 1u, 0u, true);
+		descriptorManger.SetDescriptorTable(0u, 0u, 0u, true);
+		descriptorManger.SetDescriptorTable(1u, 0u, 0u, true);
+		descriptorManger.SetDescriptorTable(0u, 2u, 0u, true);
+		descriptorManger.SetRootSRV(2u, 0u, testBuffer3.GetGPUAddress(), true);
+		descriptorManger.SetRootCBV(3u, 0u, testBuffer4.GetGPUAddress(), true);
+
+		descriptorManger.CreateSRV(0u, 1u, 2u, testTexture.Get(), testTexture.GetSRVDesc());
+		descriptorManger.CreateSRV(0u, 1u, 3u, testTexture1.Get(), testTexture1.GetSRVDesc());
+		descriptorManger.CreateUAV(0u, 0u, 0u, testBuffer1.Get(), nullptr, Buffer::GetUAVDesc(10u, 20u));
+		descriptorManger.CreateUAV(1u, 0u, 1u, testBuffer2.Get(), nullptr, Buffer::GetUAVDesc(10u, 20u));
+		descriptorManger.CreateSRV(0u, 2u, 0u, testBuffer5.Get(), Buffer::GetSRVDesc(10u, 20u));
+
+		{
+			D3DRootSignatureDynamic rsDynamic{};
+
+			rsDynamic.PopulateFromLayouts(descriptorManger.GetLayouts());
+			rsDynamic.CompileSignature(RSCompileFlagBuilder{}.MeshShader(), BindlessLevel::UnboundArray);
+
+			D3DRootSignature rootSignature{};
+			rootSignature.CreateSignature(device, rsDynamic);
+		}
 	}
 }
