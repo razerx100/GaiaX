@@ -38,6 +38,21 @@ public:
 	}
 };
 
+// The command list will be reset at creation of an object and closed at destruction.
+struct CommandListScope
+{
+	CommandListScope(const D3DCommandList& commandList) : m_commandList{ commandList }
+	{
+		m_commandList.Reset();
+	}
+
+	~CommandListScope() noexcept { m_commandList.Close(); }
+
+	const D3DCommandList& m_commandList;
+
+	operator const D3DCommandList& () const noexcept { return m_commandList; }
+};
+
 class D3DCommandQueue
 {
 public:
