@@ -1,8 +1,8 @@
 #include <D3DFence.hpp>
 
-void D3DFence::Create(UINT64 initialValue/* = 0u */)
+void D3DFence::Create(ID3D12Device* device, UINT64 initialValue/* = 0u */)
 {
-	m_device->CreateFence(initialValue, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_fence));
+	device->CreateFence(initialValue, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_fence));
 
 	m_fenceCPUEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
 }

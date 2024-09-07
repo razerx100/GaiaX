@@ -6,9 +6,9 @@
 class D3DFence
 {
 public:
-	D3DFence(ID3D12Device* device) : m_device{ device }, m_fence{}, m_fenceCPUEvent{ nullptr } {}
+	D3DFence() : m_fence{}, m_fenceCPUEvent{ nullptr } {}
 
-	void Create(UINT64 initialValue = 0u);
+	void Create(ID3D12Device* device, UINT64 initialValue = 0u);
 
 	void Signal(UINT64 signalValue) const;
 	void Wait(UINT64 waitValue) const;
@@ -19,7 +19,6 @@ public:
 	ID3D12Fence* Get() const noexcept { return m_fence.Get(); }
 
 private:
-	ID3D12Device*       m_device;
 	ComPtr<ID3D12Fence> m_fence;
 	HANDLE              m_fenceCPUEvent;
 
@@ -28,12 +27,11 @@ public:
 	D3DFence& operator=(const D3DFence&) = delete;
 
 	D3DFence(D3DFence&& other) noexcept
-		: m_device{ other.m_device }, m_fence{ std::move(other.m_fence) },
+		: m_fence{ std::move(other.m_fence) },
 		m_fenceCPUEvent{ std::exchange(other.m_fenceCPUEvent, nullptr) }
 	{}
 	D3DFence& operator=(D3DFence&& other) noexcept
 	{
-		m_device        = other.m_device;
 		m_fence         = std::move(other.m_fence);
 		m_fenceCPUEvent = std::exchange(other.m_fenceCPUEvent, nullptr);
 
