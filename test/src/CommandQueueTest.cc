@@ -4,6 +4,12 @@
 #include <memory>
 
 #include <D3DCommandQueue.hpp>
+#include <D3DFence.hpp>
+
+namespace Constants
+{
+	constexpr size_t bufferCount = 2u;
+}
 
 class CommandQueueTest : public ::testing::Test
 {
@@ -36,4 +42,37 @@ TEST_F(CommandQueueTest, CommandListTest)
 	cmdList.Create(device, D3D12_COMMAND_LIST_TYPE_DIRECT);
 
 	EXPECT_NE(cmdList.Get(), nullptr) << "CommandList creation failed.";
+}
+
+TEST_F(CommandQueueTest, BasicCommandQueueTest)
+{
+	ID3D12Device5* device = s_deviceManager->GetDevice();
+
+	D3D12_COMMAND_LIST_TYPE type = D3D12_COMMAND_LIST_TYPE_DIRECT;
+
+	D3DCommandQueue queue{};
+	queue.Create(device, type, Constants::bufferCount);
+
+	{
+		type = D3D12_COMMAND_LIST_TYPE_COMPUTE;
+
+		D3DCommandQueue queue1{};
+		queue1.Create(device, type, Constants::bufferCount);
+
+		queue = std::move(queue1);
+	}
+
+	EXPECT_NE(queue.GetCommandList(1u).Get(), nullptr) << "CommandList creation failed.";
+
+	D3DFence fence{};
+	fence.Create(device);
+
+	D3DCommandList& commandList0 = queue.GetCommandList(0u);
+	commandList0.Reset();
+	commandList0.Close();
+
+	queue.ExecuteCommandLists(commandList0.Get());
+	queue.Signal(fence.Get(), 1u);
+
+	fence.Wait(1u);
 }

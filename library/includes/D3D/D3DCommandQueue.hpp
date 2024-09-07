@@ -2,6 +2,7 @@
 #define D3D_COMMAND_QUEUE_HPP_
 #include <D3DHeaders.hpp>
 #include <utility>
+#include <vector>
 
 class D3DCommandList
 {
@@ -56,16 +57,42 @@ struct CommandListScope
 class D3DCommandQueue
 {
 public:
-	D3DCommandQueue(ID3D12Device* device, D3D12_COMMAND_LIST_TYPE type);
+	D3DCommandQueue() : m_commandQueue{}, m_commandLists{} {}
 
-	void SignalCommandQueue(ID3D12Fence* fence, UINT64 fenceValue) const;
-	void WaitOnGPU(ID3D12Fence* fence, UINT64 fenceValue) const;
+	void Create(
+		ID3D12Device4* device, D3D12_COMMAND_LIST_TYPE type, size_t bufferCount
+	);
+
+	void Signal(ID3D12Fence* fence, UINT64 signalValue) const;
+	void Wait(ID3D12Fence* fence, UINT64 waitValue) const;
+
 	void ExecuteCommandLists(ID3D12GraphicsCommandList* commandList) const noexcept;
 
 	[[nodiscard]]
-	ID3D12CommandQueue* GetQueue() const noexcept;
+	ID3D12CommandQueue* GetQueue() const noexcept { return m_commandQueue.Get(); }
+	[[nodiscard]]
+	D3DCommandList& GetCommandList(size_t index) noexcept { return m_commandLists[index]; }
+	[[nodiscard]]
+	const D3DCommandList& GetCommandList(size_t index) const noexcept { return m_commandLists[index]; }
 
 private:
-	ComPtr<ID3D12CommandQueue> m_pCommandQueue;
+	ComPtr<ID3D12CommandQueue>  m_commandQueue;
+	std::vector<D3DCommandList> m_commandLists;
+
+public:
+	D3DCommandQueue(const D3DCommandQueue&) = delete;
+	D3DCommandQueue& operator=(const D3DCommandQueue&) = delete;
+
+	D3DCommandQueue(D3DCommandQueue&& other) noexcept
+		: m_commandQueue{ std::move(other.m_commandQueue) },
+		m_commandLists{ std::move(other.m_commandLists) }
+	{}
+	D3DCommandQueue& operator=(D3DCommandQueue&& other) noexcept
+	{
+		m_commandQueue = std::move(other.m_commandQueue);
+		m_commandLists = std::move(other.m_commandLists);
+
+		return *this;
+	}
 };
 #endif
