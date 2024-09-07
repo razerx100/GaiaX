@@ -13,10 +13,8 @@ void D3DCommandList::Create(ID3D12Device4* device, D3D12_COMMAND_LIST_TYPE type)
 	ComPtr<ID3D12GraphicsCommandList> commandList{};
 
 	device->CreateCommandList1(
-		0u, type, D3D12_COMMAND_LIST_FLAG_NONE, IID_PPV_ARGS(&commandList)
+		0u, type, D3D12_COMMAND_LIST_FLAG_NONE, IID_PPV_ARGS(&m_commandList)
 	);
-
-	commandList->QueryInterface(IID_PPV_ARGS(&m_commandList));
 }
 
 void D3DCommandList::Reset() const

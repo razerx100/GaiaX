@@ -1,8 +1,7 @@
 #ifndef D3D_COMMAND_QUEUE_HPP_
 #define D3D_COMMAND_QUEUE_HPP_
 #include <D3DHeaders.hpp>
-#include <vector>
-#include <optional>
+#include <utility>
 
 class D3DCommandList
 {
