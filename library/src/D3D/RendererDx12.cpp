@@ -103,14 +103,14 @@ void RendererDx12::Resize(std::uint32_t width, std::uint32_t height) {
 
 		ID3D12Device* deviceRef = Gaia::device->GetDevice();
 
-		UINT64 fenceValue = Gaia::graphicsFence->GetFrontValue();
+		//UINT64 fenceValue = Gaia::graphicsFence->GetFrontValue();
 
-		Gaia::graphicsQueue->SignalCommandQueue(Gaia::graphicsFence->GetFence(), fenceValue);
-		Gaia::graphicsFence->WaitOnCPU();
+		//Gaia::graphicsQueue->SignalCommandQueue(Gaia::graphicsFence->GetFence(), fenceValue);
+		//Gaia::graphicsFence->WaitOnCPU();
 
 		Gaia::swapChain->Resize(deviceRef, width, height);
 
-		Gaia::graphicsFence->ResetFenceValues(fenceValue + 1u);
+		//Gaia::graphicsFence->ResetFenceValues(fenceValue + 1u);
 
 		Gaia::renderEngine->CreateDepthBufferView(deviceRef, width, height);
 		Gaia::renderEngine->ResizeViewportAndScissor(width, height);
@@ -220,12 +220,14 @@ void RendererDx12::RemoveTexture(size_t index) {}
 void RendererDx12::WaitForGPUToFinish()
 {
 	// Current frame's value is already checked. So, check the rest
+	/*
 	for (std::uint32_t _ = 0u; _ < m_bufferCount - 1u; ++_) {
 		Gaia::graphicsFence->AdvanceValueInQueue();
 		Gaia::graphicsFence->WaitOnCPUConditional();
 		Gaia::computeFence->AdvanceValueInQueue();
 		Gaia::computeFence->WaitOnCPUConditional();
 	}
+	*/
 }
 
 std::uint32_t RendererDx12::AddModelBundle(

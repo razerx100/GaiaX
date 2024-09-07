@@ -109,11 +109,13 @@ void RenderEngineIndirectDraw::ExecuteComputeStage(size_t frameIndex) {
 	Gaia::computeCmdList->Close();
 	Gaia::computeQueue->ExecuteCommandLists(computeCommandList);
 
+	/*
 	UINT64 fenceValue = Gaia::graphicsFence->GetFrontValue();
 
 	Gaia::computeQueue->SignalCommandQueue(Gaia::computeFence->GetFence(), fenceValue);
 
 	Gaia::graphicsQueue->WaitOnGPU(Gaia::computeFence->GetFence(), fenceValue);
+	*/
 }
 
 void RenderEngineIndirectDraw::ExecutePreRenderStage(

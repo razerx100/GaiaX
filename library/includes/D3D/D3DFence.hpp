@@ -1,32 +1,43 @@
 #ifndef D3D_FENCE_HPP_
 #define D3D_FENCE_HPP_
 #include <D3DHeaders.hpp>
-#include <queue>
-#include <optional>
+#include <utility>
 
-class D3DFence {
+class D3DFence
+{
 public:
-	D3DFence(ID3D12Device* device, size_t fenceValueCount = 1u);
+	D3DFence(ID3D12Device* device) : m_device{ device }, m_fence{}, m_fenceCPUEvent{ nullptr } {}
 
-	void AdvanceValueInQueue() noexcept;
-	void WaitOnCPU();
-	void WaitOnCPUConditional();
-	void IncreaseFrontValue(UINT64 oldValue) noexcept;
+	void Create(UINT64 initialValue = 0u);
 
-	void SignalFence(UINT64 fenceValue) const;
-	void ResetFenceValues(UINT64 value) noexcept;
+	void Signal(UINT64 signalValue) const;
+	void Wait(UINT64 waitValue) const;
 
 	[[nodiscard]]
-	ID3D12Fence* GetFence() const noexcept;
+	UINT64 GetCurrentValue() const noexcept;
 	[[nodiscard]]
-	UINT64 GetFrontValue() const noexcept;
+	ID3D12Fence* Get() const noexcept { return m_fence.Get(); }
 
 private:
-	void WaitOnCPU(UINT64 fenceValue);
-
-private:
+	ID3D12Device*       m_device;
 	ComPtr<ID3D12Fence> m_fence;
-	std::queue<UINT64> m_fenceValues;
-	HANDLE m_fenceCPUEvent;
+	HANDLE              m_fenceCPUEvent;
+
+public:
+	D3DFence(const D3DFence&) = delete;
+	D3DFence& operator=(const D3DFence&) = delete;
+
+	D3DFence(D3DFence&& other) noexcept
+		: m_device{ other.m_device }, m_fence{ std::move(other.m_fence) },
+		m_fenceCPUEvent{ std::exchange(other.m_fenceCPUEvent, nullptr) }
+	{}
+	D3DFence& operator=(D3DFence&& other) noexcept
+	{
+		m_device        = other.m_device;
+		m_fence         = std::move(other.m_fence);
+		m_fenceCPUEvent = std::exchange(other.m_fenceCPUEvent, nullptr);
+
+		return *this;
+	}
 };
 #endif

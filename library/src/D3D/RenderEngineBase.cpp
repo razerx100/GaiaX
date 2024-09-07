@@ -23,12 +23,14 @@ void RenderEngineBase::Present(size_t frameIndex) {
 }
 
 void RenderEngineBase::ExecutePostRenderStage() {
+	/*
 	UINT64 fenceValue = Gaia::graphicsFence->GetFrontValue();
 
 	Gaia::graphicsQueue->SignalCommandQueue(Gaia::graphicsFence->GetFence(), fenceValue);
 	Gaia::graphicsFence->AdvanceValueInQueue();
 	Gaia::graphicsFence->WaitOnCPUConditional();
 	Gaia::graphicsFence->IncreaseFrontValue(fenceValue);
+	*/
 }
 
 void RenderEngineBase::ExecutePreGraphicsStage(

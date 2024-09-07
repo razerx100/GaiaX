@@ -38,7 +38,7 @@ namespace Gaia {
 			graphicsCmdList, 1u,
 			d3dDevice, D3D12_COMMAND_LIST_TYPE_DIRECT, cmdList6, commandAllocatorCount
 		);
-		om.CreateObject(graphicsFence, 1u, d3dDevice, commandAllocatorCount);
+		//om.CreateObject(graphicsFence, 1u, d3dDevice, commandAllocatorCount);
 	}
 
 	void InitCopyQueueAndList(ObjectManager& om, ID3D12Device4* d3dDevice) {
@@ -56,7 +56,7 @@ namespace Gaia {
 			computeCmdList, 1u,
 			d3dDevice, D3D12_COMMAND_LIST_TYPE_COMPUTE, false, commandAllocatorCount
 		);
-		om.CreateObject(computeFence, 1u, d3dDevice, commandAllocatorCount);
+		//om.CreateObject(computeFence, 1u, d3dDevice, commandAllocatorCount);
 	}
 
 	void InitRenderEngine(
