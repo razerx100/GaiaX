@@ -81,7 +81,7 @@ void RenderEngineVertexShader::BindGraphicsBuffers(
 }
 
 void RenderEngineVertexShader::ExecuteRenderStage(size_t frameIndex) {
-	ID3D12GraphicsCommandList* graphicsCommandList = Gaia::graphicsCmdList->GetCommandList();
+	ID3D12GraphicsCommandList* graphicsCommandList = Gaia::graphicsCmdList->Get();
 
 	ExecutePreRenderStage(graphicsCommandList, frameIndex);
 	RecordDrawCommands(graphicsCommandList, frameIndex);
@@ -92,8 +92,8 @@ RenderEngineIndirectDraw::RenderEngineIndirectDraw(ID3D12Device* device, std::ui
 	: RenderEngineVertexShader{ device }, m_computePipeline{ frameCount } {}
 
 void RenderEngineIndirectDraw::ExecuteComputeStage(size_t frameIndex) {
-	ID3D12GraphicsCommandList* computeCommandList = Gaia::computeCmdList->GetCommandList();
-	Gaia::computeCmdList->Reset(frameIndex);
+	ID3D12GraphicsCommandList* computeCommandList = Gaia::computeCmdList->Get();
+	Gaia::computeCmdList->Reset();
 
 	ID3D12DescriptorHeap* descriptorHeap[] = { Gaia::descriptorTable->GetDescHeapRef() };
 	computeCommandList->SetDescriptorHeaps(1u, descriptorHeap);

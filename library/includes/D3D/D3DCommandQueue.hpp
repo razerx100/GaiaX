@@ -7,23 +7,36 @@
 class D3DCommandList
 {
 public:
-	D3DCommandList(
-		ID3D12Device4* device, D3D12_COMMAND_LIST_TYPE type, bool cmdList6, size_t allocatorCount = 1u
-	);
+	D3DCommandList() : m_commandList{}, m_commandAllocator{} {}
+	D3DCommandList(ID3D12Device4* device, D3D12_COMMAND_LIST_TYPE type);
 
-	void Reset(size_t allocatorIndex);
-	void ResetFirst();
+	void Create(ID3D12Device4* device, D3D12_COMMAND_LIST_TYPE type);
+
+	void Reset() const;
 	void Close() const;
 
 	[[nodiscard]]
-	ID3D12GraphicsCommandList* GetCommandList() const noexcept;
-	[[nodiscard]]
-	ID3D12GraphicsCommandList6* GetCommandList6() const noexcept;
+	ID3D12GraphicsCommandList6* Get() const noexcept { return m_commandList.Get(); }
 
 private:
-	ComPtr<ID3D12GraphicsCommandList> m_pCommandList;
-	ComPtr<ID3D12GraphicsCommandList6> m_pCommandList6;
-	std::vector<ComPtr<ID3D12CommandAllocator>> m_pCommandAllocators;
+	ComPtr<ID3D12GraphicsCommandList6> m_commandList;
+	ComPtr<ID3D12CommandAllocator>     m_commandAllocator;
+
+public:
+	D3DCommandList(const D3DCommandList&) = delete;
+	D3DCommandList& operator=(const D3DCommandList&) = delete;
+
+	D3DCommandList(D3DCommandList&& other) noexcept
+		: m_commandList{ std::move(other.m_commandList) },
+		m_commandAllocator{ std::move(other.m_commandAllocator) }
+	{}
+	D3DCommandList& operator=(D3DCommandList&& other) noexcept
+	{
+		m_commandList      = std::move(other.m_commandList);
+		m_commandAllocator = std::move(other.m_commandAllocator);
+
+		return *this;
+	}
 };
 
 class D3DCommandQueue

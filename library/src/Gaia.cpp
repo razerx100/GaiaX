@@ -33,30 +33,36 @@ namespace Gaia {
 		ObjectManager& om, ID3D12Device4* d3dDevice, bool cmdList6,
 		std::uint32_t commandAllocatorCount
 	) {
+		/*
 		om.CreateObject(graphicsQueue, 1u, d3dDevice, D3D12_COMMAND_LIST_TYPE_DIRECT);
 		om.CreateObject(
 			graphicsCmdList, 1u,
 			d3dDevice, D3D12_COMMAND_LIST_TYPE_DIRECT, cmdList6, commandAllocatorCount
 		);
-		//om.CreateObject(graphicsFence, 1u, d3dDevice, commandAllocatorCount);
+		om.CreateObject(graphicsFence, 1u, d3dDevice, commandAllocatorCount);
+		*/
 	}
 
 	void InitCopyQueueAndList(ObjectManager& om, ID3D12Device4* d3dDevice) {
+		/*
 		om.CreateObject(copyQueue, 1u, d3dDevice, D3D12_COMMAND_LIST_TYPE_COPY);
 		om.CreateObject(
 			copyCmdList, 1u, d3dDevice, D3D12_COMMAND_LIST_TYPE_COPY, false
 		);
+		*/
 	}
 
 	void InitComputeQueueAndList(
 		ObjectManager& om, ID3D12Device4* d3dDevice, std::uint32_t commandAllocatorCount
 	) {
+		/*
 		om.CreateObject(computeQueue, 1u, d3dDevice, D3D12_COMMAND_LIST_TYPE_COMPUTE);
 		om.CreateObject(
 			computeCmdList, 1u,
 			d3dDevice, D3D12_COMMAND_LIST_TYPE_COMPUTE, false, commandAllocatorCount
 		);
-		//om.CreateObject(computeFence, 1u, d3dDevice, commandAllocatorCount);
+		om.CreateObject(computeFence, 1u, d3dDevice, commandAllocatorCount);
+		*/
 	}
 
 	void InitRenderEngine(

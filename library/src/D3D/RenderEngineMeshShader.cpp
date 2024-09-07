@@ -7,7 +7,7 @@ RenderEngineMeshDraw::RenderEngineMeshDraw(ID3D12Device* device) noexcept
 	: RenderEngineBase{ device }, m_meshletBuffer{ DescriptorType::SRV } {}
 
 void RenderEngineMeshDraw::ExecuteRenderStage(size_t frameIndex) {
-	ID3D12GraphicsCommandList6* graphicsCommandList = Gaia::graphicsCmdList->GetCommandList6();
+	ID3D12GraphicsCommandList6* graphicsCommandList = Gaia::graphicsCmdList->Get();
 
 	ExecutePreGraphicsStage(graphicsCommandList, frameIndex);
 	RecordDrawCommands(graphicsCommandList, frameIndex);

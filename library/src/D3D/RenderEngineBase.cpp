@@ -7,7 +7,7 @@ RenderEngineBase::RenderEngineBase(ID3D12Device* device) : m_depthBuffer{ device
 }
 
 void RenderEngineBase::Present(size_t frameIndex) {
-	ID3D12GraphicsCommandList* graphicsCommandList = Gaia::graphicsCmdList->GetCommandList();
+	ID3D12GraphicsCommandList* graphicsCommandList = Gaia::graphicsCmdList->Get();
 
 	D3DResourceBarrier().AddBarrier(
 		ResourceBarrierBuilder{}.Transition(
@@ -36,7 +36,7 @@ void RenderEngineBase::ExecutePostRenderStage() {
 void RenderEngineBase::ExecutePreGraphicsStage(
 	ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex
 ) {
-	Gaia::graphicsCmdList->Reset(frameIndex);
+	Gaia::graphicsCmdList->Reset();
 
 	D3DResourceBarrier().AddBarrier(
 		ResourceBarrierBuilder{}.Transition(
