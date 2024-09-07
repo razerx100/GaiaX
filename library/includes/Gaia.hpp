@@ -5,7 +5,6 @@
 #include <DeviceManager.hpp>
 #include <SwapChainManager.hpp>
 #include <D3DCommandQueue.hpp>
-#include <D3DCommandList.hpp>
 #include <D3DDebugLogger.hpp>
 #include <BufferManager.hpp>
 #include <DescriptorTableManager.hpp>
