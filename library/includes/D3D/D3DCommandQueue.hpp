@@ -2,6 +2,7 @@
 #define D3D_COMMAND_QUEUE_HPP_
 #include <D3DHeaders.hpp>
 #include <D3DFence.hpp>
+#include <D3DResourceBarrier.hpp>
 #include <utility>
 #include <vector>
 #include <array>
@@ -17,6 +18,14 @@ public:
 
 	void Reset() const;
 	void Close() const;
+
+	template<std::uint32_t BarrierCount = 1u>
+	const D3DCommandList& AddBarrier(const D3DResourceBarrier<BarrierCount>& barrier) const noexcept
+	{
+		barrier.RecordBarriers(m_commandList.Get());
+
+		return *this;
+	}
 
 	[[nodiscard]]
 	ID3D12GraphicsCommandList6* Get() const noexcept { return m_commandList.Get(); }
