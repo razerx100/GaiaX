@@ -46,7 +46,7 @@ protected:
 	) = 0;
 
 private:
-	VertexManagerVertexShader m_vertexManager;
+	//VertexManagerVertexShader m_vertexManager;
 };
 
 class RenderEngineIndirectDraw final : public RenderEngineVertexShader {
@@ -85,7 +85,7 @@ private:
 	using GraphicsPipeline = std::unique_ptr<GraphicsPipelineIndirectDraw>;
 
 private:
-	ComputePipelineIndirectDraw m_computePipeline;
+	//ComputePipelineIndirectDraw m_computePipeline;
 	GraphicsPipeline m_graphicsPipeline0;
 	std::vector<GraphicsPipeline> m_graphicsPipelines;
 

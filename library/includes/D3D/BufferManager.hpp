@@ -1,19 +1,18 @@
 #ifndef BUFFER_MANAGER_HPP_
 #define BUFFER_MANAGER_HPP_
 #include <D3DHeaders.hpp>
-#include <D3DDescriptorView.hpp>
 #include <memory>
 #include <vector>
 #include <Model.hpp>
 #include <MeshBundle.hpp>
 #include <Material.hpp>
 
+	/*
 class BufferManager
 {
 public:
 	BufferManager(std::uint32_t frameCount, bool modelDataNoBB);
 
-	/*
 	void BindBuffersToGraphics(
 		ID3D12GraphicsCommandList* graphicsCmdList, size_t frameIndex
 	) const noexcept;
@@ -23,7 +22,6 @@ public:
 	void BindPixelOnlyBuffers(
 		ID3D12GraphicsCommandList* graphicsCmdList, size_t frameIndex
 	) const noexcept;
-	*/
 
 	//void SetComputeRootSignatureLayout(RSLayoutType rsLayout) noexcept;
 	//void SetGraphicsRootSignatureLayout(RSLayoutType rsLayout) noexcept;
@@ -128,7 +126,7 @@ private:
 					modelBufferOffset, modelOffset
 				);
 
-			/*const auto& modelMaterial = model->GetMaterial();
+			const auto& modelMaterial = model->GetMaterial();
 
 			MaterialBuffer material{
 				.ambient = modelMaterial.ambient,
@@ -140,11 +138,10 @@ private:
 				.specularTexIndex = model->GetSpecularTexIndex(),
 				.shininess = modelMaterial.shininess
 			};
-			CopyStruct(material, materialBufferOffset, materialOffset);*/
+			CopyStruct(material, materialBufferOffset, materialOffset);
 		}
 	}
 
-	/*
 	template<void(__stdcall ID3D12GraphicsCommandList::* RCBV)(UINT, D3D12_GPU_VIRTUAL_ADDRESS),
 		void(__stdcall ID3D12GraphicsCommandList::* RDT)(UINT, D3D12_GPU_DESCRIPTOR_HANDLE)>
 	void BindBuffers(
@@ -161,7 +158,6 @@ private:
 			rsLayout[modelBufferTypeIndex], m_modelBuffers.GetGPUDescriptorHandle(frameIndex)
 			);
 	}
-	*/
 
 	template<typename T>
 	void CopyStruct(
@@ -188,4 +184,5 @@ private:
 	std::vector<size_t> m_lightModelIndices;
 	bool m_modelDataNoBB;
 };
+*/
 #endif

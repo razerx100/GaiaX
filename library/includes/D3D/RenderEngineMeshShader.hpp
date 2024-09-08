@@ -49,8 +49,8 @@ private:
 	GraphicsPipeline m_graphicsPipeline0;
 	std::vector<GraphicsPipeline> m_graphicsPipelines;
 
-	VertexManagerMeshShader m_vertexManager;
-	D3DUploadResourceDescriptorView m_meshletBuffer;
+	//VertexManagerMeshShader m_vertexManager;
+	//D3DUploadResourceDescriptorView m_meshletBuffer;
 	std::vector<Meshlet> m_meshlets;
 };
 #endif

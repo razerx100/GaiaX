@@ -11,28 +11,28 @@ RenderEngineVertexShader::RenderEngineVertexShader(ID3D12Device* device)
 void RenderEngineVertexShader::AddGVerticesAndIndices(
 	std::vector<Vertex>&& gVertices, std::vector<std::uint32_t>&& gIndices
 ) noexcept {
-	m_vertexManager.AddGVerticesAndIndices(std::move(gVertices), std::move(gIndices));
+	//m_vertexManager.AddGVerticesAndIndices(std::move(gVertices), std::move(gIndices));
 }
 
 void RenderEngineVertexShader::CreateBuffers(ID3D12Device* device) {
-	m_vertexManager.CreateBuffers(device);
+//	m_vertexManager.CreateBuffers(device);
 	_createBuffers(device);
 }
 
 void RenderEngineVertexShader::ReserveBuffersDerived(ID3D12Device* device) {
-	m_vertexManager.ReserveBuffers(device);
+//	m_vertexManager.ReserveBuffers(device);
 	_reserveBuffers(device);
 }
 
 void RenderEngineVertexShader::RecordResourceUploads(
 	ID3D12GraphicsCommandList* copyList
 ) noexcept {
-	m_vertexManager.RecordResourceUploads(copyList);
+//	m_vertexManager.RecordResourceUploads(copyList);
 	_recordResourceUploads(copyList);
 }
 
 void RenderEngineVertexShader::ReleaseUploadResources() noexcept {
-	m_vertexManager.ReleaseUploadResources();
+//	m_vertexManager.ReleaseUploadResources();
 	_releaseUploadResources();
 }
 
@@ -77,7 +77,7 @@ void RenderEngineVertexShader::BindGraphicsBuffers(
 	ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex
 ) {
 	BindCommonGraphicsBuffers(graphicsCommandList, frameIndex);
-	m_vertexManager.BindVertexAndIndexBuffer(graphicsCommandList);
+//	m_vertexManager.BindVertexAndIndexBuffer(graphicsCommandList);
 }
 
 void RenderEngineVertexShader::ExecuteRenderStage(size_t frameIndex) {
@@ -89,7 +89,7 @@ void RenderEngineVertexShader::ExecuteRenderStage(size_t frameIndex) {
 
 // Indirect Draw
 RenderEngineIndirectDraw::RenderEngineIndirectDraw(ID3D12Device* device, std::uint32_t frameCount)
-	: RenderEngineVertexShader{ device }, m_computePipeline{ frameCount } {}
+	: RenderEngineVertexShader{ device } {}//, m_computePipeline{ frameCount } {}
 
 void RenderEngineIndirectDraw::ExecuteComputeStage(size_t frameIndex) {
 	ID3D12GraphicsCommandList* computeCommandList = Gaia::computeCmdList->Get();
@@ -99,12 +99,12 @@ void RenderEngineIndirectDraw::ExecuteComputeStage(size_t frameIndex) {
 	computeCommandList->SetDescriptorHeaps(1u, descriptorHeap);
 
 	// Record compute commands
-	m_computePipeline.ResetCounterBuffer(computeCommandList, frameIndex);
+	//m_computePipeline.ResetCounterBuffer(computeCommandList, frameIndex);
 
-	m_computePipeline.BindComputePipeline(computeCommandList);
+//	m_computePipeline.BindComputePipeline(computeCommandList);
 
 	//Gaia::bufferManager->BindBuffersToCompute(computeCommandList, frameIndex);
-	m_computePipeline.DispatchCompute(computeCommandList, frameIndex);
+//	m_computePipeline.DispatchCompute(computeCommandList, frameIndex);
 
 	Gaia::computeCmdList->Close();
 	Gaia::computeQueue->ExecuteCommandLists(computeCommandList);
@@ -126,7 +126,7 @@ void RenderEngineIndirectDraw::ExecutePreRenderStage(
 }
 
 void RenderEngineIndirectDraw::UpdateModelBuffers(size_t frameIndex) const noexcept {
-	Gaia::bufferManager->Update<false>(frameIndex);
+//	Gaia::bufferManager->Update<false>(frameIndex);
 }
 
 void RenderEngineIndirectDraw::RecordDrawCommands(
@@ -180,12 +180,12 @@ void RenderEngineIndirectDraw::RecordModelDataSet(
 	auto graphicsPipeline = std::make_unique<GraphicsPipelineIndirectDraw>();
 
 	// old currentModelCount hold the modelCountOffset value
-	graphicsPipeline->ConfigureGraphicsPipelineObject(
-		pixelShader, static_cast<std::uint32_t>(std::size(models)),
-		m_computePipeline.GetCurrentModelCount(), m_computePipeline.GetCounterCount()
-	);
+//	graphicsPipeline->ConfigureGraphicsPipelineObject(
+//		pixelShader, static_cast<std::uint32_t>(std::size(models)),
+//		m_computePipeline.GetCurrentModelCount(), m_computePipeline.GetCounterCount()
+//	);
 
-	m_computePipeline.RecordIndirectArguments(models);
+//	m_computePipeline.RecordIndirectArguments(models);
 
 	if (!m_graphicsPipeline0)
 		m_graphicsPipeline0 = std::move(graphicsPipeline);
@@ -194,21 +194,21 @@ void RenderEngineIndirectDraw::RecordModelDataSet(
 }
 
 void RenderEngineIndirectDraw::_createBuffers(ID3D12Device* device) {
-	m_computePipeline.CreateBuffers(device);
+//	m_computePipeline.CreateBuffers(device);
 }
 
 void RenderEngineIndirectDraw::_reserveBuffers(ID3D12Device* device) {
-	m_computePipeline.ReserveBuffers(device);
+//	m_computePipeline.ReserveBuffers(device);
 }
 
 void RenderEngineIndirectDraw::_recordResourceUploads(
 	ID3D12GraphicsCommandList* copyList
 ) noexcept {
-	m_computePipeline.RecordResourceUpload(copyList);
+//	m_computePipeline.RecordResourceUpload(copyList);
 }
 
 void RenderEngineIndirectDraw::_releaseUploadResources() noexcept {
-	m_computePipeline.ReleaseUploadResource();
+//	m_computePipeline.ReleaseUploadResource();
 }
 
 void RenderEngineIndirectDraw::CreateCommandSignature(ID3D12Device* device) {
@@ -246,7 +246,7 @@ void RenderEngineIndividualDraw::ExecutePreRenderStage(
 }
 
 void RenderEngineIndividualDraw::UpdateModelBuffers(size_t frameIndex) const noexcept {
-	Gaia::bufferManager->Update<true>(frameIndex);
+//	Gaia::bufferManager->Update<true>(frameIndex);
 }
 
 void RenderEngineIndividualDraw::RecordDrawCommands(

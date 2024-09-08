@@ -4,7 +4,7 @@
 #include <Gaia.hpp>
 
 RenderEngineMeshDraw::RenderEngineMeshDraw(ID3D12Device* device) noexcept
-	: RenderEngineBase{ device }, m_meshletBuffer{ DescriptorType::SRV } {}
+	: RenderEngineBase{ device } {}//, m_meshletBuffer{ DescriptorType::SRV } {}
 
 void RenderEngineMeshDraw::ExecuteRenderStage(size_t frameIndex) {
 	ID3D12GraphicsCommandList6* graphicsCommandList = Gaia::graphicsCmdList->Get();
@@ -47,7 +47,7 @@ void RenderEngineMeshDraw::RecordDrawCommands(
 }
 
 void RenderEngineMeshDraw::UpdateModelBuffers(size_t frameIndex) const noexcept {
-	Gaia::bufferManager->Update<true>(frameIndex);
+	//Gaia::bufferManager->Update<true>(frameIndex);
 }
 
 /*void RenderEngineMeshDraw::AddMeshletModelSet(
@@ -82,38 +82,38 @@ void RenderEngineMeshDraw::AddGVerticesAndPrimIndices(
 	std::vector<Vertex>&& gVertices, std::vector<std::uint32_t>&& gVerticesIndices,
 	std::vector<std::uint32_t>&& gPrimIndices
 ) noexcept {
-	m_vertexManager.AddGVerticesAndPrimIndices(
-		std::move(gVertices), std::move(gVerticesIndices), std::move(gPrimIndices)
-	);
+	//m_vertexManager.AddGVerticesAndPrimIndices(
+//		std::move(gVertices), std::move(gVerticesIndices), std::move(gPrimIndices)
+//	);
 }
 
 void RenderEngineMeshDraw::CreateBuffers(ID3D12Device* device) {
-	m_vertexManager.CreateBuffers(device);
+//	m_vertexManager.CreateBuffers(device);
 
-	CreateUploadDescView(device, m_meshletBuffer, m_meshlets);
+//	CreateUploadDescView(device, m_meshletBuffer, m_meshlets);
 }
 
 void RenderEngineMeshDraw::RecordResourceUploads(
 	ID3D12GraphicsCommandList* copyList
 ) noexcept {
-	m_vertexManager.RecordResourceUpload(copyList);
-	m_meshletBuffer.RecordResourceUpload(copyList);
+//	m_vertexManager.RecordResourceUpload(copyList);
+//	m_meshletBuffer.RecordResourceUpload(copyList);
 }
 
 void RenderEngineMeshDraw::ReleaseUploadResources() noexcept {
-	m_vertexManager.ReleaseUploadResource();
-	m_meshletBuffer.ReleaseUploadResource();
+//	m_vertexManager.ReleaseUploadResource();
+//	m_meshletBuffer.ReleaseUploadResource();
 
 	m_meshlets = std::vector<Meshlet>{};
 }
 
 void RenderEngineMeshDraw::ReserveBuffersDerived(ID3D12Device* device) {
-	m_vertexManager.ReserveBuffers(device);
+//	m_vertexManager.ReserveBuffers(device);
 
 	const size_t meshletDescriptorOffset =
 		Gaia::descriptorTable->ReserveDescriptorsAndGetOffset();
 
-	SetDescBufferInfo(device, meshletDescriptorOffset, m_meshlets, m_meshletBuffer);
+//	SetDescBufferInfo(device, meshletDescriptorOffset, m_meshlets, m_meshletBuffer);
 }
 
 void RenderEngineMeshDraw::ConstructPipelines() {

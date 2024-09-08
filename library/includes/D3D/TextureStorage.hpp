@@ -4,8 +4,8 @@
 #include <DescriptorTableManager.hpp>
 #include <vector>
 #include <memory>
-#include <D3DDescriptorView.hpp>
 
+/*
 class TextureStorage {
 public:
 	TextureStorage() noexcept;
@@ -25,9 +25,10 @@ public:
 	void BindTextures(ID3D12GraphicsCommandList* graphicsList) const noexcept;
 
 private:
-	std::vector<std::unique_ptr<D3DUploadResourceDescriptorView>> m_textureDescriptors;
+	//std::vector<std::unique_ptr<D3DUploadResourceDescriptorView>> m_textureDescriptors;
 	D3D12_GPU_DESCRIPTOR_HANDLE m_textureDescriptorStart;
 	std::vector<std::unique_ptr<std::uint8_t>> m_textureHandles;
 	std::vector<UINT> m_graphicsRSLayout;
 };
+*/
 #endif

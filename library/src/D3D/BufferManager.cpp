@@ -5,6 +5,7 @@
 
 #include <CameraManager.hpp>
 
+/*
 BufferManager::BufferManager(
 	std::uint32_t frameCount, bool modelDataNoBB
 )
@@ -96,7 +97,6 @@ void BufferManager::SetMemoryAddresses() noexcept {
 	m_pixelDataBuffer.UpdateGPUAddressStart(gpuOffset);
 }
 
-/*
 void BufferManager::BindBuffersToGraphics(
 	ID3D12GraphicsCommandList* graphicsCmdList, size_t frameIndex
 ) const noexcept {
@@ -143,7 +143,6 @@ void BufferManager::SetComputeRootSignatureLayout(RSLayoutType rsLayout) noexcep
 void BufferManager::SetGraphicsRootSignatureLayout(RSLayoutType rsLayout) noexcept {
 	m_graphicsRSLayout = std::move(rsLayout);
 }
-*/
 
 void BufferManager::CheckLightSourceAndAddOpaque(std::shared_ptr<Model>&& model) noexcept {
 //	if (model->IsLightSource())
@@ -157,10 +156,10 @@ void BufferManager::AddOpaqueModels(std::vector<std::shared_ptr<Model>>&& models
 		CheckLightSourceAndAddOpaque(std::move(models[index]));
 }
 
-/*void BufferManager::AddOpaqueModels(std::vector<MeshletModel>&& meshletModels) noexcept {
+void BufferManager::AddOpaqueModels(std::vector<MeshletModel>&& meshletModels) noexcept {
 	for (size_t index = 0u; index < std::size(meshletModels); ++index)
 		CheckLightSourceAndAddOpaque(std::move(meshletModels[index].model));
-}*/
+}
 
 void BufferManager::UpdateCameraData(size_t bufferIndex) const noexcept {
 	std::uint8_t* cameraCpuHandle = m_cameraBuffer.GetCPUAddressStart(bufferIndex);
@@ -176,13 +175,13 @@ void BufferManager::UpdateLightData(
 
 	for (auto& lightIndex : m_lightModelIndices) {
 		auto& model = m_opaqueModels[lightIndex];
-		/*const auto& modelMaterial = model->GetMaterial();
+		const auto& modelMaterial = model->GetMaterial();
 
 		LightBuffer light{
 			.ambient = modelMaterial.ambient,
 			.diffuse = modelMaterial.diffuse,
 			.specular = modelMaterial.specular
-		};*/
+		};
 
 		DirectX::XMFLOAT3 modelPosition = model->GetModelOffset();
 		DirectX::XMMATRIX viewSpace = model->GetModelMatrix() * viewMatrix;
@@ -201,3 +200,4 @@ void BufferManager::UpdatePixelData(size_t bufferIndex) const noexcept {
 
 	memcpy(pixelDataOffset, &lightCount, sizeof(PixelData));
 }
+*/

@@ -45,7 +45,7 @@ RendererDx12::RendererDx12(
 	const bool modelDataNoBB = engineType == RenderEngineType::IndirectDraw ? false : true;
 
 	//m_objectManager.CreateObject(Gaia::bufferManager, 1u, bufferCount, modelDataNoBB, sharedContainer);
-	m_objectManager.CreateObject(Gaia::textureStorage, 0u);
+	//m_objectManager.CreateObject(Gaia::textureStorage, 0u);
 
 	//m_objectManager.CreateObject(Gaia::cameraManager, 0u, sharedContainer);
 	Gaia::cameraManager->SetSceneResolution(width, height);

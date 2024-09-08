@@ -4,9 +4,9 @@
 #include <memory>
 #include <cstdint>
 #include <atomic>
-#include <D3DResourceBuffer.hpp>
 #include <MeshBundle.hpp>
 
+/*
 class VertexManagerVertexShader {
 public:
 	VertexManagerVertexShader() noexcept;
@@ -23,7 +23,7 @@ public:
 	void ReleaseUploadResources() noexcept;
 
 private:
-	D3DUploadableResourceBuffer m_vertexBuffer;
+	//D3DUploadableResourceBuffer m_vertexBuffer;
 	D3D12_VERTEX_BUFFER_VIEW m_gVertexBufferView;
 	D3D12_INDEX_BUFFER_VIEW m_gIndexBufferView;
 	std::vector<Vertex> m_gVertices;
@@ -31,4 +31,5 @@ private:
 	size_t m_verticesOffset;
 	size_t m_indicesOffset;
 };
+*/
 #endif

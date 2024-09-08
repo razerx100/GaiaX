@@ -9,11 +9,11 @@ namespace Gaia {
 	std::unique_ptr<D3DCommandList> graphicsCmdList;
 	std::unique_ptr<D3DFence> graphicsFence;
 	std::unique_ptr<D3DDebugLogger> debugLogger;
-	std::unique_ptr<BufferManager> bufferManager;
+	//std::unique_ptr<BufferManager> bufferManager;
 	std::unique_ptr<D3DCommandQueue> copyQueue;
 	std::unique_ptr<D3DCommandList> copyCmdList;
 	std::unique_ptr<DescriptorTableManager> descriptorTable;
-	std::unique_ptr<TextureStorage> textureStorage;
+	//std::unique_ptr<TextureStorage> textureStorage;
 	std::unique_ptr<CameraManager> cameraManager;
 	std::unique_ptr<D3DCommandQueue> computeQueue;
 	std::unique_ptr<D3DCommandList> computeCmdList;
@@ -25,7 +25,7 @@ namespace Gaia {
 		std::unique_ptr<D3DHeap> cpuWriteHeap;
 		std::unique_ptr<D3DHeap> gpuOnlyHeap;
 		std::unique_ptr<D3DHeap> cpuReadBackHeap;
-		std::unique_ptr<D3DResourceBuffer> cpuWriteBuffer;
+		//std::unique_ptr<D3DResourceBuffer> cpuWriteBuffer;
 		std::unique_ptr<UploadContainer> uploadContainer;
 	}
 
@@ -96,7 +96,7 @@ namespace Gaia {
 		om.CreateObject(Resources::gpuOnlyHeap, 2u, D3D12_HEAP_TYPE_DEFAULT);
 		*/
 
-		om.CreateObject(Resources::cpuWriteBuffer, 1u, ResourceType::cpuWrite);
+		//om.CreateObject(Resources::cpuWriteBuffer, 1u, ResourceType::cpuWrite);
 		om.CreateObject(Resources::uploadContainer, 0u, threadPooll);
 	}
 }

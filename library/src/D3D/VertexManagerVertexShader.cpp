@@ -1,6 +1,6 @@
 #include <VertexManagerVertexShader.hpp>
-#include <Gaia.hpp>
 
+/*
 VertexManagerVertexShader::VertexManagerVertexShader() noexcept
 	: m_gVertexBufferView{}, m_gIndexBufferView{}, m_verticesOffset{ 0u },
 	m_indicesOffset{ 0u } {}
@@ -80,3 +80,4 @@ void VertexManagerVertexShader::ReleaseUploadResources() noexcept {
 	m_gIndices = std::vector<std::uint32_t>{};
 	m_gVertices = std::vector<Vertex>{};
 }
+*/

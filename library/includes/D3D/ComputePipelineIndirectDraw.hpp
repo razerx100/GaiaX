@@ -5,10 +5,10 @@
 #include <string>
 #include <vector>
 #include <D3DPipelineObject.hpp>
-#include <D3DDescriptorView.hpp>
 #include <GaiaDataTypes.hpp>
 #include <Model.hpp>
 
+/*
 class ComputePipelineIndirectDraw {
 public:
 	ComputePipelineIndirectDraw(std::uint32_t frameCount);
@@ -46,12 +46,10 @@ public:
 	ID3D12Resource* GetCounterBuffer(size_t frameIndex) const noexcept;
 
 private:
-	/*
 	[[nodiscard]]
 	std::unique_ptr<RootSignatureDynamic> _createComputeRootSignature(
 		ID3D12Device* device
 	) const noexcept;
-	*/
 	[[nodiscard]]
 	std::unique_ptr<D3DPipelineObject> _createComputePipelineObject(
 		ID3D12Device2* device, ID3D12RootSignature* computeRootSignature,
@@ -89,4 +87,5 @@ private:
 		DirectX::XMFLOAT2 zBounds;
 	};
 };
+*/
 #endif
