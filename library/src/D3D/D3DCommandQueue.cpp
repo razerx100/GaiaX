@@ -43,19 +43,26 @@ void D3DCommandQueue::Create(ID3D12Device4* device, D3D12_COMMAND_LIST_TYPE type
 		m_commandLists.emplace_back(device, type);
 }
 
-void D3DCommandQueue::Signal(ID3D12Fence* fence, UINT64 signalValue) const
+void D3DCommandQueue::Signal(ID3D12Fence* fence, UINT64 signalValue) const noexcept
 {
 	m_commandQueue->Signal(fence, signalValue);
 }
 
-void D3DCommandQueue::Wait(ID3D12Fence* fence, UINT64 waitValue) const
+void D3DCommandQueue::Wait(ID3D12Fence* fence, UINT64 waitValue) const noexcept
 {
 	m_commandQueue->Wait(fence, waitValue);
 }
 
 void D3DCommandQueue::ExecuteCommandLists(
+	ID3D12CommandList* const * commandLists, UINT commandListCount
+) const noexcept {
+	m_commandQueue->ExecuteCommandLists(commandListCount, commandLists);
+}
+
+void D3DCommandQueue::ExecuteCommandLists(
 	ID3D12GraphicsCommandList* commandList
 ) const noexcept {
-	ID3D12CommandList* const ppCommandList{ commandList };
-	m_commandQueue->ExecuteCommandLists(1u, &ppCommandList);
+	ID3D12CommandList* const commandLists{ commandList };
+
+	ExecuteCommandLists(&commandLists, 1u);
 }

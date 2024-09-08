@@ -71,8 +71,11 @@ TEST_F(CommandQueueTest, BasicCommandQueueTest)
 	commandList0.Reset();
 	commandList0.Close();
 
-	queue.ExecuteCommandLists(commandList0.Get());
-	queue.Signal(fence.Get(), 1u);
+	QueueSubmitBuilder<0u, 1u> submitBuilder{};
+
+	submitBuilder.SignalFence(fence).CommandList(commandList0);
+
+	queue.SubmitCommandLists(submitBuilder);
 
 	fence.Wait(1u);
 }
