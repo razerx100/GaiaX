@@ -285,10 +285,10 @@ D3D12_UNORDERED_ACCESS_VIEW_DESC Texture::GetUAVDesc(UINT mipSlice/* = 0u */) co
 	return uavDesc;
 }
 
-UINT64 Texture::GetBufferSize() const noexcept
+UINT64 Texture::GetRowPitch() const noexcept
 {
 	// For example: R8G8B8A8 has 4 components, 8bits at each component. So, 4bytes.
-	const static std::unordered_map<DXGI_FORMAT, std::uint32_t> formatSizeMap
+	const static std::unordered_map<DXGI_FORMAT, UINT> formatSizeMap
 	{
 		{ DXGI_FORMAT_R8G8B8A8_TYPELESS,    4u },
 		{ DXGI_FORMAT_R8G8B8A8_UNORM,       4u },
@@ -303,19 +303,19 @@ UINT64 Texture::GetBufferSize() const noexcept
 
 	const DXGI_FORMAT textureFormat = Format();
 
+	// Not bothering with adding the size of every single colour format. If a format size isn't
+	// defined here, then 0 will be returned.
+	UINT64 rowPitch                 = 0u;
+
 	auto formatSize = formatSizeMap.find(textureFormat);
 
 	if (formatSize != std::end(formatSizeMap))
 	{
 		const UINT64 sizePerPixel = formatSize->second;
-		const UINT64 rowPitch     = Align(m_width * sizePerPixel, D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
-
-		return rowPitch * m_height * m_depth;
+		rowPitch                  = Align(m_width * sizePerPixel, D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
 	}
 
-	// Not bothering with adding the size of every single colour format. If an format size isn't
-	// defined here, then 0 will be returned.
-	return 0u;
+	return rowPitch;
 }
 
 // D3DResource

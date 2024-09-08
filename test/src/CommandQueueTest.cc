@@ -72,8 +72,52 @@ TEST_F(CommandQueueTest, BasicCommandQueueTest)
 	commandList0.Close();
 
 	QueueSubmitBuilder<0u, 1u> submitBuilder{};
-
 	submitBuilder.SignalFence(fence).CommandList(commandList0);
+
+	queue.SubmitCommandLists(submitBuilder);
+
+	fence.Wait(1u);
+}
+
+TEST_F(CommandQueueTest, CommandQueueCopyTest)
+{
+	ID3D12Device5* device  = s_deviceManager->GetDevice();
+	IDXGIAdapter3* adapter = s_deviceManager->GetAdapter();
+
+	const D3D12_COMMAND_LIST_TYPE type = D3D12_COMMAND_LIST_TYPE_COPY;
+
+	D3DCommandQueue queue{};
+	queue.Create(device, type, 1u);
+
+	MemoryManager memoryManager{ adapter, device, 200_MB, 200_KB };
+
+	Buffer testBuffer1{ device, &memoryManager, D3D12_HEAP_TYPE_UPLOAD };
+	testBuffer1.Create(20_KB, D3D12_RESOURCE_STATE_COPY_SOURCE);
+
+	Buffer testBuffer2{ device, &memoryManager, D3D12_HEAP_TYPE_DEFAULT };
+	testBuffer2.Create(20_KB, D3D12_RESOURCE_STATE_COPY_DEST);
+
+	Texture testTexture{ device, &memoryManager, D3D12_HEAP_TYPE_DEFAULT };
+	testTexture.Create2D(
+		1280u, 720u, 1u, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, D3D12_RESOURCE_STATE_COPY_DEST
+	);
+
+	Buffer testBuffer3{ device, &memoryManager, D3D12_HEAP_TYPE_UPLOAD };
+	testBuffer3.Create(testTexture.GetBufferSize(), D3D12_RESOURCE_STATE_COPY_SOURCE);
+
+	D3DCommandList& cmdList = queue.GetCommandList(0u);
+	{
+		CommandListScope testScope{ cmdList };
+
+		cmdList.CopyWhole(testBuffer1, testBuffer2);
+		cmdList.CopyWhole(testBuffer3, testTexture);
+	}
+
+	D3DFence fence{};
+	fence.Create(device);
+
+	QueueSubmitBuilder<0u, 1u> submitBuilder{};
+	submitBuilder.SignalFence(fence).CommandList(cmdList);
 
 	queue.SubmitCommandLists(submitBuilder);
 

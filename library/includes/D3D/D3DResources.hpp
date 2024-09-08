@@ -155,7 +155,7 @@ public:
 	[[nodiscard]]
 	UINT GetHeight() const noexcept { return m_height; }
 	[[nodiscard]]
-	UINT64 GetDepth() const noexcept { return m_depth; }
+	UINT16 GetDepth() const noexcept { return m_depth; }
 
 	[[nodiscard]]
 	D3D12_SHADER_RESOURCE_VIEW_DESC GetSRVDesc(
@@ -167,7 +167,9 @@ public:
 	[[nodiscard]]
 	// The allocation size will be different. This will return the Size of the Texture
 	// if it were to fit in a Buffer.
-	UINT64 GetBufferSize() const noexcept;
+	UINT64 GetBufferSize() const noexcept { return GetRowPitch() * m_height * m_depth; }
+	[[nodiscard]]
+	UINT64 GetRowPitch() const noexcept;
 
 private:
 	void Create(

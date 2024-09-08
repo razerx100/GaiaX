@@ -28,6 +28,51 @@ void D3DCommandList::Close() const
 	m_commandList->Close();
 }
 
+void D3DCommandList::Copy(
+	const Buffer& src, UINT64 srcOffset, const Buffer& dst, UINT64 dstOffset, UINT64 size
+) const noexcept {
+	m_commandList->CopyBufferRegion(dst.Get(), dstOffset, src.Get(), srcOffset, size);
+}
+
+void D3DCommandList::Copy(const Buffer& src, UINT64 srcOffset, const Texture& dst) const noexcept
+{
+	D3D12_TEXTURE_COPY_LOCATION dstLocation
+	{
+		.pResource        = dst.Get(),
+		.Type             = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX,
+		.SubresourceIndex = 0u
+	};
+
+	D3D12_SUBRESOURCE_FOOTPRINT srcFootprint
+	{
+		.Format   = dst.Format(),
+		.Width    = static_cast<UINT>(dst.GetWidth()),
+		.Height   = dst.GetHeight(),
+		.Depth    = dst.GetDepth(),
+		.RowPitch = static_cast<UINT>(dst.GetRowPitch())
+	};
+
+	D3D12_PLACED_SUBRESOURCE_FOOTPRINT srcPlacedFootprint
+	{
+		.Offset    = srcOffset,
+		.Footprint = srcFootprint
+	};
+
+	D3D12_TEXTURE_COPY_LOCATION srcLocation
+	{
+		.pResource       = src.Get(),
+		.Type            = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT,
+		.PlacedFootprint = srcPlacedFootprint
+	};
+
+	m_commandList->CopyTextureRegion(
+		&dstLocation,
+		0u, 0u, 0u,
+		&srcLocation,
+		nullptr
+	);
+}
+
 // D3D Command Queue
 void D3DCommandQueue::Create(ID3D12Device4* device, D3D12_COMMAND_LIST_TYPE type, size_t bufferCount)
 {

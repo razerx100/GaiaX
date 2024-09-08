@@ -3,6 +3,7 @@
 #include <D3DHeaders.hpp>
 #include <D3DFence.hpp>
 #include <D3DResourceBarrier.hpp>
+#include <D3DResources.hpp>
 #include <utility>
 #include <vector>
 #include <array>
@@ -18,6 +19,16 @@ public:
 
 	void Reset() const;
 	void Close() const;
+
+	void Copy(
+		const Buffer& src, UINT64 srcOffset, const Buffer& dst, UINT64 dstOffset, UINT64 size
+	) const noexcept;
+	void CopyWhole(const Buffer& src, const Buffer& dst) const noexcept
+	{
+		Copy(src, 0u, dst, 0u, src.BufferSize());
+	}
+	void Copy(const Buffer& src, UINT64 srcOffset, const Texture& dst) const noexcept;
+	void CopyWhole(const Buffer& src, const Texture& dst) const noexcept { Copy(src, 0u, dst); }
 
 	template<std::uint32_t BarrierCount = 1u>
 	const D3DCommandList& AddBarrier(const D3DResourceBarrier<BarrierCount>& barrier) const noexcept
