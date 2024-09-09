@@ -49,8 +49,8 @@ void RenderEngineBase::ExecutePreGraphicsStage(
 	ID3D12DescriptorHeap* descriptorHeap[] = { Gaia::descriptorTable->GetDescHeapRef() };
 	graphicsCommandList->SetDescriptorHeaps(1u, descriptorHeap);
 
-	graphicsCommandList->RSSetViewports(1u, m_viewportAndScissor.GetViewportRef());
-	graphicsCommandList->RSSetScissorRects(1u, m_viewportAndScissor.GetScissorRef());
+	//graphicsCommandList->RSSetViewports(1u, m_viewportAndScissor.GetViewportRef());
+	//graphicsCommandList->RSSetScissorRects(1u, m_viewportAndScissor.GetScissorRef());
 
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = Gaia::swapChain->GetRTVHandle(frameIndex);
 
