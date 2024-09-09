@@ -3,27 +3,47 @@
 #include <D3DHeaders.hpp>
 #include <cstdint>
 #include <D3DResources.hpp>
+#include <D3DCommandQueue.hpp>
+#include <D3DDescriptorHeapManager.hpp>
 
-class DepthBuffer {
+class DepthBuffer
+{
 public:
-	DepthBuffer(ID3D12Device* device);
+	DepthBuffer(ID3D12Device* device, MemoryManager* memoryManager)
+		: m_device{ device }, m_depthTexture{ device, memoryManager, D3D12_HEAP_TYPE_DEFAULT },
+		m_dsvHandleIndex{ 0u }
+	{}
 
-	void CreateDepthBufferView(ID3D12Device* device, std::uint32_t width, std::uint32_t height);
-	void ReserveHeapSpace(ID3D12Device* device) noexcept;
-
-	void SetMaxResolution(std::uint32_t width, std::uint32_t height) noexcept;
-
+	void Create(D3DReusableDescriptorHeap& descriptorHeap, UINT width, UINT height);
 	void ClearDSV(
-		ID3D12GraphicsCommandList* commandList, D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle
-	) noexcept;
+		const D3DCommandList& commandList, const D3DReusableDescriptorHeap& descriptorHeap
+	) const noexcept;
 
 	[[nodiscard]]
-	D3D12_CPU_DESCRIPTOR_HANDLE GetDSVHandle() const noexcept;
+	const Texture& GetDepthTexture() const noexcept { return m_depthTexture; }
+	[[nodiscard]]
+	UINT GetDescriptorIndex() const noexcept { return m_dsvHandleIndex; }
 
 private:
-	ComPtr<ID3D12DescriptorHeap> m_pDSVHeap;
-	//D3DResourceView m_depthBuffer;
-	std::uint32_t m_maxWidth;
-	std::uint32_t m_maxHeight;
+	ID3D12Device* m_device;
+	Texture       m_depthTexture;
+	UINT          m_dsvHandleIndex;
+
+public:
+	DepthBuffer(const DepthBuffer&) = delete;
+	DepthBuffer& operator=(const DepthBuffer&) = delete;
+
+	DepthBuffer(DepthBuffer&& other) noexcept
+		: m_device{ other.m_device }, m_depthTexture{ std::move(other.m_depthTexture) },
+		m_dsvHandleIndex{ other.m_dsvHandleIndex }
+	{}
+	DepthBuffer& operator=(DepthBuffer&& other) noexcept
+	{
+		m_device         = other.m_device;
+		m_depthTexture   = std::move(other.m_depthTexture);
+		m_dsvHandleIndex = other.m_dsvHandleIndex;
+
+		return *this;
+	}
 };
 #endif

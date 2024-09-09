@@ -2,8 +2,9 @@
 #include <Gaia.hpp>
 #include <D3DResourceBarrier.hpp>
 
-RenderEngineBase::RenderEngineBase(ID3D12Device* device) : m_depthBuffer{ device } {
-	m_depthBuffer.SetMaxResolution(7680u, 4320u);
+RenderEngineBase::RenderEngineBase(ID3D12Device* device) //: m_depthBuffer{ device }
+{
+	//m_depthBuffer.SetMaxResolution(7680u, 4320u);
 }
 
 void RenderEngineBase::Present(size_t frameIndex) {
@@ -57,11 +58,11 @@ void RenderEngineBase::ExecutePreGraphicsStage(
 		graphicsCommandList, std::data(m_backgroundColour), rtvHandle
 	);
 
-	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = m_depthBuffer.GetDSVHandle();
+	//D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = m_depthBuffer.GetDSVHandle();
 
-	m_depthBuffer.ClearDSV(graphicsCommandList, dsvHandle);
+//	m_depthBuffer.ClearDSV(graphicsCommandList, dsvHandle);
 
-	graphicsCommandList->OMSetRenderTargets(1u, &rtvHandle, FALSE, &dsvHandle);
+//	graphicsCommandList->OMSetRenderTargets(1u, &rtvHandle, FALSE, &dsvHandle);
 }
 
 void RenderEngineBase::BindCommonGraphicsBuffers(
@@ -93,11 +94,11 @@ void RenderEngineBase::ResizeViewportAndScissor(
 void RenderEngineBase::CreateDepthBufferView(
 	ID3D12Device* device, std::uint32_t width, std::uint32_t height
 ) {
-	m_depthBuffer.CreateDepthBufferView(device, width, height);
+	//m_depthBuffer.CreateDepthBufferView(device, width, height);
 }
 
 void RenderEngineBase::ReserveBuffers(ID3D12Device* device) {
-	m_depthBuffer.ReserveHeapSpace(device);
+//	m_depthBuffer.ReserveHeapSpace(device);
 	ReserveBuffersDerived(device);
 }
 

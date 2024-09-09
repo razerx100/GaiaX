@@ -4,6 +4,7 @@
 #include <memory>
 
 #include <D3DResources.hpp>
+#include <DepthBuffer.hpp>
 
 class BufferTest : public ::testing::Test
 {
@@ -78,4 +79,40 @@ TEST_F(BufferTest, TextureTest)
 	EXPECT_EQ(testTexture.GetHeight(), 1080u) << "Texture width isn't 1080.";
 	EXPECT_EQ(testTexture.GetBufferSize(), 8'294'400lu) << "Texture size isn't 8'294'400.";
 	EXPECT_NE(testTexture.Get(), nullptr) << "Texture wasn't created.";
+}
+
+TEST_F(BufferTest, DepthBufferTest)
+{
+	ID3D12Device* device   = s_deviceManager->GetDevice();
+	IDXGIAdapter3* adapter = s_deviceManager->GetAdapter();
+
+	MemoryManager memoryManager{ adapter, device, 20_MB, 200_KB };
+
+	D3DReusableDescriptorHeap dsvHeap{
+		device, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE
+	};
+
+	DepthBuffer depth1{ device, &memoryManager };
+	depth1.Create(dsvHeap, 1280u, 720u);
+
+	EXPECT_NE(depth1.GetDepthTexture().Get(), nullptr) << "Depth texture Handle is null.";
+	EXPECT_EQ(depth1.GetDescriptorIndex(), 0u) << "Depth descriptor index isn't 0.";
+
+	DepthBuffer depth2{ device, &memoryManager };
+	depth2.Create(dsvHeap, 1920u, 1080u);
+
+	EXPECT_NE(depth2.GetDepthTexture().Get(), nullptr) << "Depth texture Handle is null.";
+	EXPECT_EQ(depth2.GetDescriptorIndex(), 1u) << "Depth descriptor index isn't 1.";
+
+	dsvHeap.FreeDescriptor(depth1.GetDescriptorIndex());
+
+	DepthBuffer depth3{ device, &memoryManager };
+	depth3.Create(dsvHeap, 1920u, 1080u);
+
+	EXPECT_EQ(depth3.GetDescriptorIndex(), 0u) << "Depth descriptor index isn't 0.";
+
+	depth1.Create(dsvHeap, 1920u, 1080u);
+
+	EXPECT_NE(depth1.GetDepthTexture().Get(), nullptr) << "Depth texture Handle is null.";
+	EXPECT_EQ(depth1.GetDescriptorIndex(), 2u) << "Depth descriptor index isn't 2.";
 }

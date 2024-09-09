@@ -73,6 +73,6 @@ protected:
 
 private:
 	ViewportAndScissorManager m_viewportAndScissor;
-	DepthBuffer m_depthBuffer;
+	//DepthBuffer m_depthBuffer;
 };
 #endif

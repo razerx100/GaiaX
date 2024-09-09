@@ -1,60 +1,40 @@
 #include <DepthBuffer.hpp>
-#include <Exception.hpp>
 
-DepthBuffer::DepthBuffer(ID3D12Device* device) : m_maxWidth{ 0u }, m_maxHeight{ 0u }
-//, m_depthBuffer{ ResourceType::gpuOnly, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL }
+void DepthBuffer::Create(D3DReusableDescriptorHeap& descriptorHeap, UINT width, UINT height)
 {
+	const DXGI_FORMAT depthFormat = DXGI_FORMAT_D32_FLOAT;
 
-    D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc{
-        .Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV,
-        .NumDescriptors = 1u,
-        .Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE
-    };
+	D3D12_CLEAR_VALUE depthClearValue
+	{
+		.Format = depthFormat,
+		.Color  = { 1.f, 0.f, 0.f, 0.f }
+	};
 
-    device->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&m_pDSVHeap));
-}
+	m_depthTexture.Create2D(
+		width, height, 1u, depthFormat, D3D12_RESOURCE_STATE_DEPTH_WRITE,
+		D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL, false, &depthClearValue
+	);
 
-void DepthBuffer::CreateDepthBufferView(
-    ID3D12Device* device, std::uint32_t width, std::uint32_t height
-) {
-    if (width > m_maxWidth || height > m_maxHeight)
-        throw Exception("DepthBuffer Error", "Resolution exceeds max supported resolution");
+	D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc
+	{
+		.Format        = depthFormat,
+		.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D,
+		.Flags         = D3D12_DSV_FLAG_NONE,
+		.Texture2D     = D3D12_TEX2D_DSV
+		{
+			.MipSlice = 0u
+		}
+	};
 
-    static D3D12_CLEAR_VALUE depthValue{ DXGI_FORMAT_D32_FLOAT, { 1.0f, 0u } };
-
-    //m_depthBuffer.SetTextureInfo(width, height, DXGI_FORMAT_D32_FLOAT, false);
-    //m_depthBuffer.CreateResource(device, D3D12_RESOURCE_STATE_DEPTH_WRITE, &depthValue);
-
-    static constexpr D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc{
-        .Format = DXGI_FORMAT_D32_FLOAT,
-        .ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D,
-        .Flags = D3D12_DSV_FLAG_NONE,
-        .Texture2D = {0u}
-    };
-
-    //device->CreateDepthStencilView(
-    //    m_depthBuffer.GetResource(), &dsvDesc, m_pDSVHeap->GetCPUDescriptorHandleForHeapStart()
-    //);
+	m_dsvHandleIndex = descriptorHeap.CreateDSV(m_depthTexture.Get(), dsvDesc);
 }
 
 void DepthBuffer::ClearDSV(
-    ID3D12GraphicsCommandList* commandList, D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle
-) noexcept {
-    commandList->ClearDepthStencilView(
-        dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0u, 0u, nullptr
-    );
-}
+	const D3DCommandList& commandList, const D3DReusableDescriptorHeap& descriptorHeap
+) const noexcept {
+	ID3D12GraphicsCommandList6* cmdList = commandList.Get();
 
-void DepthBuffer::ReserveHeapSpace(ID3D12Device* device) noexcept {
-    //m_depthBuffer.SetTextureInfo(m_maxWidth, m_maxHeight,DXGI_FORMAT_D32_FLOAT, false);
-    //m_depthBuffer.ReserveHeapSpace(device);
-}
-
-void DepthBuffer::SetMaxResolution(std::uint32_t width, std::uint32_t height) noexcept {
-    m_maxWidth = width;
-    m_maxHeight = height;
-}
-
-D3D12_CPU_DESCRIPTOR_HANDLE DepthBuffer::GetDSVHandle() const noexcept {
-    return m_pDSVHeap->GetCPUDescriptorHandleForHeapStart();
+	cmdList->ClearDepthStencilView(
+		descriptorHeap.GetCPUHandle(m_dsvHandleIndex), D3D12_CLEAR_FLAG_DEPTH, 1.f, 0u, 0u, nullptr
+	);
 }
