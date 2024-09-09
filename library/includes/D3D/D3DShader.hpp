@@ -6,6 +6,8 @@
 class D3DShader
 {
 public:
+	D3DShader() : m_binary{} {}
+
 	void LoadBinary(const std::wstring& fileName);
 	void CompileBinary(
 		const std::wstring& fileName, const char* target,
@@ -16,6 +18,20 @@ public:
 	D3D12_SHADER_BYTECODE GetByteCode() const noexcept;
 
 private:
-	ComPtr<ID3DBlob> m_pBinary;
+	ComPtr<ID3DBlob> m_binary;
+
+public:
+	D3DShader(const D3DShader&) = delete;
+	D3DShader& operator=(const D3DShader&) = delete;
+
+	D3DShader(D3DShader&& other) noexcept
+		: m_binary{ std::move(other.m_binary) }
+	{}
+	D3DShader& operator=(D3DShader&& other) noexcept
+	{
+		m_binary = std::move(other.m_binary);
+
+		return *this;
+	}
 };
 #endif

@@ -1,11 +1,11 @@
 #include <D3DShader.hpp>
 #include <d3dcompiler.h>
-#include <fstream>
-#include <cassert>
+#include <format>
+#include <Exception.hpp>
 
 void D3DShader::LoadBinary(const std::wstring& fileName)
 {
-	D3DReadFileToBlob(fileName.c_str(), &m_pBinary);
+	D3DReadFileToBlob(fileName.c_str(), &m_binary);
 }
 
 void D3DShader::CompileBinary(
@@ -18,29 +18,30 @@ void D3DShader::CompileBinary(
 	std::uint32_t compileFlags = 0;
 #endif
 
-	ComPtr<ID3DBlob> error;
+	ComPtr<ID3DBlob> error{};
 	D3DCompileFromFile(
 		fileName.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, entryPoint, target,
-		compileFlags, 0u, &m_pBinary, &error
+		compileFlags, 0u, &m_binary, &error
 	);
 
 	if (error)
 	{
-		std::ofstream log("ErrorLog.txt", std::ios_base::app | std::ios_base::out);
-		log << "Category : Shader Creation error    "
-			<< "Description : " << reinterpret_cast<char*>(error->GetBufferPointer()) << "    "
-			<< std::endl;
-	}
+		std::string errorString = std::format(
+			"Description : {}\n",
+			reinterpret_cast<char*>(error->GetBufferPointer())
+		);
 
-	assert(!error && "Shader Creation error.");
+		throw Exception{ "Shader Creation error", errorString };
+	}
 }
 
 D3D12_SHADER_BYTECODE D3DShader::GetByteCode() const noexcept
 {
-	D3D12_SHADER_BYTECODE byteCode{};
-
-	byteCode.BytecodeLength  = m_pBinary->GetBufferSize();
-	byteCode.pShaderBytecode = m_pBinary->GetBufferPointer();
+	D3D12_SHADER_BYTECODE byteCode
+	{
+		.pShaderBytecode = m_binary->GetBufferPointer(),
+		.BytecodeLength  = m_binary->GetBufferSize()
+	};
 
 	return byteCode;
 }
