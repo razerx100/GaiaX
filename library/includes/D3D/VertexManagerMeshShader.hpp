@@ -1,7 +1,6 @@
 #ifndef VERTEX_MANAGER_MESH_SHADER_HPP_
 #define VERTEX_MANAGER_MESH_SHADER_HPP_
 #include <atomic>
-#include <UploadContainer.hpp>
 #include <MeshBundle.hpp>
 
 /*
