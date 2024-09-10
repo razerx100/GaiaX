@@ -12,8 +12,10 @@ std::unique_ptr<D3DPipelineObject> GraphicsPipelineMeshShader::_createGraphicsPi
 	ps->LoadBinary(shaderPath + pixelShader);
 
 	auto pso = std::make_unique<D3DPipelineObject>();
-	pso->CreateGFXPipelineStateMesh(
-		device, graphicsRootSignature, ms->GetByteCode(), ps->GetByteCode()
+	pso->CreateGraphicsPipeline(
+		device,
+		GraphicsPipelineBuilderMS{ graphicsRootSignature }
+		.SetMeshStage(ms->GetByteCode(), ps->GetByteCode())
 	);
 
 	return pso;

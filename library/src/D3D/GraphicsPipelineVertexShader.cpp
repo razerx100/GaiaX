@@ -14,13 +14,17 @@ std::unique_ptr<D3DPipelineObject> GraphicsPipelineVertexShader::CreateGraphicsP
 	ps->LoadBinary(shaderPath + pixelShader);
 
 	auto pso = std::make_unique<D3DPipelineObject>();
-	pso->CreateGFXPipelineStateVertex(
+	pso->CreateGraphicsPipeline(
 		device,
-		VertexLayout()
-		.AddInputElement("Position", DXGI_FORMAT_R32G32B32_FLOAT, 12u)
-		.AddInputElement("Normal", DXGI_FORMAT_R32G32B32_FLOAT, 12u)
-		.AddInputElement("UV", DXGI_FORMAT_R32G32_FLOAT, 8u).GetLayoutDesc(),
-		graphicsRootSignature, vs->GetByteCode(), ps->GetByteCode()
+		GraphicsPipelineBuilderVS{ graphicsRootSignature }
+		.SetInputAssembler(
+			VertexLayout{}
+			.AddInputElement("Position", DXGI_FORMAT_R32G32B32_FLOAT, 12u)
+			.AddInputElement("Normal", DXGI_FORMAT_R32G32B32_FLOAT, 12u)
+			.AddInputElement("UV", DXGI_FORMAT_R32G32_FLOAT, 8u)
+			.GetLayoutDesc()
+		)
+		.SetVertexStage(vs->GetByteCode(), ps->GetByteCode())
 	);
 
 	return pso;
