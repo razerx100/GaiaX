@@ -14,7 +14,7 @@ public:
 	[[nodiscard]]
 	ID3D12Device5* GetDevice() const noexcept { return m_device.Get(); }
 	[[nodiscard]]
-	IDXGIFactory4* GetFactory() const noexcept { return m_factory.Get(); }
+	IDXGIFactory5* GetFactory() const noexcept { return m_factory.Get(); }
 	[[nodiscard]]
 	IDXGIAdapter3* GetAdapter() const noexcept { return m_adapter.Get(); }
 	[[nodiscard]]
@@ -31,7 +31,7 @@ private:
 private:
 	ComPtr<ID3D12Device5> m_device;
 	ComPtr<IDXGIAdapter3> m_adapter;
-    ComPtr<IDXGIFactory4> m_factory;
+    ComPtr<IDXGIFactory5> m_factory;
 	D3DDebugLogger        m_debugLogger;
 
 public:
