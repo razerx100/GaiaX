@@ -1,12 +1,12 @@
 cmake_minimum_required(VERSION 3.21)
 
-file(GLOB_RECURSE SRC src/*.cc)
+file(GLOB_RECURSE SRC src/*.cc Win32/*.hpp Win32/*.cpp)
 
 add_executable(GaiaXTest
     ${SRC}
 )
 
-target_include_directories(GaiaXTest PRIVATE ${GAIAX_PRIVATE_INCLUDES})
+target_include_directories(GaiaXTest PRIVATE ${GAIAX_PRIVATE_INCLUDES} Win32/)
 
 unset(GAIAX_PRIVATE_INCLUDES)
 
