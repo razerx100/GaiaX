@@ -33,16 +33,18 @@ void SwapchainManager::Create(
 	{
 		desc.Flags    = DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
 		m_presentFlag = DXGI_PRESENT_ALLOW_TEARING;
-
-		factory->MakeWindowAssociation(windowHandle, DXGI_MWA_NO_ALT_ENTER);
 	}
 
-	ComPtr<IDXGISwapChain1> swapChain{};
+	ComPtr<IDXGISwapChain1> swapchain{};
 	factory->CreateSwapChainForHwnd(
-		presentQueue.GetQueue(), windowHandle, &desc, nullptr, nullptr, &swapChain
+		presentQueue.GetQueue(), windowHandle, &desc, nullptr, nullptr, &swapchain
 	);
 
-	swapChain->QueryInterface(IID_PPV_ARGS(&m_swapchain));
+	// Must do it after the swapchain creation.
+	if (variableRefreshRateSupport == TRUE)
+		factory->MakeWindowAssociation(windowHandle, DXGI_MWA_NO_ALT_ENTER);
+
+	swapchain->QueryInterface(IID_PPV_ARGS(&m_swapchain));
 
 	m_descriptorIndices.resize(bufferCount, std::numeric_limits<UINT>::max());
 	m_renderTargets.resize(bufferCount, nullptr);
@@ -73,6 +75,10 @@ void SwapchainManager::CreateRTVs(D3DReusableDescriptorHeap& rtvHeap)
 
 void SwapchainManager::Resize(D3DReusableDescriptorHeap& rtvHeap, UINT width, UINT height)
 {
+	// Must be called before calling ResizeBuffers.
+	for (auto& renderTarget : m_renderTargets)
+		renderTarget.Reset();
+
 	DXGI_SWAP_CHAIN_DESC1 desc{};
 	m_swapchain->GetDesc1(&desc);
 
