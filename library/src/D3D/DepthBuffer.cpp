@@ -26,7 +26,10 @@ void DepthBuffer::Create(D3DReusableDescriptorHeap& descriptorHeap, UINT width, 
 		}
 	};
 
-	m_dsvHandleIndex = descriptorHeap.CreateDSV(m_depthTexture.Get(), dsvDesc);
+	if (m_dsvHandleIndex != std::numeric_limits<UINT>::max())
+		descriptorHeap.CreateDSV(m_depthTexture.Get(), dsvDesc, m_dsvHandleIndex);
+	else
+		m_dsvHandleIndex = descriptorHeap.CreateDSV(m_depthTexture.Get(), dsvDesc);
 }
 
 void DepthBuffer::ClearDSV(

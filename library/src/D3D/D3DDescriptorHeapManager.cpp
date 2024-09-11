@@ -204,6 +204,43 @@ UINT D3DReusableDescriptorHeap::CreateSampler(const D3D12_SAMPLER_DESC& samplerD
     return descriptorIndex;
 }
 
+void D3DReusableDescriptorHeap::CreateSRV(
+    ID3D12Resource* resource, const D3D12_SHADER_RESOURCE_VIEW_DESC& srvDesc,
+    UINT descriptorIndex
+) {
+    m_descriptorHeap.CreateSRV(resource, srvDesc, descriptorIndex);
+}
+
+void D3DReusableDescriptorHeap::CreateCBV(
+    const D3D12_CONSTANT_BUFFER_VIEW_DESC& cbvDesc, UINT descriptorIndex
+) {
+    m_descriptorHeap.CreateCBV(cbvDesc, descriptorIndex);
+}
+
+void D3DReusableDescriptorHeap::CreateUAV(
+    ID3D12Resource* resource, ID3D12Resource* counterResource,
+    const D3D12_UNORDERED_ACCESS_VIEW_DESC& uavDesc, UINT descriptorIndex
+) {
+    m_descriptorHeap.CreateUAV(resource, counterResource, uavDesc, descriptorIndex);
+}
+
+void D3DReusableDescriptorHeap::CreateDSV(
+    ID3D12Resource* resource, const D3D12_DEPTH_STENCIL_VIEW_DESC& dsvDesc, UINT descriptorIndex
+) {
+    m_descriptorHeap.CreateDSV(resource, dsvDesc, descriptorIndex);
+}
+
+void D3DReusableDescriptorHeap::CreateRTV(
+    ID3D12Resource* resource, const D3D12_RENDER_TARGET_VIEW_DESC& rtvDesc, UINT descriptorIndex
+) {
+    m_descriptorHeap.CreateRTV(resource, rtvDesc, descriptorIndex);
+}
+
+void D3DReusableDescriptorHeap::CreateSampler(const D3D12_SAMPLER_DESC& samplerDesc, UINT descriptorIndex)
+{
+    m_descriptorHeap.CreateSampler(samplerDesc, descriptorIndex);
+}
+
 UINT D3DReusableDescriptorHeap::GetNextFreeIndex(UINT extraAllocCount/* = 0 */)
 {
     UINT descriptorIndex  = std::numeric_limits<UINT>::max();

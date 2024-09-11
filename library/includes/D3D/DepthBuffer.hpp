@@ -2,6 +2,7 @@
 #define DEPTH_BUFFER_HPP_
 #include <D3DHeaders.hpp>
 #include <cstdint>
+#include <numeric>
 #include <D3DResources.hpp>
 #include <D3DCommandQueue.hpp>
 #include <D3DDescriptorHeapManager.hpp>
@@ -11,7 +12,7 @@ class DepthBuffer
 public:
 	DepthBuffer(ID3D12Device* device, MemoryManager* memoryManager)
 		: m_device{ device }, m_depthTexture{ device, memoryManager, D3D12_HEAP_TYPE_DEFAULT },
-		m_dsvHandleIndex{ 0u }
+		m_dsvHandleIndex{ std::numeric_limits<UINT>::max() }
 	{}
 
 	void Create(D3DReusableDescriptorHeap& descriptorHeap, UINT width, UINT height);

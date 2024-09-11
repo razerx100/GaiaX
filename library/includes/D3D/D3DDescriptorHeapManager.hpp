@@ -103,6 +103,23 @@ public:
 	UINT CreateRTV(ID3D12Resource* resource, const D3D12_RENDER_TARGET_VIEW_DESC& rtvDesc);
 	UINT CreateSampler(const D3D12_SAMPLER_DESC& samplerDesc);
 
+	void CreateSRV(
+		ID3D12Resource* resource, const D3D12_SHADER_RESOURCE_VIEW_DESC& srvDesc,
+		UINT descriptorIndex
+	);
+	void CreateCBV(const D3D12_CONSTANT_BUFFER_VIEW_DESC& cbvDesc, UINT descriptorIndex);
+	void CreateUAV(
+		ID3D12Resource* resource, ID3D12Resource* counterResource,
+		const D3D12_UNORDERED_ACCESS_VIEW_DESC& uavDesc, UINT descriptorIndex
+	);
+	void CreateDSV(
+		ID3D12Resource* resource, const D3D12_DEPTH_STENCIL_VIEW_DESC& dsvDesc, UINT descriptorIndex
+	);
+	void CreateRTV(
+		ID3D12Resource* resource, const D3D12_RENDER_TARGET_VIEW_DESC& rtvDesc, UINT descriptorIndex
+	);
+	void CreateSampler(const D3D12_SAMPLER_DESC& samplerDesc, UINT descriptorIndex);
+
 	[[nodiscard]]
 	D3D12_CPU_DESCRIPTOR_HANDLE GetCPUHandle(UINT index) const noexcept
 	{
