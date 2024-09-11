@@ -96,23 +96,15 @@ TEST_F(BufferTest, DepthBufferTest)
 	depth1.Create(dsvHeap, 1280u, 720u);
 
 	EXPECT_NE(depth1.GetDepthTexture().Get(), nullptr) << "Depth texture Handle is null.";
-	EXPECT_EQ(depth1.GetDescriptorIndex(), 0u) << "Depth descriptor index isn't 0.";
 
 	DepthBuffer depth2{ device, &memoryManager };
 	depth2.Create(dsvHeap, 1920u, 1080u);
 
 	EXPECT_NE(depth2.GetDepthTexture().Get(), nullptr) << "Depth texture Handle is null.";
-	EXPECT_EQ(depth2.GetDescriptorIndex(), 1u) << "Depth descriptor index isn't 1.";
-
-	dsvHeap.FreeDescriptor(depth1.GetDescriptorIndex());
 
 	DepthBuffer depth3{ device, &memoryManager };
 	depth3.Create(dsvHeap, 1920u, 1080u);
 
-	EXPECT_EQ(depth3.GetDescriptorIndex(), 0u) << "Depth descriptor index isn't 0.";
-
 	depth1.Create(dsvHeap, 1920u, 1080u);
-
 	EXPECT_NE(depth1.GetDepthTexture().Get(), nullptr) << "Depth texture Handle is null.";
-	EXPECT_EQ(depth1.GetDescriptorIndex(), 2u) << "Depth descriptor index isn't 2.";
 }

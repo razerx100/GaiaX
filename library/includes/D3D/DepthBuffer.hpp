@@ -22,8 +22,6 @@ public:
 
 	[[nodiscard]]
 	const Texture& GetDepthTexture() const noexcept { return m_depthTexture; }
-	[[nodiscard]]
-	UINT GetDescriptorIndex() const noexcept { return m_dsvHandleIndex; }
 
 private:
 	ID3D12Device* m_device;
