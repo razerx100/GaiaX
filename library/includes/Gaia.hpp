@@ -19,7 +19,7 @@
 namespace Gaia {
 	// Variables
 	extern std::unique_ptr<DeviceManager> device;
-	extern std::unique_ptr<SwapChainManager> swapChain;
+	//extern std::unique_ptr<SwapChainManager> swapChain;
 	extern std::unique_ptr<D3DCommandQueue> graphicsQueue;
 	extern std::unique_ptr<D3DCommandList> graphicsCmdList;
 	extern std::unique_ptr<D3DFence> graphicsFence;

@@ -2,56 +2,69 @@
 #define SWAP_CHAIN_MANAGER_HPP_
 #include <D3DHeaders.hpp>
 #include <vector>
-#include <optional>
+#include <array>
+#include <D3DResources.hpp>
+#include <D3DDescriptorHeapManager.hpp>
+#include <D3DCommandQueue.hpp>
 
-class SwapChainManager {
+class SwapchainManager
+{
 public:
-	struct Args
-	{
-		ID3D12Device* device;
-		IDXGIFactory2* factory;
-		ID3D12CommandQueue* graphicsQueue;
-		HWND windowHandle;
-		std::uint32_t width;
-		std::uint32_t height;
-		std::uint32_t bufferCount;
-		bool variableRefreshRate;
-	};
-
-public:
-	SwapChainManager(const Args& arguments);
-
-	void ToggleVSync() noexcept;
-	void PresentWithTear();
-	void PresentWithoutTear();
-	void Resize(
-		ID3D12Device* device,
-		std::uint32_t width, std::uint32_t height
+	SwapchainManager() : m_swapchain{}, m_renderTargets{}, m_descriptorIndices{}, m_presentFlag{ 0u } {}
+	SwapchainManager(
+		IDXGIFactory5* factory, const D3DCommandQueue& presentQueue, HWND windowHandle, UINT bufferCount
 	);
 
+	void Create(
+		IDXGIFactory5* factory, const D3DCommandQueue& presentQueue, HWND windowHandle, UINT bufferCount
+	);
+
+	void Resize(D3DReusableDescriptorHeap& rtvHeap, UINT width, UINT height);
 	void ClearRTV(
-		ID3D12GraphicsCommandList* commandList, float* clearColor,
-		D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle
-	) noexcept;
+		const D3DCommandList& commandList, const D3DReusableDescriptorHeap& rtvHeap,
+		size_t frameIndex, const std::array<float, 4u>& clearColour
+	);
+
+	void Present() { m_swapchain->Present(0u, m_presentFlag); }
 
 	[[nodiscard]]
-	D3D12_CPU_DESCRIPTOR_HANDLE GetRTVHandle(size_t index) const noexcept;
+	UINT GetCurrentBackBufferIndex() const noexcept
+	{
+		return m_swapchain->GetCurrentBackBufferIndex();
+	}
 	[[nodiscard]]
-	ID3D12Resource* GetRTV(size_t index) const noexcept;
-	[[nodiscard]]
-	size_t GetCurrentBackBufferIndex() const noexcept;
-	[[nodiscard]]
-	IDXGISwapChain4* GetRef() const noexcept;
+	ID3D12Resource* GetRenderTarget(size_t frameIndex) const noexcept
+	{
+		return m_renderTargets[frameIndex].Get();
+	}
 
 private:
-	void CreateRTVHeap(ID3D12Device* device, UINT bufferCount);
-	void CreateRTVs(ID3D12Device* device);
+	void CreateRTVs(D3DReusableDescriptorHeap& rtvHeap);
 
 private:
-	size_t m_rtvDescSize;
-	bool m_vsyncFlag;
-	ComPtr<IDXGISwapChain4> m_pSwapChain;
-	std::vector<ComPtr<ID3D12Resource>> m_pRenderTargetViews;
-	ComPtr<ID3D12DescriptorHeap> m_pRtvHeap;
+	ComPtr<IDXGISwapChain4>             m_swapchain;
+	std::vector<ComPtr<ID3D12Resource>> m_renderTargets;
+	std::vector<UINT>                   m_descriptorIndices;
+	UINT                                m_presentFlag;
+
+public:
+	SwapchainManager(const SwapchainManager&) = delete;
+	SwapchainManager& operator=(const SwapchainManager&) = delete;
+
+	SwapchainManager(SwapchainManager&& other) noexcept
+		: m_swapchain{ std::move(other.m_swapchain) },
+		m_renderTargets{ std::move(other.m_renderTargets) },
+		m_descriptorIndices{ std::move(other.m_descriptorIndices) },
+		m_presentFlag{ other.m_presentFlag }
+	{}
+	SwapchainManager& operator=(SwapchainManager&& other) noexcept
+	{
+		m_swapchain         = std::move(other.m_swapchain);
+		m_renderTargets     = std::move(other.m_renderTargets);
+		m_descriptorIndices = std::move(other.m_descriptorIndices);
+		m_presentFlag       = other.m_presentFlag;
+
+		return *this;
+	}
 };
 #endif

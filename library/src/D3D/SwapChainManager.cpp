@@ -1,133 +1,97 @@
 #include <SwapChainManager.hpp>
-#include <Gaia.hpp>
-#include <d3dx12.h>
+#include <numeric>
 
-SwapChainManager::SwapChainManager(const Args& arguments)
-	: m_rtvDescSize{ 0u }, m_vsyncFlag{ false },
-	m_pRenderTargetViews{ arguments.bufferCount } {
-
-	ID3D12Device* device = arguments.device;
-	UINT bufferCount = static_cast<UINT>(arguments.bufferCount);
-
-	DXGI_SWAP_CHAIN_DESC1 desc{
-		.Width = arguments.width,
-		.Height = arguments.height,
-		.Format = DXGI_FORMAT_B8G8R8A8_UNORM,
-		.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT,
-		.BufferCount = bufferCount,
-		.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD
-	};
-	desc.SampleDesc.Count = 1u;
-
-	bool variableRefreshRate = arguments.variableRefreshRate;
-	if (variableRefreshRate)
-		desc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
-
-	IDXGIFactory2* factory = arguments.factory;
-	HWND windowHandle = arguments.windowHandle;
-
-	ComPtr<IDXGISwapChain1> swapChain;
-	factory->CreateSwapChainForHwnd(
-		arguments.graphicsQueue, windowHandle, &desc, nullptr, nullptr, &swapChain
-	);
-	swapChain.As(&m_pSwapChain);
-
-	if (variableRefreshRate)
-		factory->MakeWindowAssociation(windowHandle, DXGI_MWA_NO_ALT_ENTER);
-
-	CreateRTVHeap(device, bufferCount);
-	CreateRTVs(device);
+// Swapchain Manager
+SwapchainManager::SwapchainManager(
+	IDXGIFactory5* factory, const D3DCommandQueue& presentQueue, HWND windowHandle, UINT bufferCount
+) : SwapchainManager{}
+{
+	Create(factory, presentQueue, windowHandle, bufferCount);
 }
 
-void SwapChainManager::CreateRTVs(ID3D12Device* device) {
-	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(
-		m_pRtvHeap->GetCPUDescriptorHandleForHeapStart()
+void SwapchainManager::Create(
+	IDXGIFactory5* factory, const D3DCommandQueue& presentQueue, HWND windowHandle, UINT bufferCount
+) {
+	DXGI_SWAP_CHAIN_DESC1 desc
+	{
+		.Width       = 0u,
+		.Height      = 0u,
+		.Format      = DXGI_FORMAT_B8G8R8A8_UNORM,
+		.SampleDesc  = DXGI_SAMPLE_DESC{ .Count = 1u, .Quality = 0u },
+		.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT,
+		.BufferCount = bufferCount,
+		.SwapEffect  = DXGI_SWAP_EFFECT_FLIP_DISCARD
+	};
+
+	BOOL variableRefreshRateSupport = FALSE;
+
+	factory->CheckFeatureSupport(
+		DXGI_FEATURE_PRESENT_ALLOW_TEARING, &variableRefreshRateSupport, static_cast<UINT>(sizeof(BOOL))
 	);
 
-	if (device) {
-		D3D12_RENDER_TARGET_VIEW_DESC rtvDesc{};
-		rtvDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
-		rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
+	if (variableRefreshRateSupport == TRUE)
+	{
+		desc.Flags    = DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
+		m_presentFlag = DXGI_PRESENT_ALLOW_TEARING;
 
-		for (size_t index = 0u; index < std::size(m_pRenderTargetViews); ++index) {
-			m_pSwapChain->GetBuffer(
-				static_cast<UINT>(index), IID_PPV_ARGS( & m_pRenderTargetViews[index])
-			);
+		factory->MakeWindowAssociation(windowHandle, DXGI_MWA_NO_ALT_ENTER);
+	}
 
-			device->CreateRenderTargetView(
-				m_pRenderTargetViews[index].Get(), &rtvDesc, rtvHandle
-			);
+	ComPtr<IDXGISwapChain1> swapChain{};
+	factory->CreateSwapChainForHwnd(
+		presentQueue.GetQueue(), windowHandle, &desc, nullptr, nullptr, &swapChain
+	);
 
-			rtvHandle.Offset(1u, static_cast<UINT>(m_rtvDescSize));
+	swapChain->QueryInterface(IID_PPV_ARGS(&m_swapchain));
+
+	m_descriptorIndices.resize(bufferCount, std::numeric_limits<UINT>::max());
+	m_renderTargets.resize(bufferCount, nullptr);
+}
+
+void SwapchainManager::CreateRTVs(D3DReusableDescriptorHeap& rtvHeap)
+{
+	D3D12_RENDER_TARGET_VIEW_DESC rtvDesc
+	{
+		.Format        = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,
+		.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D,
+		.Texture2D     = D3D12_TEX2D_RTV
+		{
+			.MipSlice = 0u
 		}
+	};
+
+	for (size_t index = 0u; index < std::size(m_renderTargets); ++index)
+	{
+		m_swapchain->GetBuffer(static_cast<UINT>(index), IID_PPV_ARGS(&m_renderTargets[index]));
+
+		if (m_descriptorIndices[index] != std::numeric_limits<UINT>::max())
+			rtvHeap.CreateRTV(m_renderTargets[index].Get(), rtvDesc, m_descriptorIndices[index]);
+		else
+			m_descriptorIndices[index] = rtvHeap.CreateRTV(m_renderTargets[index].Get(), rtvDesc);
 	}
 }
 
-size_t SwapChainManager::GetCurrentBackBufferIndex() const noexcept {
-	return static_cast<size_t>(m_pSwapChain->GetCurrentBackBufferIndex());
-}
-
-void SwapChainManager::ClearRTV(
-	ID3D12GraphicsCommandList* commandList, float* clearColor,
-	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle
-) noexcept {
-	commandList->ClearRenderTargetView(rtvHandle, clearColor, 0u, nullptr);
-}
-
-D3D12_CPU_DESCRIPTOR_HANDLE SwapChainManager::GetRTVHandle(size_t index) const noexcept {
-	return CD3DX12_CPU_DESCRIPTOR_HANDLE(
-		m_pRtvHeap->GetCPUDescriptorHandleForHeapStart(),
-		static_cast<INT>(index), static_cast<UINT>(m_rtvDescSize)
-	);
-}
-
-ID3D12Resource* SwapChainManager::GetRTV(size_t index) const noexcept {
-	return m_pRenderTargetViews[index].Get();
-}
-
-void SwapChainManager::ToggleVSync() noexcept {
-	m_vsyncFlag = !m_vsyncFlag;
-}
-
-void SwapChainManager::PresentWithTear() {
-	m_pSwapChain->Present(0u, DXGI_PRESENT_ALLOW_TEARING);
-}
-
-void SwapChainManager::PresentWithoutTear() {
-	m_pSwapChain->Present(m_vsyncFlag, 0u);
-}
-
-void SwapChainManager::Resize(
-	ID3D12Device* device, std::uint32_t width, std::uint32_t height
-) {
-	for (auto& rt : m_pRenderTargetViews)
-		rt.Reset();
-
+void SwapchainManager::Resize(D3DReusableDescriptorHeap& rtvHeap, UINT width, UINT height)
+{
 	DXGI_SWAP_CHAIN_DESC1 desc{};
-	m_pSwapChain->GetDesc1(&desc);
+	m_swapchain->GetDesc1(&desc);
 
-	m_pSwapChain->ResizeBuffers(
-		static_cast<UINT>(std::size(m_pRenderTargetViews)), width, height, desc.Format,
+	m_swapchain->ResizeBuffers(
+		static_cast<UINT>(std::size(m_renderTargets)), width, height, desc.Format,
 		desc.Flags
 	);
 
-	CreateRTVs(device);
+	CreateRTVs(rtvHeap);
 }
 
-void SwapChainManager::CreateRTVHeap(ID3D12Device* device, UINT bufferCount) {
-	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc{
-		.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV,
-		.NumDescriptors = bufferCount,
-		.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE
-	};
+void SwapchainManager::ClearRTV(
+	const D3DCommandList& commandList, const D3DReusableDescriptorHeap& rtvHeap,
+	size_t frameIndex, const std::array<float, 4u>& clearColour
+) {
+	ID3D12GraphicsCommandList* cmdList = commandList.Get();
 
-	device->CreateDescriptorHeap(&rtvHeapDesc,IID_PPV_ARGS(&m_pRtvHeap));
-
-	m_rtvDescSize = device->GetDescriptorHandleIncrementSize(
-		D3D12_DESCRIPTOR_HEAP_TYPE_RTV
+	cmdList->ClearRenderTargetView(
+		rtvHeap.GetCPUHandle(m_descriptorIndices[frameIndex]), std::data(clearColour),
+		0u, nullptr
 	);
-}
-
-IDXGISwapChain4* SwapChainManager::GetRef() const noexcept {
-	return m_pSwapChain.Get();
 }

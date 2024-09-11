@@ -10,6 +10,7 @@ RenderEngineBase::RenderEngineBase(ID3D12Device* device) //: m_depthBuffer{ devi
 void RenderEngineBase::Present(size_t frameIndex) {
 	ID3D12GraphicsCommandList* graphicsCommandList = Gaia::graphicsCmdList->Get();
 
+	/*
 	D3DResourceBarrier().AddBarrier(
 		ResourceBarrierBuilder{}.Transition(
 			Gaia::swapChain->GetRTV(frameIndex),
@@ -21,6 +22,7 @@ void RenderEngineBase::Present(size_t frameIndex) {
 	Gaia::graphicsQueue->ExecuteCommandLists(graphicsCommandList);
 
 	Gaia::swapChain->PresentWithTear();
+	*/
 }
 
 void RenderEngineBase::ExecutePostRenderStage() {
@@ -39,6 +41,7 @@ void RenderEngineBase::ExecutePreGraphicsStage(
 ) {
 	Gaia::graphicsCmdList->Reset();
 
+	/*
 	D3DResourceBarrier().AddBarrier(
 		ResourceBarrierBuilder{}.Transition(
 			Gaia::swapChain->GetRTV(frameIndex),
@@ -63,6 +66,8 @@ void RenderEngineBase::ExecutePreGraphicsStage(
 //	m_depthBuffer.ClearDSV(graphicsCommandList, dsvHandle);
 
 //	graphicsCommandList->OMSetRenderTargets(1u, &rtvHandle, FALSE, &dsvHandle);
+
+	*/
 }
 
 void RenderEngineBase::BindCommonGraphicsBuffers(

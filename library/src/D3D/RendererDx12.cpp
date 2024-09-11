@@ -24,6 +24,7 @@ RendererDx12::RendererDx12(
 
 	Gaia::InitGraphicsQueueAndList(m_objectManager, deviceRef, meshDrawType, bufferCount);
 
+	/*
 	SwapChainManager::Args swapChainArguments{
 		.device = deviceRef,
 		.factory = Gaia::device->GetFactory(),
@@ -34,8 +35,9 @@ RendererDx12::RendererDx12(
 		.bufferCount = bufferCount,
 		.variableRefreshRate = true
 	};
+	*/
 
-	m_objectManager.CreateObject(Gaia::swapChain, 1u, swapChainArguments);
+	//m_objectManager.CreateObject(Gaia::swapChain, 1u, swapChainArguments);
 
 	Gaia::InitCopyQueueAndList(m_objectManager, deviceRef);
 	Gaia::InitComputeQueueAndList(m_objectManager, deviceRef, bufferCount);
@@ -88,12 +90,15 @@ void RendererDx12::Update() {
 }
 */
 
-void RendererDx12::Render() {
+void RendererDx12::Render()
+{
+	/*
 	const size_t currentBackIndex = Gaia::swapChain->GetCurrentBackBufferIndex();
 
 	Gaia::renderEngine->ExecuteRenderStage(currentBackIndex);
 	Gaia::renderEngine->Present(currentBackIndex);
 	Gaia::renderEngine->ExecutePostRenderStage();
+	*/
 }
 
 void RendererDx12::Resize(std::uint32_t width, std::uint32_t height) {
@@ -108,7 +113,7 @@ void RendererDx12::Resize(std::uint32_t width, std::uint32_t height) {
 		//Gaia::graphicsQueue->SignalCommandQueue(Gaia::graphicsFence->GetFence(), fenceValue);
 		//Gaia::graphicsFence->WaitOnCPU();
 
-		Gaia::swapChain->Resize(deviceRef, width, height);
+		//Gaia::swapChain->Resize(deviceRef, width, height);
 
 		//Gaia::graphicsFence->ResetFenceValues(fenceValue + 1u);
 

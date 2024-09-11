@@ -4,7 +4,7 @@
 
 namespace Gaia {
 	std::unique_ptr<DeviceManager> device;
-	std::unique_ptr<SwapChainManager> swapChain;
+	//std::unique_ptr<SwapChainManager> swapChain;
 	std::unique_ptr<D3DCommandQueue> graphicsQueue;
 	std::unique_ptr<D3DCommandList> graphicsCmdList;
 	std::unique_ptr<D3DFence> graphicsFence;
