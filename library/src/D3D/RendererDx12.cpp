@@ -50,7 +50,7 @@ RendererDx12::RendererDx12(
 	//m_objectManager.CreateObject(Gaia::textureStorage, 0u);
 
 	//m_objectManager.CreateObject(Gaia::cameraManager, 0u, sharedContainer);
-	Gaia::cameraManager->SetSceneResolution(width, height);
+	//Gaia::cameraManager->SetSceneResolution(width, height);
 }
 
 /*void RendererDx12::AddModelSet(
@@ -120,7 +120,7 @@ void RendererDx12::Resize(std::uint32_t width, std::uint32_t height) {
 		Gaia::renderEngine->CreateDepthBufferView(deviceRef, width, height);
 		Gaia::renderEngine->ResizeViewportAndScissor(width, height);
 
-		Gaia::cameraManager->SetSceneResolution(width, height);
+		//Gaia::cameraManager->SetSceneResolution(width, height);
 	}
 }
 
