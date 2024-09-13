@@ -29,7 +29,7 @@ void CameraManager::CreateBuffer(std::uint32_t frameCount)
 
 	const UINT64 cameraBufferSize = m_cameraBufferInstanceSize * frameCount;
 
-	m_cameraBuffer.Create(cameraBufferSize, D3D12_RESOURCE_STATE_GENERIC_READ);
+	m_cameraBuffer.Create(cameraBufferSize, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
 }
 
 void CameraManager::Update(UINT64 index) const noexcept
