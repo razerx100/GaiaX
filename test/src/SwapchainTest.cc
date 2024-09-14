@@ -3,7 +3,7 @@
 #include <gtest/gtest.h>
 #include <memory>
 
-#include <SwapChainManager.hpp>
+#include <SwapchainManager.hpp>
 #include <SimpleWindow.hpp>
 
 namespace Constants

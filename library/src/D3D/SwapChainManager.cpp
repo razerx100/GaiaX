@@ -1,4 +1,4 @@
-#include <SwapChainManager.hpp>
+#include <SwapchainManager.hpp>
 #include <numeric>
 
 // Swapchain Manager

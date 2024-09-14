@@ -3,7 +3,7 @@
 #include <memory>
 #include <Renderer.hpp>
 #include <DeviceManager.hpp>
-#include <SwapChainManager.hpp>
+#include <SwapchainManager.hpp>
 #include <D3DCommandQueue.hpp>
 #include <D3DDebugLogger.hpp>
 #include <DescriptorTableManager.hpp>
