@@ -29,7 +29,8 @@ void CameraManager::CreateBuffer(std::uint32_t frameCount)
 
 	const UINT64 cameraBufferSize = m_cameraBufferInstanceSize * frameCount;
 
-	m_cameraBuffer.Create(cameraBufferSize, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+	// Upload buffers must be in the generic read state.
+	m_cameraBuffer.Create(cameraBufferSize, D3D12_RESOURCE_STATE_GENERIC_READ);
 }
 
 void CameraManager::Update(UINT64 index) const noexcept
@@ -38,7 +39,7 @@ void CameraManager::Update(UINT64 index) const noexcept
 
 	constexpr size_t matrixSize = sizeof(DirectX::XMMATRIX);
 
-	// Although I am not a big of useless checks. This would potentially allow us
+	// Although I am not a big fan of useless checks. This would potentially allow us
 	// to run the renderer without having any cameras.
 	if (m_activeCameraIndex < std::size(m_cameras)) [[likely]]
 	{
@@ -71,9 +72,8 @@ void CameraManager::SetDescriptorGraphics(
 	std::vector<D3DDescriptorManager>& descriptorBuffers, size_t cameraRegister, size_t registerSpace
 ) const {
 	for (size_t index = 0u; index < std::size(descriptorBuffers); ++index)
-		// I will keep it like this for now. As you can't really pass the size of a root descriptor
-		// I am not sure if you can bind a single resource to multiple descriptors. But hoping
-		// I can just read the necessary data in the shader and it just works.
+		// Root descriptors don't have bound checks and the user must do that themselves but it is
+		// fine to bind the same resource as multiple root descriptors.
 		descriptorBuffers[index].SetRootCBV(
 			cameraRegister, registerSpace,
 			m_cameraBuffer.GetGPUAddress() + (index * m_cameraBufferInstanceSize), true
