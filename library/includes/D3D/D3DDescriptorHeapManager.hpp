@@ -167,16 +167,16 @@ public:
 class D3DDescriptorMap
 {
 public:
-	D3DDescriptorMap() : m_singleDescriptors{}, m_descriptorTables{} {}
+	D3DDescriptorMap() : m_rootDescriptors{}, m_descriptorTables{} {}
 
-	D3DDescriptorMap& SetCBVGfx(UINT rootIndex, D3D12_GPU_VIRTUAL_ADDRESS bufferAddress) noexcept;
-	D3DDescriptorMap& SetCBVCom(UINT rootIndex, D3D12_GPU_VIRTUAL_ADDRESS bufferAddress) noexcept;
+	D3DDescriptorMap& SetRootCBVGfx(UINT rootIndex, D3D12_GPU_VIRTUAL_ADDRESS bufferAddress) noexcept;
+	D3DDescriptorMap& SetRootCBVCom(UINT rootIndex, D3D12_GPU_VIRTUAL_ADDRESS bufferAddress) noexcept;
 
-	D3DDescriptorMap& SetUAVGfx(UINT rootIndex, D3D12_GPU_VIRTUAL_ADDRESS bufferAddress) noexcept;
-	D3DDescriptorMap& SetUAVCom(UINT rootIndex, D3D12_GPU_VIRTUAL_ADDRESS bufferAddress) noexcept;
+	D3DDescriptorMap& SetRootUAVGfx(UINT rootIndex, D3D12_GPU_VIRTUAL_ADDRESS bufferAddress) noexcept;
+	D3DDescriptorMap& SetRootUAVCom(UINT rootIndex, D3D12_GPU_VIRTUAL_ADDRESS bufferAddress) noexcept;
 
-	D3DDescriptorMap& SetSRVGfx(UINT rootIndex, D3D12_GPU_VIRTUAL_ADDRESS bufferAddress) noexcept;
-	D3DDescriptorMap& SetSRVCom(UINT rootIndex, D3D12_GPU_VIRTUAL_ADDRESS bufferAddress) noexcept;
+	D3DDescriptorMap& SetRootSRVGfx(UINT rootIndex, D3D12_GPU_VIRTUAL_ADDRESS bufferAddress) noexcept;
+	D3DDescriptorMap& SetRootSRVCom(UINT rootIndex, D3D12_GPU_VIRTUAL_ADDRESS bufferAddress) noexcept;
 
 	D3DDescriptorMap& SetDescTableGfx(UINT rootIndex, UINT descriptorIndex) noexcept;
 	D3DDescriptorMap& SetDescTableCom(UINT rootIndex, UINT descriptorIndex) noexcept;
@@ -220,7 +220,7 @@ private:
 		auto DescriptorsGetter = [this]<typename U>()-> const std::vector<U>&
 		{
 			if constexpr (std::is_same_v<U, SingleDescriptorMap>)
-				return m_singleDescriptors;
+				return m_rootDescriptors;
 			else
 				return m_descriptorTables;
 		};
@@ -242,30 +242,30 @@ private:
 	}
 
 private:
-	std::vector<SingleDescriptorMap> m_singleDescriptors;
+	std::vector<SingleDescriptorMap> m_rootDescriptors;
 	std::vector<DescriptorTableMap>  m_descriptorTables;
 
 public:
 	D3DDescriptorMap(const D3DDescriptorMap& other) noexcept
-		: m_singleDescriptors{ other.m_singleDescriptors },
+		: m_rootDescriptors{ other.m_rootDescriptors },
 		m_descriptorTables{ other.m_descriptorTables }
 	{}
 	D3DDescriptorMap& operator=(const D3DDescriptorMap& other) noexcept
 	{
-		m_singleDescriptors = other.m_singleDescriptors;
-		m_descriptorTables  = other.m_descriptorTables;
+		m_rootDescriptors  = other.m_rootDescriptors;
+		m_descriptorTables = other.m_descriptorTables;
 
 		return *this;
 	}
 
 	D3DDescriptorMap(D3DDescriptorMap&& other) noexcept
-		: m_singleDescriptors{ std::move(other.m_singleDescriptors) },
+		: m_rootDescriptors{ std::move(other.m_rootDescriptors) },
 		m_descriptorTables{ std::move(other.m_descriptorTables) }
 	{}
 	D3DDescriptorMap& operator=(D3DDescriptorMap&& other) noexcept
 	{
-		m_singleDescriptors = std::move(other.m_singleDescriptors);
-		m_descriptorTables  = std::move(other.m_descriptorTables);
+		m_rootDescriptors  = std::move(other.m_rootDescriptors);
+		m_descriptorTables = std::move(other.m_descriptorTables);
 
 		return *this;
 	}
