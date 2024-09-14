@@ -465,6 +465,11 @@ void D3DDescriptorManager::CreateDescriptors()
     for (const D3DDescriptorLayout& layout : m_descriptorLayouts)
         totalDescriptorCount += layout.GetTotalDescriptorCount();
 
+    // If the total descriptor count is 0, make it one so everything else doesn't fail.
+    // As this would only be the case in tests anyway.
+    if (!totalDescriptorCount)
+        totalDescriptorCount = 1u;
+
     m_resourceHeapCPU.Create(totalDescriptorCount);
     m_resourceHeapGPU.Create(totalDescriptorCount);
 }

@@ -5,6 +5,12 @@
 
 #include <D3DResources.hpp>
 #include <DepthBuffer.hpp>
+#include <CameraManager.hpp>
+
+namespace Constants
+{
+	constexpr size_t bufferCount = 2u;
+}
 
 class BufferTest : public ::testing::Test
 {
@@ -107,4 +113,26 @@ TEST_F(BufferTest, DepthBufferTest)
 
 	depth1.Create(dsvHeap, 1920u, 1080u);
 	EXPECT_NE(depth1.GetDepthTexture().Get(), nullptr) << "Depth texture Handle is null.";
+}
+
+TEST_F(BufferTest, CameraManagerTest)
+{
+	ID3D12Device* device   = s_deviceManager->GetDevice();
+	IDXGIAdapter3* adapter = s_deviceManager->GetAdapter();
+
+	MemoryManager memoryManager{ adapter, device, 20_MB, 200_KB };
+
+	CameraManager cameraManager{ device, &memoryManager };
+
+	cameraManager.CreateBuffer(Constants::bufferCount);
+
+	std::vector<D3DDescriptorManager> descriptorManagers{};
+	descriptorManagers.emplace_back(device, Constants::bufferCount);
+
+	cameraManager.SetDescriptorLayoutGraphics(descriptorManagers, 0u, 0u, D3D12_SHADER_VISIBILITY_VERTEX);
+
+	for (auto& descriptorManager : descriptorManagers)
+		descriptorManager.CreateDescriptors();
+
+	cameraManager.SetDescriptorGraphics(descriptorManagers, 0u, 0u);
 }

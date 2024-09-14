@@ -26,18 +26,18 @@ public:
 	void Update(UINT64 index) const noexcept;
 
 	void SetDescriptorLayoutGraphics(
-		std::vector<D3DDescriptorManager>& descriptorBuffers, size_t cameraRegister, size_t registerSpace,
+		std::vector<D3DDescriptorManager>& descriptorManagers, size_t cameraRegister, size_t registerSpace,
 		D3D12_SHADER_VISIBILITY shaderStage
 	) const noexcept;
 	void SetDescriptorLayoutCompute(
-		std::vector<D3DDescriptorManager>& descriptorBuffers, size_t cameraRegister, size_t registerSpace
+		std::vector<D3DDescriptorManager>& descriptorManagers, size_t cameraRegister, size_t registerSpace
 	) const noexcept;
 
 	void SetDescriptorGraphics(
-		std::vector<D3DDescriptorManager>& descriptorBuffers, size_t cameraRegister, size_t registerSpace
+		std::vector<D3DDescriptorManager>& descriptorManagers, size_t cameraRegister, size_t registerSpace
 	) const;
 	void SetDescriptorCompute(
-		std::vector<D3DDescriptorManager>& descriptorBuffers, size_t cameraRegister, size_t registerSpace
+		std::vector<D3DDescriptorManager>& descriptorManagers, size_t cameraRegister, size_t registerSpace
 	) const;
 
 private:

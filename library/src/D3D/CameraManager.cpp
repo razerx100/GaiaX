@@ -54,37 +54,37 @@ void CameraManager::Update(UINT64 index) const noexcept
 }
 
 void CameraManager::SetDescriptorLayoutGraphics(
-	std::vector<D3DDescriptorManager>& descriptorBuffers, size_t cameraRegister, size_t registerSpace,
+	std::vector<D3DDescriptorManager>& descriptorManagers, size_t cameraRegister, size_t registerSpace,
 	D3D12_SHADER_VISIBILITY shaderStage
 ) const noexcept {
-	for (auto& descriptorBuffer : descriptorBuffers)
-		descriptorBuffer.AddRootCBV(cameraRegister, registerSpace, shaderStage);
+	for (auto& descriptorManager : descriptorManagers)
+		descriptorManager.AddRootCBV(cameraRegister, registerSpace, shaderStage);
 }
 
 void CameraManager::SetDescriptorLayoutCompute(
-	std::vector<D3DDescriptorManager>& descriptorBuffers, size_t cameraRegister, size_t registerSpace
+	std::vector<D3DDescriptorManager>& descriptorManagers, size_t cameraRegister, size_t registerSpace
 ) const noexcept {
-	for (auto& descriptorBuffer : descriptorBuffers)
-		descriptorBuffer.AddRootCBV(cameraRegister, registerSpace, D3D12_SHADER_VISIBILITY_ALL);
+	for (auto& descriptorManager : descriptorManagers)
+		descriptorManager.AddRootCBV(cameraRegister, registerSpace, D3D12_SHADER_VISIBILITY_ALL);
 }
 
 void CameraManager::SetDescriptorGraphics(
-	std::vector<D3DDescriptorManager>& descriptorBuffers, size_t cameraRegister, size_t registerSpace
+	std::vector<D3DDescriptorManager>& descriptorManagers, size_t cameraRegister, size_t registerSpace
 ) const {
-	for (size_t index = 0u; index < std::size(descriptorBuffers); ++index)
+	for (size_t index = 0u; index < std::size(descriptorManagers); ++index)
 		// Root descriptors don't have bound checks and the user must do that themselves but it is
 		// fine to bind the same resource as multiple root descriptors.
-		descriptorBuffers[index].SetRootCBV(
+		descriptorManagers[index].SetRootCBV(
 			cameraRegister, registerSpace,
 			m_cameraBuffer.GetGPUAddress() + (index * m_cameraBufferInstanceSize), true
 		);
 }
 
 void CameraManager::SetDescriptorCompute(
-	std::vector<D3DDescriptorManager>& descriptorBuffers, size_t cameraRegister, size_t registerSpace
+	std::vector<D3DDescriptorManager>& descriptorManagers, size_t cameraRegister, size_t registerSpace
 ) const {
-	for (size_t index = 0u; index < std::size(descriptorBuffers); ++index)
-		descriptorBuffers[index].SetRootCBV(
+	for (size_t index = 0u; index < std::size(descriptorManagers); ++index)
+		descriptorManagers[index].SetRootCBV(
 			cameraRegister, registerSpace,
 			m_cameraBuffer.GetGPUAddress() + (index * m_cameraBufferInstanceSize), false
 		);
