@@ -6,7 +6,6 @@
 #include <SwapChainManager.hpp>
 #include <D3DCommandQueue.hpp>
 #include <D3DDebugLogger.hpp>
-#include <BufferManager.hpp>
 #include <DescriptorTableManager.hpp>
 #include <TextureStorage.hpp>
 #include <ThreadPool.hpp>
