@@ -24,7 +24,7 @@ void MaterialBuffers::CreateBuffer(size_t materialCount)
 	const auto materialBuffersSize = static_cast<UINT64>(strideSize * materialCount);
 
 	Buffer newBuffer = GetCPUResource<Buffer>(m_device, m_memoryManager);
-	newBuffer.Create(materialBuffersSize, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	newBuffer.Create(materialBuffersSize, D3D12_RESOURCE_STATE_GENERIC_READ);
 
 	// All of the old materials will be only copied if the new buffer is larger.
 	const UINT64 oldBufferSize = m_buffers.BufferSize();
