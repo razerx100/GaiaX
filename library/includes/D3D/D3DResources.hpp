@@ -212,4 +212,18 @@ public:
 		return *this;
 	}
 };
+
+template<class T>
+[[nodiscard]]
+T GetCPUResource(ID3D12Device* device, MemoryManager* memoryManager)
+{
+	return T{ device, memoryManager, D3D12_HEAP_TYPE_UPLOAD };
+}
+
+template<class T>
+[[nodiscard]]
+T GetGPUResource(ID3D12Device* device, MemoryManager* memoryManager)
+{
+	return T{ device, memoryManager, D3D12_HEAP_TYPE_DEFAULT };
+}
 #endif

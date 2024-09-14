@@ -3,7 +3,7 @@
 
 CameraManager::CameraManager(ID3D12Device* device, MemoryManager* memoryManager)
 	: m_activeCameraIndex{ 0u }, m_cameraBufferInstanceSize{ 0u },
-	m_cameraBuffer{ device, memoryManager, D3D12_HEAP_TYPE_UPLOAD },
+	m_cameraBuffer{ GetCPUResource<Buffer>(device, memoryManager) },
 	m_cameras{}
 {}
 

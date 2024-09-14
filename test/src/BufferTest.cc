@@ -6,6 +6,7 @@
 #include <D3DResources.hpp>
 #include <DepthBuffer.hpp>
 #include <CameraManager.hpp>
+#include <ReusableD3DBuffer.hpp>
 
 namespace Constants
 {
@@ -135,4 +136,19 @@ TEST_F(BufferTest, CameraManagerTest)
 		descriptorManager.CreateDescriptors();
 
 	cameraManager.SetDescriptorGraphics(descriptorManagers, 0u, 0u);
+}
+
+TEST_F(BufferTest, ReusableBufferTest)
+{
+	ID3D12Device* device   = s_deviceManager->GetDevice();
+	IDXGIAdapter3* adapter = s_deviceManager->GetAdapter();
+
+	MemoryManager memoryManager{ adapter, device, 20_MB, 200_KB };
+
+	ReusableCPUBuffer<size_t> reusableCpuBuffer{ device, &memoryManager };
+	reusableCpuBuffer.Add(1u, 100u);
+	reusableCpuBuffer.Update(1u, 99u);
+
+	MultiInstanceCPUBuffer<size_t> reusableCpuMBuffer{ device, &memoryManager, Constants::bufferCount };
+	reusableCpuMBuffer.Add(1u);
 }
