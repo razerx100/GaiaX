@@ -78,9 +78,9 @@ void StagingBufferManager::CopyCPU()
 	{
 		for (size_t index = 0u; index < std::size(m_bufferInfo); ++index)
 		{
-			const BufferInfo& bufferInfo = m_bufferInfo.at(index);
+			const BufferInfo& bufferInfo = m_bufferInfo[index];
 
-			tasks.emplace_back([&bufferInfo, &tempBuffer = m_tempBufferToBuffer.at(index)]
+			tasks.emplace_back([&bufferInfo, &tempBuffer = m_tempBufferToBuffer[index]]
 				{
 					memcpy(tempBuffer->CPUHandle(), bufferInfo.cpuHandle, bufferInfo.bufferSize);
 				});
@@ -108,9 +108,9 @@ void StagingBufferManager::CopyCPU()
 
 		for (size_t index = 0u; index < std::size(m_textureInfo); ++index)
 		{
-			const TextureInfo& textureInfo = m_textureInfo.at(index);
+			const TextureInfo& textureInfo = m_textureInfo[index];
 
-			tasks.emplace_back([&textureInfo, &tempBuffer = m_tempBufferToTexture.at(index)]
+			tasks.emplace_back([&textureInfo, &tempBuffer = m_tempBufferToTexture[index]]
 				{
 					memcpy(tempBuffer->CPUHandle(), textureInfo.cpuHandle, textureInfo.bufferSize);
 				});
@@ -148,7 +148,7 @@ void StagingBufferManager::CopyCPU()
 			{
 				for (size_t index = batch.startIndex; index <= batch.endIndex; ++index)
 				{
-					tTasks.at(index)();
+					tTasks[index]();
 				}
 			}}));
 	}
@@ -168,8 +168,8 @@ void StagingBufferManager::CopyGPU(const D3DCommandList& copyCmdList)
 	// Assuming the command buffer has been reset before this.
 	for(size_t index = 0u; index < std::size(m_bufferInfo); ++index)
 	{
-		const BufferInfo& bufferInfo = m_bufferInfo.at(index);
-		const Buffer& tempBuffer     = *m_tempBufferToBuffer.at(index);
+		const BufferInfo& bufferInfo = m_bufferInfo[index];
+		const Buffer& tempBuffer     = *m_tempBufferToBuffer[index];
 
 		// I am making a new buffer for each copy but if the buffer alignment for example is
 		// 16 bytes and the buffer size is 4bytes, copyWhole would be wrong as it would go over
@@ -181,8 +181,8 @@ void StagingBufferManager::CopyGPU(const D3DCommandList& copyCmdList)
 
 	for(size_t index = 0u; index < std::size(m_textureInfo); ++index)
 	{
-		const TextureInfo& textureInfo = m_textureInfo.at(index);
-		const Buffer& tempBuffer       = *m_tempBufferToTexture.at(index);
+		const TextureInfo& textureInfo = m_textureInfo[index];
+		const Buffer& tempBuffer       = *m_tempBufferToTexture[index];
 
 		// CopyWhole would not be a problem for textures, as the destination buffer would be a texture
 		// and will be using the dimension of the texture instead of its size to copy. And there should
