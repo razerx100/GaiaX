@@ -57,18 +57,18 @@ TEST_F(SwapchainTest, SwapchainManagerTest)
 	};
 
 	SwapchainManager swapchain{
-		s_deviceManager->GetFactory(), presentQueue,
+		&rtvHeap, s_deviceManager->GetFactory(), presentQueue,
 		static_cast<HWND>(s_window->GetWindowHandle()), static_cast<UINT>(Constants::bufferCount)
 	};
 
-	swapchain.Resize(rtvHeap, Constants::width, Constants::height);
+	swapchain.Resize(Constants::width, Constants::height);
 
 	for (size_t index = 0u; index < Constants::bufferCount; ++index)
 		EXPECT_NE(swapchain.GetRenderTarget(index), nullptr) << "Render target creation failed.";
 
 	s_window->SetWindowResolution(2560u, 1440u);
 
-	swapchain.Resize(rtvHeap, 2560u, 1440u);
+	swapchain.Resize(2560u, 1440u);
 
 	for (size_t index = 0u; index < Constants::bufferCount; ++index)
 		EXPECT_NE(swapchain.GetRenderTarget(index), nullptr) << "Render target re-creation failed.";

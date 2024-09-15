@@ -3,10 +3,17 @@
 
 // Swapchain Manager
 SwapchainManager::SwapchainManager(
+	D3DReusableDescriptorHeap* rtvHeap,
 	IDXGIFactory5* factory, const D3DCommandQueue& presentQueue, HWND windowHandle, UINT bufferCount
-) : SwapchainManager{}
+) : SwapchainManager{ rtvHeap }
 {
 	Create(factory, presentQueue, windowHandle, bufferCount);
+}
+
+SwapchainManager::~SwapchainManager() noexcept
+{
+	for (UINT descriptorIndex : m_descriptorIndices)
+		m_rtvHeap->FreeDescriptor(descriptorIndex);
 }
 
 void SwapchainManager::Create(
@@ -50,7 +57,7 @@ void SwapchainManager::Create(
 	m_renderTargets.resize(bufferCount, nullptr);
 }
 
-void SwapchainManager::CreateRTVs(D3DReusableDescriptorHeap& rtvHeap)
+void SwapchainManager::CreateRTVs()
 {
 	D3D12_RENDER_TARGET_VIEW_DESC rtvDesc
 	{
@@ -67,13 +74,13 @@ void SwapchainManager::CreateRTVs(D3DReusableDescriptorHeap& rtvHeap)
 		m_swapchain->GetBuffer(static_cast<UINT>(index), IID_PPV_ARGS(&m_renderTargets[index]));
 
 		if (m_descriptorIndices[index] != std::numeric_limits<UINT>::max())
-			rtvHeap.CreateRTV(m_renderTargets[index].Get(), rtvDesc, m_descriptorIndices[index]);
+			m_rtvHeap->CreateRTV(m_renderTargets[index].Get(), rtvDesc, m_descriptorIndices[index]);
 		else
-			m_descriptorIndices[index] = rtvHeap.CreateRTV(m_renderTargets[index].Get(), rtvDesc);
+			m_descriptorIndices[index] = m_rtvHeap->CreateRTV(m_renderTargets[index].Get(), rtvDesc);
 	}
 }
 
-void SwapchainManager::Resize(D3DReusableDescriptorHeap& rtvHeap, UINT width, UINT height)
+void SwapchainManager::Resize(UINT width, UINT height)
 {
 	// Must be called before calling ResizeBuffers.
 	for (auto& renderTarget : m_renderTargets)
@@ -87,17 +94,16 @@ void SwapchainManager::Resize(D3DReusableDescriptorHeap& rtvHeap, UINT width, UI
 		desc.Flags
 	);
 
-	CreateRTVs(rtvHeap);
+	CreateRTVs();
 }
 
 void SwapchainManager::ClearRTV(
-	const D3DCommandList& commandList, const D3DReusableDescriptorHeap& rtvHeap,
-	size_t frameIndex, const std::array<float, 4u>& clearColour
+	const D3DCommandList& commandList, size_t frameIndex, const std::array<float, 4u>& clearColour
 ) {
 	ID3D12GraphicsCommandList* cmdList = commandList.Get();
 
 	cmdList->ClearRenderTargetView(
-		rtvHeap.GetCPUHandle(m_descriptorIndices[frameIndex]), std::data(clearColour),
+		m_rtvHeap->GetCPUHandle(m_descriptorIndices[frameIndex]), std::data(clearColour),
 		0u, nullptr
 	);
 }

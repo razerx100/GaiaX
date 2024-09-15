@@ -10,19 +10,23 @@
 class SwapchainManager
 {
 public:
-	SwapchainManager() : m_swapchain{}, m_renderTargets{}, m_descriptorIndices{}, m_presentFlag{ 0u } {}
+	SwapchainManager(D3DReusableDescriptorHeap* rtvHeap)
+		: m_swapchain{}, m_rtvHeap{ rtvHeap }, m_renderTargets{},
+		m_descriptorIndices{}, m_presentFlag{ 0u }
+	{}
 	SwapchainManager(
+		D3DReusableDescriptorHeap* rtvHeap,
 		IDXGIFactory5* factory, const D3DCommandQueue& presentQueue, HWND windowHandle, UINT bufferCount
 	);
+	~SwapchainManager() noexcept;
 
 	void Create(
 		IDXGIFactory5* factory, const D3DCommandQueue& presentQueue, HWND windowHandle, UINT bufferCount
 	);
 
-	void Resize(D3DReusableDescriptorHeap& rtvHeap, UINT width, UINT height);
+	void Resize(UINT width, UINT height);
 	void ClearRTV(
-		const D3DCommandList& commandList, const D3DReusableDescriptorHeap& rtvHeap,
-		size_t frameIndex, const std::array<float, 4u>& clearColour
+		const D3DCommandList& commandList, size_t frameIndex, const std::array<float, 4u>& clearColour
 	);
 
 	void Present() { m_swapchain->Present(0u, m_presentFlag); }
@@ -39,10 +43,11 @@ public:
 	}
 
 private:
-	void CreateRTVs(D3DReusableDescriptorHeap& rtvHeap);
+	void CreateRTVs();
 
 private:
 	ComPtr<IDXGISwapChain4>             m_swapchain;
+	D3DReusableDescriptorHeap*          m_rtvHeap;
 	std::vector<ComPtr<ID3D12Resource>> m_renderTargets;
 	std::vector<UINT>                   m_descriptorIndices;
 	UINT                                m_presentFlag;
@@ -53,6 +58,7 @@ public:
 
 	SwapchainManager(SwapchainManager&& other) noexcept
 		: m_swapchain{ std::move(other.m_swapchain) },
+		m_rtvHeap{ other.m_rtvHeap },
 		m_renderTargets{ std::move(other.m_renderTargets) },
 		m_descriptorIndices{ std::move(other.m_descriptorIndices) },
 		m_presentFlag{ other.m_presentFlag }
@@ -60,6 +66,7 @@ public:
 	SwapchainManager& operator=(SwapchainManager&& other) noexcept
 	{
 		m_swapchain         = std::move(other.m_swapchain);
+		m_rtvHeap           = other.m_rtvHeap;
 		m_renderTargets     = std::move(other.m_renderTargets);
 		m_descriptorIndices = std::move(other.m_descriptorIndices);
 		m_presentFlag       = other.m_presentFlag;
