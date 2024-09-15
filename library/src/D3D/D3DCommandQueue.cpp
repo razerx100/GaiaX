@@ -34,13 +34,14 @@ void D3DCommandList::Copy(
 	m_commandList->CopyBufferRegion(dst.Get(), dstOffset, src.Get(), srcOffset, size);
 }
 
-void D3DCommandList::Copy(const Buffer& src, UINT64 srcOffset, const Texture& dst) const noexcept
-{
+void D3DCommandList::Copy(
+	const Buffer& src, UINT64 srcOffset, const Texture& dst, UINT subresourceIndex
+) const noexcept {
 	D3D12_TEXTURE_COPY_LOCATION dstLocation
 	{
 		.pResource        = dst.Get(),
 		.Type             = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX,
-		.SubresourceIndex = 0u
+		.SubresourceIndex = subresourceIndex
 	};
 
 	D3D12_SUBRESOURCE_FOOTPRINT srcFootprint

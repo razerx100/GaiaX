@@ -110,7 +110,7 @@ TEST_F(CommandQueueTest, CommandQueueCopyTest)
 		CommandListScope testScope{ cmdList };
 
 		cmdList.CopyWhole(testBuffer1, testBuffer2);
-		cmdList.CopyWhole(testBuffer3, testTexture);
+		cmdList.CopyWhole(testBuffer3, testTexture, 0u);
 	}
 
 	D3DFence fence{};

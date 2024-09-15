@@ -27,8 +27,14 @@ public:
 	{
 		Copy(src, 0u, dst, 0u, src.BufferSize());
 	}
-	void Copy(const Buffer& src, UINT64 srcOffset, const Texture& dst) const noexcept;
-	void CopyWhole(const Buffer& src, const Texture& dst) const noexcept { Copy(src, 0u, dst); }
+	void Copy(
+		const Buffer& src, UINT64 srcOffset, const Texture& dst, UINT subresourceIndex
+	) const noexcept;
+	void CopyWhole(
+		const Buffer& src, const Texture& dst, UINT subresourceIndex
+	) const noexcept {
+		Copy(src, 0u, dst, subresourceIndex);
+	}
 
 	template<std::uint32_t BarrierCount = 1u>
 	const D3DCommandList& AddBarrier(const D3DResourceBarrier<BarrierCount>& barrier) const noexcept
