@@ -99,20 +99,20 @@ TEST_F(BufferTest, DepthBufferTest)
 		device, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE
 	};
 
-	DepthBuffer depth1{ device, &memoryManager };
-	depth1.Create(dsvHeap, 1280u, 720u);
+	DepthBuffer depth1{ device, &memoryManager, &dsvHeap };
+	depth1.Create(1280u, 720u);
 
 	EXPECT_NE(depth1.GetDepthTexture().Get(), nullptr) << "Depth texture Handle is null.";
 
-	DepthBuffer depth2{ device, &memoryManager };
-	depth2.Create(dsvHeap, 1920u, 1080u);
+	DepthBuffer depth2{ device, &memoryManager, &dsvHeap };
+	depth2.Create(1920u, 1080u);
 
 	EXPECT_NE(depth2.GetDepthTexture().Get(), nullptr) << "Depth texture Handle is null.";
 
-	DepthBuffer depth3{ device, &memoryManager };
-	depth3.Create(dsvHeap, 1920u, 1080u);
+	DepthBuffer depth3{ device, &memoryManager, &dsvHeap };
+	depth3.Create(1920u, 1080u);
 
-	depth1.Create(dsvHeap, 1920u, 1080u);
+	depth1.Create(1920u, 1080u);
 	EXPECT_NE(depth1.GetDepthTexture().Get(), nullptr) << "Depth texture Handle is null.";
 }
 

@@ -1,6 +1,11 @@
 #include <DepthBuffer.hpp>
 
-void DepthBuffer::Create(D3DReusableDescriptorHeap& descriptorHeap, UINT width, UINT height)
+DepthBuffer::~DepthBuffer() noexcept
+{
+	m_dsvHeap->FreeDescriptor(m_dsvHandleIndex);
+}
+
+void DepthBuffer::Create(UINT width, UINT height)
 {
 	const DXGI_FORMAT depthFormat = DXGI_FORMAT_D32_FLOAT;
 
@@ -27,17 +32,16 @@ void DepthBuffer::Create(D3DReusableDescriptorHeap& descriptorHeap, UINT width, 
 	};
 
 	if (m_dsvHandleIndex != std::numeric_limits<UINT>::max())
-		descriptorHeap.CreateDSV(m_depthTexture.Get(), dsvDesc, m_dsvHandleIndex);
+		m_dsvHeap->CreateDSV(m_depthTexture.Get(), dsvDesc, m_dsvHandleIndex);
 	else
-		m_dsvHandleIndex = descriptorHeap.CreateDSV(m_depthTexture.Get(), dsvDesc);
+		m_dsvHandleIndex = m_dsvHeap->CreateDSV(m_depthTexture.Get(), dsvDesc);
 }
 
-void DepthBuffer::ClearDSV(
-	const D3DCommandList& commandList, const D3DReusableDescriptorHeap& descriptorHeap
-) const noexcept {
+void DepthBuffer::ClearDSV(const D3DCommandList& commandList) const noexcept
+{
 	ID3D12GraphicsCommandList6* cmdList = commandList.Get();
 
 	cmdList->ClearDepthStencilView(
-		descriptorHeap.GetCPUHandle(m_dsvHandleIndex), D3D12_CLEAR_FLAG_DEPTH, 1.f, 0u, 0u, nullptr
+		m_dsvHeap->GetCPUHandle(m_dsvHandleIndex), D3D12_CLEAR_FLAG_DEPTH, 1.f, 0u, 0u, nullptr
 	);
 }
