@@ -280,9 +280,9 @@ void RenderEngineIndividualDraw::RecordModelDataSet(
 ) noexcept {
 	auto graphicsPipeline = std::make_unique<GraphicsPipelineIndividualDraw>();
 
-	graphicsPipeline->ConfigureGraphicsPipelineObject(
-		pixelShader, static_cast<std::uint32_t>(std::size(models)), std::size(m_modelArguments)
-	);
+	//graphicsPipeline->ConfigureGraphicsPipelineObject(
+	//	pixelShader, static_cast<std::uint32_t>(std::size(models)), std::size(m_modelArguments)
+	//);
 
 	RecordModelArguments(models);
 
@@ -304,11 +304,11 @@ void RenderEngineIndividualDraw::RecordModelArguments(
 			.StartInstanceLocation = 0u
 		};
 
-		ModelDrawArguments modelArgs{
-			.modelIndex = static_cast<std::uint32_t>(std::size(m_modelArguments)),
-			.drawIndexed = arguments
-		};
+		//ModelDrawArguments modelArgs{
+	//		.modelIndex = static_cast<std::uint32_t>(std::size(m_modelArguments)),
+		//	.drawIndexed = arguments
+		//};
 
-		m_modelArguments.emplace_back(modelArgs);
+		//m_modelArguments.emplace_back(modelArgs);
 	}
 }

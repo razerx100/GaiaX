@@ -50,7 +50,7 @@ void GraphicsPipelineIndirectDraw::ConfigureGraphicsPipelineObject(
 ) noexcept {
 	m_modelCount = modelCount;
 
-	m_argumentBufferOffset = sizeof(ModelDrawArguments) * modelCountOffset;
+	//m_argumentBufferOffset = sizeof(ModelDrawArguments) * modelCountOffset;
 	m_counterBufferOffset = sizeof(std::uint32_t) * 2u * counterIndex;
 	m_pixelShader = pixelShader;
 }
@@ -77,20 +77,19 @@ void GraphicsPipelineIndividualDraw::ConfigureGraphicsPipelineObject(
 }
 
 void GraphicsPipelineIndividualDraw::DrawModels(
-	ID3D12GraphicsCommandList* graphicsCommandList,
-	const std::vector<ModelDrawArguments>& drawArguments//,
+	ID3D12GraphicsCommandList* graphicsCommandList//,
+	//const std::vector<ModelDrawArguments>& drawArguments//,
 	//const RSLayoutType& graphicsRSLayout
 ) const noexcept {
+	/*
 	for (size_t index = 0u; index < m_modelCount; ++index) {
 		const auto& modelArgs = drawArguments[m_modelOffset + index];
 
-		/*
 		static constexpr size_t modelInfoIndex = static_cast<size_t>(RootSigElement::ModelInfo);
 
 		graphicsCommandList->SetGraphicsRoot32BitConstant(
 			graphicsRSLayout[modelInfoIndex], modelArgs.modelIndex, 0u
 		);
-		*/
 
 		const D3D12_DRAW_INDEXED_ARGUMENTS& args = modelArgs.drawIndexed;
 
@@ -99,6 +98,7 @@ void GraphicsPipelineIndividualDraw::DrawModels(
 			args.BaseVertexLocation, args.StartInstanceLocation
 		);
 	}
+	*/
 }
 
 std::unique_ptr<D3DPipelineObject> GraphicsPipelineIndividualDraw::_createGraphicsPipelineObject(

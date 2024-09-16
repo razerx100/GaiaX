@@ -5,7 +5,6 @@
 #include <string>
 #include <vector>
 #include <D3DPipelineObject.hpp>
-#include <GaiaDataTypes.hpp>
 #include <Model.hpp>
 
 /*

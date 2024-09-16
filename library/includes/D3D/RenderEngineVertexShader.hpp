@@ -118,6 +118,6 @@ private:
 	GraphicsPipeline m_graphicsPipeline0;
 	std::vector<GraphicsPipeline> m_graphicsPipelines;
 
-	std::vector<ModelDrawArguments> m_modelArguments;
+	//std::vector<ModelDrawArguments> m_modelArguments;
 };
 #endif
