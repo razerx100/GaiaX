@@ -8,10 +8,11 @@ class D3DShader
 public:
 	D3DShader() : m_binary{} {}
 
-	void LoadBinary(const std::wstring& fileName);
-	void CompileBinary(
-		const std::wstring& fileName, const char* target,
-		const char* entryPoint = "main"
+	[[nodiscard]]
+	bool LoadBinary(const std::wstring& fileName);
+	[[nodiscard]]
+	bool CompileBinary(
+		const std::wstring& fileName, const char* target, const char* entryPoint = "main"
 	);
 
 	[[nodiscard]]

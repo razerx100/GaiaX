@@ -4,27 +4,52 @@
 #include <memory>
 #include <D3DHeaders.hpp>
 #include <D3DPipelineObject.hpp>
+#include <D3DRootSignature.hpp>
+#include <D3DCommandQueue.hpp>
+#include <Shader.hpp>
 
-class GraphicsPipelineBase {
+class GraphicsPipelineBase
+{
 public:
-	void CreateGraphicsPipeline(
+	GraphicsPipelineBase() : m_graphicsPipeline{}, m_pixelShader{} {}
+
+	virtual void Create(
 		ID3D12Device2* device, ID3D12RootSignature* graphicsRootSignature,
-		const std::wstring& shaderPath
-	) noexcept;
+		const std::wstring& shaderPath, const ShaderName& pixelShader
+	) = 0;
 
-	void BindGraphicsPipeline(
-		ID3D12GraphicsCommandList* graphicsCommandList, ID3D12RootSignature* graphicsRS
-	) const noexcept;
+	void Create(
+		ID3D12Device2* device, const D3DRootSignature& graphicsRootSignature,
+		const std::wstring& shaderPath, const ShaderName& pixelShader
+	) {
+		Create(device, graphicsRootSignature.Get(), shaderPath, pixelShader);
+	}
 
-protected:
+	void Bind(const D3DCommandList& graphicsCmdList) const noexcept;
+
 	[[nodiscard]]
-	virtual std::unique_ptr<D3DPipelineObject> _createGraphicsPipelineObject(
-		ID3D12Device2* device, const std::wstring& shaderPath, const std::wstring& pixelShader,
-		ID3D12RootSignature* graphicsRootSignature
-	) const noexcept = 0 ;
+	ShaderName GetPixelShader() const noexcept { return m_pixelShader; }
 
 protected:
-	std::unique_ptr<D3DPipelineObject> m_graphicPSO;
-	std::wstring m_pixelShader;
+	std::unique_ptr<D3DPipelineObject> m_graphicsPipeline;
+	ShaderName                         m_pixelShader;
+
+	static constexpr ShaderType s_shaderBytecodeType = ShaderType::DXIL;
+
+public:
+	GraphicsPipelineBase(const GraphicsPipelineBase&) = delete;
+	GraphicsPipelineBase& operator=(const GraphicsPipelineBase&) = delete;
+
+	GraphicsPipelineBase(GraphicsPipelineBase&& other) noexcept
+		: m_graphicsPipeline{ std::move(other.m_graphicsPipeline) },
+		m_pixelShader{ std::move(other.m_pixelShader) }
+	{}
+	GraphicsPipelineBase& operator=(GraphicsPipelineBase&& other) noexcept
+	{
+		m_graphicsPipeline = std::move(other.m_graphicsPipeline);
+		m_pixelShader      = std::move(other.m_pixelShader);
+
+		return *this;
+	}
 };
 #endif

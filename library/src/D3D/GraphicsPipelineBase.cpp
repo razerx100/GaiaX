@@ -1,18 +1,8 @@
 #include <GraphicsPipelineBase.hpp>
 
-void GraphicsPipelineBase::BindGraphicsPipeline(
-	ID3D12GraphicsCommandList* graphicsCommandList, ID3D12RootSignature* graphicsRS
-) const noexcept {
-	graphicsCommandList->SetPipelineState(m_graphicPSO->Get());
-	graphicsCommandList->SetGraphicsRootSignature(graphicsRS);
-	graphicsCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-}
+void GraphicsPipelineBase::Bind(const D3DCommandList& graphicsCmdList) const noexcept
+{
+	ID3D12GraphicsCommandList* cmdList = graphicsCmdList.Get();
 
-void GraphicsPipelineBase::CreateGraphicsPipeline(
-	ID3D12Device2* device, ID3D12RootSignature* graphicsRootSignature,
-	const std::wstring& shaderPath
-) noexcept {
-	m_graphicPSO = _createGraphicsPipelineObject(
-		device, shaderPath, m_pixelShader, graphicsRootSignature
-	);
+	cmdList->SetPipelineState(m_graphicsPipeline->Get());
 }

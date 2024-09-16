@@ -1,33 +1,46 @@
 #ifndef GRAPHICS_PIPELINE_MESH_SHADER_HPP_
 #define GRAPHICS_PIPELINE_MESH_SHADER_HPP_
-#include <vector>
 #include <GraphicsPipelineBase.hpp>
 
-class GraphicsPipelineMeshShader : public GraphicsPipelineBase {
+class GraphicsPipelineMeshShader : public GraphicsPipelineBase
+{
 public:
-	void ConfigureGraphicsPipelineObject(const std::wstring& pixelShader) noexcept;
-	void AddModelDetails(
-		std::uint32_t meshletCount, std::uint32_t meshletOffset, std::uint32_t modelIndex
-	) noexcept;
-	void DrawModels(
-		ID3D12GraphicsCommandList6* graphicsCommandList//, const RSLayoutType& graphicsRSLayout
-	) const noexcept;
+	GraphicsPipelineMeshShader(bool useAmplificationShader = true)
+		: GraphicsPipelineBase{}, m_useAmplificationShader{ useAmplificationShader }
+	{}
+
+	void Create(
+		ID3D12Device2* device, ID3D12RootSignature* graphicsRootSignature,
+		const std::wstring& shaderPath, const ShaderName& pixelShader
+	) final;
+
+	using GraphicsPipelineBase::Create;
 
 private:
 	[[nodiscard]]
-	std::unique_ptr<D3DPipelineObject> _createGraphicsPipelineObject(
-		ID3D12Device2* device, const std::wstring& shaderPath, const std::wstring& pixelShader,
-		ID3D12RootSignature* graphicsRootSignature
-	) const noexcept override;
+	static std::unique_ptr<D3DPipelineObject> CreateGraphicsPipelineMS(
+		ID3D12Device2* device, ID3D12RootSignature* graphicsRootSignature,
+		const std::wstring& shaderPath, const ShaderName& pixelShader,
+		const ShaderName& meshShader, const ShaderName& amplificationShader = {}
+	);
 
 private:
-	struct ModelDetails {
-		std::uint32_t modelIndex;
-		std::uint32_t meshletOffset;
-		std::uint32_t meshletCount;
-	};
+	bool m_useAmplificationShader;
 
-private:
-	std::vector<ModelDetails> m_modelDetails;
+public:
+	GraphicsPipelineMeshShader(const GraphicsPipelineMeshShader&) = delete;
+	GraphicsPipelineMeshShader& operator=(const GraphicsPipelineMeshShader&) = delete;
+
+	GraphicsPipelineMeshShader(GraphicsPipelineMeshShader&& other) noexcept
+		: GraphicsPipelineBase{ std::move(other) },
+		m_useAmplificationShader{ other.m_useAmplificationShader }
+	{}
+	GraphicsPipelineMeshShader& operator=(GraphicsPipelineMeshShader&& other) noexcept
+	{
+		GraphicsPipelineBase::operator=(std::move(other));
+		m_useAmplificationShader = other.m_useAmplificationShader;
+
+		return *this;
+	}
 };
 #endif

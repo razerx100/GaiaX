@@ -1,67 +1,98 @@
 #ifndef GRAPHICS_PIPELINE_VERTEX_SHADER_HPP_
 #define GRAPHICS_PIPELINE_VERTEX_SHADER_HPP_
-#include <vector>
 #include <GraphicsPipelineBase.hpp>
 
-class GraphicsPipelineVertexShader : public GraphicsPipelineBase {
+class GraphicsPipelineVertexShader : public GraphicsPipelineBase
+{
+public:
+	GraphicsPipelineVertexShader() : GraphicsPipelineBase{} {}
+
+	void Create(
+		ID3D12Device2* device, ID3D12RootSignature* graphicsRootSignature,
+		const std::wstring& shaderPath, const ShaderName& pixelShader
+	) final;
+
+	using GraphicsPipelineBase::Create;
+
 protected:
 	[[nodiscard]]
-	std::unique_ptr<D3DPipelineObject> CreateGraphicsPipelineObjectVS(
-		ID3D12Device2* device, const std::wstring& shaderPath, const std::wstring& pixelShader,
-		const std::wstring& vertexShader, ID3D12RootSignature* graphicsRootSignature
-	) const noexcept;
+	static std::unique_ptr<D3DPipelineObject> CreateGraphicsPipelineVS(
+		ID3D12Device2* device, ID3D12RootSignature* graphicsRootSignature,
+		const std::wstring& shaderPath, const ShaderName& pixelShader,
+		const ShaderName& vertexShader
+	);
+	[[nodiscard]]
+	virtual std::unique_ptr<D3DPipelineObject> _createGraphicsPipeline(
+		ID3D12Device2* device, ID3D12RootSignature* graphicsRootSignature,
+		const std::wstring& shaderPath, const ShaderName& pixelShader
+	) const = 0;
+
+public:
+	GraphicsPipelineVertexShader(const GraphicsPipelineVertexShader&) = delete;
+	GraphicsPipelineVertexShader& operator=(const GraphicsPipelineVertexShader&) = delete;
+
+	GraphicsPipelineVertexShader(GraphicsPipelineVertexShader&& other) noexcept
+		: GraphicsPipelineBase{ std::move(other) }
+	{}
+	GraphicsPipelineVertexShader& operator=(GraphicsPipelineVertexShader&& other) noexcept
+	{
+		GraphicsPipelineBase::operator=(std::move(other));
+
+		return *this;
+	}
 };
 
-class GraphicsPipelineIndirectDraw : public GraphicsPipelineVertexShader {
+class GraphicsPipelineIndirectDraw : public GraphicsPipelineVertexShader
+{
 public:
-	GraphicsPipelineIndirectDraw() noexcept;
-
-	void ConfigureGraphicsPipelineObject(
-		const std::wstring& pixelShader, UINT modelCount,
-		std::uint32_t modelCountOffset, size_t counterIndex
-	) noexcept;
-
-	void DrawModels(
-		ID3D12CommandSignature* commandSignature, ID3D12GraphicsCommandList* graphicsCommandList,
-		ID3D12Resource* argumentBuffer, ID3D12Resource* counterBuffer
-	) const noexcept;
+	GraphicsPipelineIndirectDraw() : GraphicsPipelineVertexShader{} {}
 
 private:
 	[[nodiscard]]
-	std::unique_ptr<D3DPipelineObject> _createGraphicsPipelineObject(
-		ID3D12Device2* device, const std::wstring& shaderPath, const std::wstring& pixelShader,
-		ID3D12RootSignature* graphicsRootSignature
-	) const noexcept override;
+	std::unique_ptr<D3DPipelineObject> _createGraphicsPipeline(
+		ID3D12Device2* device, ID3D12RootSignature* graphicsRootSignature,
+		const std::wstring& shaderPath, const ShaderName& pixelShader
+	) const final;
 
-private:
-	UINT m_modelCount;
-	UINT64 m_counterBufferOffset;
-	UINT64 m_argumentBufferOffset;
+public:
+	GraphicsPipelineIndirectDraw(const GraphicsPipelineIndirectDraw&) = delete;
+	GraphicsPipelineIndirectDraw& operator=(const GraphicsPipelineIndirectDraw&) = delete;
+
+	GraphicsPipelineIndirectDraw(GraphicsPipelineIndirectDraw&& other) noexcept
+		: GraphicsPipelineVertexShader{ std::move(other) }
+	{}
+	GraphicsPipelineIndirectDraw& operator=(GraphicsPipelineIndirectDraw&& other) noexcept
+	{
+		GraphicsPipelineVertexShader::operator=(std::move(other));
+
+		return *this;
+	}
 };
 
-class GraphicsPipelineIndividualDraw : public GraphicsPipelineVertexShader {
+class GraphicsPipelineIndividualDraw : public GraphicsPipelineVertexShader
+{
 public:
-	GraphicsPipelineIndividualDraw() noexcept;
-
-	void ConfigureGraphicsPipelineObject(
-		const std::wstring& pixelShader, size_t modelCount, size_t modelOffset
-	) noexcept;
-
-	void DrawModels(
-		ID3D12GraphicsCommandList* graphicsCommandList//,
-		//const std::vector<ModelDrawArguments>& drawArguments//,
-		//const RSLayoutType& graphicsRSLayout
-	) const noexcept;
+	GraphicsPipelineIndividualDraw() : GraphicsPipelineVertexShader{} {}
 
 private:
 	[[nodiscard]]
-	std::unique_ptr<D3DPipelineObject> _createGraphicsPipelineObject(
-		ID3D12Device2* device, const std::wstring& shaderPath, const std::wstring& pixelShader,
-		ID3D12RootSignature* graphicsRootSignature
-	) const noexcept override;
+	std::unique_ptr<D3DPipelineObject> _createGraphicsPipeline(
+		ID3D12Device2* device, ID3D12RootSignature* graphicsRootSignature,
+		const std::wstring& shaderPath, const ShaderName& pixelShader
+	) const final;
 
-private:
-	size_t m_modelCount;
-	size_t m_modelOffset;
+public:
+	GraphicsPipelineIndividualDraw(const GraphicsPipelineIndividualDraw&) = delete;
+	GraphicsPipelineIndividualDraw& operator=(const GraphicsPipelineIndividualDraw&) = delete;
+
+	GraphicsPipelineIndividualDraw(GraphicsPipelineIndividualDraw&& other) noexcept
+		: GraphicsPipelineVertexShader{ std::move(other) }
+	{}
+	GraphicsPipelineIndividualDraw& operator=(GraphicsPipelineIndividualDraw&& other) noexcept
+	{
+		GraphicsPipelineVertexShader::operator=(std::move(other));
+
+		return *this;
+	}
 };
 #endif
