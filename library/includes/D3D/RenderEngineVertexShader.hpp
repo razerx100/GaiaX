@@ -1,7 +1,6 @@
 #ifndef RENDER_ENGINE_VERTEX_SHADER_HPP_
 #define RENDER_ENGINE_VERTEX_SHADER_HPP_
 #include <RenderEngineBase.hpp>
-#include <ComputePipelineIndirectDraw.hpp>
 #include <GraphicsPipelineVertexShader.hpp>
 #include <optional>
 
