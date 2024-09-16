@@ -12,7 +12,7 @@ namespace Gaia {
 	//std::unique_ptr<BufferManager> bufferManager;
 	std::unique_ptr<D3DCommandQueue> copyQueue;
 	std::unique_ptr<D3DCommandList> copyCmdList;
-	std::unique_ptr<DescriptorTableManager> descriptorTable;
+	//std::unique_ptr<DescriptorTableManager> descriptorTable;
 	//std::unique_ptr<TextureStorage> textureStorage;
 	std::unique_ptr<CameraManager> cameraManager;
 	std::unique_ptr<D3DCommandQueue> computeQueue;

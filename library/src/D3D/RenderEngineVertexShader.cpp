@@ -95,8 +95,8 @@ void RenderEngineIndirectDraw::ExecuteComputeStage(size_t frameIndex) {
 	ID3D12GraphicsCommandList* computeCommandList = Gaia::computeCmdList->Get();
 	Gaia::computeCmdList->Reset();
 
-	ID3D12DescriptorHeap* descriptorHeap[] = { Gaia::descriptorTable->GetDescHeapRef() };
-	computeCommandList->SetDescriptorHeaps(1u, descriptorHeap);
+	//ID3D12DescriptorHeap* descriptorHeap[] = { Gaia::descriptorTable->GetDescHeapRef() };
+	//computeCommandList->SetDescriptorHeaps(1u, descriptorHeap);
 
 	// Record compute commands
 	//m_computePipeline.ResetCounterBuffer(computeCommandList, frameIndex);

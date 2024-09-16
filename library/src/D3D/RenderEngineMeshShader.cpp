@@ -110,8 +110,7 @@ void RenderEngineMeshDraw::ReleaseUploadResources() noexcept {
 void RenderEngineMeshDraw::ReserveBuffersDerived(ID3D12Device* device) {
 //	m_vertexManager.ReserveBuffers(device);
 
-	const size_t meshletDescriptorOffset =
-		Gaia::descriptorTable->ReserveDescriptorsAndGetOffset();
+	//const size_t meshletDescriptorOffset = Gaia::descriptorTable->ReserveDescriptorsAndGetOffset();
 
 //	SetDescBufferInfo(device, meshletDescriptorOffset, m_meshlets, m_meshletBuffer);
 }

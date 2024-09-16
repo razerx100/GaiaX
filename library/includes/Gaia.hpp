@@ -6,7 +6,6 @@
 #include <SwapchainManager.hpp>
 #include <D3DCommandQueue.hpp>
 #include <D3DDebugLogger.hpp>
-#include <DescriptorTableManager.hpp>
 #include <ThreadPool.hpp>
 #include <CameraManager.hpp>
 #include <D3DHeap.hpp>
@@ -25,7 +24,7 @@ namespace Gaia {
 	//extern std::unique_ptr<BufferManager> bufferManager;
 	extern std::unique_ptr<D3DCommandQueue> copyQueue;
 	extern std::unique_ptr<D3DCommandList> copyCmdList;
-	extern std::unique_ptr<DescriptorTableManager> descriptorTable;
+	//extern std::unique_ptr<DescriptorTableManager> descriptorTable;
 	//extern std::unique_ptr<TextureStorage> textureStorage;
 	extern std::unique_ptr<CameraManager> cameraManager;
 	extern std::unique_ptr<D3DCommandQueue> computeQueue;

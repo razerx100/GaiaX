@@ -42,7 +42,7 @@ RendererDx12::RendererDx12(
 	Gaia::InitCopyQueueAndList(m_objectManager, deviceRef);
 	Gaia::InitComputeQueueAndList(m_objectManager, deviceRef, bufferCount);
 
-	m_objectManager.CreateObject(Gaia::descriptorTable, 0u);
+	//m_objectManager.CreateObject(Gaia::descriptorTable, 0u);
 
 	const bool modelDataNoBB = engineType == RenderEngineType::IndirectDraw ? false : true;
 
