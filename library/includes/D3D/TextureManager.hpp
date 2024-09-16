@@ -5,10 +5,7 @@
 #include <D3DDescriptorHeapManager.hpp>
 #include <D3DCommandQueue.hpp>
 #include <TemporaryDataBuffer.hpp>
-#include <ranges>
-#include <algorithm>
 #include <deque>
-#include <type_traits>
 #include <optional>
 #include <Texture.hpp>
 
