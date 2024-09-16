@@ -2,7 +2,6 @@
 #define RENDER_ENGINE_MESH_SHADER_HPP_
 #include <memory>
 #include <RenderEngineBase.hpp>
-#include <VertexManagerMeshShader.hpp>
 #include <GraphicsPipelineMeshShader.hpp>
 #include <optional>
 

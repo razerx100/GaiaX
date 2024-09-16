@@ -3,7 +3,6 @@
 #include <RenderEngineBase.hpp>
 #include <ComputePipelineIndirectDraw.hpp>
 #include <GraphicsPipelineVertexShader.hpp>
-#include <VertexManagerVertexShader.hpp>
 #include <optional>
 
 class RenderEngineVertexShader : public RenderEngineBase {
