@@ -63,7 +63,7 @@ TEST_F(StagingBufferTest, StagingTest)
 	TemporaryDataBufferGPU tempDataBuffer{};
 
 	stagingBufferMan.AddBuffer(std::move(bufferData), 2_KB, &testNonPixel, 0u, tempDataBuffer);
-	stagingBufferMan.AddTextureView(std::move(textureData), &testTexture, tempDataBuffer);
+	stagingBufferMan.AddTexture(std::move(textureData), &testTexture, tempDataBuffer);
 
 	const D3DCommandList& copyCmdList = copyQueue.GetCommandList(0u);
 

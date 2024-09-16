@@ -280,7 +280,7 @@ public:
 		size_t registerSlot, size_t registerSpace, UINT descriptorCount,
 		D3D12_SHADER_VISIBILITY shaderStage
 	) noexcept {
-		m_descriptorLayouts.at(registerSpace).AddCBVTable(registerSlot, descriptorCount, shaderStage);
+		m_descriptorLayouts[registerSpace].AddCBVTable(registerSlot, descriptorCount, shaderStage);
 
 		return *this;
 	}
@@ -288,7 +288,7 @@ public:
 		size_t registerSlot, size_t registerSpace, UINT descriptorCount,
 		D3D12_SHADER_VISIBILITY shaderStage
 	) noexcept {
-		m_descriptorLayouts.at(registerSpace).AddSRVTable(registerSlot, descriptorCount, shaderStage);
+		m_descriptorLayouts[registerSpace].AddSRVTable(registerSlot, descriptorCount, shaderStage);
 
 		return *this;
 	}
@@ -296,28 +296,28 @@ public:
 		size_t registerSlot, size_t registerSpace, UINT descriptorCount,
 		D3D12_SHADER_VISIBILITY shaderStage
 	) noexcept {
-		m_descriptorLayouts.at(registerSpace).AddUAVTable(registerSlot, descriptorCount, shaderStage);
+		m_descriptorLayouts[registerSpace].AddUAVTable(registerSlot, descriptorCount, shaderStage);
 
 		return *this;
 	}
 	D3DDescriptorManager& AddRootCBV(
 		size_t registerSlot, size_t registerSpace, D3D12_SHADER_VISIBILITY shaderStage
 	) noexcept {
-		m_descriptorLayouts.at(registerSpace).AddRootCBV(registerSlot, shaderStage);
+		m_descriptorLayouts[registerSpace].AddRootCBV(registerSlot, shaderStage);
 
 		return *this;
 	}
 	D3DDescriptorManager& AddRootSRV(
 		size_t registerSlot, size_t registerSpace, D3D12_SHADER_VISIBILITY shaderStage
 	) noexcept {
-		m_descriptorLayouts.at(registerSpace).AddRootSRV(registerSlot, shaderStage);
+		m_descriptorLayouts[registerSpace].AddRootSRV(registerSlot, shaderStage);
 
 		return *this;
 	}
 	D3DDescriptorManager& AddRootUAV(
 		size_t registerSlot, size_t registerSpace, D3D12_SHADER_VISIBILITY shaderStage
 	) noexcept {
-		m_descriptorLayouts.at(registerSpace).AddRootUAV(registerSlot, shaderStage);
+		m_descriptorLayouts[registerSpace].AddRootUAV(registerSlot, shaderStage);
 
 		return *this;
 	}

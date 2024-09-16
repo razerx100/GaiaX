@@ -55,7 +55,7 @@ public:
 	{}
 	D3DDescriptorLayout& operator=(const D3DDescriptorLayout& other) noexcept
 	{
-		m_descriptorDetails = other.m_descriptorDetails ;
+		m_descriptorDetails = other.m_descriptorDetails;
 		m_offsets           = other.m_offsets;
 
 		return *this;
@@ -66,7 +66,7 @@ public:
 	{}
 	D3DDescriptorLayout& operator=(D3DDescriptorLayout&& other) noexcept
 	{
-		m_descriptorDetails = std::move(other.m_descriptorDetails) ;
+		m_descriptorDetails = std::move(other.m_descriptorDetails);
 		m_offsets           = std::move(other.m_offsets);
 
 		return *this;

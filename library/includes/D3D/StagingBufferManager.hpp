@@ -18,7 +18,7 @@ public:
 
 	// The destination info is required, when an ownership transfer is desired. Which
 	// is needed when a resource has exclusive ownership.
-	StagingBufferManager& AddTextureView(
+	StagingBufferManager& AddTexture(
 		std::shared_ptr<void> cpuData, Texture const* dst,
 		TemporaryDataBufferGPU& tempDataBuffer, UINT mipLevelIndex = 0u
 	);

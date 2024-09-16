@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <cassert>
 
-StagingBufferManager& StagingBufferManager::AddTextureView(
+StagingBufferManager& StagingBufferManager::AddTexture(
 	std::shared_ptr<void> cpuData, Texture const* dst,
 	TemporaryDataBufferGPU& tempDataBuffer, UINT mipLevelIndex/* = 0u */
 ) {
