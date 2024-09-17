@@ -276,6 +276,14 @@ class D3DDescriptorManager
 public:
 	D3DDescriptorManager(ID3D12Device* device, size_t layoutCount);
 
+	D3DDescriptorManager& AddConstants(
+		size_t registerSlot, size_t registerSpace, UINT uintCount,
+		D3D12_SHADER_VISIBILITY shaderStage
+	) noexcept {
+		m_descriptorLayouts[registerSpace].AddConstants(registerSlot, uintCount, shaderStage);
+
+		return *this;
+	}
 	D3DDescriptorManager& AddCBVTable(
 		size_t registerSlot, size_t registerSpace, UINT descriptorCount,
 		D3D12_SHADER_VISIBILITY shaderStage
@@ -367,6 +375,8 @@ public:
 
 	[[nodiscard]]
 	const std::vector<D3DDescriptorLayout>& GetLayouts() const noexcept { return m_descriptorLayouts; }
+	[[nodiscard]]
+	UINT GetRootIndex(size_t slotIndex, size_t layoutIndex) const noexcept;
 
 private:
 	[[nodiscard]]
@@ -375,8 +385,6 @@ private:
 	UINT GetSlotOffset(size_t slotIndex, size_t layoutIndex) const noexcept;
 	[[nodiscard]]
 	UINT GetDescriptorOffset(size_t slotIndex, size_t layoutIndex, UINT descriptorIndex) const noexcept;
-	[[nodiscard]]
-	UINT GetRootIndex(size_t slotIndex, size_t layoutIndex) const noexcept;
 
 private:
 	D3DDescriptorHeap                m_resourceHeapGPU;

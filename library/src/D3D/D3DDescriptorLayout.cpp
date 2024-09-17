@@ -52,6 +52,28 @@ D3DDescriptorLayout& D3DDescriptorLayout::AddCBVTable(
     return *this;
 }
 
+D3DDescriptorLayout& D3DDescriptorLayout::AddConstants(
+    size_t registerSlot, UINT uintCount, D3D12_SHADER_VISIBILITY shaderStage
+) noexcept {
+    // This layout is for the CBV_SRV_UAV heap. Since sampler needs a separate heap anyway,
+    // not gonna hold any sampler data in this. Instead, to make my life easier
+    // I will use the Sampler type to save the constant values. Which needs its own
+    // register space and stuff in D3D12. And the descriptorCount is the number of
+    // uints. So, putting the table variable to false, so the number doesn't get
+    // added to the total descriptor count.
+    AddView(
+        registerSlot,
+        DescriptorDetails{
+            .visibility      = shaderStage,
+            .type            = D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER,
+            .descriptorCount = uintCount,
+            .descriptorTable = false
+        }
+    );
+
+    return *this;
+}
+
 D3DDescriptorLayout& D3DDescriptorLayout::AddSRVTable(
     size_t registerSlot, UINT descriptorCount, D3D12_SHADER_VISIBILITY shaderStage
 ) noexcept {

@@ -17,6 +17,9 @@ public:
 public:
 	D3DDescriptorLayout() : m_descriptorDetails{}, m_offsets{ 0u } {}
 
+	D3DDescriptorLayout& AddConstants(
+		size_t registerSlot, UINT uintCount, D3D12_SHADER_VISIBILITY shaderStage
+	) noexcept;
 	D3DDescriptorLayout& AddCBVTable(
 		size_t registerSlot, UINT descriptorCount, D3D12_SHADER_VISIBILITY shaderStage
 	) noexcept;
