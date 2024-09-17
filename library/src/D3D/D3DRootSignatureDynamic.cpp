@@ -163,7 +163,7 @@ void D3DRootSignatureDynamic::PopulateFromLayouts(const std::vector<D3DDescripto
 				else if (descriptorDetails.type == D3D12_DESCRIPTOR_RANGE_TYPE_UAV)
 					AddRootUAV(descriptorDetails.visibility, registerIndex, registerSpace);
 				else if (descriptorDetails.type == D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER)
-					// Samler means Constant values in the DescriptorLayout.
+					// Sampler means Constant values in the DescriptorLayout.
 					AddConstants(
 						descriptorDetails.descriptorCount, descriptorDetails.visibility,
 						registerIndex, registerSpace

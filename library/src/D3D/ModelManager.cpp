@@ -405,6 +405,10 @@ void ModelManagerVSIndividual::CreateRootSignatureImpl(
 	D3DRootSignatureDynamic rootSignatureDynamic{};
 
 	rootSignatureDynamic.PopulateFromLayouts(descriptorManager.GetLayouts());
+	rootSignatureDynamic.CompileSignature(
+		RSCompileFlagBuilder{}.VertexShader(), BindlessLevel::UnboundArray
+	);
+
 	m_graphicsRootSignature.CreateSignature(m_device, rootSignatureDynamic);
 
 	m_constantsRootIndex = descriptorManager.GetRootIndex(
