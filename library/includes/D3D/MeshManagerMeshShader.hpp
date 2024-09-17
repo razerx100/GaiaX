@@ -72,9 +72,9 @@ public:
 	MeshDetails GetMeshDetails() const noexcept { return m_meshDetails; }
 
 	[[nodiscard]]
-	static consteval std::uint32_t GetConstantBufferSize() noexcept
+	static consteval UINT GetConstantCount() noexcept
 	{
-		return static_cast<std::uint32_t>(sizeof(MeshDetails));
+		return static_cast<UINT>(sizeof(MeshDetails) / sizeof(UINT));
 	}
 
 private:
