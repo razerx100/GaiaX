@@ -8,11 +8,12 @@
 
 namespace Constants
 {
-	constexpr std::uint32_t frameCount         = 2u;
-	constexpr std::uint32_t descSetLayoutCount = 2u;
-	constexpr std::uint32_t vsSetLayoutIndex   = 0u;
-	constexpr std::uint32_t psSetLayoutIndex   = 1u;
-	constexpr std::uint32_t meshID             = 0u;
+	constexpr std::uint32_t frameCount  = 2u;
+	constexpr size_t descSetLayoutCount = 2u;
+	constexpr size_t vsRegisterSpace    = 0u;
+	constexpr size_t csRegisterSpace    = 0u;
+	constexpr size_t psRegisterSpace    = 1u;
+	constexpr std::uint32_t meshID      = 0u;
 }
 
 class ModelManagerTest : public ::testing::Test
@@ -351,21 +352,21 @@ TEST_F(ModelManagerTest, ModelManagerVSIndividualTest)
 
 	ModelManagerVSIndividual vsIndividual{ device, &memoryManager, Constants::frameCount };
 
-	std::vector<D3DDescriptorManager> descBuffers{};
+	std::vector<D3DDescriptorManager> descManagers{};
 
 	for (size_t _ = 0u; _ < Constants::frameCount; ++_)
-		descBuffers.emplace_back(
+		descManagers.emplace_back(
 			D3DDescriptorManager{ device, Constants::descSetLayoutCount }
 		);
 
 	vsIndividual.SetDescriptorLayout(
-		descBuffers, Constants::vsSetLayoutIndex, Constants::psSetLayoutIndex
+		descManagers, Constants::vsRegisterSpace, Constants::psRegisterSpace
 	);
 
-	for (auto& descBuffer : descBuffers)
-		descBuffer.CreateDescriptors();
+	for (auto& descManager : descManagers)
+		descManager.CreateDescriptors();
 
-	vsIndividual.CreateRootSignature(descBuffers.front(), Constants::vsSetLayoutIndex);
+	vsIndividual.CreateRootSignature(descManagers.front(), Constants::vsRegisterSpace);
 
 	TemporaryDataBufferGPU tempDataBuffer{};
 
@@ -436,5 +437,142 @@ TEST_F(ModelManagerTest, ModelManagerVSIndividualTest)
 			std::move(modelBundleVS), L"H", tempDataBuffer
 		);
 		EXPECT_EQ(index, 1u) << "Index isn't 1.";
+	}
+}
+
+TEST_F(ModelManagerTest, ModelManagerVSIndirectTest)
+{
+	ID3D12Device5* device  = s_deviceManager->GetDevice();
+	IDXGIAdapter3* adapter = s_deviceManager->GetAdapter();
+
+	MemoryManager memoryManager{ adapter, device, 20_MB, 200_KB };
+
+	ThreadPool threadPool{ 2u };
+
+	StagingBufferManager stagingBufferManager{ device, &memoryManager, &threadPool };
+
+	ModelManagerVSIndirect vsIndirect{
+		device, &memoryManager, &stagingBufferManager, Constants::frameCount
+	};
+
+	std::vector<D3DDescriptorManager> descManagersVS{};
+	std::vector<D3DDescriptorManager> descManagersCS{};
+
+	for (size_t _ = 0u; _ < Constants::frameCount; ++_)
+	{
+		descManagersVS.emplace_back(
+			D3DDescriptorManager{ device, Constants::descSetLayoutCount }
+		);
+		descManagersCS.emplace_back(
+			D3DDescriptorManager{ device, Constants::descSetLayoutCount }
+		);
+	}
+
+	vsIndirect.SetDescriptorLayoutVS(
+		descManagersVS, Constants::vsRegisterSpace, Constants::psRegisterSpace
+	);
+	vsIndirect.SetDescriptorLayoutCS(descManagersCS, Constants::csRegisterSpace);
+
+	for (auto& descManager : descManagersVS)
+		descManager.CreateDescriptors();
+	for (auto& descManager : descManagersCS)
+		descManager.CreateDescriptors();
+
+	vsIndirect.CreateRootSignature(descManagersVS.front(), Constants::vsRegisterSpace);
+	vsIndirect.CreatePipelineCS(descManagersCS.front(), Constants::csRegisterSpace);
+
+	TemporaryDataBufferGPU tempDataBuffer{};
+
+	{
+		auto meshVS         = std::make_unique<MeshDummyVS>();
+		std::uint32_t index = vsIndirect.AddMeshBundle(
+			std::move(meshVS), stagingBufferManager, tempDataBuffer
+		);
+		EXPECT_EQ(index, 0u) << "Index isn't 0u";
+	}
+	{
+		auto meshVS         = std::make_unique<MeshDummyVS>();
+		std::uint32_t index = vsIndirect.AddMeshBundle(
+			std::move(meshVS), stagingBufferManager, tempDataBuffer
+		);
+		EXPECT_EQ(index, 1u) << "Index isn't 1u";
+	}
+	vsIndirect.RemoveMeshBundle(0u);
+	{
+		auto meshVS         = std::make_unique<MeshDummyVS>();
+		std::uint32_t index = vsIndirect.AddMeshBundle(
+			std::move(meshVS), stagingBufferManager, tempDataBuffer
+		);
+		EXPECT_EQ(index, 0u) << "Index isn't 0u";
+	}
+
+	{
+		auto modelVS       = std::make_shared<ModelDummyVS>();
+		auto modelBundleVS = std::make_shared<ModelBundleDummyVS>();
+
+		modelBundleVS->AddModel(std::move(modelVS));
+
+		std::uint32_t index = vsIndirect.AddModelBundle(
+			std::move(modelBundleVS), L"", tempDataBuffer
+		);
+		EXPECT_EQ(index, 0u) << "Index isn't 0.";
+	}
+	{
+		auto modelVS       = std::make_shared<ModelDummyVS>();
+		auto modelBundleVS = std::make_shared<ModelBundleDummyVS>();
+
+		modelBundleVS->AddModel(std::move(modelVS));
+
+		std::uint32_t index = vsIndirect.AddModelBundle(
+			std::move(modelBundleVS), L"A", tempDataBuffer
+		);
+		EXPECT_EQ(index, 1u) << "Index isn't 1.";
+	}
+	{
+		auto modelBundleVS = std::make_shared<ModelBundleDummyVS>();
+
+		for (size_t index = 0u; index < 5u; ++index)
+			modelBundleVS->AddModel(std::make_shared<ModelDummyVS>());
+
+		std::uint32_t index = vsIndirect.AddModelBundle(
+			std::move(modelBundleVS), L"H", tempDataBuffer
+		);
+		EXPECT_EQ(index, 2u) << "Index isn't 2.";
+	}
+	vsIndirect.RemoveModelBundle(1u);
+	{
+		auto modelBundleVS = std::make_shared<ModelBundleDummyVS>();
+
+		for (size_t index = 0u; index < 7u; ++index)
+			modelBundleVS->AddModel(std::make_shared<ModelDummyVS>());
+
+		std::uint32_t index = vsIndirect.AddModelBundle(
+			std::move(modelBundleVS), L"H", tempDataBuffer
+		);
+		EXPECT_EQ(index, 1u) << "Index isn't 1.";
+
+		vsIndirect.ChangePSO(index, L"A");
+	}
+	{
+		auto modelVS       = std::make_shared<ModelDummyVS>();
+		auto modelBundleVS = std::make_shared<ModelBundleDummyVS>();
+
+		modelBundleVS->AddModel(std::move(modelVS));
+
+		std::uint32_t index = vsIndirect.AddModelBundle(
+			std::move(modelBundleVS), L"H", tempDataBuffer
+		);
+		EXPECT_EQ(index, 13u) << "Index isn't 13.";
+	}
+	{
+		auto modelVS       = std::make_shared<ModelDummyVS>();
+		auto modelBundleVS = std::make_shared<ModelBundleDummyVS>();
+
+		modelBundleVS->AddModel(std::move(modelVS));
+
+		std::uint32_t index = vsIndirect.AddModelBundle(
+			std::move(modelBundleVS), L"A", tempDataBuffer
+		);
+		EXPECT_EQ(index, 14u) << "Index isn't 14.";
 	}
 }
