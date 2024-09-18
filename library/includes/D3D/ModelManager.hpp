@@ -618,8 +618,7 @@ protected:
 	std::uint32_t GetPSOIndex(const ShaderName& pixelShader)
 	{
 		std::uint32_t psoIndex = 0u;
-
-		auto oPSOIndex = TryToGetPSOIndex(pixelShader);
+		auto oPSOIndex         = TryToGetPSOIndex(pixelShader);
 
 		if (!oPSOIndex)
 		{
@@ -742,18 +741,18 @@ public:
 class ModelManagerVSIndividual : public
 	ModelManager
 	<
-	ModelManagerVSIndividual,
-	GraphicsPipelineIndividualDraw,
-	MeshManagerVertexShader, MeshBundleVS,
-	ModelBundleVSIndividual, ModelBundleVS
-	>
-{
-	friend class ModelManager
-		<
 		ModelManagerVSIndividual,
 		GraphicsPipelineIndividualDraw,
 		MeshManagerVertexShader, MeshBundleVS,
 		ModelBundleVSIndividual, ModelBundleVS
+	>
+{
+	friend class ModelManager
+		<
+			ModelManagerVSIndividual,
+			GraphicsPipelineIndividualDraw,
+			MeshManagerVertexShader, MeshBundleVS,
+			ModelBundleVSIndividual, ModelBundleVS
 		>;
 	friend class ModelManagerVSIndividualTest;
 
@@ -833,18 +832,18 @@ public:
 class ModelManagerVSIndirect : public
 	ModelManager
 	<
-	ModelManagerVSIndirect,
-	GraphicsPipelineIndirectDraw,
-	MeshManagerVertexShader, MeshBundleVS,
-	ModelBundleVSIndirect, ModelBundleVS
-	>
-{
-	friend class ModelManager
-		<
 		ModelManagerVSIndirect,
 		GraphicsPipelineIndirectDraw,
 		MeshManagerVertexShader, MeshBundleVS,
 		ModelBundleVSIndirect, ModelBundleVS
+	>
+{
+	friend class ModelManager
+		<
+			ModelManagerVSIndirect,
+			GraphicsPipelineIndirectDraw,
+			MeshManagerVertexShader, MeshBundleVS,
+			ModelBundleVSIndirect, ModelBundleVS
 		>;
 	friend class ModelManagerVSIndirectTest;
 
@@ -1042,6 +1041,113 @@ public:
 		m_constantsVSRootIndex   = other.m_constantsVSRootIndex;
 		m_constantsCSRootIndex   = other.m_constantsCSRootIndex;
 		m_modelBundlesCS         = std::move(other.m_modelBundlesCS);
+
+		return *this;
+	}
+};
+
+class ModelManagerMS : public
+	ModelManager
+	<
+		ModelManagerMS,
+		GraphicsPipelineMeshShader,
+		MeshManagerMeshShader, MeshBundleMS,
+		ModelBundleMSIndividual, ModelBundleMS
+	>
+{
+	friend class ModelManager
+		<
+			ModelManagerMS,
+			GraphicsPipelineMeshShader,
+			MeshManagerMeshShader, MeshBundleMS,
+			ModelBundleMSIndividual, ModelBundleMS
+		>;
+	friend class ModelManagerMSTest;
+
+public:
+	ModelManagerMS(
+		ID3D12Device5* device, MemoryManager* memoryManager, StagingBufferManager* stagingBufferMan,
+		std::uint32_t frameCount
+	);
+
+	void SetDescriptorLayout(
+		std::vector<D3DDescriptorManager>& descriptorManagers, size_t msRegisterSpace,
+		size_t psRegisterSpace
+	) const noexcept;
+
+	// Should be called after a new Mesh has been added.
+	void SetDescriptorOfMeshes(
+		std::vector<D3DDescriptorManager>& descriptorManagers, size_t msRegisterSpace
+	) const;
+	// Should be called after a new Model has been added.
+	void SetDescriptorOfModels(
+		std::vector<D3DDescriptorManager>& descriptorManagers, size_t msRegisterSpace,
+		size_t psRegisterSpace
+	) const;
+
+	void CopyTempBuffers(const D3DCommandList& copyList) noexcept;
+
+	void Draw(const D3DCommandList& graphicsList) const noexcept;
+
+private:
+	void CreateRootSignatureImpl(
+		const D3DDescriptorManager& descriptorManager, size_t constantsRegisterSpace
+	);
+	void ConfigureModelBundle(
+		ModelBundleMSIndividual& modelBundleObj, std::vector<std::uint32_t>&& modelIndices,
+		std::shared_ptr<ModelBundleMS>&& modelBundle, TemporaryDataBufferGPU& tempBuffer
+	);
+
+	void ConfigureModelRemove(size_t bundleIndex) noexcept;
+	void ConfigureRemoveMesh(size_t bundleIndex) noexcept;
+	void ConfigureMeshBundle(
+		std::unique_ptr<MeshBundleMS> meshBundle, StagingBufferManager& stagingBufferMan,
+		MeshManagerMeshShader& meshManager, TemporaryDataBufferGPU& tempBuffer
+	);
+
+	void _updatePerFrame([[maybe_unused]] UINT64 frameIndex) const noexcept {}
+	// To create compute shader pipelines.
+	void ShaderPathSet() {}
+
+	[[nodiscard]]
+	GraphicsPipelineMeshShader CreatePipelineObject();
+
+private:
+	UINT                  m_constantsRootIndex;
+	StagingBufferManager* m_stagingBufferMan;
+	SharedBufferGPU       m_meshletBuffer;
+	SharedBufferGPU       m_vertexBuffer;
+	SharedBufferGPU       m_vertexIndicesBuffer;
+	SharedBufferGPU       m_primIndicesBuffer;
+
+	static constexpr size_t s_constantDataRegisterSlot        = 1u;
+	static constexpr size_t s_meshletBufferRegisterSlot       = 2u;
+	static constexpr size_t s_vertexBufferRegisterSlot        = 3u;
+	static constexpr size_t s_vertexIndicesBufferRegisterSlot = 4u;
+	static constexpr size_t s_primIndicesBufferRegisterSlot   = 5u;
+
+public:
+	ModelManagerMS(const ModelManagerMS&) = delete;
+	ModelManagerMS& operator=(const ModelManagerMS&) = delete;
+
+	ModelManagerMS(ModelManagerMS&& other) noexcept
+		: ModelManager{ std::move(other) },
+		m_constantsRootIndex{ other.m_constantsRootIndex },
+		m_stagingBufferMan{ other.m_stagingBufferMan },
+		m_meshletBuffer{ std::move(other.m_meshletBuffer) },
+		m_vertexBuffer{ std::move(other.m_vertexBuffer) },
+		m_vertexIndicesBuffer{ std::move(other.m_vertexIndicesBuffer) },
+		m_primIndicesBuffer{ std::move(other.m_primIndicesBuffer) }
+	{}
+	ModelManagerMS& operator=(ModelManagerMS&& other) noexcept
+	{
+		ModelManager::operator=(std::move(other));
+		m_constantsRootIndex  = other.m_constantsRootIndex;
+		m_stagingBufferMan    = other.m_stagingBufferMan;
+		m_meshletBuffer       = std::move(other.m_meshletBuffer);
+		m_vertexBuffer        = std::move(other.m_vertexBuffer);
+		m_vertexIndicesBuffer = std::move(other.m_vertexIndicesBuffer);
+		m_primIndicesBuffer   = std::move(other.m_primIndicesBuffer);
 
 		return *this;
 	}
