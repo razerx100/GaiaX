@@ -604,9 +604,8 @@ void ModelManagerVSIndirect::CreateRootSignatureImpl(
 		.pArgumentDescs   = &argumentDesc
 	};
 
-	m_device->CreateCommandSignature(
-		&signatureDesc, m_graphicsRootSignature.Get(), IID_PPV_ARGS(&m_commandSignature)
-	);
+	// If the argumentDesc contains only has the draw type, the rootSignature should be null.
+	m_device->CreateCommandSignature(&signatureDesc, nullptr, IID_PPV_ARGS(&m_commandSignature));
 }
 
 void ModelManagerVSIndirect::CreatePipelineCS(
