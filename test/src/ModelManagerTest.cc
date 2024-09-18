@@ -355,9 +355,7 @@ TEST_F(ModelManagerTest, ModelManagerVSIndividualTest)
 	std::vector<D3DDescriptorManager> descManagers{};
 
 	for (size_t _ = 0u; _ < Constants::frameCount; ++_)
-		descManagers.emplace_back(
-			D3DDescriptorManager{ device, Constants::descSetLayoutCount }
-		);
+		descManagers.emplace_back(D3DDescriptorManager{ device, Constants::descSetLayoutCount });
 
 	vsIndividual.SetDescriptorLayout(
 		descManagers, Constants::vsRegisterSpace, Constants::psRegisterSpace
@@ -460,12 +458,8 @@ TEST_F(ModelManagerTest, ModelManagerVSIndirectTest)
 
 	for (size_t _ = 0u; _ < Constants::frameCount; ++_)
 	{
-		descManagersVS.emplace_back(
-			D3DDescriptorManager{ device, Constants::descSetLayoutCount }
-		);
-		descManagersCS.emplace_back(
-			D3DDescriptorManager{ device, Constants::descSetLayoutCount }
-		);
+		descManagersVS.emplace_back(D3DDescriptorManager{ device, Constants::descSetLayoutCount });
+		descManagersCS.emplace_back(D3DDescriptorManager{ device, Constants::descSetLayoutCount });
 	}
 
 	vsIndirect.SetDescriptorLayoutVS(
@@ -574,5 +568,111 @@ TEST_F(ModelManagerTest, ModelManagerVSIndirectTest)
 			std::move(modelBundleVS), L"A", tempDataBuffer
 		);
 		EXPECT_EQ(index, 14u) << "Index isn't 14.";
+	}
+}
+
+TEST_F(ModelManagerTest, ModelManagerMS)
+{
+	ID3D12Device5* device  = s_deviceManager->GetDevice();
+	IDXGIAdapter3* adapter = s_deviceManager->GetAdapter();
+
+	MemoryManager memoryManager{ adapter, device, 20_MB, 200_KB };
+
+	ThreadPool threadPool{ 2u };
+
+	StagingBufferManager stagingBufferManager{ device, &memoryManager, &threadPool };
+
+	ModelManagerMS managerMS{
+		device, &memoryManager, &stagingBufferManager, Constants::frameCount
+	};
+
+	std::vector<D3DDescriptorManager> descManagers{};
+
+	for (size_t _ = 0u; _ < Constants::frameCount; ++_)
+		descManagers.emplace_back(D3DDescriptorManager{ device, Constants::descSetLayoutCount });
+
+	managerMS.SetDescriptorLayout(descManagers, Constants::vsRegisterSpace, Constants::psRegisterSpace);
+
+	for (auto& descManager : descManagers)
+		descManager.CreateDescriptors();
+
+	managerMS.CreateRootSignature(descManagers.front(), Constants::vsRegisterSpace);
+
+	TemporaryDataBufferGPU tempDataBuffer{};
+
+	{
+		auto meshMS         = std::make_unique<MeshDummyMS>();
+		std::uint32_t index = managerMS.AddMeshBundle(
+			std::move(meshMS), stagingBufferManager, tempDataBuffer
+		);
+		EXPECT_EQ(index, 0u) << "Index isn't 0u";
+	}
+	{
+		auto meshMS         = std::make_unique<MeshDummyMS>();
+		std::uint32_t index = managerMS.AddMeshBundle(
+			std::move(meshMS), stagingBufferManager, tempDataBuffer
+		);
+		EXPECT_EQ(index, 1u) << "Index isn't 1u";
+	}
+	managerMS.RemoveMeshBundle(0u);
+	{
+		auto meshMS         = std::make_unique<MeshDummyMS>();
+		std::uint32_t index = managerMS.AddMeshBundle(
+			std::move(meshMS), stagingBufferManager, tempDataBuffer
+		);
+		EXPECT_EQ(index, 0u) << "Index isn't 0u";
+	}
+	{
+		auto meshMS         = std::make_unique<MeshDummyMS>();
+		std::uint32_t index = managerMS.AddMeshBundle(
+			std::move(meshMS), stagingBufferManager, tempDataBuffer
+		);
+		EXPECT_EQ(index, 2u) << "Index isn't 2u";
+	}
+
+	{
+		auto modelMS       = std::make_shared<ModelDummyMS>();
+		auto modelBundleMS = std::make_shared<ModelBundleDummyMS>();
+
+		modelBundleMS->AddModel(std::move(modelMS));
+
+		std::uint32_t index = managerMS.AddModelBundle(
+			std::move(modelBundleMS), L"", tempDataBuffer
+		);
+		EXPECT_EQ(index, 0u) << "Index isn't 0.";
+	}
+	{
+		auto modelMS       = std::make_shared<ModelDummyMS>();
+		auto modelBundleMS = std::make_shared<ModelBundleDummyMS>();
+
+		modelBundleMS->AddModel(std::move(modelMS));
+
+		std::uint32_t index = managerMS.AddModelBundle(
+			std::move(modelBundleMS), L"", tempDataBuffer
+		);
+		EXPECT_EQ(index, 1u) << "Index isn't 1.";
+	}
+	{
+		auto modelBundleMS = std::make_shared<ModelBundleDummyMS>();
+
+		for (size_t index = 0u; index < 5u; ++index)
+			modelBundleMS->AddModel(std::make_shared<ModelDummyMS>());
+
+		std::uint32_t index = managerMS.AddModelBundle(
+			std::move(modelBundleMS), L"H", tempDataBuffer
+		);
+		EXPECT_EQ(index, 2u) << "Index isn't 2.";
+	}
+	managerMS.RemoveModelBundle(1u);
+	{
+		auto modelBundleMS = std::make_shared<ModelBundleDummyMS>();
+
+		for (size_t index = 0u; index < 7u; ++index)
+			modelBundleMS->AddModel(std::make_shared<ModelDummyMS>());
+
+		std::uint32_t index = managerMS.AddModelBundle(
+			std::move(modelBundleMS), L"H", tempDataBuffer
+		);
+		EXPECT_EQ(index, 1u) << "Index isn't 1.";
 	}
 }
