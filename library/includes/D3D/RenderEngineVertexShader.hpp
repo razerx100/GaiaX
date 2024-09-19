@@ -4,6 +4,7 @@
 #include <GraphicsPipelineVertexShader.hpp>
 #include <optional>
 
+/*
 class RenderEngineVertexShader : public RenderEngineBase {
 public:
 	RenderEngineVertexShader(ID3D12Device* device);
@@ -18,12 +19,10 @@ public:
 	void ReleaseUploadResources() noexcept final;
 
 protected:
-	/*
 	[[nodiscard]]
 	std::unique_ptr<RootSignatureDynamic> CreateGraphicsRootSignature(
 		ID3D12Device* device
 	) const noexcept final;
-	*/
 
 	void ReserveBuffersDerived(ID3D12Device* device) final;
 
@@ -119,4 +118,5 @@ private:
 
 	//std::vector<ModelDrawArguments> m_modelArguments;
 };
+*/
 #endif

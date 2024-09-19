@@ -69,6 +69,7 @@ namespace Gaia {
 		ObjectManager& om, RenderEngineType engineType, ID3D12Device* d3dDevice,
 		std::uint32_t frameCount
 	) {
+		/*
 		switch (engineType)
 		{
 		case RenderEngineType::IndirectDraw: {
@@ -86,6 +87,7 @@ namespace Gaia {
 			break;
 		}
 		}
+		*/
 	}
 
 	void InitResources(ObjectManager& om, ThreadPool& threadPooll) {

@@ -5,14 +5,15 @@
 #include <GraphicsPipelineMeshShader.hpp>
 #include <optional>
 
+/*
 class RenderEngineMeshDraw : public RenderEngineBase
 {
 public:
 	RenderEngineMeshDraw(ID3D12Device* device) noexcept;
 
-	/*void AddMeshletModelSet(
+	void AddMeshletModelSet(
 		std::vector<MeshletModel>& meshletModels, const std::wstring& pixelShader
-	) noexcept final;*/
+	) noexcept final;
 	void AddGVerticesAndPrimIndices(
 		std::vector<Vertex>&& gVertices, std::vector<std::uint32_t>&& gVerticesIndices,
 		std::vector<std::uint32_t>&& gPrimIndices
@@ -37,12 +38,10 @@ private:
 		ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex
 	);
 
-	/*
 	[[nodiscard]]
 	std::unique_ptr<RootSignatureDynamic> CreateGraphicsRootSignature(
 		ID3D12Device* device
 	) const noexcept final;
-	*/
 
 private:
 	GraphicsPipeline m_graphicsPipeline0;
@@ -52,4 +51,5 @@ private:
 	//D3DUploadResourceDescriptorView m_meshletBuffer;
 	std::vector<Meshlet> m_meshlets;
 };
+*/
 #endif

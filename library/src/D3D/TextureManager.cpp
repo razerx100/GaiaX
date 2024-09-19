@@ -29,7 +29,7 @@ static std::pair<size_t, T*> AddResource(
 
 // Texture storage
 void TextureStorage::SetBindingIndex(
-	size_t index, std::uint32_t bindingIndex, std::vector<std::uint32_t>& bindingIndices
+	size_t index, UINT bindingIndex, std::vector<UINT>& bindingIndices
 ) noexcept {
 	if (std::size(bindingIndices) <= index)
 	{
@@ -106,18 +106,18 @@ void TextureManager::SetDescriptorLayout(
 
 	if (textureDescCount)
 		descriptorManager.AddSRVTable(
-			textureRegisterSpace, textureRegisterSpace, textureDescCount,
+			texturesRegisterSlot, textureRegisterSpace, textureDescCount,
 			D3D12_SHADER_VISIBILITY_PIXEL
 		);
 }
 
-std::optional<std::uint32_t> TextureManager::FindFreeIndex(
+std::optional<UINT> TextureManager::FindFreeIndex(
 	const std::vector<bool>& availableIndices
 ) noexcept {
 	auto result = std::ranges::find(availableIndices, true);
 
 	if (result != std::end(availableIndices))
-		return static_cast<std::uint32_t>(std::distance(std::begin(availableIndices), result));
+		return static_cast<UINT>(std::distance(std::begin(availableIndices), result));
 
 	return {};
 }

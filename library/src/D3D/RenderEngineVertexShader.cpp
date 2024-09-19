@@ -4,6 +4,7 @@
 #include <VertexLayout.hpp>
 #include <cassert>
 
+/*
 // Vertex Shader
 RenderEngineVertexShader::RenderEngineVertexShader(ID3D12Device* device)
 	: RenderEngineBase{ device } {}
@@ -43,7 +44,6 @@ void RenderEngineVertexShader::_recordResourceUploads(
 ) noexcept {}
 void RenderEngineVertexShader::_releaseUploadResources() noexcept {}
 
-/*
 std::unique_ptr<RootSignatureDynamic> RenderEngineVertexShader::CreateGraphicsRootSignature(
 	ID3D12Device* device
 ) const noexcept {
@@ -71,7 +71,6 @@ std::unique_ptr<RootSignatureDynamic> RenderEngineVertexShader::CreateGraphicsRo
 
 	return signature;
 }
-*/
 
 void RenderEngineVertexShader::BindGraphicsBuffers(
 	ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex
@@ -109,13 +108,11 @@ void RenderEngineIndirectDraw::ExecuteComputeStage(size_t frameIndex) {
 	Gaia::computeCmdList->Close();
 	Gaia::computeQueue->ExecuteCommandLists(computeCommandList);
 
-	/*
 	UINT64 fenceValue = Gaia::graphicsFence->GetFrontValue();
 
 	Gaia::computeQueue->SignalCommandQueue(Gaia::computeFence->GetFence(), fenceValue);
 
 	Gaia::graphicsQueue->WaitOnGPU(Gaia::computeFence->GetFence(), fenceValue);
-	*/
 }
 
 void RenderEngineIndirectDraw::ExecutePreRenderStage(
@@ -132,7 +129,6 @@ void RenderEngineIndirectDraw::UpdateModelBuffers(size_t frameIndex) const noexc
 void RenderEngineIndirectDraw::RecordDrawCommands(
 	ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex
 ) {
-	/*
 	ID3D12RootSignature* graphicsRS = m_graphicsRS->Get();
 
 	// One Pipeline needs to be bound before Descriptors can be bound.
@@ -153,14 +149,12 @@ void RenderEngineIndirectDraw::RecordDrawCommands(
 			m_computePipeline.GetCounterBuffer(frameIndex)
 		);
 	}
-	*/
 }
 
 void RenderEngineIndirectDraw::ConstructPipelines() {
 	ID3D12Device2* device = Gaia::device->GetDevice();
 
 	ConstructGraphicsRootSignature(device);
-	/*
 	CreateGraphicsPipelines(device, m_graphicsPipeline0, m_graphicsPipelines);
 
 	m_computePipeline.CreateComputeRootSignature(device);
@@ -169,7 +163,6 @@ void RenderEngineIndirectDraw::ConstructPipelines() {
 	Gaia::bufferManager->SetComputeRootSignatureLayout(
 		m_computePipeline.GetComputeRSLayout()
 	);
-	*/
 
 	CreateCommandSignature(device);
 }
@@ -212,7 +205,6 @@ void RenderEngineIndirectDraw::_releaseUploadResources() noexcept {
 }
 
 void RenderEngineIndirectDraw::CreateCommandSignature(ID3D12Device* device) {
-	/*
 	static constexpr size_t modelInfoIndex = static_cast<size_t>(RootSigElement::ModelInfo);
 
 	std::array<D3D12_INDIRECT_ARGUMENT_DESC, 2u> arguments{};
@@ -232,7 +224,6 @@ void RenderEngineIndirectDraw::CreateCommandSignature(ID3D12Device* device) {
 	device->CreateCommandSignature(
 		&desc, m_graphicsRS->Get(), IID_PPV_ARGS(&m_commandSignature)
 	);
-	*/
 }
 
 // Individual Draw
@@ -252,7 +243,6 @@ void RenderEngineIndividualDraw::UpdateModelBuffers(size_t frameIndex) const noe
 void RenderEngineIndividualDraw::RecordDrawCommands(
 	ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex
 ) {
-	/*
 	ID3D12RootSignature* graphicsRS = m_graphicsRS->Get();
 
 	// One Pipeline needs to be bound before Descriptors can be bound.
@@ -265,7 +255,6 @@ void RenderEngineIndividualDraw::RecordDrawCommands(
 		graphicsPipeline->BindGraphicsPipeline(graphicsCommandList, graphicsRS);
 		graphicsPipeline->DrawModels(graphicsCommandList, m_modelArguments, m_graphicsRSLayout);
 	}
-	*/
 }
 
 void RenderEngineIndividualDraw::ConstructPipelines() {
@@ -312,3 +301,4 @@ void RenderEngineIndividualDraw::RecordModelArguments(
 		//m_modelArguments.emplace_back(modelArgs);
 	}
 }
+*/

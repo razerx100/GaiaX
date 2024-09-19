@@ -2,6 +2,7 @@
 #include <Gaia.hpp>
 #include <D3DResourceBarrier.hpp>
 
+/*
 RenderEngineBase::RenderEngineBase(ID3D12Device* device) //: m_depthBuffer{ device }
 {
 	//m_depthBuffer.SetMaxResolution(7680u, 4320u);
@@ -10,7 +11,6 @@ RenderEngineBase::RenderEngineBase(ID3D12Device* device) //: m_depthBuffer{ devi
 void RenderEngineBase::Present(size_t frameIndex) {
 	ID3D12GraphicsCommandList* graphicsCommandList = Gaia::graphicsCmdList->Get();
 
-	/*
 	D3DResourceBarrier().AddBarrier(
 		ResourceBarrierBuilder{}.Transition(
 			Gaia::swapChain->GetRTV(frameIndex),
@@ -22,18 +22,15 @@ void RenderEngineBase::Present(size_t frameIndex) {
 	Gaia::graphicsQueue->ExecuteCommandLists(graphicsCommandList);
 
 	Gaia::swapChain->PresentWithTear();
-	*/
 }
 
 void RenderEngineBase::ExecutePostRenderStage() {
-	/*
 	UINT64 fenceValue = Gaia::graphicsFence->GetFrontValue();
 
 	Gaia::graphicsQueue->SignalCommandQueue(Gaia::graphicsFence->GetFence(), fenceValue);
 	Gaia::graphicsFence->AdvanceValueInQueue();
 	Gaia::graphicsFence->WaitOnCPUConditional();
 	Gaia::graphicsFence->IncreaseFrontValue(fenceValue);
-	*/
 }
 
 void RenderEngineBase::ExecutePreGraphicsStage(
@@ -41,7 +38,6 @@ void RenderEngineBase::ExecutePreGraphicsStage(
 ) {
 	Gaia::graphicsCmdList->Reset();
 
-	/*
 	D3DResourceBarrier().AddBarrier(
 		ResourceBarrierBuilder{}.Transition(
 			Gaia::swapChain->GetRTV(frameIndex),
@@ -67,7 +63,6 @@ void RenderEngineBase::ExecutePreGraphicsStage(
 
 //	graphicsCommandList->OMSetRenderTargets(1u, &rtvHandle, FALSE, &dsvHandle);
 
-	*/
 }
 
 void RenderEngineBase::BindCommonGraphicsBuffers(
@@ -79,7 +74,6 @@ void RenderEngineBase::BindCommonGraphicsBuffers(
 }
 
 void RenderEngineBase::ConstructGraphicsRootSignature(ID3D12Device* device) {
-	/*
 	auto graphicsRS = CreateGraphicsRootSignature(device);
 
 	m_graphicsRSLayout = graphicsRS->GetElementLayout();
@@ -87,7 +81,6 @@ void RenderEngineBase::ConstructGraphicsRootSignature(ID3D12Device* device) {
 
 	Gaia::bufferManager->SetGraphicsRootSignatureLayout(m_graphicsRSLayout);
 	Gaia::textureStorage->SetGraphicsRootSignatureLayout(m_graphicsRSLayout);
-	*/
 }
 
 void RenderEngineBase::ResizeViewportAndScissor(
@@ -119,13 +112,14 @@ void RenderEngineBase::RecordModelDataSet(
 	[[maybe_unused]] const std::wstring& pixelShader
 ) noexcept {}
 
-/*void RenderEngineBase::AddMeshletModelSet(
+void RenderEngineBase::AddMeshletModelSet(
 	[[maybe_unused]] std::vector<MeshletModel>& meshletModels,
 	[[maybe_unused]] const std::wstring& pixelShader
-) noexcept {} */
+) noexcept {}
 
 void RenderEngineBase::AddGVerticesAndPrimIndices(
 	[[maybe_unused]] std::vector<Vertex>&& gVertices,
 	[[maybe_unused]] std::vector<std::uint32_t>&& gVerticesIndices,
 	[[maybe_unused]] std::vector<std::uint32_t>&& gPrimIndices
 ) noexcept {}
+*/

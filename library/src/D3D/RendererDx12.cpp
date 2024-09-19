@@ -16,7 +16,7 @@ RendererDx12::RendererDx12(
 	ID3D12Device4* deviceRef = Gaia::device.get()->GetDevice();
 
 	Gaia::InitRenderEngine(m_objectManager, engineType, deviceRef, bufferCount);
-	Gaia::renderEngine->ResizeViewportAndScissor(width, height);
+	//Gaia::renderEngine->ResizeViewportAndScissor(width, height);
 
 	//Gaia::InitResources(m_objectManager, threadPool);
 
@@ -117,8 +117,8 @@ void RendererDx12::Resize(std::uint32_t width, std::uint32_t height) {
 
 		//Gaia::graphicsFence->ResetFenceValues(fenceValue + 1u);
 
-		Gaia::renderEngine->CreateDepthBufferView(deviceRef, width, height);
-		Gaia::renderEngine->ResizeViewportAndScissor(width, height);
+		//Gaia::renderEngine->CreateDepthBufferView(deviceRef, width, height);
+		//Gaia::renderEngine->ResizeViewportAndScissor(width, height);
 
 		//Gaia::cameraManager->SetSceneResolution(width, height);
 	}

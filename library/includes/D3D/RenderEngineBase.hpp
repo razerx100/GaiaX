@@ -6,6 +6,7 @@
 #include <ViewportAndScissorManager.hpp>
 #include <DepthBuffer.hpp>
 
+/*
 class RenderEngineBase : public RenderEngine
 {
 public:
@@ -26,9 +27,9 @@ public:
 	virtual void RecordModelDataSet(
 		const std::vector<std::shared_ptr<Model>>& models, const std::wstring& pixelShader
 	) noexcept override;
-	/*virtual void AddMeshletModelSet(
+	virtual void AddMeshletModelSet(
 		std::vector<MeshletModel>& meshletModels, const std::wstring& pixelShader
-	) noexcept override;*/
+	) noexcept override;
 	virtual void AddGVerticesAndPrimIndices(
 		std::vector<Vertex>&& gVertices, std::vector<std::uint32_t>&& gVerticesIndices,
 		std::vector<std::uint32_t>&& gPrimIndices
@@ -42,18 +43,15 @@ protected:
 		ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex
 	);
 
-	/*
 	[[nodiscard]]
 	virtual std::unique_ptr<RootSignatureDynamic> CreateGraphicsRootSignature(
 		ID3D12Device* device
 	) const noexcept = 0;
-	*/
 
 	virtual void ReserveBuffersDerived(ID3D12Device* device);
 
 	void ConstructGraphicsRootSignature(ID3D12Device* device);
 
-	/*
 	template<std::derived_from<GraphicsPipelineBase> Pipeline>
 	void CreateGraphicsPipelines(
 		ID3D12Device2* device, std::unique_ptr<Pipeline>& graphicsPipeline0,
@@ -65,7 +63,6 @@ protected:
 		for (auto& graphicsPipeline : graphicsPipelines)
 			graphicsPipeline->CreateGraphicsPipeline(device, graphicsRootSig, m_shaderPath);
 	}
-	*/
 
 protected:
 	//std::unique_ptr<RootSignatureBase> m_graphicsRS;
@@ -75,4 +72,5 @@ private:
 	ViewportAndScissorManager m_viewportAndScissor;
 	//DepthBuffer m_depthBuffer;
 };
+*/
 #endif

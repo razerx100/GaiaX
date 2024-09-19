@@ -5,51 +5,194 @@
 #include <array>
 #include <memory>
 #include <string>
+#include <DeviceManager.hpp>
+#include <D3DFence.hpp>
+#include <TemporaryDataBuffer.hpp>
+#include <D3DCommandQueue.hpp>
+#include <CommonBuffers.hpp>
+#include <TextureManager.hpp>
+#include <DepthBuffer.hpp>
+#include <CameraManager.hpp>
+#include <ViewportAndScissorManager.hpp>
 #include <Model.hpp>
+#include <Shader.hpp>
 #include <MeshBundle.hpp>
 
 class RenderEngine
 {
+	// Getting the values from the same values from the deviceManager for each member is kinda
+	// dumb, so keeping this constructor but making it private.
+	RenderEngine(
+		IDXGIAdapter3* adapter, ID3D12Device5* device, std::shared_ptr<ThreadPool> threadPool,
+		size_t frameCount
+	);
+
 public:
-	RenderEngine() noexcept;
+	RenderEngine(
+		const DeviceManager& deviceManager, std::shared_ptr<ThreadPool> threadPool, size_t frameCount
+	);
 	virtual ~RenderEngine() = default;
 
-	virtual void ExecuteRenderStage(size_t frameIndex) = 0;
-	virtual void Present(size_t frameIndex) = 0;
-	virtual void ExecutePostRenderStage() = 0;
-	virtual void ConstructPipelines() = 0;
-	virtual void UpdateModelBuffers(size_t frameIndex) const noexcept = 0;
+	[[nodiscard]]
+	size_t AddMaterial(std::shared_ptr<Material> material);
+	[[nodiscard]]
+	std::vector<size_t> AddMaterials(std::vector<std::shared_ptr<Material>>&& materials);
 
-	virtual void CreateDepthBufferView(
-		ID3D12Device* device, std::uint32_t width, std::uint32_t height
+	void UpdateMaterial(size_t index) const noexcept { m_materialBuffers.Update(index); }
+	void RemoveMaterial(size_t index) noexcept { m_materialBuffers.Remove(index); }
+
+	void SetBackgroundColour(const std::array<float, 4>& colourVector) noexcept;
+
+	[[nodiscard]]
+	size_t AddTexture(STexture&& texture);
+
+	void UnbindCombinedTexture(size_t index);
+	void UnbindCombinedTexture(size_t textureIndex, size_t samplerIndex);
+	[[nodiscard]]
+	std::uint32_t BindCombinedTexture(size_t index);
+	[[nodiscard]]
+	std::uint32_t BindCombinedTexture(size_t textureIndex, size_t samplerIndex);
+
+	void RemoveTexture(size_t index);
+
+	[[nodiscard]]
+	std::uint32_t AddCamera(std::shared_ptr<Camera> camera) noexcept
+	{
+		return m_cameraManager.AddCamera(std::move(camera));
+	}
+	void SetCamera(std::uint32_t index) noexcept { m_cameraManager.SetCamera(index); }
+	void RemoveCamera(std::uint32_t index) noexcept { m_cameraManager.RemoveCamera(index); }
+
+	virtual void SetShaderPath(const std::wstring& shaderPath) = 0;
+	virtual void AddPixelShader(const ShaderName& pixelShader) = 0;
+	virtual void ChangePixelShader(
+		std::uint32_t modelBundleID, const ShaderName& pixelShader
 	) = 0;
-	virtual void ResizeViewportAndScissor(
-		std::uint32_t width, std::uint32_t height
-	) noexcept = 0;
-	virtual void AddGVerticesAndIndices(
-		std::vector<Vertex>&& gVertices, std::vector<std::uint32_t>&& gIndices
-	) noexcept = 0;
-	virtual void RecordModelDataSet(
-		const std::vector<std::shared_ptr<Model>>& models, const std::wstring& pixelShader
-	) noexcept = 0;
-	/*virtual void AddMeshletModelSet(
-		std::vector<MeshletModel>& meshletModels, const std::wstring& pixelShader
-	) noexcept = 0;*/
-	virtual void AddGVerticesAndPrimIndices(
-		std::vector<Vertex>&& gVertices, std::vector<std::uint32_t>&& gVerticesIndices,
-		std::vector<std::uint32_t>&& gPrimIndices
-	) noexcept = 0;
 
-	virtual void CreateBuffers(ID3D12Device* device) = 0;
-	virtual void ReserveBuffers(ID3D12Device* device) = 0;
-	virtual void RecordResourceUploads(ID3D12GraphicsCommandList* copyList) noexcept = 0;
-	virtual void ReleaseUploadResources() noexcept = 0;
+	[[nodiscard]]
+	virtual void Render(size_t frameIndex, UINT64& fenceCounter) = 0;
+	virtual void Resize(std::uint32_t width, std::uint32_t height) = 0;
 
-	void SetBackgroundColour(const std::array<float, 4>& colour) noexcept;
-	void SetShaderPath(const wchar_t* path);
+	[[nodiscard]]
+	virtual std::uint32_t AddModelBundle(
+		std::shared_ptr<ModelBundleVS>&& modelBundle, const ShaderName& pixelShader
+	);
+	[[nodiscard]]
+	virtual std::uint32_t AddModelBundle(
+		std::shared_ptr<ModelBundleMS>&& modelBundle, const ShaderName& pixelShader
+	);
+
+	virtual void RemoveModelBundle(std::uint32_t bundleID) noexcept = 0;
+
+	[[nodiscard]]
+	virtual std::uint32_t AddMeshBundle(std::unique_ptr<MeshBundleVS> meshBundle);
+	[[nodiscard]]
+	virtual std::uint32_t AddMeshBundle(std::unique_ptr<MeshBundleMS> meshBundle);
+
+	virtual void RemoveMeshBundle(std::uint32_t bundleIndex) noexcept = 0;
+
+	// Making this function, so this can be overriden to add the compute queues in
+	// certain Engines.
+	virtual void WaitForGPUToFinish();
+
+	[[nodiscard]]
+	const DepthBuffer& GetDepthBuffer() const noexcept { return m_depthBuffer; }
+	[[nodiscard]]
+	const D3DCommandQueue& GetPresentQueue() const noexcept { return m_graphicsQueue; }
 
 protected:
-	std::array<float, 4> m_backgroundColour;
-	std::wstring m_shaderPath;
+	[[nodiscard]]
+	virtual size_t GetCameraRegisterSlot() const noexcept = 0;
+	[[nodiscard]]
+	virtual size_t GetMaterialRegisterSlot() const noexcept = 0;
+	[[nodiscard]]
+	virtual size_t GetTextureRegisterSlot() const noexcept = 0;
+
+	void SetCommonGraphicsDescriptorLayout(D3D12_SHADER_VISIBILITY cameraShaderVisibility) noexcept;
+
+	virtual void Update(UINT64 frameIndex) const noexcept;
+
+protected:
+	// These descriptors are bound to the pixel shader. So, they should be the same across
+	// all of the pipeline types. That's why we are going to bind them to their own RegisterSpace.
+	static constexpr size_t s_graphicsPipelineSetLayoutCount = 2u;
+	static constexpr size_t s_vertexShaderRegisterSpace      = 0u;
+	static constexpr size_t s_pixelShaderRegisterSpace       = 1u;
+
+	static constexpr size_t s_materialRegisterSlot        = 1u;
+	static constexpr size_t s_combinedTextureRegisterSlot = 2u;
+	static constexpr size_t s_sampledTextureRegisterSlot  = 3u;
+	static constexpr size_t s_samplerRegisterSlot         = 4u;
+
+protected:
+	std::shared_ptr<ThreadPool>       m_threadPool;
+	MemoryManager                     m_memoryManager;
+	UINT64                            m_counterValue;
+	D3DCommandQueue                   m_graphicsQueue;
+	std::vector<D3DFence>             m_graphicsWait;
+	D3DCommandQueue                   m_copyQueue;
+	std::vector<D3DFence>             m_copyWait;
+	StagingBufferManager              m_stagingManager;
+	std::vector<D3DDescriptorManager> m_graphicsDescriptorManagers;
+	TextureStorage                    m_textureStorage;
+	TextureManager                    m_textureManager;
+	MaterialBuffers                   m_materialBuffers;
+	CameraManager                     m_cameraManager;
+	D3DReusableDescriptorHeap         m_dsvHeap;
+	DepthBuffer                       m_depthBuffer;
+	std::array<float, 4u>             m_backgroundColour;
+	ViewportAndScissorManager         m_viewportAndScissors;
+	TemporaryDataBufferGPU            m_temporaryDataBuffer;
+	bool                              m_copyNecessary;
+
+public:
+	RenderEngine(const RenderEngine&) = delete;
+	RenderEngine& operator=(const RenderEngine&) = delete;
+
+	RenderEngine(RenderEngine&& other) noexcept
+		: m_threadPool{ std::move(other.m_threadPool) },
+		m_memoryManager{ std::move(other.m_memoryManager) },
+		m_counterValue{ other.m_counterValue },
+		m_graphicsQueue{ std::move(other.m_graphicsQueue) },
+		m_graphicsWait{ std::move(other.m_graphicsWait) },
+		m_copyQueue{ std::move(other.m_copyQueue) },
+		m_copyWait{ std::move(other.m_copyWait) },
+		m_stagingManager{ std::move(other.m_stagingManager) },
+		m_graphicsDescriptorManagers{ std::move(other.m_graphicsDescriptorManagers) },
+		m_textureStorage{ std::move(other.m_textureStorage) },
+		m_textureManager{ std::move(other.m_textureManager) },
+		m_materialBuffers{ std::move(other.m_materialBuffers) },
+		m_cameraManager{ std::move(other.m_cameraManager) },
+		m_dsvHeap{ std::move(other.m_dsvHeap) },
+		m_depthBuffer{ std::move(other.m_depthBuffer) },
+		m_backgroundColour{ other.m_backgroundColour },
+		m_viewportAndScissors{ other.m_viewportAndScissors },
+		m_temporaryDataBuffer{ std::move(other.m_temporaryDataBuffer) },
+		m_copyNecessary{ other.m_copyNecessary }
+	{}
+	RenderEngine& operator=(RenderEngine&& other) noexcept
+	{
+		m_threadPool                 = std::move(other.m_threadPool);
+		m_memoryManager              = std::move(other.m_memoryManager);
+		m_counterValue               = other.m_counterValue;
+		m_graphicsQueue              = std::move(other.m_graphicsQueue);
+		m_graphicsWait               = std::move(other.m_graphicsWait);
+		m_copyQueue                  = std::move(other.m_copyQueue);
+		m_copyWait                   = std::move(other.m_copyWait);
+		m_stagingManager             = std::move(other.m_stagingManager);
+		m_graphicsDescriptorManagers = std::move(other.m_graphicsDescriptorManagers);
+		m_textureStorage             = std::move(other.m_textureStorage);
+		m_textureManager             = std::move(other.m_textureManager);
+		m_materialBuffers            = std::move(other.m_materialBuffers);
+		m_cameraManager              = std::move(other.m_cameraManager);
+		m_dsvHeap                    = std::move(other.m_dsvHeap);
+		m_depthBuffer                = std::move(other.m_depthBuffer);
+		m_backgroundColour           = other.m_backgroundColour;
+		m_viewportAndScissors        = other.m_viewportAndScissors;
+		m_temporaryDataBuffer        = std::move(other.m_temporaryDataBuffer);
+		m_copyNecessary              = other.m_copyNecessary;
+
+		return *this;
+	}
 };
 #endif

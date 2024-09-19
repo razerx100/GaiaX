@@ -35,11 +35,11 @@ public:
 	void RemoveTexture(size_t index);
 	void RemoveSampler(size_t index);
 
-	void SetTextureBindingIndex(size_t textureIndex, std::uint32_t bindingIndex) noexcept
+	void SetTextureBindingIndex(size_t textureIndex, UINT bindingIndex) noexcept
 	{
 		SetBindingIndex(textureIndex, bindingIndex, m_textureBindingIndices);
 	}
-	void SetSamplerBindingIndex(size_t samplerIndex, std::uint32_t bindingIndex) noexcept
+	void SetSamplerBindingIndex(size_t samplerIndex, UINT bindingIndex) noexcept
 	{
 		SetBindingIndex(samplerIndex, bindingIndex, m_samplerBindingIndices);
 	}
@@ -56,19 +56,19 @@ public:
 	}
 
 	[[nodiscard]]
-	std::uint32_t GetTextureBindingIndex(size_t textureIndex) const noexcept
+	UINT GetTextureBindingIndex(size_t textureIndex) const noexcept
 	{
 		return GetBindingIndex(textureIndex, m_textureBindingIndices);
 	}
 	[[nodiscard]]
-	std::uint32_t GetSamplerBindingIndex(size_t samplerIndex) const noexcept
+	UINT GetSamplerBindingIndex(size_t samplerIndex) const noexcept
 	{
 		return GetBindingIndex(samplerIndex, m_samplerBindingIndices);
 	}
 	[[nodiscard]]
-	static constexpr std::uint32_t GetDefaultSamplerIndex() noexcept
+	static constexpr UINT GetDefaultSamplerIndex() noexcept
 	{
-		return static_cast<std::uint32_t>(s_defaultSamplerIndex);
+		return static_cast<UINT>(s_defaultSamplerIndex);
 	}
 
 	[[nodiscard]]
@@ -92,8 +92,8 @@ public:
 
 private:
 	[[nodiscard]]
-	static std::uint32_t GetBindingIndex(
-		size_t index, const std::vector<std::uint32_t>& bindingIndices
+	static UINT GetBindingIndex(
+		size_t index, const std::vector<UINT>& bindingIndices
 	) noexcept {
 		// The plan is to not initialise the bindingIndices container, if we
 		// aren't using the remove and re-adding binding feature. As an element will be
@@ -104,11 +104,11 @@ private:
 		if (std::size(bindingIndices) > index)
 			return bindingIndices[index];
 		else
-			return static_cast<std::uint32_t>(index);
+			return static_cast<UINT>(index);
 	}
 
 	static void SetBindingIndex(
-		size_t index, std::uint32_t bindingIndex, std::vector<std::uint32_t>& bindingIndices
+		size_t index, UINT bindingIndex, std::vector<UINT>& bindingIndices
 	) noexcept;
 
 private:
@@ -121,8 +121,8 @@ private:
 	std::vector<bool>              m_availableTextureIndices;
 	std::vector<bool>              m_availableSamplerIndices;
 	std::queue<Texture const*>     m_transitionQueue;
-	std::vector<std::uint32_t>     m_textureBindingIndices;
-	std::vector<std::uint32_t>     m_samplerBindingIndices;
+	std::vector<UINT>		       m_textureBindingIndices;
+	std::vector<UINT>              m_samplerBindingIndices;
 
 	static constexpr DXGI_FORMAT s_textureFormat = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
 
@@ -166,7 +166,7 @@ class TextureManager
 		= std::numeric_limits<std::uint8_t>::max();
 
 public:
-	TextureManager(ID3D12Device* device, MemoryManager* memoryManager)
+	TextureManager()
 		: m_inactiveTextureIndices{}, m_inactiveSamplerIndices{},
 		m_availableIndicesTextures{}, m_availableIndicesSamplers{}
 	{}
@@ -179,15 +179,15 @@ public:
 
 private:
 	[[nodiscard]]
-	static std::optional<std::uint32_t> FindFreeIndex(
+	static std::optional<UINT> FindFreeIndex(
 		const std::vector<bool>& availableIndices
 	) noexcept;
 
 private:
-	std::vector<std::uint32_t> m_inactiveTextureIndices;
-	std::vector<std::uint32_t> m_inactiveSamplerIndices;
-	std::vector<bool>          m_availableIndicesTextures;
-	std::vector<bool>          m_availableIndicesSamplers;
+	std::vector<UINT> m_inactiveTextureIndices;
+	std::vector<UINT> m_inactiveSamplerIndices;
+	std::vector<bool> m_availableIndicesTextures;
+	std::vector<bool> m_availableIndicesSamplers;
 
 private:
 	template<D3D12_DESCRIPTOR_RANGE_TYPE type>
@@ -198,11 +198,19 @@ private:
 		else
 			return m_availableIndicesTextures;
 	}
+	template<D3D12_DESCRIPTOR_RANGE_TYPE type>
+	std::vector<bool>& GetAvailableIndices() noexcept
+	{
+		if constexpr (type == D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER)
+			return m_availableIndicesSamplers;
+		else
+			return m_availableIndicesTextures;
+	}
 
 public:
 	template<D3D12_DESCRIPTOR_RANGE_TYPE type>
 	[[nodiscard]]
-	std::optional<std::uint32_t> GetFreeGlobalDescriptorIndex() const noexcept
+	std::optional<UINT> GetFreeGlobalDescriptorIndex() const noexcept
 	{
 		const std::vector<bool>& availableIndices = GetAvailableIndices<type>();
 
@@ -210,7 +218,7 @@ public:
 	}
 
 	template<D3D12_DESCRIPTOR_RANGE_TYPE type>
-	void SetAvailableIndex(std::uint32_t descriptorIndex, bool availablity) noexcept
+	void SetAvailableIndex(UINT descriptorIndex, bool availablity) noexcept
 	{
 		std::vector<bool>& availableIndices = GetAvailableIndices<type>();
 
