@@ -70,7 +70,7 @@ public:
 	) = 0;
 
 	[[nodiscard]]
-	virtual void Render(size_t frameIndex, UINT64& fenceCounter) = 0;
+	virtual void Render(size_t frameIndex) = 0;
 	virtual void Resize(std::uint32_t width, std::uint32_t height) = 0;
 
 	[[nodiscard]]
@@ -191,6 +191,129 @@ public:
 		m_viewportAndScissors        = other.m_viewportAndScissors;
 		m_temporaryDataBuffer        = std::move(other.m_temporaryDataBuffer);
 		m_copyNecessary              = other.m_copyNecessary;
+
+		return *this;
+	}
+};
+
+template<typename ModelManager_t, typename Derived>
+class RenderEngineCommon : public RenderEngine
+{
+public:
+	RenderEngineCommon(
+		const DeviceManager& deviceManager, std::shared_ptr<ThreadPool> threadPool, size_t frameCount
+	) : RenderEngine{ deviceManager, std::move(threadPool), frameCount },
+		m_modelManager{
+			Derived::GetModelManager(
+				deviceManager, &m_memoryManager, &m_stagingManager,
+				static_cast<std::uint32_t>(frameCount)
+			)
+		}, m_pipelineStages{}
+	{
+		for (auto& descriptorManager : m_graphicsDescriptorManagers)
+			m_textureManager.SetDescriptorLayout(
+				descriptorManager, GetTextureRegisterSlot(), s_pixelShaderRegisterSpace
+			);
+	}
+
+	void SetShaderPath(const std::wstring& shaderPath) override
+	{
+		m_modelManager.SetShaderPath(shaderPath);
+	}
+	void AddPixelShader(const ShaderName& pixelShader) override
+	{
+		m_modelManager.AddPSO(pixelShader);
+	}
+	void ChangePixelShader(std::uint32_t modelBundleID, const ShaderName& pixelShader) override
+	{
+		m_modelManager.ChangePSO(modelBundleID, pixelShader);
+	}
+
+	void RemoveModelBundle(std::uint32_t bundleID) noexcept override
+	{
+		m_modelManager.RemoveModelBundle(bundleID);
+	}
+
+	void RemoveMeshBundle(std::uint32_t bundleIndex) noexcept override
+	{
+		m_modelManager.RemoveMeshBundle(bundleIndex);
+	}
+
+	void Resize(std::uint32_t width, std::uint32_t height) override
+	{
+		m_depthBuffer.Create(width, height);
+
+		m_viewportAndScissors.Resize(width, height);
+	}
+
+	[[nodiscard]]
+	size_t GetCameraRegisterSlot() const noexcept override
+	{
+		return Derived::s_cameraRegisterSlot;
+	}
+	[[nodiscard]]
+	size_t GetMaterialRegisterSlot() const noexcept override
+	{
+		return Derived::s_materialRegisterSlot;
+	}
+	[[nodiscard]]
+	size_t GetTextureRegisterSlot() const noexcept override
+	{
+		return Derived::s_textureRegisterSlot;
+	}
+
+	void Render(size_t frameIndex) final
+	{
+		// Progress the counter value.
+		++m_counterValue;
+
+		// Wait for the previous Graphics command buffer to finish.
+		m_graphicsWait[frameIndex].Wait(m_counterValue);
+		// It should be okay to clear the data now that the frame has finished
+		// its submission.
+		m_temporaryDataBuffer.Clear(frameIndex);
+
+		Update(static_cast<UINT64>(frameIndex));
+
+		// Passing this as the wait fence is kinda useless, but to keep
+		// all the pipelineStage function signature the same, gonna pass it
+		// as it should immedietly return.
+		ID3D12Fence* waitFence = m_graphicsWait[frameIndex].Get();
+
+		for (auto pipelineStage : m_pipelineStages)
+			waitFence = (static_cast<Derived*>(this)->*pipelineStage)(
+				frameIndex, m_counterValue, waitFence
+			);
+	}
+
+protected:
+	void Update(UINT64 frameIndex) const noexcept override
+	{
+		RenderEngine::Update(frameIndex);
+
+		m_modelManager.UpdatePerFrame(frameIndex);
+	}
+
+	using PipelineSignature = ID3D12Fence*(Derived::*)(size_t, UINT64&, ID3D12Fence*);
+
+protected:
+	ModelManager_t                 m_modelManager;
+	std::vector<PipelineSignature> m_pipelineStages;
+
+public:
+	RenderEngineCommon(const RenderEngineCommon&) = delete;
+	RenderEngineCommon& operator=(const RenderEngineCommon&) = delete;
+
+	RenderEngineCommon(RenderEngineCommon&& other) noexcept
+		: RenderEngine{ std::move(other) },
+		m_modelManager{ std::move(other.m_modelManager) },
+		m_pipelineStages{ std::move(other.m_pipelineStages) }
+	{}
+	RenderEngineCommon& operator=(RenderEngineCommon&& other) noexcept
+	{
+		RenderEngine::operator=(std::move(other));
+		m_modelManager        = std::move(other.m_modelManager);
+		m_pipelineStages      = std::move(other.m_pipelineStages);
 
 		return *this;
 	}
