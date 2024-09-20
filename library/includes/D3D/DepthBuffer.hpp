@@ -23,6 +23,11 @@ public:
 
 	[[nodiscard]]
 	const Texture& GetDepthTexture() const noexcept { return m_depthTexture; }
+	[[nodiscard]]
+	D3D12_CPU_DESCRIPTOR_HANDLE GetDSVHandle() const noexcept
+	{
+		return m_dsvHeap->GetCPUHandle(m_dsvHandleIndex);
+	}
 
 private:
 	ID3D12Device*              m_device;

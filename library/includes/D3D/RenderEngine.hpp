@@ -14,6 +14,7 @@
 #include <DepthBuffer.hpp>
 #include <CameraManager.hpp>
 #include <ViewportAndScissorManager.hpp>
+#include <D3DRenderTarget.hpp>
 #include <Model.hpp>
 #include <Shader.hpp>
 #include <MeshBundle.hpp>
@@ -46,12 +47,9 @@ public:
 	[[nodiscard]]
 	size_t AddTexture(STexture&& texture);
 
-	void UnbindCombinedTexture(size_t index);
-	void UnbindCombinedTexture(size_t textureIndex, size_t samplerIndex);
+	void UnbindCombinedTexture(size_t textureIndex);
 	[[nodiscard]]
-	std::uint32_t BindCombinedTexture(size_t index);
-	[[nodiscard]]
-	std::uint32_t BindCombinedTexture(size_t textureIndex, size_t samplerIndex);
+	std::uint32_t BindCombinedTexture(size_t textureIndex);
 
 	void RemoveTexture(size_t index);
 
@@ -70,7 +68,7 @@ public:
 	) = 0;
 
 	[[nodiscard]]
-	virtual void Render(size_t frameIndex, ID3D12Resource* frameBuffer) = 0;
+	virtual void Render(size_t frameIndex, const RenderTarget& renderTarget) = 0;
 	virtual void Resize(std::uint32_t width, std::uint32_t height) = 0;
 
 	[[nodiscard]]
@@ -246,7 +244,7 @@ public:
 		return Derived::s_cameraRegisterSlot;
 	}
 
-	void Render(size_t frameIndex, ID3D12Resource* frameBuffer) final
+	void Render(size_t frameIndex, const RenderTarget& renderTarget) final
 	{
 		// Progress the counter value.
 		++m_counterValue;
@@ -266,7 +264,7 @@ public:
 
 		for (auto pipelineStage : m_pipelineStages)
 			waitFence = (static_cast<Derived*>(this)->*pipelineStage)(
-				frameIndex, frameBuffer, m_counterValue, waitFence
+				frameIndex, renderTarget, m_counterValue, waitFence
 			);
 	}
 
@@ -279,7 +277,7 @@ protected:
 	}
 
 	using PipelineSignature = ID3D12Fence*(Derived::*)(
-			size_t, ID3D12Resource*, UINT64&, ID3D12Fence*
+			size_t, const RenderTarget&, UINT64&, ID3D12Fence*
 		);
 
 protected:

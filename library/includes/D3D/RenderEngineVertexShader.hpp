@@ -32,11 +32,11 @@ private:
 
 	[[nodiscard]]
 	ID3D12Fence* GenericCopyStage(
-		size_t frameIndex, ID3D12Resource* frameBuffer, UINT64& counterValue, ID3D12Fence* waitFence
+		size_t frameIndex, const RenderTarget& renderTarget, UINT64& counterValue, ID3D12Fence* waitFence
 	);
 	[[nodiscard]]
 	ID3D12Fence* DrawingStage(
-		size_t frameIndex, ID3D12Resource* frameBuffer, UINT64& counterValue, ID3D12Fence* waitFence
+		size_t frameIndex, const RenderTarget& renderTarget, UINT64& counterValue, ID3D12Fence* waitFence
 	);
 
 	void SetupPipelineStages();

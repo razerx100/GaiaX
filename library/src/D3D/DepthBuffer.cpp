@@ -2,7 +2,8 @@
 
 DepthBuffer::~DepthBuffer() noexcept
 {
-	m_dsvHeap->FreeDescriptor(m_dsvHandleIndex);
+	if (m_dsvHandleIndex != std::numeric_limits<UINT>::max())
+		m_dsvHeap->FreeDescriptor(m_dsvHandleIndex);
 }
 
 void DepthBuffer::Create(UINT width, UINT height)

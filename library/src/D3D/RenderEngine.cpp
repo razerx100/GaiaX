@@ -94,12 +94,7 @@ size_t RenderEngine::AddTexture(STexture&& texture)
 	return textureIndex;
 }
 
-void RenderEngine::UnbindCombinedTexture(size_t index)
-{
-	UnbindCombinedTexture(index, m_textureStorage.GetDefaultSamplerIndex());
-}
-
-void RenderEngine::UnbindCombinedTexture(size_t textureIndex, size_t samplerIndex)
+void RenderEngine::UnbindCombinedTexture(size_t textureIndex)
 {
 	// This function shouldn't need to wait for the GPU to finish, as it isn't doing
 	// anything on the GPU side.
@@ -109,12 +104,7 @@ void RenderEngine::UnbindCombinedTexture(size_t textureIndex, size_t samplerInde
 		m_textureManager.SetAvailableIndex<D3D12_DESCRIPTOR_RANGE_TYPE_SRV>(globalDescIndex, true);
 }
 
-std::uint32_t RenderEngine::BindCombinedTexture(size_t index)
-{
-	return BindCombinedTexture(index, m_textureStorage.GetDefaultSamplerIndex());
-}
-
-std::uint32_t RenderEngine::BindCombinedTexture(size_t textureIndex, size_t samplerIndex)
+std::uint32_t RenderEngine::BindCombinedTexture(size_t textureIndex)
 {
 	WaitForGPUToFinish();
 

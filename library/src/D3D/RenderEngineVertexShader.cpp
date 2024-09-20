@@ -78,7 +78,7 @@ std::uint32_t RenderEngineVSIndividual::AddMeshBundle(std::unique_ptr<MeshBundle
 
 ID3D12Fence* RenderEngineVSIndividual::GenericCopyStage(
 	size_t frameIndex,
-	[[maybe_unused]] ID3D12Resource* frameBuffer, UINT64& counterValue, ID3D12Fence* waitFence
+	[[maybe_unused]] const RenderTarget& renderTarget, UINT64& counterValue, ID3D12Fence* waitFence
 ) {
 	// Transfer Phase
 
@@ -121,7 +121,7 @@ ID3D12Fence* RenderEngineVSIndividual::GenericCopyStage(
 }
 
 ID3D12Fence* RenderEngineVSIndividual::DrawingStage(
-	size_t frameIndex, ID3D12Resource* frameBuffer, UINT64& counterValue, ID3D12Fence* waitFence
+	size_t frameIndex, const RenderTarget& renderTarget, UINT64& counterValue, ID3D12Fence* waitFence
 ) {
 	// Graphics Phase
 	const D3DCommandList& graphicsCmdList = m_graphicsQueue.GetCommandList(frameIndex);
@@ -129,12 +129,7 @@ ID3D12Fence* RenderEngineVSIndividual::DrawingStage(
 	{
 		const CommandListScope graphicsCmdListScope{ graphicsCmdList };
 
-		D3DResourceBarrier().AddBarrier(
-			ResourceBarrierBuilder{}.Transition(
-				frameBuffer,
-				D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET
-			)
-		).RecordBarriers(graphicsCmdList.Get());
+		renderTarget.ToRenderState(graphicsCmdListScope);
 
 		m_textureStorage.TransitionQueuedTextures(graphicsCmdListScope);
 
@@ -143,20 +138,14 @@ ID3D12Fence* RenderEngineVSIndividual::DrawingStage(
 		m_graphicsDescriptorManagers[frameIndex].Bind(graphicsCmdListScope);
 
 		m_depthBuffer.ClearDSV(graphicsCmdListScope);
-		//ClearRTV(
-		//	graphicsCommandList, std::data(m_backgroundColour), rtvHandle
-		//);
 
-		//	graphicsCommandList->OMSetRenderTargets(1u, &rtvHandle, FALSE, &dsvHandle);
+		const D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = m_depthBuffer.GetDSVHandle();
+
+		renderTarget.SetRenderTarget(graphicsCmdListScope, m_backgroundColour, &dsvHandle);
 
 		m_modelManager.Draw(graphicsCmdListScope);
 
-		D3DResourceBarrier().AddBarrier(
-			ResourceBarrierBuilder{}.Transition(
-				frameBuffer,
-				D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT
-			)
-		).RecordBarriers(graphicsCmdList.Get());
+		renderTarget.ToPresentState(graphicsCmdListScope);
 	}
 
 	const D3DFence& graphicsWaitFence = m_graphicsWait[frameIndex];
