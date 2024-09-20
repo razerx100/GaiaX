@@ -48,7 +48,7 @@ void RenderTarget::ToPresentState(const D3DCommandList& commandList) const noexc
 	).RecordBarriers(commandList.Get());
 }
 
-void RenderTarget::SetRenderTarget(
+void RenderTarget::Set(
 	const D3DCommandList& commandList, const std::array<float, 4u>& clearColour,
 	D3D12_CPU_DESCRIPTOR_HANDLE const* dsvHandle
 ) const {

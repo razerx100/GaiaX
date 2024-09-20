@@ -17,7 +17,7 @@ public:
 
 	void Create(ComPtr<ID3D12Resource>&& renderTarget);
 
-	void SetRenderTarget(
+	void Set(
 		const D3DCommandList& commandList, const std::array<float, 4u>& clearColour,
 		D3D12_CPU_DESCRIPTOR_HANDLE const* dsvHandle
 	) const;

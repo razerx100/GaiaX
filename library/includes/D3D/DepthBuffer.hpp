@@ -19,15 +19,12 @@ public:
 	~DepthBuffer() noexcept;
 
 	void Create(UINT width, UINT height);
-	void ClearDSV(const D3DCommandList& commandList) const noexcept;
+
+	[[nodiscard]]
+	D3D12_CPU_DESCRIPTOR_HANDLE ClearDSV(const D3DCommandList& commandList) const noexcept;
 
 	[[nodiscard]]
 	const Texture& GetDepthTexture() const noexcept { return m_depthTexture; }
-	[[nodiscard]]
-	D3D12_CPU_DESCRIPTOR_HANDLE GetDSVHandle() const noexcept
-	{
-		return m_dsvHeap->GetCPUHandle(m_dsvHandleIndex);
-	}
 
 private:
 	ID3D12Device*              m_device;

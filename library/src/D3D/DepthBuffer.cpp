@@ -38,11 +38,12 @@ void DepthBuffer::Create(UINT width, UINT height)
 		m_dsvHandleIndex = m_dsvHeap->CreateDSV(m_depthTexture.Get(), dsvDesc);
 }
 
-void DepthBuffer::ClearDSV(const D3DCommandList& commandList) const noexcept
+D3D12_CPU_DESCRIPTOR_HANDLE DepthBuffer::ClearDSV(const D3DCommandList& commandList) const noexcept
 {
-	ID3D12GraphicsCommandList6* cmdList = commandList.Get();
+	ID3D12GraphicsCommandList6* cmdList         = commandList.Get();
+	const D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = m_dsvHeap->GetCPUHandle(m_dsvHandleIndex);
 
-	cmdList->ClearDepthStencilView(
-		m_dsvHeap->GetCPUHandle(m_dsvHandleIndex), D3D12_CLEAR_FLAG_DEPTH, 1.f, 0u, 0u, nullptr
-	);
+	cmdList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.f, 0u, 0u, nullptr);
+
+	return dsvHandle;
 }

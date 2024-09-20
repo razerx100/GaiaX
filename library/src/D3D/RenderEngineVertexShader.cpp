@@ -137,11 +137,9 @@ ID3D12Fence* RenderEngineVSIndividual::DrawingStage(
 
 		m_graphicsDescriptorManagers[frameIndex].Bind(graphicsCmdListScope);
 
-		m_depthBuffer.ClearDSV(graphicsCmdListScope);
+		const D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = m_depthBuffer.ClearDSV(graphicsCmdListScope);
 
-		const D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = m_depthBuffer.GetDSVHandle();
-
-		renderTarget.SetRenderTarget(graphicsCmdListScope, m_backgroundColour, &dsvHandle);
+		renderTarget.Set(graphicsCmdListScope, m_backgroundColour, &dsvHandle);
 
 		m_modelManager.Draw(graphicsCmdListScope);
 
