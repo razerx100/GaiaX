@@ -1,8 +1,181 @@
 #include <RenderEngineVertexShader.hpp>
-#include <Gaia.hpp>
-#include <D3DResourceBarrier.hpp>
-#include <VertexLayout.hpp>
-#include <cassert>
+
+// VS Individual
+RenderEngineVSIndividual::RenderEngineVSIndividual(
+	const DeviceManager& deviceManager, std::shared_ptr<ThreadPool> threadPool, size_t frameCount
+) : RenderEngineCommon{ deviceManager, std::move(threadPool), frameCount }
+{
+	// The layout shouldn't change throughout the runtime.
+	m_modelManager.SetDescriptorLayout(
+		m_graphicsDescriptorManagers, s_vertexShaderRegisterSpace, s_pixelShaderRegisterSpace
+	);
+	SetCommonGraphicsDescriptorLayout(D3D12_SHADER_VISIBILITY_VERTEX);
+
+	for (auto& descriptorManager : m_graphicsDescriptorManagers)
+		descriptorManager.CreateDescriptors();
+
+	if (!std::empty(m_graphicsDescriptorManagers))
+		m_modelManager.CreateRootSignature(
+			m_graphicsDescriptorManagers.front(), s_vertexShaderRegisterSpace
+		);
+
+	// This descriptor shouldn't change, so it should be fine to set it here.
+	m_cameraManager.CreateBuffer(static_cast<std::uint32_t>(frameCount));
+	m_cameraManager.SetDescriptorGraphics(
+		m_graphicsDescriptorManagers, s_cameraRegisterSlot, s_vertexShaderRegisterSpace
+	);
+	m_textureManager.SetDescriptorTable(
+		m_graphicsDescriptorManagers, s_textureRegisterSlot, s_pixelShaderRegisterSpace
+	);
+
+	SetupPipelineStages();
+}
+
+void RenderEngineVSIndividual::SetupPipelineStages()
+{
+	constexpr size_t stageCount = 2u;
+
+	m_pipelineStages.reserve(stageCount);
+
+	m_pipelineStages.emplace_back(&RenderEngineVSIndividual::GenericCopyStage);
+	m_pipelineStages.emplace_back(&RenderEngineVSIndividual::DrawingStage);
+}
+
+ModelManagerVSIndividual RenderEngineVSIndividual::GetModelManager(
+	const DeviceManager& deviceManager, MemoryManager* memoryManager,
+	[[maybe_unused]] StagingBufferManager* stagingBufferMan,
+	std::uint32_t frameCount
+) {
+	return ModelManagerVSIndividual{ deviceManager.GetDevice(), memoryManager, frameCount };
+}
+
+std::uint32_t RenderEngineVSIndividual::AddModelBundle(
+	std::shared_ptr<ModelBundleVS>&& modelBundle, const ShaderName& pixelShader
+) {
+	const std::uint32_t index = m_modelManager.AddModelBundle(
+		std::move(modelBundle), pixelShader, m_temporaryDataBuffer
+	);
+
+	// After new models have been added, the ModelBuffer might get recreated. So, it will have
+	// a new object. So, we should set that new object as the descriptor.
+	m_modelManager.SetDescriptors(
+		m_graphicsDescriptorManagers, s_vertexShaderRegisterSpace, s_pixelShaderRegisterSpace
+	);
+
+	m_copyNecessary = true;
+
+	return index;
+}
+
+std::uint32_t RenderEngineVSIndividual::AddMeshBundle(std::unique_ptr<MeshBundleVS> meshBundle)
+{
+	m_copyNecessary = true;
+
+	return m_modelManager.AddMeshBundle(
+		std::move(meshBundle), m_stagingManager, m_temporaryDataBuffer
+	);
+}
+
+ID3D12Fence* RenderEngineVSIndividual::GenericCopyStage(
+	size_t frameIndex,
+	[[maybe_unused]] ID3D12Resource* frameBuffer, UINT64& counterValue, ID3D12Fence* waitFence
+) {
+	// Transfer Phase
+
+	// If the Copy stage isn't executed, pass the waitFence on.
+	ID3D12Fence* signalledFence = waitFence;
+
+	if (m_copyNecessary)
+	{
+		const D3DCommandList& copyCmdList = m_copyQueue.GetCommandList(frameIndex);
+
+		{
+			const CommandListScope copyCmdListScope{ copyCmdList };
+
+			m_stagingManager.CopyAndClear(copyCmdListScope);
+			m_modelManager.CopyTempData(copyCmdListScope);
+		}
+
+		const D3DFence& copyWaitFence = m_copyWait[frameIndex];
+
+		{
+			const UINT64 oldCounterValue = counterValue;
+			++counterValue;
+
+			QueueSubmitBuilder<1u, 1u> copySubmitBuilder{};
+			copySubmitBuilder
+				.SignalFence(copyWaitFence, counterValue)
+				.WaitFence(waitFence, oldCounterValue)
+				.CommandList(copyCmdList);
+
+			m_copyQueue.SubmitCommandLists(copySubmitBuilder);
+
+			m_temporaryDataBuffer.SetUsed(frameIndex);
+		}
+
+		m_copyNecessary = false;
+		signalledFence  = copyWaitFence.Get();
+	}
+
+	return signalledFence;
+}
+
+ID3D12Fence* RenderEngineVSIndividual::DrawingStage(
+	size_t frameIndex, ID3D12Resource* frameBuffer, UINT64& counterValue, ID3D12Fence* waitFence
+) {
+	// Graphics Phase
+	const D3DCommandList& graphicsCmdList = m_graphicsQueue.GetCommandList(frameIndex);
+
+	{
+		const CommandListScope graphicsCmdListScope{ graphicsCmdList };
+
+		D3DResourceBarrier().AddBarrier(
+			ResourceBarrierBuilder{}.Transition(
+				frameBuffer,
+				D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET
+			)
+		).RecordBarriers(graphicsCmdList.Get());
+
+		m_textureStorage.TransitionQueuedTextures(graphicsCmdListScope);
+
+		m_viewportAndScissors.BindViewportAndScissor(graphicsCmdListScope);
+
+		m_graphicsDescriptorManagers[frameIndex].Bind(graphicsCmdListScope);
+
+		m_depthBuffer.ClearDSV(graphicsCmdListScope);
+		//ClearRTV(
+		//	graphicsCommandList, std::data(m_backgroundColour), rtvHandle
+		//);
+
+		//	graphicsCommandList->OMSetRenderTargets(1u, &rtvHandle, FALSE, &dsvHandle);
+
+		m_modelManager.Draw(graphicsCmdListScope);
+
+		D3DResourceBarrier().AddBarrier(
+			ResourceBarrierBuilder{}.Transition(
+				frameBuffer,
+				D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT
+			)
+		).RecordBarriers(graphicsCmdList.Get());
+	}
+
+	const D3DFence& graphicsWaitFence = m_graphicsWait[frameIndex];
+
+	{
+		const UINT64 oldCounterValue = counterValue;
+		++counterValue;
+
+		QueueSubmitBuilder<1u, 1u> graphicsSubmitBuilder{};
+		graphicsSubmitBuilder
+			.SignalFence(graphicsWaitFence, counterValue)
+			.WaitFence(waitFence, oldCounterValue)
+			.CommandList(graphicsCmdList);
+
+		m_graphicsQueue.SubmitCommandLists(graphicsSubmitBuilder);
+	}
+
+	return graphicsWaitFence.Get();
+}
 
 /*
 // Vertex Shader

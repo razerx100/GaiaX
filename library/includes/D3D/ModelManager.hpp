@@ -765,7 +765,7 @@ public:
 		std::vector<D3DDescriptorManager>& descriptorManagers,
 		size_t vsRegisterSpace, size_t psRegisterSpace
 	);
-	void SetDescriptor(
+	void SetDescriptors(
 		std::vector<D3DDescriptorManager>& descriptorManagers,
 		size_t vsRegisterSpace, size_t psRegisterSpace
 	);
@@ -878,7 +878,7 @@ public:
 		std::vector<D3DDescriptorManager>& descriptorManagers, size_t vsRegisterSpace,
 		size_t psRegisterSpace
 	) const noexcept;
-	void SetDescriptorVS(
+	void SetDescriptorsVS(
 		std::vector<D3DDescriptorManager>& descriptorManagers, size_t vsRegisterSpace,
 		size_t psRegisterSpace
 	) const;
@@ -887,10 +887,10 @@ public:
 		std::vector<D3DDescriptorManager>& descriptorManagers, size_t csRegisterSpace
 	) const noexcept;
 
-	void SetDescriptorCSOfModels(
+	void SetDescriptorsCSOfModels(
 		std::vector<D3DDescriptorManager>& descriptorManagers, size_t csRegisterSpace
 	) const;
-	void SetDescriptorCSOfMeshes(
+	void SetDescriptorsCSOfMeshes(
 		std::vector<D3DDescriptorManager>& descriptorManagers, size_t csRegisterSpace
 	) const;
 
@@ -1076,11 +1076,11 @@ public:
 	) const noexcept;
 
 	// Should be called after a new Mesh has been added.
-	void SetDescriptorOfMeshes(
+	void SetDescriptorsOfMeshes(
 		std::vector<D3DDescriptorManager>& descriptorManagers, size_t msRegisterSpace
 	) const;
 	// Should be called after a new Model has been added.
-	void SetDescriptorOfModels(
+	void SetDescriptorsOfModels(
 		std::vector<D3DDescriptorManager>& descriptorManagers, size_t msRegisterSpace,
 		size_t psRegisterSpace
 	) const;

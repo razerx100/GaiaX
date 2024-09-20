@@ -175,6 +175,10 @@ public:
 		D3DDescriptorManager& descriptorManager, size_t texturesRegisterSlot,
 		size_t textureRegisterSpace
 	) const noexcept;
+	void SetDescriptorTable(
+		std::vector<D3DDescriptorManager>& descriptorManagers, size_t texturesRegisterSlot,
+		size_t textureRegisterSpace
+	) const;
 	// TODO: Add another of these functions for the samplers.
 
 private:

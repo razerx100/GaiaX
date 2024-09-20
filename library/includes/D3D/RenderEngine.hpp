@@ -70,7 +70,7 @@ public:
 	) = 0;
 
 	[[nodiscard]]
-	virtual void Render(size_t frameIndex) = 0;
+	virtual void Render(size_t frameIndex, ID3D12Resource* frameBuffer) = 0;
 	virtual void Resize(std::uint32_t width, std::uint32_t height) = 0;
 
 	[[nodiscard]]
@@ -103,10 +103,6 @@ public:
 protected:
 	[[nodiscard]]
 	virtual size_t GetCameraRegisterSlot() const noexcept = 0;
-	[[nodiscard]]
-	virtual size_t GetMaterialRegisterSlot() const noexcept = 0;
-	[[nodiscard]]
-	virtual size_t GetTextureRegisterSlot() const noexcept = 0;
 
 	void SetCommonGraphicsDescriptorLayout(D3D12_SHADER_VISIBILITY cameraShaderVisibility) noexcept;
 
@@ -119,10 +115,8 @@ protected:
 	static constexpr size_t s_vertexShaderRegisterSpace      = 0u;
 	static constexpr size_t s_pixelShaderRegisterSpace       = 1u;
 
-	static constexpr size_t s_materialRegisterSlot        = 1u;
-	static constexpr size_t s_combinedTextureRegisterSlot = 2u;
-	static constexpr size_t s_sampledTextureRegisterSlot  = 3u;
-	static constexpr size_t s_samplerRegisterSlot         = 4u;
+	static constexpr size_t s_materialRegisterSlot = 1u;
+	static constexpr size_t s_textureRegisterSlot  = 2u;
 
 protected:
 	std::shared_ptr<ThreadPool>       m_threadPool;
@@ -212,7 +206,7 @@ public:
 	{
 		for (auto& descriptorManager : m_graphicsDescriptorManagers)
 			m_textureManager.SetDescriptorLayout(
-				descriptorManager, GetTextureRegisterSlot(), s_pixelShaderRegisterSpace
+				descriptorManager, s_textureRegisterSlot, s_pixelShaderRegisterSpace
 			);
 	}
 
@@ -251,18 +245,8 @@ public:
 	{
 		return Derived::s_cameraRegisterSlot;
 	}
-	[[nodiscard]]
-	size_t GetMaterialRegisterSlot() const noexcept override
-	{
-		return Derived::s_materialRegisterSlot;
-	}
-	[[nodiscard]]
-	size_t GetTextureRegisterSlot() const noexcept override
-	{
-		return Derived::s_textureRegisterSlot;
-	}
 
-	void Render(size_t frameIndex) final
+	void Render(size_t frameIndex, ID3D12Resource* frameBuffer) final
 	{
 		// Progress the counter value.
 		++m_counterValue;
@@ -282,7 +266,7 @@ public:
 
 		for (auto pipelineStage : m_pipelineStages)
 			waitFence = (static_cast<Derived*>(this)->*pipelineStage)(
-				frameIndex, m_counterValue, waitFence
+				frameIndex, frameBuffer, m_counterValue, waitFence
 			);
 	}
 
@@ -294,7 +278,9 @@ protected:
 		m_modelManager.UpdatePerFrame(frameIndex);
 	}
 
-	using PipelineSignature = ID3D12Fence*(Derived::*)(size_t, UINT64&, ID3D12Fence*);
+	using PipelineSignature = ID3D12Fence*(Derived::*)(
+			size_t, ID3D12Resource*, UINT64&, ID3D12Fence*
+		);
 
 protected:
 	ModelManager_t                 m_modelManager;

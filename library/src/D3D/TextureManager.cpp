@@ -111,6 +111,14 @@ void TextureManager::SetDescriptorLayout(
 		);
 }
 
+void TextureManager::SetDescriptorTable(
+	std::vector<D3DDescriptorManager>& descriptorManagers, size_t texturesRegisterSlot,
+	size_t textureRegisterSpace
+) const {
+	for (auto& descriptorManager : descriptorManagers)
+		descriptorManager.SetDescriptorTable(texturesRegisterSlot, textureRegisterSpace, 0u, true);
+}
+
 std::optional<UINT> TextureManager::FindFreeIndex(
 	const std::vector<bool>& availableIndices
 ) noexcept {

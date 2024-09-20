@@ -1,8 +1,63 @@
 #ifndef RENDER_ENGINE_VERTEX_SHADER_HPP_
 #define RENDER_ENGINE_VERTEX_SHADER_HPP_
 #include <RenderEngineBase.hpp>
-#include <GraphicsPipelineVertexShader.hpp>
-#include <optional>
+#include <ModelManager.hpp>
+
+class RenderEngineVSIndividual
+	: public RenderEngineCommon<ModelManagerVSIndividual, RenderEngineVSIndividual>
+{
+	friend class RenderEngineCommon<ModelManagerVSIndividual, RenderEngineVSIndividual>;
+
+public:
+	RenderEngineVSIndividual(
+		const DeviceManager& deviceManager, std::shared_ptr<ThreadPool> threadPool, size_t frameCount
+	);
+
+	[[nodiscard]]
+	// Should wait for the device to be idle before calling this.
+	std::uint32_t AddModelBundle(
+		std::shared_ptr<ModelBundleVS>&& modelBundle, const ShaderName& pixelShader
+	) override;
+
+	[[nodiscard]]
+	// Should wait for the device to be idle before calling this.
+	std::uint32_t AddMeshBundle(std::unique_ptr<MeshBundleVS> meshBundle) override;
+
+private:
+	[[nodiscard]]
+	static ModelManagerVSIndividual GetModelManager(
+		const DeviceManager& deviceManager, MemoryManager* memoryManager,
+		StagingBufferManager* stagingBufferMan, std::uint32_t frameCount
+	);
+
+	[[nodiscard]]
+	ID3D12Fence* GenericCopyStage(
+		size_t frameIndex, ID3D12Resource* frameBuffer, UINT64& counterValue, ID3D12Fence* waitFence
+	);
+	[[nodiscard]]
+	ID3D12Fence* DrawingStage(
+		size_t frameIndex, ID3D12Resource* frameBuffer, UINT64& counterValue, ID3D12Fence* waitFence
+	);
+
+	void SetupPipelineStages();
+
+private:
+	static constexpr size_t s_cameraRegisterSlot = 1u;
+
+public:
+	RenderEngineVSIndividual(const RenderEngineVSIndividual&) = delete;
+	RenderEngineVSIndividual& operator=(const RenderEngineVSIndividual&) = delete;
+
+	RenderEngineVSIndividual(RenderEngineVSIndividual&& other) noexcept
+		: RenderEngineCommon{ std::move(other) }
+	{}
+	RenderEngineVSIndividual& operator=(RenderEngineVSIndividual&& other) noexcept
+	{
+		RenderEngineCommon::operator=(std::move(other));
+
+		return *this;
+	}
+};
 
 /*
 class RenderEngineVertexShader : public RenderEngineBase {

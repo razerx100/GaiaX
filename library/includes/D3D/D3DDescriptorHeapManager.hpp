@@ -6,6 +6,7 @@
 #include <utility>
 #include <IndicesManager.hpp>
 #include <D3DDescriptorLayout.hpp>
+#include <D3DCommandQueue.hpp>
 #include <memory>
 #include <optional>
 
@@ -24,6 +25,7 @@ public:
 	) const;
 
 	void Bind(ID3D12GraphicsCommandList* commandList) const noexcept;
+	void Bind(const D3DCommandList& commandList) const noexcept { Bind(commandList.Get()); }
 
 	void CreateSRV(
 		ID3D12Resource* resource, const D3D12_SHADER_RESOURCE_VIEW_DESC& srvDesc, UINT descriptorIndex
@@ -183,6 +185,12 @@ public:
 
 	void Bind(const D3DDescriptorHeap& descriptorHeap, ID3D12GraphicsCommandList* commandList) const;
 
+	void Bind(
+		const D3DDescriptorHeap& descriptorHeap, const D3DCommandList& commandList
+	) const noexcept {
+		Bind(descriptorHeap, commandList.Get());
+	}
+
 private:
 	template<void (ID3D12GraphicsCommandList::*bindViewFunction)(UINT, D3D12_GPU_VIRTUAL_ADDRESS)>
 	static void ProxyView(
@@ -333,6 +341,7 @@ public:
 	void CreateDescriptors();
 
 	void Bind(ID3D12GraphicsCommandList* commandList) const noexcept;
+	void Bind(const D3DCommandList& commandList) const noexcept { Bind(commandList.Get()); }
 
 	void CreateCBV(
 		size_t registerSlot, size_t registerSpace, UINT descriptorIndex,

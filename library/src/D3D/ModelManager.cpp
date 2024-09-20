@@ -490,7 +490,7 @@ void ModelManagerVSIndividual::SetDescriptorLayout(
 	}
 }
 
-void ModelManagerVSIndividual::SetDescriptor(
+void ModelManagerVSIndividual::SetDescriptors(
 	std::vector<D3DDescriptorManager>& descriptorManagers,
 	size_t vsRegisterSpace, size_t psRegisterSpace
 ) {
@@ -821,7 +821,7 @@ void ModelManagerVSIndirect::SetDescriptorLayoutVS(
 	}
 }
 
-void ModelManagerVSIndirect::SetDescriptorVS(
+void ModelManagerVSIndirect::SetDescriptorsVS(
 	std::vector<D3DDescriptorManager>& descriptorManagers, size_t vsRegisterSpace,
 	size_t psRegisterSpace
 ) const {
@@ -895,7 +895,7 @@ void ModelManagerVSIndirect::SetDescriptorLayoutCS(
 	}
 }
 
-void ModelManagerVSIndirect::SetDescriptorCSOfModels(
+void ModelManagerVSIndirect::SetDescriptorsCSOfModels(
 	std::vector<D3DDescriptorManager>& descriptorManagers, size_t csRegisterSpace
 ) const {
 	const auto frameCount = std::size(descriptorManagers);
@@ -942,7 +942,7 @@ void ModelManagerVSIndirect::SetDescriptorCSOfModels(
 	}
 }
 
-void ModelManagerVSIndirect::SetDescriptorCSOfMeshes(
+void ModelManagerVSIndirect::SetDescriptorsCSOfMeshes(
 	std::vector<D3DDescriptorManager>& descriptorManagers, size_t csRegisterSpace
 ) const {
 	for (auto& descriptorManager : descriptorManagers)
@@ -1185,7 +1185,7 @@ void ModelManagerMS::SetDescriptorLayout(
 	}
 }
 
-void ModelManagerMS::SetDescriptorOfModels(
+void ModelManagerMS::SetDescriptorsOfModels(
 	std::vector<D3DDescriptorManager>& descriptorManagers, size_t msRegisterSpace,
 	size_t psRegisterSpace
 ) const {
@@ -1205,7 +1205,7 @@ void ModelManagerMS::SetDescriptorOfModels(
 	}
 }
 
-void ModelManagerMS::SetDescriptorOfMeshes(
+void ModelManagerMS::SetDescriptorsOfMeshes(
 	std::vector<D3DDescriptorManager>& descriptorManagers, size_t msRegisterSpace
 ) const {
 	for (D3DDescriptorManager& descriptorManager : descriptorManagers)
