@@ -39,7 +39,7 @@ void ViewportAndScissorManager::ResizeScissor(
 	m_scissor.bottom = static_cast<LONG>(height);
 }
 
-void ViewportAndScissorManager::BindViewportAndScissor(const D3DCommandList& d3dCommandList) const noexcept
+void ViewportAndScissorManager::Bind(const D3DCommandList& d3dCommandList) const noexcept
 {
 	ID3D12GraphicsCommandList* commandList = d3dCommandList.Get();
 

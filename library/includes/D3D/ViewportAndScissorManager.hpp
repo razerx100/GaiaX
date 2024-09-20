@@ -10,7 +10,7 @@ public:
 	ViewportAndScissorManager();
 
 	void Resize(std::uint32_t width, std::uint32_t height) noexcept;
-	void BindViewportAndScissor(const D3DCommandList& d3dCommandList) const noexcept;
+	void Bind(const D3DCommandList& d3dCommandList) const noexcept;
 
 private:
 	void ResizeViewport(std::uint32_t width, std::uint32_t height) noexcept;

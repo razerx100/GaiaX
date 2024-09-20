@@ -133,7 +133,7 @@ ID3D12Fence* RenderEngineVSIndividual::DrawingStage(
 
 		m_textureStorage.TransitionQueuedTextures(graphicsCmdListScope);
 
-		m_viewportAndScissors.BindViewportAndScissor(graphicsCmdListScope);
+		m_viewportAndScissors.Bind(graphicsCmdListScope);
 
 		m_graphicsDescriptorManagers[frameIndex].Bind(graphicsCmdListScope);
 
