@@ -103,10 +103,10 @@ void D3DInfoQueueLogger::OutputCurrentMessages()
 		auto message = reinterpret_cast<D3D12_MESSAGE*>(std::data(messageBuffer));
 		m_debugInfoQueue->GetMessage(index, message, &messageLength);
 
-		for (size_t index = 0u; index < m_callbackManager.GetCallbackCount(); ++index)
-			if (m_callbackManager.DoesCallbackExist(index))
+		for (size_t index1 = 0u; index1 < m_callbackManager.GetCallbackCount(); ++index1)
+			if (m_callbackManager.DoesCallbackExist(index1))
 			{
-				D3D12MessageFunc callback = m_callbackManager.GetCallback(index);
+				D3D12MessageFunc callback = m_callbackManager.GetCallback(index1);
 
 				callback(
 					message->Category, message->Severity, message->ID, message->pDescription, nullptr
