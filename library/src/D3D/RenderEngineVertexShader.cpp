@@ -254,12 +254,12 @@ ModelManagerVSIndirect RenderEngineVSIndirect::GetModelManager(
 }
 
 std::uint32_t RenderEngineVSIndirect::AddModelBundle(
-	std::shared_ptr<ModelBundleVS>&& modelBundle, const ShaderName& fragmentShader
+	std::shared_ptr<ModelBundleVS>&& modelBundle, const ShaderName& pixelShader
 ) {
 	WaitForGPUToFinish();
 
 	const std::uint32_t index = m_modelManager.AddModelBundle(
-		std::move(modelBundle), fragmentShader, m_temporaryDataBuffer
+		std::move(modelBundle), pixelShader, m_temporaryDataBuffer
 	);
 
 	// After new models have been added, the ModelBuffer might get recreated. So, it will have

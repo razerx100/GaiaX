@@ -1,161 +1,174 @@
-#include <ranges>
-#include <algorithm>
 #include <RenderEngineMeshShader.hpp>
-#include <Gaia.hpp>
 
-/*
-RenderEngineMeshDraw::RenderEngineMeshDraw(ID3D12Device* device) noexcept
-	: RenderEngineBase{ device } {}//, m_meshletBuffer{ DescriptorType::SRV } {}
-
-void RenderEngineMeshDraw::ExecuteRenderStage(size_t frameIndex) {
-	ID3D12GraphicsCommandList6* graphicsCommandList = Gaia::graphicsCmdList->Get();
-
-	ExecutePreGraphicsStage(graphicsCommandList, frameIndex);
-	RecordDrawCommands(graphicsCommandList, frameIndex);
-}
-
-void RenderEngineMeshDraw::BindGraphicsBuffers(
-	ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex
-) {
-	BindCommonGraphicsBuffers(graphicsCommandList, frameIndex);
-	m_vertexManager.BindVertexBuffers(graphicsCommandList, m_graphicsRSLayout);
-
-	static constexpr auto meshletsIndex = static_cast<size_t>(RootSigElement::Meshlets);
-	graphicsCommandList->SetGraphicsRootDescriptorTable(
-		m_graphicsRSLayout[meshletsIndex], m_meshletBuffer.GetFirstGPUDescriptorHandle()
+RenderEngineMS::RenderEngineMS(
+	const DeviceManager& deviceManager, std::shared_ptr<ThreadPool> threadPool, size_t frameCount
+) : RenderEngineCommon{ deviceManager, std::move(threadPool), frameCount }
+{
+	// The layout shouldn't change throughout the runtime.
+	m_modelManager.SetDescriptorLayout(
+		m_graphicsDescriptorManagers, s_vertexShaderRegisterSpace, s_pixelShaderRegisterSpace
 	);
-}
+	SetCommonGraphicsDescriptorLayout(D3D12_SHADER_VISIBILITY_MESH);
 
-void RenderEngineMeshDraw::RecordDrawCommands(
-	ID3D12GraphicsCommandList6* graphicsCommandList, size_t frameIndex
-) {
-	ID3D12RootSignature* graphicsRS = m_graphicsRS->Get();
+	for (auto& descriptorManager : m_graphicsDescriptorManagers)
+		descriptorManager.CreateDescriptors();
 
-	// One Pipeline needs to be bound before Descriptors can be bound.
-	m_graphicsPipeline0->BindGraphicsPipeline(graphicsCommandList, graphicsRS);
-	BindGraphicsBuffers(graphicsCommandList, frameIndex);
-
-	m_graphicsPipeline0->DrawModels(graphicsCommandList, m_graphicsRSLayout);
-
-	for (auto& graphicsPipeline : m_graphicsPipelines) {
-		graphicsPipeline->BindGraphicsPipeline(graphicsCommandList, graphicsRS);
-		graphicsPipeline->DrawModels(graphicsCommandList, m_graphicsRSLayout);
-	}
-}
-
-void RenderEngineMeshDraw::UpdateModelBuffers(size_t frameIndex) const noexcept {
-	//Gaia::bufferManager->Update<true>(frameIndex);
-}
-
-void RenderEngineMeshDraw::AddMeshletModelSet(
-	std::vector<MeshletModel>& meshletModels, const std::wstring& pixelShader
-) noexcept {
-	auto graphicsPipeline = std::make_unique<GraphicsPipelineMeshShader>();
-
-	graphicsPipeline->ConfigureGraphicsPipelineObject(pixelShader);
-
-	static std::uint32_t modelCount = 0u;
-
-	for (size_t index = 0u; index < std::size(meshletModels); ++index) {
-		std::vector<Meshlet>&& meshlets = std::move(meshletModels[index].meshlets);
-
-		graphicsPipeline->AddModelDetails(
-			static_cast<std::uint32_t>(std::size(meshlets)),
-			static_cast<std::uint32_t>(std::size(m_meshlets)), modelCount
+	if (!std::empty(m_graphicsDescriptorManagers))
+		m_modelManager.CreateRootSignature(
+			m_graphicsDescriptorManagers.front(), s_vertexShaderRegisterSpace
 		);
 
-		++modelCount;
+	m_cameraManager.CreateBuffer(static_cast<std::uint32_t>(frameCount));
 
-		std::ranges::move(meshlets, std::back_inserter(m_meshlets));
+	// This descriptor shouldn't change, so it should be fine to set it here.
+	m_cameraManager.SetDescriptorGraphics(
+		m_graphicsDescriptorManagers, s_cameraRegisterSlot, s_vertexShaderRegisterSpace
+	);
+	m_textureManager.SetDescriptorTable(
+		m_graphicsDescriptorManagers, s_textureRegisterSlot, s_pixelShaderRegisterSpace
+	);
+
+	SetupPipelineStages();
+}
+
+void RenderEngineMS::SetupPipelineStages()
+{
+	constexpr size_t stageCount = 2u;
+
+	m_pipelineStages.reserve(stageCount);
+
+	m_pipelineStages.emplace_back(&RenderEngineMS::GenericCopyStage);
+	m_pipelineStages.emplace_back(&RenderEngineMS::DrawingStage);
+}
+
+std::uint32_t RenderEngineMS::AddModelBundle(
+	std::shared_ptr<ModelBundleMS>&& modelBundle, const ShaderName& pixelShader
+) {
+	WaitForGPUToFinish();
+
+	const std::uint32_t index = m_modelManager.AddModelBundle(
+		std::move(modelBundle), pixelShader, m_temporaryDataBuffer
+	);
+
+	// After a new model has been added, the ModelBuffer might get recreated. So, it will have
+	// a new object. So, we should set that new object as the descriptor.
+	m_modelManager.SetDescriptorsOfModels(
+		m_graphicsDescriptorManagers, s_vertexShaderRegisterSpace, s_pixelShaderRegisterSpace
+	);
+
+	m_copyNecessary = true;
+
+	return index;
+}
+
+std::uint32_t RenderEngineMS::AddMeshBundle(std::unique_ptr<MeshBundleMS> meshBundle)
+{
+	WaitForGPUToFinish();
+
+	const std::uint32_t index = m_modelManager.AddMeshBundle(
+		std::move(meshBundle), m_stagingManager, m_temporaryDataBuffer
+	);
+
+	m_modelManager.SetDescriptorsOfMeshes(m_graphicsDescriptorManagers, s_vertexShaderRegisterSpace);
+
+	m_copyNecessary = true;
+
+	return index;
+}
+
+ID3D12Fence* RenderEngineMS::GenericCopyStage(
+	size_t frameIndex,
+	[[maybe_unused]] const RenderTarget& renderTarget, UINT64& counterValue, ID3D12Fence* waitFence
+) {
+	// Copy Phase
+	// If the Copy stage isn't executed, pass the waitFence on.
+	ID3D12Fence* signalledFence = waitFence;
+
+	// Only execute this stage if copying is necessary.
+	if (m_copyNecessary)
+	{
+		const D3DCommandList& copyCmdList = m_copyQueue.GetCommandList(frameIndex);
+
+		{
+			const CommandListScope copyCmdListScope{ copyCmdList };
+
+			m_stagingManager.CopyAndClear(copyCmdListScope);
+			m_modelManager.CopyTempBuffers(copyCmdListScope);
+		}
+
+		const D3DFence& copyWaitFence = m_copyWait[frameIndex];
+
+		{
+			const UINT64 oldCounterValue = counterValue;
+			++counterValue;
+
+			QueueSubmitBuilder<1u, 1u> copySubmitBuilder{};
+			copySubmitBuilder
+				.SignalFence(copyWaitFence, counterValue)
+				.WaitFence(waitFence, oldCounterValue)
+				.CommandList(copyCmdList);
+
+			m_copyQueue.SubmitCommandLists(copySubmitBuilder);
+
+			m_temporaryDataBuffer.SetUsed(frameIndex);
+		}
+
+		m_copyNecessary = false;
+		signalledFence  = copyWaitFence.Get();
 	}
 
-	if (!m_graphicsPipeline0)
-		m_graphicsPipeline0 = std::move(graphicsPipeline);
-	else
-		m_graphicsPipelines.emplace_back(std::move(graphicsPipeline));
+	return signalledFence;
 }
 
-void RenderEngineMeshDraw::AddGVerticesAndPrimIndices(
-	std::vector<Vertex>&& gVertices, std::vector<std::uint32_t>&& gVerticesIndices,
-	std::vector<std::uint32_t>&& gPrimIndices
-) noexcept {
-	//m_vertexManager.AddGVerticesAndPrimIndices(
-//		std::move(gVertices), std::move(gVerticesIndices), std::move(gPrimIndices)
-//	);
+ID3D12Fence* RenderEngineMS::DrawingStage(
+	size_t frameIndex, const RenderTarget& renderTarget, UINT64& counterValue, ID3D12Fence* waitFence
+) {
+	// Graphics Phase
+	const D3DCommandList& graphicsCmdList = m_graphicsQueue.GetCommandList(frameIndex);
+
+	{
+		const CommandListScope graphicsCmdListScope{ graphicsCmdList };
+
+		renderTarget.ToRenderState(graphicsCmdListScope);
+
+		m_textureStorage.TransitionQueuedTextures(graphicsCmdListScope);
+
+		m_viewportAndScissors.Bind(graphicsCmdListScope);
+
+		m_graphicsDescriptorManagers[frameIndex].Bind(graphicsCmdListScope);
+
+		const D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = m_depthBuffer.ClearDSV(graphicsCmdListScope);
+
+		renderTarget.Set(graphicsCmdListScope, m_backgroundColour, &dsvHandle);
+
+		m_modelManager.Draw(graphicsCmdListScope);
+
+		renderTarget.ToPresentState(graphicsCmdListScope);
+	}
+
+	const D3DFence& graphicsWaitFence = m_graphicsWait[frameIndex];
+
+	{
+		const UINT64 oldCounterValue = counterValue;
+		++counterValue;
+
+		QueueSubmitBuilder<1u, 1u> graphicsSubmitBuilder{};
+		graphicsSubmitBuilder
+			.SignalFence(graphicsWaitFence, counterValue)
+			.WaitFence(waitFence, oldCounterValue)
+			.CommandList(graphicsCmdList);
+
+		m_graphicsQueue.SubmitCommandLists(graphicsSubmitBuilder);
+	}
+
+	return graphicsWaitFence.Get();
 }
 
-void RenderEngineMeshDraw::CreateBuffers(ID3D12Device* device) {
-//	m_vertexManager.CreateBuffers(device);
-
-//	CreateUploadDescView(device, m_meshletBuffer, m_meshlets);
+ModelManagerMS RenderEngineMS::GetModelManager(
+	const DeviceManager& deviceManager, MemoryManager* memoryManager,
+	StagingBufferManager* stagingBufferMan, std::uint32_t frameCount
+) {
+	return ModelManagerMS{
+		deviceManager.GetDevice(), memoryManager, stagingBufferMan, frameCount
+	};
 }
-
-void RenderEngineMeshDraw::RecordResourceUploads(
-	ID3D12GraphicsCommandList* copyList
-) noexcept {
-//	m_vertexManager.RecordResourceUpload(copyList);
-//	m_meshletBuffer.RecordResourceUpload(copyList);
-}
-
-void RenderEngineMeshDraw::ReleaseUploadResources() noexcept {
-//	m_vertexManager.ReleaseUploadResource();
-//	m_meshletBuffer.ReleaseUploadResource();
-
-	m_meshlets = std::vector<Meshlet>{};
-}
-
-void RenderEngineMeshDraw::ReserveBuffersDerived(ID3D12Device* device) {
-//	m_vertexManager.ReserveBuffers(device);
-
-	//const size_t meshletDescriptorOffset = Gaia::descriptorTable->ReserveDescriptorsAndGetOffset();
-
-//	SetDescBufferInfo(device, meshletDescriptorOffset, m_meshlets, m_meshletBuffer);
-}
-
-void RenderEngineMeshDraw::ConstructPipelines() {
-	ID3D12Device2* device = Gaia::device->GetDevice();
-
-	ConstructGraphicsRootSignature(device);
-	//CreateGraphicsPipelines(device, m_graphicsPipeline0, m_graphicsPipelines);
-}
-
-std::unique_ptr<RootSignatureDynamic> RenderEngineMeshDraw::CreateGraphicsRootSignature(
-	ID3D12Device* device
-) const noexcept {
-	auto signature = std::make_unique<RootSignatureDynamic>();
-
-	signature->AddDescriptorTable(
-		D3D12_DESCRIPTOR_RANGE_TYPE_SRV, UINT_MAX, D3D12_SHADER_VISIBILITY_PIXEL,
-		RootSigElement::Textures, true, 0u, 1u
-	).AddDescriptorTable(
-		D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1u, D3D12_SHADER_VISIBILITY_MESH,
-		RootSigElement::ModelData, false, 0u
-	).AddDescriptorTable(
-		D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1u, D3D12_SHADER_VISIBILITY_PIXEL,
-		RootSigElement::MaterialData, false, 1u
-	).AddDescriptorTable(
-		D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1u, D3D12_SHADER_VISIBILITY_PIXEL,
-		RootSigElement::LightData, false, 2u
-	).AddDescriptorTable(
-		D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1u, D3D12_SHADER_VISIBILITY_MESH,
-		RootSigElement::VertexData, false, 3u
-	).AddDescriptorTable(
-		D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1u, D3D12_SHADER_VISIBILITY_MESH,
-		RootSigElement::VertexIndices, false, 4u
-	).AddDescriptorTable(
-		D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1u, D3D12_SHADER_VISIBILITY_MESH,
-		RootSigElement::PrimIndices, false, 5u
-	).AddDescriptorTable(
-		D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1u, D3D12_SHADER_VISIBILITY_MESH,
-		RootSigElement::Meshlets, false, 6u
-	).AddConstants(
-		2u, D3D12_SHADER_VISIBILITY_MESH, RootSigElement::ModelInfo, 0u
-	).AddConstantBufferView(
-		D3D12_SHADER_VISIBILITY_MESH, RootSigElement::Camera, 1u
-	).AddConstantBufferView(
-		D3D12_SHADER_VISIBILITY_PIXEL, RootSigElement::PixelData, 2u
-	).CompileSignature().CreateSignature(device);
-
-	return signature;
-}
-*/

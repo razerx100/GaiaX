@@ -1,55 +1,59 @@
 #ifndef RENDER_ENGINE_MESH_SHADER_HPP_
 #define RENDER_ENGINE_MESH_SHADER_HPP_
-#include <memory>
-#include <RenderEngineBase.hpp>
-#include <GraphicsPipelineMeshShader.hpp>
-#include <optional>
+#include <RenderEngine.hpp>
+#include <ModelManager.hpp>
 
-/*
-class RenderEngineMeshDraw : public RenderEngineBase
+class RenderEngineMS : public RenderEngineCommon<ModelManagerMS, RenderEngineMS>
 {
+	friend class RenderEngineCommon<ModelManagerMS, RenderEngineMS>;
+
 public:
-	RenderEngineMeshDraw(ID3D12Device* device) noexcept;
-
-	void AddMeshletModelSet(
-		std::vector<MeshletModel>& meshletModels, const std::wstring& pixelShader
-	) noexcept final;
-	void AddGVerticesAndPrimIndices(
-		std::vector<Vertex>&& gVertices, std::vector<std::uint32_t>&& gVerticesIndices,
-		std::vector<std::uint32_t>&& gPrimIndices
-	) noexcept final;
-	void ExecuteRenderStage(size_t frameIndex) final;
-	void UpdateModelBuffers(size_t frameIndex) const noexcept final;
-
-	void CreateBuffers(ID3D12Device* device) final;
-	void RecordResourceUploads(ID3D12GraphicsCommandList* copyList) noexcept final;
-	void ReleaseUploadResources() noexcept final;
-	void ConstructPipelines() final;
-
-private:
-	using GraphicsPipeline = std::unique_ptr<GraphicsPipelineMeshShader>;
-
-	void ReserveBuffersDerived(ID3D12Device* device) final;
-
-	void RecordDrawCommands(
-		ID3D12GraphicsCommandList6* graphicsCommandList, size_t frameIndex
-	);
-	void BindGraphicsBuffers(
-		ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex
+	RenderEngineMS(
+		const DeviceManager& deviceManager, std::shared_ptr<ThreadPool> threadPool, size_t frameCount
 	);
 
 	[[nodiscard]]
-	std::unique_ptr<RootSignatureDynamic> CreateGraphicsRootSignature(
-		ID3D12Device* device
-	) const noexcept final;
+	std::uint32_t AddModelBundle(
+		std::shared_ptr<ModelBundleMS>&& modelBundle, const ShaderName& pixelShader
+	) override;
+
+	[[nodiscard]]
+	std::uint32_t AddMeshBundle(std::unique_ptr<MeshBundleMS> meshBundle) override;
 
 private:
-	GraphicsPipeline m_graphicsPipeline0;
-	std::vector<GraphicsPipeline> m_graphicsPipelines;
+	[[nodiscard]]
+	static ModelManagerMS GetModelManager(
+		const DeviceManager& deviceManager, MemoryManager* memoryManager,
+		StagingBufferManager* stagingBufferMan, std::uint32_t frameCount
+	);
 
-	//VertexManagerMeshShader m_vertexManager;
-	//D3DUploadResourceDescriptorView m_meshletBuffer;
-	std::vector<Meshlet> m_meshlets;
+	[[nodiscard]]
+	ID3D12Fence* GenericCopyStage(
+		size_t frameIndex, const RenderTarget& renderTarget, UINT64& counterValue, ID3D12Fence* waitFence
+	);
+	[[nodiscard]]
+	ID3D12Fence* DrawingStage(
+		size_t frameIndex, const RenderTarget& renderTarget, UINT64& counterValue, ID3D12Fence* waitFence
+	);
+
+	void SetupPipelineStages();
+
+private:
+	// Graphics
+	static constexpr size_t s_cameraRegisterSlot = 5u;
+
+public:
+	RenderEngineMS(const RenderEngineMS&) = delete;
+	RenderEngineMS& operator=(const RenderEngineMS&) = delete;
+
+	RenderEngineMS(RenderEngineMS&& other) noexcept
+		: RenderEngineCommon{ std::move(other) }
+	{}
+	RenderEngineMS& operator=(RenderEngineMS&& other) noexcept
+	{
+		RenderEngineCommon::operator=(std::move(other));
+
+		return *this;
+	}
 };
-*/
 #endif
