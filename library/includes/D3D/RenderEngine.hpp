@@ -47,9 +47,9 @@ public:
 	[[nodiscard]]
 	size_t AddTexture(STexture&& texture);
 
-	void UnbindCombinedTexture(size_t textureIndex);
+	void UnbindTexture(size_t textureIndex);
 	[[nodiscard]]
-	std::uint32_t BindCombinedTexture(size_t textureIndex);
+	std::uint32_t BindTexture(size_t textureIndex);
 
 	void RemoveTexture(size_t index);
 
@@ -69,7 +69,7 @@ public:
 
 	[[nodiscard]]
 	virtual void Render(size_t frameIndex, const RenderTarget& renderTarget) = 0;
-	virtual void Resize(std::uint32_t width, std::uint32_t height) = 0;
+	virtual void Resize(UINT width, UINT height) = 0;
 
 	[[nodiscard]]
 	virtual std::uint32_t AddModelBundle(
@@ -231,7 +231,7 @@ public:
 		m_modelManager.RemoveMeshBundle(bundleIndex);
 	}
 
-	void Resize(std::uint32_t width, std::uint32_t height) override
+	void Resize(UINT width, UINT height) override
 	{
 		m_depthBuffer.Create(width, height);
 
@@ -246,9 +246,6 @@ public:
 
 	void Render(size_t frameIndex, const RenderTarget& renderTarget) final
 	{
-		// Progress the counter value.
-		++m_counterValue;
-
 		// Wait for the previous Graphics command buffer to finish.
 		m_graphicsWait[frameIndex].Wait(m_counterValue);
 		// It should be okay to clear the data now that the frame has finished

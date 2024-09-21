@@ -12,7 +12,8 @@ RenderEngine::RenderEngine(
 	size_t frameCount
 ) : m_threadPool{ std::move(threadPool) },
 	m_memoryManager{ adapter, device, 20_MB, 400_KB },
-	m_counterValue{ 0u },
+	// The fences will be initialised as 0. So, the starting value should be 1.
+	m_counterValue{ 1u },
 	m_graphicsQueue{}, m_graphicsWait{},
 	m_copyQueue{}, m_copyWait{},
 	m_stagingManager{ device, &m_memoryManager, m_threadPool.get() },
@@ -94,7 +95,7 @@ size_t RenderEngine::AddTexture(STexture&& texture)
 	return textureIndex;
 }
 
-void RenderEngine::UnbindCombinedTexture(size_t textureIndex)
+void RenderEngine::UnbindTexture(size_t textureIndex)
 {
 	// This function shouldn't need to wait for the GPU to finish, as it isn't doing
 	// anything on the GPU side.
@@ -104,7 +105,7 @@ void RenderEngine::UnbindCombinedTexture(size_t textureIndex)
 		m_textureManager.SetAvailableIndex<D3D12_DESCRIPTOR_RANGE_TYPE_SRV>(globalDescIndex, true);
 }
 
-std::uint32_t RenderEngine::BindCombinedTexture(size_t textureIndex)
+std::uint32_t RenderEngine::BindTexture(size_t textureIndex)
 {
 	WaitForGPUToFinish();
 

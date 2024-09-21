@@ -1,10 +1,13 @@
 #include <RendererDx12.hpp>
 
 RendererDx12::RendererDx12(
-	const char* appName,
+	[[maybe_unused]] const char* appName,
 	void* windowHandle, std::uint32_t width, std::uint32_t height, std::uint32_t bufferCount,
 	std::shared_ptr<ThreadPool>&& threadPool, RenderEngineType engineType
-) {
+) : m_gaia{
+		windowHandle, width, height, bufferCount, std::move(threadPool), engineType
+	}
+{}
 
 	/*
 	m_objectManager.CreateObject(Gaia::device, 3u);
@@ -48,7 +51,7 @@ RendererDx12::RendererDx12(
 	//m_objectManager.CreateObject(Gaia::cameraManager, 0u, sharedContainer);
 	//Gaia::cameraManager->SetSceneResolution(width, height);
 	*/
-}
+//}
 
 /*void RendererDx12::AddModelSet(
 	std::vector<std::shared_ptr<Model>>&& models, const std::wstring& pixelShader
@@ -117,12 +120,11 @@ void RendererDx12::Resize(std::uint32_t width, std::uint32_t height) {
 		//Gaia::cameraManager->SetSceneResolution(width, height);
 }
 
-Renderer::Resolution RendererDx12::GetFirstDisplayCoordinates() const {
-	//auto [width, height] = GetDisplayResolution(
-	//	Gaia::device->GetDevice(), Gaia::device->GetFactory(), 0u
-	//);
+Renderer::Resolution RendererDx12::GetFirstDisplayCoordinates() const
+{
+	auto [width, height] = m_gaia.GetFirstDisplayCoordinates();
 
-	return { 0u, 0u };
+	return Renderer::Resolution{ .width = width, .height = height };
 }
 
 void RendererDx12::SetBackgroundColour(const std::array<float, 4>& colour) noexcept {
