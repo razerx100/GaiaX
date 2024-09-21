@@ -514,6 +514,8 @@ void ModelManagerVSIndividual::Draw(const D3DCommandList& graphicsList) const no
 {
 	auto previousPSOIndex = std::numeric_limits<size_t>::max();
 
+	m_graphicsRootSignature.BindToGraphics(graphicsList);
+
 	for (const auto& modelBundle : m_modelBundles)
 	{
 		// Pipeline Object.
@@ -955,6 +957,8 @@ void ModelManagerVSIndirect::Dispatch(const D3DCommandList& computeList) const n
 {
 	ID3D12GraphicsCommandList* cmdList = computeList.Get();
 
+	m_computeRootSignature.BindToCompute(computeList);
+
 	m_computePipeline.Bind(computeList);
 
 	{
@@ -978,6 +982,8 @@ void ModelManagerVSIndirect::Dispatch(const D3DCommandList& computeList) const n
 void ModelManagerVSIndirect::Draw(size_t frameIndex, const D3DCommandList& graphicsList) const noexcept
 {
 	auto previousPSOIndex = std::numeric_limits<size_t>::max();
+
+	m_graphicsRootSignature.BindToGraphics(graphicsList);
 
 	for (const auto& modelBundle : m_modelBundles)
 	{
@@ -1231,6 +1237,8 @@ void ModelManagerMS::Draw(const D3DCommandList& graphicsList) const noexcept
 {
 	auto previousPSOIndex              = std::numeric_limits<size_t>::max();
 	ID3D12GraphicsCommandList* cmdList = graphicsList.Get();
+
+	m_graphicsRootSignature.BindToGraphics(graphicsList);
 
 	for (const auto& modelBundle : m_modelBundles)
 	{

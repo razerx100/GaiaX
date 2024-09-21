@@ -2,6 +2,7 @@
 #define D3D_ROOT_SIGNATURE_HPP_
 #include <D3DHeaders.hpp>
 #include <D3DRootSignatureDynamic.hpp>
+#include <D3DCommandQueue.hpp>
 #include <utility>
 #include <string>
 
@@ -47,6 +48,9 @@ public:
 	{
 		CreateSignature(device, rsDynamic.GetBinary());
 	}
+
+	void BindToGraphics(const D3DCommandList& commandList) const;
+	void BindToCompute(const D3DCommandList& commandList) const;
 
 	[[nodiscard]]
 	ID3D12RootSignature* Get() const noexcept { return m_rootSignature.Get(); }
