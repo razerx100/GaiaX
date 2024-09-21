@@ -38,3 +38,10 @@ TEST_F(RenderEngineTest, RenderEngineVSIndividualTest)
 
 	RenderEngineVSIndividual renderEngine{ *s_deviceManager, threadPool, Constants::frameCount };
 }
+
+TEST_F(RenderEngineTest, RenderEngineVSIndirectTest)
+{
+	auto threadPool = std::make_shared<ThreadPool>(2u);
+
+	RenderEngineVSIndirect renderEngine{ *s_deviceManager, threadPool, Constants::frameCount };
+}
