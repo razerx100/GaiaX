@@ -15,7 +15,6 @@ public:
 
 	void Resize(UINT width, UINT height);
 	void Render();
-	void WaitForGPUToFinish();
 
 	// Instead of creating useless wrapper functions, let's just return a reference to the RenderEngine.
 	[[nodiscard]]

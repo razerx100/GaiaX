@@ -62,7 +62,7 @@ void Gaia::Resize(UINT width, UINT height)
 	// Only recreate these if the new resolution is different.
 	if (m_windowWidth != width || m_windowHeight != height)
 	{
-		WaitForGPUToFinish();
+		m_renderEngine->WaitForGPUToFinish();
 
 		// Must resize the swapchain first.
 		m_swapchain->Resize(width, height);
@@ -82,11 +82,6 @@ void Gaia::Render()
 	m_renderEngine->Render(nextImageIndex, nextRenderTarget);
 
 	m_swapchain->Present();
-}
-
-void Gaia::WaitForGPUToFinish()
-{
-	m_renderEngine->WaitForGPUToFinish();
 }
 
 DeviceManager::Resolution Gaia::GetFirstDisplayCoordinates() const
