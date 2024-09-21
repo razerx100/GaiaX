@@ -14,13 +14,11 @@ public:
 	);
 
 	[[nodiscard]]
-	// Should wait for the device to be idle before calling this.
 	std::uint32_t AddModelBundle(
 		std::shared_ptr<ModelBundleVS>&& modelBundle, const ShaderName& pixelShader
 	) override;
 
 	[[nodiscard]]
-	// Should wait for the device to be idle before calling this.
 	std::uint32_t AddMeshBundle(std::unique_ptr<MeshBundleVS> meshBundle) override;
 
 private:
@@ -59,119 +57,79 @@ public:
 	}
 };
 
-/*
-class RenderEngineVertexShader : public RenderEngineBase {
+class RenderEngineVSIndirect
+	: public RenderEngineCommon<ModelManagerVSIndirect, RenderEngineVSIndirect>
+{
+	friend class RenderEngineCommon<ModelManagerVSIndirect, RenderEngineVSIndirect>;
+
 public:
-	RenderEngineVertexShader(ID3D12Device* device);
-
-	void AddGVerticesAndIndices(
-		std::vector<Vertex>&& gVertices, std::vector<std::uint32_t>&& gIndices
-	) noexcept final;
-	void ExecuteRenderStage(size_t frameIndex) final;
-
-	void CreateBuffers(ID3D12Device* device) final;
-	void RecordResourceUploads(ID3D12GraphicsCommandList* copyList) noexcept final;
-	void ReleaseUploadResources() noexcept final;
-
-protected:
-	[[nodiscard]]
-	std::unique_ptr<RootSignatureDynamic> CreateGraphicsRootSignature(
-		ID3D12Device* device
-	) const noexcept final;
-
-	void ReserveBuffersDerived(ID3D12Device* device) final;
-
-	void BindGraphicsBuffers(
-		ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex
+	RenderEngineVSIndirect(
+		const DeviceManager& deviceManager, std::shared_ptr<ThreadPool> threadPool, size_t frameCount
 	);
 
-	virtual void _createBuffers(ID3D12Device* device);
-	virtual void _reserveBuffers(ID3D12Device* device);
-	virtual void _recordResourceUploads(ID3D12GraphicsCommandList* copyList) noexcept;
-	virtual void _releaseUploadResources() noexcept;
+	[[nodiscard]]
+	std::uint32_t AddModelBundle(
+		std::shared_ptr<ModelBundleVS>&& modelBundle, const ShaderName& pixelShader
+	) override;
 
-	virtual void ExecutePreRenderStage(
-		ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex
-	) = 0;
-	virtual void RecordDrawCommands(
-		ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex
-	) = 0;
+	[[nodiscard]]
+	std::uint32_t AddMeshBundle(std::unique_ptr<MeshBundleVS> meshBundle) override;
 
 private:
-	//VertexManagerVertexShader m_vertexManager;
-};
+	[[nodiscard]]
+	static ModelManagerVSIndirect GetModelManager(
+		const DeviceManager& deviceManager, MemoryManager* memoryManager,
+		StagingBufferManager* stagingBufferMan, std::uint32_t frameCount
+	);
 
-class RenderEngineIndirectDraw final : public RenderEngineVertexShader {
+	[[nodiscard]]
+	ID3D12Fence* GenericCopyStage(
+		size_t frameIndex, const RenderTarget& renderTarget, UINT64& counterValue, ID3D12Fence* waitFence
+	);
+	[[nodiscard]]
+	ID3D12Fence* FrustumCullingStage(
+		size_t frameIndex, const RenderTarget& renderTarget, UINT64& counterValue, ID3D12Fence* waitFence
+	);
+	[[nodiscard]]
+	ID3D12Fence* DrawingStage(
+		size_t frameIndex, const RenderTarget& renderTarget, UINT64& counterValue, ID3D12Fence* waitFence
+	);
+
+	void SetupPipelineStages();
+
+private:
+	// Graphics
+	static constexpr size_t s_cameraRegisterSlot = 2u;
+
+	// Compute
+	static constexpr size_t s_computePipelineSetLayoutCount = 1u;
+	static constexpr size_t s_computeShaderRegisterSpace    = 0u;
+
+	static constexpr std::uint32_t s_cameraComputeRegisterSlot = 11u;
+
+private:
+	D3DCommandQueue                   m_computeQueue;
+	std::vector<D3DFence>             m_computeWait;
+	std::vector<D3DDescriptorManager> m_computeDescriptorManagers;
+
 public:
-	struct Args {
-		std::optional<ID3D12Device*> device;
-		std::optional<std::uint32_t> frameCount;
-	};
+	RenderEngineVSIndirect(const RenderEngineVSIndirect&) = delete;
+	RenderEngineVSIndirect& operator=(const RenderEngineVSIndirect&) = delete;
 
-public:
-	RenderEngineIndirectDraw(ID3D12Device* device, std::uint32_t frameCount);
+	RenderEngineVSIndirect(RenderEngineVSIndirect&& other) noexcept
+		: RenderEngineCommon{ std::move(other) },
+		m_computeQueue{ std::move(other.m_computeQueue) },
+		m_computeWait{ std::move(other.m_computeWait) },
+		m_computeDescriptorManagers{ std::move(other.m_computeDescriptorManagers) }
+	{}
+	RenderEngineVSIndirect& operator=(RenderEngineVSIndirect&& other) noexcept
+	{
+		RenderEngineCommon::operator=(std::move(other));
+		m_computeQueue              = std::move(other.m_computeQueue);
+		m_computeWait               = std::move(other.m_computeWait);
+		m_computeDescriptorManagers = std::move(other.m_computeDescriptorManagers);
 
-	void ConstructPipelines() final;
-
-	void RecordModelDataSet(
-		const std::vector<std::shared_ptr<Model>>& models, const std::wstring& pixelShader
-	) noexcept final;
-
-private:
-	void _createBuffers(ID3D12Device* device) override;
-	void _reserveBuffers(ID3D12Device* device) override;
-	void _recordResourceUploads(ID3D12GraphicsCommandList* copyList) noexcept override;
-	void _releaseUploadResources() noexcept override;
-
-	void CreateCommandSignature(ID3D12Device* device);
-	void ExecuteComputeStage(size_t frameIndex);
-
-	void ExecutePreRenderStage(
-		ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex
-	) final;
-	void RecordDrawCommands(
-		ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex
-	) final;
-	void UpdateModelBuffers(size_t frameIndex) const noexcept final;
-
-	using GraphicsPipeline = std::unique_ptr<GraphicsPipelineIndirectDraw>;
-
-private:
-	//ComputePipelineIndirectDraw m_computePipeline;
-	GraphicsPipeline m_graphicsPipeline0;
-	std::vector<GraphicsPipeline> m_graphicsPipelines;
-
-	ComPtr<ID3D12CommandSignature> m_commandSignature;
+		return *this;
+	}
 };
-
-class RenderEngineIndividualDraw final : public RenderEngineVertexShader {
-public:
-	RenderEngineIndividualDraw(ID3D12Device* device);
-
-	void ConstructPipelines() final;
-
-	void RecordModelDataSet(
-		const std::vector<std::shared_ptr<Model>>& models, const std::wstring& pixelShader
-	) noexcept final;
-	void UpdateModelBuffers(size_t frameIndex) const noexcept final;
-
-private:
-	using GraphicsPipeline = std::unique_ptr<GraphicsPipelineIndividualDraw>;
-
-	void RecordModelArguments(const std::vector<std::shared_ptr<Model>>& models) noexcept;
-
-	void ExecutePreRenderStage(
-		ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex
-	) final;
-	void RecordDrawCommands(
-		ID3D12GraphicsCommandList* graphicsCommandList, size_t frameIndex
-	) final;
-
-private:
-	GraphicsPipeline m_graphicsPipeline0;
-	std::vector<GraphicsPipeline> m_graphicsPipelines;
-
-	//std::vector<ModelDrawArguments> m_modelArguments;
-};
-*/
 #endif
