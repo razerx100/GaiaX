@@ -1,6 +1,6 @@
 #include <DeviceManager.hpp>
 #include <Exception.hpp>
-
+#include <cassert>
 
 void DeviceManager::Create(D3D_FEATURE_LEVEL featureLevel /* = D3D_FEATURE_LEVEL_12_0 */)
 {
@@ -87,4 +87,44 @@ void DeviceManager::GetHardwareAdapter(
         throw Exception(
             "D3D12 Feature Error", "None of the GPUs has required D3D12 feature support."
         );
+}
+
+DeviceManager::Resolution DeviceManager::GetDisplayResolution(UINT displayIndex) const
+{
+    ComPtr<IDXGIAdapter1> adapter{};
+	DXGI_ADAPTER_DESC gpuDesc{};
+
+	LUID gpuLUid        = m_device->GetAdapterLuid();
+	bool adapterMatched = false;
+
+	for (UINT index = 0u; m_factory->EnumAdapters1(index, &adapter) != DXGI_ERROR_NOT_FOUND;)
+    {
+		adapter->GetDesc(&gpuDesc);
+
+		const LUID& lUid1 = gpuDesc.AdapterLuid;
+		const LUID& lUid2 = gpuLUid;
+
+		if (lUid1.HighPart == lUid2.HighPart && lUid1.LowPart == lUid2.LowPart) {
+			adapterMatched = true;
+			break;
+		}
+	}
+
+	assert(adapterMatched && "GPU IDs don't match.");
+
+	adapter->GetDesc(&gpuDesc);
+
+    ComPtr<IDXGIOutput> displayOutput{};
+	[[maybe_unused]] HRESULT displayCheck = adapter->EnumOutputs(displayIndex, &displayOutput);
+	assert(SUCCEEDED(displayCheck) && "Invalid display index.");
+
+	DXGI_OUTPUT_DESC displayData{};
+	displayOutput->GetDesc(&displayData);
+
+	return Resolution
+    {
+		.width  = static_cast<UINT>(displayData.DesktopCoordinates.right),
+		.height = static_cast<UINT>(displayData.DesktopCoordinates.bottom)
+	};
+
 }

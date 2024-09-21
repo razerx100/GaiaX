@@ -7,6 +7,13 @@
 class DeviceManager
 {
 public:
+	struct Resolution
+	{
+		UINT width;
+		UINT height;
+	};
+
+public:
 	DeviceManager() : m_device{}, m_adapter{}, m_factory{}, m_debugLogger{} {}
 
 	void Create(D3D_FEATURE_LEVEL featureLevel = D3D_FEATURE_LEVEL_12_0);
@@ -22,6 +29,9 @@ public:
 
 	[[nodiscard]]
 	DXGI_ADAPTER_DESC1 GetAdapterDesc() const noexcept;
+
+	[[nodiscard]]
+	Resolution GetDisplayResolution(UINT displayIndex) const;
 
 private:
 	static void GetHardwareAdapter(
