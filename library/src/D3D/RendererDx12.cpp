@@ -1,14 +1,12 @@
 #include <RendererDx12.hpp>
-#include <Gaia.hpp>
-#include <D3DHelperFunctions.hpp>
-#include <D3DResourceBarrier.hpp>
 
 RendererDx12::RendererDx12(
 	const char* appName,
 	void* windowHandle, std::uint32_t width, std::uint32_t height, std::uint32_t bufferCount,
 	std::shared_ptr<ThreadPool>&& threadPool, RenderEngineType engineType
-) : m_appName(appName), m_width(width), m_height(height), m_bufferCount{ bufferCount } {
+) {
 
+	/*
 	m_objectManager.CreateObject(Gaia::device, 3u);
 
 	Gaia::device->GetDebugLogger().AddCallbackType(DebugCallbackType::FileOut);
@@ -24,7 +22,6 @@ RendererDx12::RendererDx12(
 
 	Gaia::InitGraphicsQueueAndList(m_objectManager, deviceRef, meshDrawType, bufferCount);
 
-	/*
 	SwapChainManager::Args swapChainArguments{
 		.device = deviceRef,
 		.factory = Gaia::device->GetFactory(),
@@ -35,7 +32,6 @@ RendererDx12::RendererDx12(
 		.bufferCount = bufferCount,
 		.variableRefreshRate = true
 	};
-	*/
 
 	//m_objectManager.CreateObject(Gaia::swapChain, 1u, swapChainArguments);
 
@@ -51,6 +47,7 @@ RendererDx12::RendererDx12(
 
 	//m_objectManager.CreateObject(Gaia::cameraManager, 0u, sharedContainer);
 	//Gaia::cameraManager->SetSceneResolution(width, height);
+	*/
 }
 
 /*void RendererDx12::AddModelSet(
@@ -102,11 +99,8 @@ void RendererDx12::Render()
 }
 
 void RendererDx12::Resize(std::uint32_t width, std::uint32_t height) {
-	if (m_width != width || m_height != height) {
-		m_width = width;
-		m_height = height;
 
-		ID3D12Device* deviceRef = Gaia::device->GetDevice();
+		//ID3D12Device* deviceRef = Gaia::device->GetDevice();
 
 		//UINT64 fenceValue = Gaia::graphicsFence->GetFrontValue();
 
@@ -121,24 +115,23 @@ void RendererDx12::Resize(std::uint32_t width, std::uint32_t height) {
 		//Gaia::renderEngine->ResizeViewportAndScissor(width, height);
 
 		//Gaia::cameraManager->SetSceneResolution(width, height);
-	}
 }
 
 Renderer::Resolution RendererDx12::GetFirstDisplayCoordinates() const {
-	auto [width, height] = GetDisplayResolution(
-		Gaia::device->GetDevice(), Gaia::device->GetFactory(), 0u
-	);
+	//auto [width, height] = GetDisplayResolution(
+	//	Gaia::device->GetDevice(), Gaia::device->GetFactory(), 0u
+	//);
 
-	return { width, height };
+	return { 0u, 0u };
 }
 
 void RendererDx12::SetBackgroundColour(const std::array<float, 4>& colour) noexcept {
-	Gaia::renderEngine->SetBackgroundColour(colour);
+	//Gaia::renderEngine->SetBackgroundColour(colour);
 }
 
 void RendererDx12::SetShaderPath(const wchar_t* path)
 {
-	Gaia::renderEngine->SetShaderPath(path);
+//	Gaia::renderEngine->SetShaderPath(path);
 }
 
 void RendererDx12::AddPixelShader(const ShaderName& pixelShader) {}

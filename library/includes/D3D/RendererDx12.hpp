@@ -2,8 +2,8 @@
 #define RENDERER_DX12_HPP_
 #include <Renderer.hpp>
 #include <string>
-#include <ObjectManager.hpp>
 #include <ThreadPool.hpp>
+#include <Gaia.hpp>
 
 class RendererDx12 final : public Renderer
 {
@@ -67,10 +67,20 @@ public:
 	void WaitForGPUToFinish() override;
 
 private:
-	const std::string m_appName;
-	std::uint32_t m_width;
-	std::uint32_t m_height;
-	std::uint32_t m_bufferCount;
-	ObjectManager m_objectManager;
+	Gaia m_gaia;
+
+public:
+	RendererDx12(const RendererDx12&) = delete;
+	RendererDx12& operator=(const RendererDx12&) = delete;
+
+	RendererDx12(RendererDx12&& other) noexcept
+		: m_gaia{ std::move(other.m_gaia) }
+	{}
+	RendererDx12& operator=(RendererDx12&& other) noexcept
+	{
+		m_gaia = std::move(other.m_gaia);
+
+		return *this;
+	}
 };
 #endif
