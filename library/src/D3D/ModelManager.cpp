@@ -516,6 +516,8 @@ void ModelManagerVSIndividual::Draw(const D3DCommandList& graphicsList) const no
 
 	m_graphicsRootSignature.BindToGraphics(graphicsList);
 
+	GraphicsPipelineBase::SetIATopology(graphicsList);
+
 	for (const auto& modelBundle : m_modelBundles)
 	{
 		// Pipeline Object.
@@ -984,6 +986,8 @@ void ModelManagerVSIndirect::Draw(size_t frameIndex, const D3DCommandList& graph
 	auto previousPSOIndex = std::numeric_limits<size_t>::max();
 
 	m_graphicsRootSignature.BindToGraphics(graphicsList);
+
+	GraphicsPipelineBase::SetIATopology(graphicsList);
 
 	for (const auto& modelBundle : m_modelBundles)
 	{

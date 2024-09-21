@@ -27,6 +27,8 @@ public:
 
 	void Bind(const D3DCommandList& graphicsCmdList) const noexcept;
 
+	static void SetIATopology(const D3DCommandList& graphicsCmdList) noexcept;
+
 	[[nodiscard]]
 	ShaderName GetPixelShader() const noexcept { return m_pixelShader; }
 
