@@ -290,7 +290,8 @@ std::uint32_t RenderEngineVSIndirect::AddMeshBundle(std::unique_ptr<MeshBundleVS
 }
 
 ID3D12Fence* RenderEngineVSIndirect::GenericCopyStage(
-	size_t frameIndex, const RenderTarget& renderTarget, UINT64& counterValue, ID3D12Fence* waitFence
+	size_t frameIndex,
+	[[maybe_unused]] const RenderTarget& renderTarget, UINT64& counterValue, ID3D12Fence* waitFence
 ) {
 	// Copy Phase
 	// If the Copy stage isn't executed, pass the waitFence on.
@@ -332,7 +333,8 @@ ID3D12Fence* RenderEngineVSIndirect::GenericCopyStage(
 }
 
 ID3D12Fence* RenderEngineVSIndirect::FrustumCullingStage(
-	size_t frameIndex, const RenderTarget& renderTarget, UINT64& counterValue, ID3D12Fence* waitFence
+	size_t frameIndex,
+	[[maybe_unused]] const RenderTarget& renderTarget, UINT64& counterValue, ID3D12Fence* waitFence
 ) {
 	// Compute Phase
 	const D3DCommandList& computeCmdList = m_computeQueue.GetCommandList(frameIndex);
