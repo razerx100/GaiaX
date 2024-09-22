@@ -113,8 +113,8 @@ protected:
 	static constexpr size_t s_vertexShaderRegisterSpace      = 0u;
 	static constexpr size_t s_pixelShaderRegisterSpace       = 1u;
 
-	static constexpr size_t s_materialRegisterSlot = 1u;
-	static constexpr size_t s_textureRegisterSlot  = 2u;
+	static constexpr size_t s_materialSRVRegisterSlot = 1u;
+	static constexpr size_t s_textureSRVRegisterSlot  = 2u;
 
 protected:
 	std::shared_ptr<ThreadPool>       m_threadPool;
@@ -204,7 +204,7 @@ public:
 	{
 		for (auto& descriptorManager : m_graphicsDescriptorManagers)
 			m_textureManager.SetDescriptorLayout(
-				descriptorManager, s_textureRegisterSlot, s_pixelShaderRegisterSpace
+				descriptorManager, s_textureSRVRegisterSlot, s_pixelShaderRegisterSpace
 			);
 	}
 
@@ -241,7 +241,7 @@ public:
 	[[nodiscard]]
 	size_t GetCameraRegisterSlot() const noexcept override
 	{
-		return Derived::s_cameraRegisterSlot;
+		return Derived::s_cameraCBVRegisterSlot;
 	}
 
 	void Render(size_t frameIndex, const RenderTarget& renderTarget) final

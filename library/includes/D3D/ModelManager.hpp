@@ -704,8 +704,8 @@ protected:
 	bool                         m_tempCopyNecessary;
 
 	// The pixel and Vertex data are on different sets. So both can be 0u.
-	static constexpr size_t s_modelBuffersPixelRegisterSlot    = 0u;
-	static constexpr size_t s_modelBuffersGraphicsRegisterSlot = 0u;
+	static constexpr size_t s_modelBuffersPixelSRVRegisterSlot    = 0u;
+	static constexpr size_t s_modelBuffersGraphicsSRVRegisterSlot = 0u;
 
 public:
 	ModelManager(const ModelManager&) = delete;
@@ -806,7 +806,7 @@ private:
 	SharedBufferGPU m_indexBuffer;
 
 	// Vertex Shader ones
-	static constexpr size_t s_constantDataRegisterSlot = 1u;
+	static constexpr size_t s_constantDataCBVRegisterSlot = 0u;
 
 public:
 	ModelManagerVSIndividual(const ModelManagerVSIndividual&) = delete;
@@ -961,23 +961,27 @@ private:
 	std::vector<ModelBundleCSIndirect>   m_modelBundlesCS;
 
 	// Vertex Shader ones
-	static constexpr size_t s_constantDataVSRegisterSlot = 1u;
-	static constexpr size_t s_modelIndicesVSRegisterSlot = 2u;
+	// CBV
+	static constexpr size_t s_constantDataVSCBVRegisterSlot = 0u;
+	// SRV
+	static constexpr size_t s_modelIndicesVSSRVRegisterSlot = 1u;
 
 	// Compute Shader ones
-	static constexpr size_t s_modelBuffersComputeRegisterSlot = 0u;
-	static constexpr size_t s_constantDataCSRegisterSlot      = 1u;
-	static constexpr size_t s_modelIndicesCSRegisterSlot      = 2u;
-	static constexpr size_t s_argumentInputBufferRegisterSlot = 3u;
-	static constexpr size_t s_cullingDataBufferRegisterSlot   = 4u;
-	static constexpr size_t s_argumenOutputRegisterSlot       = 5u;
-	static constexpr size_t s_counterRegisterSlot             = 6u;
-	static constexpr size_t s_modelBundleIndexRegisterSlot    = 7u;
-	static constexpr size_t s_meshBoundingRegisterSlot        = 8u;
-	static constexpr size_t s_meshIndexRegisterSlot           = 9u;
-	static constexpr size_t s_meshDetailsRegisterSlot         = 10u;
+	// CBV
+	static constexpr size_t s_constantDataCSCBVRegisterSlot      = 0u;
+	// SRV
+	static constexpr size_t s_modelBuffersCSSRVRegisterSlot      = 0u;
+	static constexpr size_t s_modelIndicesCSSRVRegisterSlot      = 1u;
+	static constexpr size_t s_argumentInputBufferSRVRegisterSlot = 2u;
+	static constexpr size_t s_cullingDataBufferSRVRegisterSlot   = 3u;
+	static constexpr size_t s_argumenOutputSRVRegisterSlot       = 4u;
+	static constexpr size_t s_counterSRVRegisterSlot             = 5u;
+	static constexpr size_t s_modelBundleIndexSRVRegisterSlot    = 6u;
+	static constexpr size_t s_meshBoundingSRVRegisterSlot        = 7u;
+	static constexpr size_t s_meshIndexSRVRegisterSlot           = 8u;
+	static constexpr size_t s_meshDetailsSRVRegisterSlot         = 9u;
 	// To write the model indices of the not culled models.
-	static constexpr size_t s_modelIndicesVSCSRegisterSlot    = 11u;
+	static constexpr size_t s_modelIndicesVSCSSRVRegisterSlot    = 10u;
 
 	// Each Compute Thread Group should have 64 threads.
 	static constexpr float THREADBLOCKSIZE = 64.f;
@@ -1120,11 +1124,13 @@ private:
 	SharedBufferGPU       m_vertexIndicesBuffer;
 	SharedBufferGPU       m_primIndicesBuffer;
 
-	static constexpr size_t s_constantDataRegisterSlot        = 1u;
-	static constexpr size_t s_meshletBufferRegisterSlot       = 2u;
-	static constexpr size_t s_vertexBufferRegisterSlot        = 3u;
-	static constexpr size_t s_vertexIndicesBufferRegisterSlot = 4u;
-	static constexpr size_t s_primIndicesBufferRegisterSlot   = 5u;
+	// CBV
+	static constexpr size_t s_constantDataCBVRegisterSlot        = 0u;
+	// SRV
+	static constexpr size_t s_meshletBufferSRVRegisterSlot       = 1u;
+	static constexpr size_t s_vertexBufferSRVRegisterSlot        = 2u;
+	static constexpr size_t s_vertexIndicesBufferSRVRegisterSlot = 3u;
+	static constexpr size_t s_primIndicesBufferSRVRegisterSlot   = 4u;
 
 public:
 	ModelManagerMS(const ModelManagerMS&) = delete;

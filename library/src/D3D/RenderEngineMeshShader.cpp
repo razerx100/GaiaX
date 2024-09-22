@@ -22,10 +22,10 @@ RenderEngineMS::RenderEngineMS(
 
 	// This descriptor shouldn't change, so it should be fine to set it here.
 	m_cameraManager.SetDescriptorGraphics(
-		m_graphicsDescriptorManagers, s_cameraRegisterSlot, s_vertexShaderRegisterSpace
+		m_graphicsDescriptorManagers, s_cameraCBVRegisterSlot, s_vertexShaderRegisterSpace
 	);
 	m_textureManager.SetDescriptorTable(
-		m_graphicsDescriptorManagers, s_textureRegisterSlot, s_pixelShaderRegisterSpace
+		m_graphicsDescriptorManagers, s_textureSRVRegisterSlot, s_pixelShaderRegisterSpace
 	);
 
 	SetupPipelineStages();

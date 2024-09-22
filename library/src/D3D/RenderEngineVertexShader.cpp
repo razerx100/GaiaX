@@ -23,10 +23,10 @@ RenderEngineVSIndividual::RenderEngineVSIndividual(
 
 	// This descriptor shouldn't change, so it should be fine to set it here.
 	m_cameraManager.SetDescriptorGraphics(
-		m_graphicsDescriptorManagers, s_cameraRegisterSlot, s_vertexShaderRegisterSpace
+		m_graphicsDescriptorManagers, s_cameraCBVRegisterSlot, s_vertexShaderRegisterSpace
 	);
 	m_textureManager.SetDescriptorTable(
-		m_graphicsDescriptorManagers, s_textureRegisterSlot, s_pixelShaderRegisterSpace
+		m_graphicsDescriptorManagers, s_textureSRVRegisterSlot, s_pixelShaderRegisterSpace
 	);
 
 	SetupPipelineStages();
@@ -193,10 +193,10 @@ RenderEngineVSIndirect::RenderEngineVSIndirect(
 
 	// This descriptor shouldn't change, so it should be fine to set it here.
 	m_cameraManager.SetDescriptorGraphics(
-		m_graphicsDescriptorManagers, s_cameraRegisterSlot, s_vertexShaderRegisterSpace
+		m_graphicsDescriptorManagers, s_cameraCBVRegisterSlot, s_vertexShaderRegisterSpace
 	);
 	m_textureManager.SetDescriptorTable(
-		m_graphicsDescriptorManagers, s_textureRegisterSlot, s_pixelShaderRegisterSpace
+		m_graphicsDescriptorManagers, s_textureSRVRegisterSlot, s_pixelShaderRegisterSpace
 	);
 
 	// Compute stuffs.
@@ -217,7 +217,7 @@ RenderEngineVSIndirect::RenderEngineVSIndirect(
 	// Compute Descriptors.
 	m_modelManager.SetDescriptorLayoutCS(m_computeDescriptorManagers, s_computeShaderRegisterSpace);
 	m_cameraManager.SetDescriptorLayoutCompute(
-		m_computeDescriptorManagers, s_cameraComputeRegisterSlot, s_computeShaderRegisterSpace
+		m_computeDescriptorManagers, s_cameraCSCBVRegisterSlot, s_computeShaderRegisterSpace
 	);
 
 	for (auto& descriptorManagers : m_computeDescriptorManagers)
@@ -227,7 +227,7 @@ RenderEngineVSIndirect::RenderEngineVSIndirect(
 		m_modelManager.CreatePipelineCS(m_computeDescriptorManagers.front(), s_computeShaderRegisterSpace);
 
 	m_cameraManager.SetDescriptorCompute(
-		m_computeDescriptorManagers, s_cameraComputeRegisterSlot, s_computeShaderRegisterSpace
+		m_computeDescriptorManagers, s_cameraCSCBVRegisterSlot, s_computeShaderRegisterSpace
 	);
 
 	SetupPipelineStages();

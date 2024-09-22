@@ -52,7 +52,7 @@ size_t RenderEngine::AddMaterial(std::shared_ptr<Material> material)
 	m_materialBuffers.Update(index);
 
 	m_materialBuffers.SetDescriptor(
-		m_graphicsDescriptorManagers, s_materialRegisterSlot, s_pixelShaderRegisterSpace
+		m_graphicsDescriptorManagers, s_materialSRVRegisterSlot, s_pixelShaderRegisterSpace
 	);
 
 	m_copyNecessary = true;
@@ -69,7 +69,7 @@ std::vector<size_t> RenderEngine::AddMaterials(std::vector<std::shared_ptr<Mater
 	m_materialBuffers.Update(indices);
 
 	m_materialBuffers.SetDescriptor(
-		m_graphicsDescriptorManagers, s_materialRegisterSlot, s_pixelShaderRegisterSpace
+		m_graphicsDescriptorManagers, s_materialSRVRegisterSlot, s_pixelShaderRegisterSpace
 	);
 
 	m_copyNecessary = true;
@@ -131,7 +131,7 @@ std::uint32_t RenderEngine::BindTexture(size_t textureIndex)
 
 	for (auto& descriptorManager : m_graphicsDescriptorManagers)
 		descriptorManager.CreateSRV(
-			s_textureRegisterSlot, s_pixelShaderRegisterSpace, freeGlobalDescIndex,
+			s_textureSRVRegisterSlot, s_pixelShaderRegisterSpace, freeGlobalDescIndex,
 			texture.Get(), texture.GetSRVDesc()
 		);
 	// Since it is a descriptor table, there is no point in setting it every time.
@@ -186,7 +186,7 @@ void RenderEngine::SetCommonGraphicsDescriptorLayout(
 		cameraShaderVisibility
 	);
 	m_materialBuffers.SetDescriptorLayout(
-		m_graphicsDescriptorManagers, s_materialRegisterSlot, s_pixelShaderRegisterSpace
+		m_graphicsDescriptorManagers, s_materialSRVRegisterSlot, s_pixelShaderRegisterSpace
 	);
 }
 

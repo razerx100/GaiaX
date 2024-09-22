@@ -40,7 +40,7 @@ private:
 	void SetupPipelineStages();
 
 private:
-	static constexpr size_t s_cameraRegisterSlot = 2u;
+	static constexpr size_t s_cameraCBVRegisterSlot = 1u;
 
 public:
 	RenderEngineVSIndividual(const RenderEngineVSIndividual&) = delete;
@@ -99,13 +99,13 @@ private:
 
 private:
 	// Graphics
-	static constexpr size_t s_cameraRegisterSlot = 3u;
+	static constexpr size_t s_cameraCBVRegisterSlot = 1u;
 
 	// Compute
 	static constexpr size_t s_computePipelineSetLayoutCount = 1u;
 	static constexpr size_t s_computeShaderRegisterSpace    = 0u;
 
-	static constexpr std::uint32_t s_cameraComputeRegisterSlot = 11u;
+	static constexpr size_t s_cameraCSCBVRegisterSlot = 1u;
 
 private:
 	D3DCommandQueue                   m_computeQueue;

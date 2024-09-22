@@ -412,7 +412,7 @@ void ModelManagerVSIndividual::CreateRootSignatureImpl(
 	m_graphicsRootSignature.CreateSignature(m_device, rootSignatureDynamic);
 
 	m_constantsRootIndex = descriptorManager.GetRootIndex(
-		s_constantDataRegisterSlot, constantsRegisterSpace
+		s_constantDataCBVRegisterSlot, constantsRegisterSpace
 	);
 }
 
@@ -478,14 +478,14 @@ void ModelManagerVSIndividual::SetDescriptorLayout(
 		D3DDescriptorManager& descriptorManager = descriptorManagers[index];
 
 		descriptorManager.AddConstants(
-			s_constantDataRegisterSlot, vsRegisterSpace, pushConstantCount,
+			s_constantDataCBVRegisterSlot, vsRegisterSpace, pushConstantCount,
 			D3D12_SHADER_VISIBILITY_VERTEX
 		);
 		descriptorManager.AddRootSRV(
-			s_modelBuffersGraphicsRegisterSlot, vsRegisterSpace, D3D12_SHADER_VISIBILITY_VERTEX
+			s_modelBuffersGraphicsSRVRegisterSlot, vsRegisterSpace, D3D12_SHADER_VISIBILITY_VERTEX
 		);
 		descriptorManager.AddRootSRV(
-			s_modelBuffersPixelRegisterSlot, psRegisterSpace, D3D12_SHADER_VISIBILITY_PIXEL
+			s_modelBuffersPixelSRVRegisterSlot, psRegisterSpace, D3D12_SHADER_VISIBILITY_PIXEL
 		);
 	}
 }
@@ -502,10 +502,10 @@ void ModelManagerVSIndividual::SetDescriptors(
 		const auto frameIndex                   = static_cast<UINT64>(index);
 
 		m_modelBuffers.SetDescriptor(
-			descriptorManager, frameIndex, s_modelBuffersGraphicsRegisterSlot, vsRegisterSpace, true
+			descriptorManager, frameIndex, s_modelBuffersGraphicsSRVRegisterSlot, vsRegisterSpace, true
 		);
 		m_modelBuffers.SetPixelDescriptor(
-			descriptorManager, frameIndex, s_modelBuffersPixelRegisterSlot, psRegisterSpace
+			descriptorManager, frameIndex, s_modelBuffersPixelSRVRegisterSlot, psRegisterSpace
 		);
 	}
 }
@@ -595,7 +595,7 @@ void ModelManagerVSIndirect::CreateRootSignatureImpl(
 	m_graphicsRootSignature.CreateSignature(m_device, rootSignatureDynamic);
 
 	m_constantsVSRootIndex = descriptorManager.GetRootIndex(
-		s_constantDataVSRegisterSlot, constantsRegisterSpace
+		s_constantDataVSCBVRegisterSlot, constantsRegisterSpace
 	);
 
 	// Command Signature
@@ -625,7 +625,7 @@ void ModelManagerVSIndirect::CreatePipelineCS(
 	m_graphicsRootSignature.CreateSignature(m_device, rootSignatureDynamic);
 
 	m_constantsVSRootIndex = descriptorManager.GetRootIndex(
-		s_constantDataCSRegisterSlot, constantsRegisterSpace
+		s_constantDataCSCBVRegisterSlot, constantsRegisterSpace
 	);
 }
 
@@ -810,17 +810,17 @@ void ModelManagerVSIndirect::SetDescriptorLayoutVS(
 		D3DDescriptorManager& descriptorManager = descriptorManagers[index];
 
 		descriptorManager.AddConstants(
-			s_constantDataVSRegisterSlot, vsRegisterSpace, pushConstantCount,
+			s_constantDataVSCBVRegisterSlot, vsRegisterSpace, pushConstantCount,
 			D3D12_SHADER_VISIBILITY_VERTEX
 		);
 		descriptorManager.AddRootSRV(
-			s_modelBuffersGraphicsRegisterSlot, vsRegisterSpace, D3D12_SHADER_VISIBILITY_VERTEX
+			s_modelBuffersGraphicsSRVRegisterSlot, vsRegisterSpace, D3D12_SHADER_VISIBILITY_VERTEX
 		);
 		descriptorManager.AddRootSRV(
-			s_modelBuffersPixelRegisterSlot, psRegisterSpace, D3D12_SHADER_VISIBILITY_PIXEL
+			s_modelBuffersPixelSRVRegisterSlot, psRegisterSpace, D3D12_SHADER_VISIBILITY_PIXEL
 		);
 		descriptorManager.AddRootSRV(
-			s_modelIndicesVSRegisterSlot, vsRegisterSpace, D3D12_SHADER_VISIBILITY_VERTEX
+			s_modelIndicesVSSRVRegisterSlot, vsRegisterSpace, D3D12_SHADER_VISIBILITY_VERTEX
 		);
 	}
 }
@@ -837,13 +837,13 @@ void ModelManagerVSIndirect::SetDescriptorsVS(
 		const auto frameIndex                   = static_cast<UINT64>(index);
 
 		m_modelBuffers.SetDescriptor(
-			descriptorManager, frameIndex, s_modelBuffersGraphicsRegisterSlot, vsRegisterSpace, true
+			descriptorManager, frameIndex, s_modelBuffersGraphicsSRVRegisterSlot, vsRegisterSpace, true
 		);
 		m_modelBuffers.SetPixelDescriptor(
-			descriptorManager, frameIndex, s_modelBuffersPixelRegisterSlot, psRegisterSpace
+			descriptorManager, frameIndex, s_modelBuffersPixelSRVRegisterSlot, psRegisterSpace
 		);
 		descriptorManager.SetRootSRV(
-			s_modelIndicesVSRegisterSlot, vsRegisterSpace,
+			s_modelIndicesVSSRVRegisterSlot, vsRegisterSpace,
 			m_modelIndicesVSBuffers[index].GetGPUAddress(), true
 		);
 	}
@@ -860,41 +860,41 @@ void ModelManagerVSIndirect::SetDescriptorLayoutCS(
 		D3DDescriptorManager& descriptorManager = descriptorManagers[index];
 
 		descriptorManager.AddConstants(
-			s_constantDataCSRegisterSlot, csRegisterSpace, pushConstantCount,
+			s_constantDataCSCBVRegisterSlot, csRegisterSpace, pushConstantCount,
 			D3D12_SHADER_VISIBILITY_ALL
 		);
 		descriptorManager.AddRootSRV(
-			s_modelBuffersComputeRegisterSlot, csRegisterSpace, D3D12_SHADER_VISIBILITY_ALL
+			s_modelBuffersCSSRVRegisterSlot, csRegisterSpace, D3D12_SHADER_VISIBILITY_ALL
 		);
 		descriptorManager.AddRootSRV(
-			s_argumentInputBufferRegisterSlot, csRegisterSpace, D3D12_SHADER_VISIBILITY_ALL
+			s_argumentInputBufferSRVRegisterSlot, csRegisterSpace, D3D12_SHADER_VISIBILITY_ALL
 		);
 		descriptorManager.AddRootSRV(
-			s_cullingDataBufferRegisterSlot, csRegisterSpace, D3D12_SHADER_VISIBILITY_ALL
+			s_cullingDataBufferSRVRegisterSlot, csRegisterSpace, D3D12_SHADER_VISIBILITY_ALL
 		);
 		descriptorManager.AddRootUAV(
-			s_argumenOutputRegisterSlot, csRegisterSpace, D3D12_SHADER_VISIBILITY_ALL
+			s_argumenOutputSRVRegisterSlot, csRegisterSpace, D3D12_SHADER_VISIBILITY_ALL
 		);
 		descriptorManager.AddRootUAV(
-			s_counterRegisterSlot, csRegisterSpace, D3D12_SHADER_VISIBILITY_ALL
+			s_counterSRVRegisterSlot, csRegisterSpace, D3D12_SHADER_VISIBILITY_ALL
 		);
 		descriptorManager.AddRootSRV(
-			s_modelIndicesCSRegisterSlot, csRegisterSpace, D3D12_SHADER_VISIBILITY_ALL
+			s_modelIndicesCSSRVRegisterSlot, csRegisterSpace, D3D12_SHADER_VISIBILITY_ALL
 		);
 		descriptorManager.AddRootSRV(
-			s_modelBundleIndexRegisterSlot, csRegisterSpace, D3D12_SHADER_VISIBILITY_ALL
+			s_modelBundleIndexSRVRegisterSlot, csRegisterSpace, D3D12_SHADER_VISIBILITY_ALL
 		);
 		descriptorManager.AddRootSRV(
-			s_meshBoundingRegisterSlot, csRegisterSpace, D3D12_SHADER_VISIBILITY_ALL
+			s_meshBoundingSRVRegisterSlot, csRegisterSpace, D3D12_SHADER_VISIBILITY_ALL
 		);
 		descriptorManager.AddRootSRV(
-			s_meshIndexRegisterSlot, csRegisterSpace, D3D12_SHADER_VISIBILITY_ALL
+			s_meshIndexSRVRegisterSlot, csRegisterSpace, D3D12_SHADER_VISIBILITY_ALL
 		);
 		descriptorManager.AddRootSRV(
-			s_meshDetailsRegisterSlot, csRegisterSpace, D3D12_SHADER_VISIBILITY_ALL
+			s_meshDetailsSRVRegisterSlot, csRegisterSpace, D3D12_SHADER_VISIBILITY_ALL
 		);
 		descriptorManager.AddRootSRV(
-			s_modelIndicesVSCSRegisterSlot, csRegisterSpace, D3D12_SHADER_VISIBILITY_ALL
+			s_modelIndicesVSCSSRVRegisterSlot, csRegisterSpace, D3D12_SHADER_VISIBILITY_ALL
 		);
 	}
 }
@@ -910,39 +910,39 @@ void ModelManagerVSIndirect::SetDescriptorsCSOfModels(
 		const auto frameIndex                   = static_cast<UINT64>(index);
 
 		m_modelBuffers.SetDescriptor(
-			descriptorManager, frameIndex, s_modelBuffersComputeRegisterSlot, csRegisterSpace, false
+			descriptorManager, frameIndex, s_modelBuffersCSSRVRegisterSlot, csRegisterSpace, false
 		);
 
 		descriptorManager.SetRootSRV(
-			s_argumentInputBufferRegisterSlot, csRegisterSpace,
+			s_argumentInputBufferSRVRegisterSlot, csRegisterSpace,
 			m_argumentInputBuffers[index].GetGPUAddress(), false
 		);
 		descriptorManager.SetRootSRV(
-			s_cullingDataBufferRegisterSlot, csRegisterSpace,
+			s_cullingDataBufferSRVRegisterSlot, csRegisterSpace,
 			m_cullingDataBuffer.GetGPUAddress(), false
 		);
 		descriptorManager.SetRootUAV(
-			s_argumenOutputRegisterSlot, csRegisterSpace,
+			s_argumenOutputSRVRegisterSlot, csRegisterSpace,
 			m_argumentOutputBuffers[index].GetGPUAddress(), false
 		);
 		descriptorManager.SetRootUAV(
-			s_counterRegisterSlot, csRegisterSpace, m_counterBuffers[index].GetGPUAddress(), false
+			s_counterSRVRegisterSlot, csRegisterSpace, m_counterBuffers[index].GetGPUAddress(), false
 		);
 		descriptorManager.SetRootSRV(
-			s_modelIndicesCSRegisterSlot, csRegisterSpace,
+			s_modelIndicesCSSRVRegisterSlot, csRegisterSpace,
 			m_modelIndicesCSBuffer.GetGPUAddress(), false
 		);
 		descriptorManager.SetRootSRV(
-			s_modelBundleIndexRegisterSlot, csRegisterSpace,
+			s_modelBundleIndexSRVRegisterSlot, csRegisterSpace,
 			m_modelBundleIndexBuffer.GetGPUAddress(), false
 		);
 		descriptorManager.SetRootSRV(
-			s_modelIndicesVSCSRegisterSlot, csRegisterSpace,
+			s_modelIndicesVSCSSRVRegisterSlot, csRegisterSpace,
 			m_modelIndicesVSBuffers[index].GetGPUAddress(), false
 		);
 
-		m_meshIndexBuffer.SetRootSRVCom(descriptorManager, s_meshIndexRegisterSlot, csRegisterSpace);
-		m_meshDetailsBuffer.SetRootSRVCom(descriptorManager, s_meshDetailsRegisterSlot, csRegisterSpace);
+		m_meshIndexBuffer.SetRootSRVCom(descriptorManager, s_meshIndexSRVRegisterSlot, csRegisterSpace);
+		m_meshDetailsBuffer.SetRootSRVCom(descriptorManager, s_meshDetailsSRVRegisterSlot, csRegisterSpace);
 	}
 }
 
@@ -951,7 +951,7 @@ void ModelManagerVSIndirect::SetDescriptorsCSOfMeshes(
 ) const {
 	for (auto& descriptorManager : descriptorManagers)
 		descriptorManager.SetRootSRV(
-			s_meshBoundingRegisterSlot, csRegisterSpace, m_meshBoundsBuffer.GetGPUAddress(), false
+			s_meshBoundingSRVRegisterSlot, csRegisterSpace, m_meshBoundsBuffer.GetGPUAddress(), false
 		);
 }
 
@@ -1141,7 +1141,7 @@ void ModelManagerMS::CreateRootSignatureImpl(
 	m_graphicsRootSignature.CreateSignature(m_device, rootSignatureDynamic);
 
 	m_constantsRootIndex = descriptorManager.GetRootIndex(
-		s_constantDataRegisterSlot, constantsRegisterSpace
+		s_constantDataCBVRegisterSlot, constantsRegisterSpace
 	);
 }
 
@@ -1171,26 +1171,26 @@ void ModelManagerMS::SetDescriptorLayout(
 		D3DDescriptorManager& descriptorManager = descriptorManagers[index];
 
 		descriptorManager.AddConstants(
-			s_constantDataRegisterSlot, msRegisterSpace, meshConstantCount + modelConstantCount,
+			s_constantDataCBVRegisterSlot, msRegisterSpace, meshConstantCount + modelConstantCount,
 			D3D12_SHADER_VISIBILITY_MESH
 		);
 		descriptorManager.AddRootSRV(
-			s_modelBuffersGraphicsRegisterSlot, msRegisterSpace, D3D12_SHADER_VISIBILITY_MESH
+			s_modelBuffersGraphicsSRVRegisterSlot, msRegisterSpace, D3D12_SHADER_VISIBILITY_MESH
 		);
 		descriptorManager.AddRootSRV(
-			s_modelBuffersPixelRegisterSlot, psRegisterSpace, D3D12_SHADER_VISIBILITY_PIXEL
+			s_modelBuffersPixelSRVRegisterSlot, psRegisterSpace, D3D12_SHADER_VISIBILITY_PIXEL
 		);
 		descriptorManager.AddRootSRV(
-			s_meshletBufferRegisterSlot, msRegisterSpace, D3D12_SHADER_VISIBILITY_MESH
+			s_meshletBufferSRVRegisterSlot, msRegisterSpace, D3D12_SHADER_VISIBILITY_MESH
 		);
 		descriptorManager.AddRootSRV(
-			s_vertexBufferRegisterSlot, msRegisterSpace, D3D12_SHADER_VISIBILITY_MESH
+			s_vertexBufferSRVRegisterSlot, msRegisterSpace, D3D12_SHADER_VISIBILITY_MESH
 		);
 		descriptorManager.AddRootSRV(
-			s_vertexIndicesBufferRegisterSlot, msRegisterSpace, D3D12_SHADER_VISIBILITY_MESH
+			s_vertexIndicesBufferSRVRegisterSlot, msRegisterSpace, D3D12_SHADER_VISIBILITY_MESH
 		);
 		descriptorManager.AddRootSRV(
-			s_primIndicesBufferRegisterSlot, msRegisterSpace, D3D12_SHADER_VISIBILITY_MESH
+			s_primIndicesBufferSRVRegisterSlot, msRegisterSpace, D3D12_SHADER_VISIBILITY_MESH
 		);
 	}
 }
@@ -1207,10 +1207,10 @@ void ModelManagerMS::SetDescriptorsOfModels(
 		const auto frameIndex                   = static_cast<UINT64>(index);
 
 		m_modelBuffers.SetDescriptor(
-			descriptorManager, frameIndex, s_modelBuffersGraphicsRegisterSlot, msRegisterSpace, true
+			descriptorManager, frameIndex, s_modelBuffersGraphicsSRVRegisterSlot, msRegisterSpace, true
 		);
 		m_modelBuffers.SetPixelDescriptor(
-			descriptorManager, frameIndex, s_modelBuffersPixelRegisterSlot, psRegisterSpace
+			descriptorManager, frameIndex, s_modelBuffersPixelSRVRegisterSlot, psRegisterSpace
 		);
 	}
 }
@@ -1221,18 +1221,18 @@ void ModelManagerMS::SetDescriptorsOfMeshes(
 	for (D3DDescriptorManager& descriptorManager : descriptorManagers)
 	{
 		descriptorManager.SetRootSRV(
-			s_vertexBufferRegisterSlot, msRegisterSpace, m_vertexBuffer.GetGPUAddress(), true
+			s_vertexBufferSRVRegisterSlot, msRegisterSpace, m_vertexBuffer.GetGPUAddress(), true
 		);
 		descriptorManager.SetRootSRV(
-			s_vertexIndicesBufferRegisterSlot, msRegisterSpace, m_vertexIndicesBuffer.GetGPUAddress(),
+			s_vertexIndicesBufferSRVRegisterSlot, msRegisterSpace, m_vertexIndicesBuffer.GetGPUAddress(),
 			true
 		);
 		descriptorManager.SetRootSRV(
-			s_primIndicesBufferRegisterSlot, msRegisterSpace, m_primIndicesBuffer.GetGPUAddress(),
+			s_primIndicesBufferSRVRegisterSlot, msRegisterSpace, m_primIndicesBuffer.GetGPUAddress(),
 			true
 		);
 		descriptorManager.SetRootSRV(
-			s_meshletBufferRegisterSlot, msRegisterSpace, m_meshletBuffer.GetGPUAddress(), true
+			s_meshletBufferSRVRegisterSlot, msRegisterSpace, m_meshletBuffer.GetGPUAddress(), true
 		);
 	}
 }
