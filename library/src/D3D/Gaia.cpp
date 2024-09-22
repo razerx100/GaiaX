@@ -21,7 +21,7 @@ Gaia::Gaia(
 void Gaia::CreateDevice()
 {
 #if _DEBUG
-	m_deviceManager.GetDebugLogger().AddCallbackType(DebugCallbackType::StandardError);
+	m_deviceManager.GetDebugLogger().AddCallbackType(DebugCallbackType::FileOut);
 #endif
 	m_deviceManager.Create(s_featureLevel);
 }
