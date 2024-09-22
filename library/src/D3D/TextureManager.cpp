@@ -116,7 +116,7 @@ void TextureManager::SetDescriptorTable(
 	size_t textureRegisterSpace
 ) const {
 	for (auto& descriptorManager : descriptorManagers)
-		descriptorManager.SetDescriptorTable(texturesRegisterSlot, textureRegisterSpace, 0u, true);
+		descriptorManager.SetDescriptorTableSRV(texturesRegisterSlot, textureRegisterSpace, 0u, true);
 }
 
 std::optional<UINT> TextureManager::FindFreeIndex(

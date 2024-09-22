@@ -139,34 +139,32 @@ void D3DRootSignatureDynamic::PopulateFromLayouts(const std::vector<D3DDescripto
 		const D3DDescriptorLayout& layout = layouts[index];
 
 		const auto registerSpace  = static_cast<UINT>(index);
-		const size_t detailsCount = layout.GetDescriptorDetailsCount();
+		const size_t bindingCount = layout.GetBindingCount();
 
-		for (size_t detailsIndex = 0u; detailsIndex < detailsCount; ++detailsIndex)
+		for (size_t bindingIndex = 0u; bindingIndex < bindingCount; ++bindingIndex)
 		{
-			const D3DDescriptorLayout::DescriptorDetails descriptorDetails = layout.GetDescriptorDetails(
-				detailsIndex
+			const D3DDescriptorLayout::BindingDetails bindingDetails = layout.GetBindingDetails(
+				bindingIndex
 			);
 
-			const auto registerIndex = static_cast<UINT>(detailsIndex);
-
-			if (descriptorDetails.descriptorTable)
+			if (bindingDetails.descriptorTable)
 				AddDescriptorTable(
-					descriptorDetails.type, descriptorDetails.descriptorCount,
-					descriptorDetails.visibility, registerIndex, registerSpace
+					bindingDetails.type, bindingDetails.descriptorCount,
+					bindingDetails.visibility, bindingDetails.registerIndex, registerSpace
 				);
 			else
 			{
-				if (descriptorDetails.type == D3D12_DESCRIPTOR_RANGE_TYPE_CBV)
-					AddRootCBV(descriptorDetails.visibility, registerIndex, registerSpace);
-				else if (descriptorDetails.type == D3D12_DESCRIPTOR_RANGE_TYPE_SRV)
-					AddRootSRV(descriptorDetails.visibility, registerIndex, registerSpace);
-				else if (descriptorDetails.type == D3D12_DESCRIPTOR_RANGE_TYPE_UAV)
-					AddRootUAV(descriptorDetails.visibility, registerIndex, registerSpace);
-				else if (descriptorDetails.type == D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER)
+				if (bindingDetails.type == D3D12_DESCRIPTOR_RANGE_TYPE_CBV)
+					AddRootCBV(bindingDetails.visibility, bindingDetails.registerIndex, registerSpace);
+				else if (bindingDetails.type == D3D12_DESCRIPTOR_RANGE_TYPE_SRV)
+					AddRootSRV(bindingDetails.visibility, bindingDetails.registerIndex, registerSpace);
+				else if (bindingDetails.type == D3D12_DESCRIPTOR_RANGE_TYPE_UAV)
+					AddRootUAV(bindingDetails.visibility, bindingDetails.registerIndex, registerSpace);
+				else if (bindingDetails.type == D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER)
 					// Sampler means Constant values in the DescriptorLayout.
 					AddConstants(
-						descriptorDetails.descriptorCount, descriptorDetails.visibility,
-						registerIndex, registerSpace
+						bindingDetails.descriptorCount, bindingDetails.visibility,
+						bindingDetails.registerIndex, registerSpace
 					);
 			}
 		}

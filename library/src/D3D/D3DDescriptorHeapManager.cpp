@@ -487,7 +487,9 @@ void D3DDescriptorManager::CreateCBV(
     size_t registerSlot, size_t registerSpace, UINT descriptorIndex,
     const D3D12_CONSTANT_BUFFER_VIEW_DESC& cbvDesc
 ) const {
-    const UINT descriptorIndexInHeap = GetDescriptorOffset(registerSlot, registerSpace, descriptorIndex);
+    const UINT descriptorIndexInHeap = GetDescriptorOffsetCBV(
+        registerSlot, registerSpace, descriptorIndex
+    );
 
     m_resourceHeapCPU.CreateCBV(cbvDesc, descriptorIndexInHeap);
 
@@ -500,7 +502,9 @@ void D3DDescriptorManager::CreateSRV(
     size_t registerSlot, size_t registerSpace, UINT descriptorIndex,
     ID3D12Resource* resource, const D3D12_SHADER_RESOURCE_VIEW_DESC& srvDesc
 ) const {
-    const UINT descriptorIndexInHeap = GetDescriptorOffset(registerSlot, registerSpace, descriptorIndex);
+    const UINT descriptorIndexInHeap = GetDescriptorOffsetSRV(
+        registerSlot, registerSpace, descriptorIndex
+    );
 
     m_resourceHeapCPU.CreateSRV(resource, srvDesc, descriptorIndexInHeap);
 
@@ -514,7 +518,9 @@ void D3DDescriptorManager::CreateUAV(
     ID3D12Resource* resource, ID3D12Resource* counterResource,
     const D3D12_UNORDERED_ACCESS_VIEW_DESC& uavDesc
 ) const {
-    const UINT descriptorIndexInHeap = GetDescriptorOffset(registerSlot, registerSpace, descriptorIndex);
+    const UINT descriptorIndexInHeap = GetDescriptorOffsetUAV(
+        registerSlot, registerSpace, descriptorIndex
+    );
 
     m_resourceHeapCPU.CreateUAV(resource, counterResource, uavDesc, descriptorIndexInHeap);
 
@@ -553,18 +559,48 @@ void D3DDescriptorManager::SetRootUAV(
         m_descriptorMap.SetRootUAVGfx(GetRootIndex(registerSlot, registerSpace), resourceAddress);
 }
 
-void D3DDescriptorManager::SetDescriptorTable(
+void D3DDescriptorManager::SetDescriptorTableCBV(
     size_t registerSlot, size_t registerSpace, UINT descriptorIndex, bool graphicsQueue
 ) {
     if (!graphicsQueue)
         m_descriptorMap.SetDescTableCom(
             GetRootIndex(registerSlot, registerSpace),
-            GetDescriptorOffset(registerSlot, registerSpace, descriptorIndex)
+            GetDescriptorOffsetCBV(registerSlot, registerSpace, descriptorIndex)
         );
     else
         m_descriptorMap.SetDescTableGfx(
             GetRootIndex(registerSlot, registerSpace),
-            GetDescriptorOffset(registerSlot, registerSpace, descriptorIndex)
+            GetDescriptorOffsetCBV(registerSlot, registerSpace, descriptorIndex)
+        );
+}
+
+void D3DDescriptorManager::SetDescriptorTableSRV(
+    size_t registerSlot, size_t registerSpace, UINT descriptorIndex, bool graphicsQueue
+) {
+    if (!graphicsQueue)
+        m_descriptorMap.SetDescTableCom(
+            GetRootIndex(registerSlot, registerSpace),
+            GetDescriptorOffsetSRV(registerSlot, registerSpace, descriptorIndex)
+        );
+    else
+        m_descriptorMap.SetDescTableGfx(
+            GetRootIndex(registerSlot, registerSpace),
+            GetDescriptorOffsetSRV(registerSlot, registerSpace, descriptorIndex)
+        );
+}
+
+void D3DDescriptorManager::SetDescriptorTableUAV(
+    size_t registerSlot, size_t registerSpace, UINT descriptorIndex, bool graphicsQueue
+) {
+    if (!graphicsQueue)
+        m_descriptorMap.SetDescTableCom(
+            GetRootIndex(registerSlot, registerSpace),
+            GetDescriptorOffsetUAV(registerSlot, registerSpace, descriptorIndex)
+        );
+    else
+        m_descriptorMap.SetDescTableGfx(
+            GetRootIndex(registerSlot, registerSpace),
+            GetDescriptorOffsetUAV(registerSlot, registerSpace, descriptorIndex)
         );
 }
 
@@ -583,40 +619,100 @@ UINT D3DDescriptorManager::GetLayoutOffset(size_t layoutIndex) const noexcept
     return layoutOffset;
 }
 
-UINT D3DDescriptorManager::GetSlotOffset(size_t slotIndex, size_t layoutIndex) const noexcept
+UINT D3DDescriptorManager::GetRegisterOffsetCBV(size_t registerIndex, size_t layoutIndex) const noexcept
 {
-    return GetLayoutOffset(layoutIndex) + m_descriptorLayouts[layoutIndex].GetSlotOffset(slotIndex);
+    return GetLayoutOffset(layoutIndex)
+        + m_descriptorLayouts[layoutIndex]
+        .GetRegisterOffset(registerIndex, D3D12_DESCRIPTOR_RANGE_TYPE_CBV);
 }
 
-UINT D3DDescriptorManager::GetDescriptorOffset(
-    size_t slotIndex, size_t layoutIndex, UINT descriptorIndex
+UINT D3DDescriptorManager::GetRegisterOffsetSRV(size_t registerIndex, size_t layoutIndex) const noexcept
+{
+    return GetLayoutOffset(layoutIndex)
+        + m_descriptorLayouts[layoutIndex]
+        .GetRegisterOffset(registerIndex, D3D12_DESCRIPTOR_RANGE_TYPE_SRV);
+}
+
+UINT D3DDescriptorManager::GetRegisterOffsetUAV(size_t registerIndex, size_t layoutIndex) const noexcept
+{
+    return GetLayoutOffset(layoutIndex)
+        + m_descriptorLayouts[layoutIndex]
+        .GetRegisterOffset(registerIndex, D3D12_DESCRIPTOR_RANGE_TYPE_UAV);
+}
+
+UINT D3DDescriptorManager::GetDescriptorOffsetCBV(
+    size_t registerIndex, size_t layoutIndex, UINT descriptorIndex
 ) const noexcept {
-    return GetSlotOffset(slotIndex, layoutIndex) + descriptorIndex;
+    return GetRegisterOffsetCBV(registerIndex, layoutIndex) + descriptorIndex;
 }
 
-UINT D3DDescriptorManager::GetRootIndex(size_t slotIndex, size_t layoutIndex) const noexcept
+UINT D3DDescriptorManager::GetDescriptorOffsetSRV(
+    size_t registerIndex, size_t layoutIndex, UINT descriptorIndex
+) const noexcept {
+    return GetRegisterOffsetSRV(registerIndex, layoutIndex) + descriptorIndex;
+}
+
+UINT D3DDescriptorManager::GetDescriptorOffsetUAV(
+    size_t registerIndex, size_t layoutIndex, UINT descriptorIndex
+) const noexcept {
+    return GetRegisterOffsetUAV(registerIndex, layoutIndex) + descriptorIndex;
+}
+
+UINT D3DDescriptorManager::GetRootIndex(size_t registerIndex, size_t layoutIndex) const noexcept
 {
     // Each layout will be ordered one after another.
-    auto rootIndex = static_cast<UINT>(slotIndex);
+    auto rootIndex = static_cast<UINT>(registerIndex);
 
     for (size_t index = 0u; index < layoutIndex; ++index)
-        rootIndex += static_cast<UINT>(m_descriptorLayouts[index].GetDescriptorDetailsCount());
+        rootIndex += static_cast<UINT>(m_descriptorLayouts[index].GetBindingCount());
 
     return rootIndex;
 }
 
-D3D12_CPU_DESCRIPTOR_HANDLE D3DDescriptorManager::GetCPUHandle(
+D3D12_CPU_DESCRIPTOR_HANDLE D3DDescriptorManager::GetCPUHandleCBV(
     size_t registerSlot, size_t registerSpace, UINT descriptorIndex
 ) const noexcept {
     return m_resourceHeapCPU.GetCPUHandle(
-        GetDescriptorOffset(registerSlot, registerSpace, descriptorIndex)
+        GetDescriptorOffsetCBV(registerSlot, registerSpace, descriptorIndex)
     );
 }
 
-D3D12_GPU_DESCRIPTOR_HANDLE D3DDescriptorManager::GetGPUHandle(
+D3D12_CPU_DESCRIPTOR_HANDLE D3DDescriptorManager::GetCPUHandleSRV(
+    size_t registerSlot, size_t registerSpace, UINT descriptorIndex
+) const noexcept {
+    return m_resourceHeapCPU.GetCPUHandle(
+        GetDescriptorOffsetSRV(registerSlot, registerSpace, descriptorIndex)
+    );
+}
+
+D3D12_CPU_DESCRIPTOR_HANDLE D3DDescriptorManager::GetCPUHandleUAV(
+    size_t registerSlot, size_t registerSpace, UINT descriptorIndex
+) const noexcept {
+    return m_resourceHeapCPU.GetCPUHandle(
+        GetDescriptorOffsetUAV(registerSlot, registerSpace, descriptorIndex)
+    );
+}
+
+D3D12_GPU_DESCRIPTOR_HANDLE D3DDescriptorManager::GetGPUHandleCBV(
     size_t registerSlot, size_t registerSpace, UINT descriptorIndex
 ) const noexcept {
     return m_resourceHeapGPU.GetGPUHandle(
-        GetDescriptorOffset(registerSlot, registerSpace, descriptorIndex)
+        GetDescriptorOffsetCBV(registerSlot, registerSpace, descriptorIndex)
+    );
+}
+
+D3D12_GPU_DESCRIPTOR_HANDLE D3DDescriptorManager::GetGPUHandleSRV(
+    size_t registerSlot, size_t registerSpace, UINT descriptorIndex
+) const noexcept {
+    return m_resourceHeapGPU.GetGPUHandle(
+        GetDescriptorOffsetSRV(registerSlot, registerSpace, descriptorIndex)
+    );
+}
+
+D3D12_GPU_DESCRIPTOR_HANDLE D3DDescriptorManager::GetGPUHandleUAV(
+    size_t registerSlot, size_t registerSpace, UINT descriptorIndex
+) const noexcept {
+    return m_resourceHeapGPU.GetGPUHandle(
+        GetDescriptorOffsetUAV(registerSlot, registerSpace, descriptorIndex)
     );
 }

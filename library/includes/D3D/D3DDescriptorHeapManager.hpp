@@ -369,31 +369,67 @@ public:
 		size_t registerSlot, size_t registerSpace, D3D12_GPU_VIRTUAL_ADDRESS resourceAddress,
 		bool graphicsQueue
 	);
-	void SetDescriptorTable(
+	void SetDescriptorTableCBV(
+		size_t registerSlot, size_t registerSpace, UINT descriptorIndex, bool graphicsQueue
+	);
+	void SetDescriptorTableSRV(
+		size_t registerSlot, size_t registerSpace, UINT descriptorIndex, bool graphicsQueue
+	);
+	void SetDescriptorTableUAV(
 		size_t registerSlot, size_t registerSpace, UINT descriptorIndex, bool graphicsQueue
 	);
 
 	[[nodiscard]]
-	D3D12_CPU_DESCRIPTOR_HANDLE GetCPUHandle(
+	D3D12_CPU_DESCRIPTOR_HANDLE GetCPUHandleCBV(
 		size_t registerSlot, size_t registerSpace, UINT descriptorIndex
 	) const noexcept;
 	[[nodiscard]]
-	D3D12_GPU_DESCRIPTOR_HANDLE GetGPUHandle(
+	D3D12_CPU_DESCRIPTOR_HANDLE GetCPUHandleSRV(
+		size_t registerSlot, size_t registerSpace, UINT descriptorIndex
+	) const noexcept;
+	[[nodiscard]]
+	D3D12_CPU_DESCRIPTOR_HANDLE GetCPUHandleUAV(
+		size_t registerSlot, size_t registerSpace, UINT descriptorIndex
+	) const noexcept;
+	[[nodiscard]]
+	D3D12_GPU_DESCRIPTOR_HANDLE GetGPUHandleCBV(
+		size_t registerSlot, size_t registerSpace, UINT descriptorIndex
+	) const noexcept;
+	[[nodiscard]]
+	D3D12_GPU_DESCRIPTOR_HANDLE GetGPUHandleSRV(
+		size_t registerSlot, size_t registerSpace, UINT descriptorIndex
+	) const noexcept;
+	[[nodiscard]]
+	D3D12_GPU_DESCRIPTOR_HANDLE GetGPUHandleUAV(
 		size_t registerSlot, size_t registerSpace, UINT descriptorIndex
 	) const noexcept;
 
 	[[nodiscard]]
 	const std::vector<D3DDescriptorLayout>& GetLayouts() const noexcept { return m_descriptorLayouts; }
 	[[nodiscard]]
-	UINT GetRootIndex(size_t slotIndex, size_t layoutIndex) const noexcept;
+	UINT GetRootIndex(size_t registerIndex, size_t layoutIndex) const noexcept;
 
 private:
 	[[nodiscard]]
 	UINT GetLayoutOffset(size_t layoutIndex) const noexcept;
 	[[nodiscard]]
-	UINT GetSlotOffset(size_t slotIndex, size_t layoutIndex) const noexcept;
+	UINT GetRegisterOffsetCBV(size_t registerIndex, size_t layoutIndex) const noexcept;
 	[[nodiscard]]
-	UINT GetDescriptorOffset(size_t slotIndex, size_t layoutIndex, UINT descriptorIndex) const noexcept;
+	UINT GetRegisterOffsetSRV(size_t registerIndex, size_t layoutIndex) const noexcept;
+	[[nodiscard]]
+	UINT GetRegisterOffsetUAV(size_t registerIndex, size_t layoutIndex) const noexcept;
+	[[nodiscard]]
+	UINT GetDescriptorOffsetCBV(
+		size_t registerIndex, size_t layoutIndex, UINT descriptorIndex
+	) const noexcept;
+	[[nodiscard]]
+	UINT GetDescriptorOffsetSRV(
+		size_t registerIndex, size_t layoutIndex, UINT descriptorIndex
+	) const noexcept;
+	[[nodiscard]]
+	UINT GetDescriptorOffsetUAV(
+		size_t registerIndex, size_t layoutIndex, UINT descriptorIndex
+	) const noexcept;
 
 private:
 	D3DDescriptorHeap                m_resourceHeapGPU;
