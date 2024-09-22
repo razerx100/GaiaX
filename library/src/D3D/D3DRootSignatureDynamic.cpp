@@ -155,17 +155,19 @@ void D3DRootSignatureDynamic::PopulateFromLayouts(const std::vector<D3DDescripto
 			else
 			{
 				if (bindingDetails.type == D3D12_DESCRIPTOR_RANGE_TYPE_CBV)
-					AddRootCBV(bindingDetails.visibility, bindingDetails.registerIndex, registerSpace);
+					if (bindingDetails.descriptorCount)
+					    // A CBV descriptor which has its table set to false but has a
+						// non-zero descriptor count would be constant values.
+						AddConstants(
+							bindingDetails.descriptorCount, bindingDetails.visibility,
+							bindingDetails.registerIndex, registerSpace
+						);
+					else
+						AddRootCBV(bindingDetails.visibility, bindingDetails.registerIndex, registerSpace);
 				else if (bindingDetails.type == D3D12_DESCRIPTOR_RANGE_TYPE_SRV)
 					AddRootSRV(bindingDetails.visibility, bindingDetails.registerIndex, registerSpace);
 				else if (bindingDetails.type == D3D12_DESCRIPTOR_RANGE_TYPE_UAV)
 					AddRootUAV(bindingDetails.visibility, bindingDetails.registerIndex, registerSpace);
-				else if (bindingDetails.type == D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER)
-					// Sampler means Constant values in the DescriptorLayout.
-					AddConstants(
-						bindingDetails.descriptorCount, bindingDetails.visibility,
-						bindingDetails.registerIndex, registerSpace
-					);
 			}
 		}
 	}

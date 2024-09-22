@@ -623,21 +623,21 @@ UINT D3DDescriptorManager::GetRegisterOffsetCBV(size_t registerIndex, size_t lay
 {
     return GetLayoutOffset(layoutIndex)
         + m_descriptorLayouts[layoutIndex]
-        .GetRegisterOffset(registerIndex, D3D12_DESCRIPTOR_RANGE_TYPE_CBV);
+        .GetDescriptorOffset(registerIndex, D3D12_DESCRIPTOR_RANGE_TYPE_CBV);
 }
 
 UINT D3DDescriptorManager::GetRegisterOffsetSRV(size_t registerIndex, size_t layoutIndex) const noexcept
 {
     return GetLayoutOffset(layoutIndex)
         + m_descriptorLayouts[layoutIndex]
-        .GetRegisterOffset(registerIndex, D3D12_DESCRIPTOR_RANGE_TYPE_SRV);
+        .GetDescriptorOffset(registerIndex, D3D12_DESCRIPTOR_RANGE_TYPE_SRV);
 }
 
 UINT D3DDescriptorManager::GetRegisterOffsetUAV(size_t registerIndex, size_t layoutIndex) const noexcept
 {
     return GetLayoutOffset(layoutIndex)
         + m_descriptorLayouts[layoutIndex]
-        .GetRegisterOffset(registerIndex, D3D12_DESCRIPTOR_RANGE_TYPE_UAV);
+        .GetDescriptorOffset(registerIndex, D3D12_DESCRIPTOR_RANGE_TYPE_UAV);
 }
 
 UINT D3DDescriptorManager::GetDescriptorOffsetCBV(

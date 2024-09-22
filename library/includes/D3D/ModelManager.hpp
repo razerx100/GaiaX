@@ -974,14 +974,15 @@ private:
 	static constexpr size_t s_modelIndicesCSSRVRegisterSlot      = 1u;
 	static constexpr size_t s_argumentInputBufferSRVRegisterSlot = 2u;
 	static constexpr size_t s_cullingDataBufferSRVRegisterSlot   = 3u;
-	static constexpr size_t s_argumenOutputSRVRegisterSlot       = 4u;
-	static constexpr size_t s_counterSRVRegisterSlot             = 5u;
-	static constexpr size_t s_modelBundleIndexSRVRegisterSlot    = 6u;
-	static constexpr size_t s_meshBoundingSRVRegisterSlot        = 7u;
-	static constexpr size_t s_meshIndexSRVRegisterSlot           = 8u;
-	static constexpr size_t s_meshDetailsSRVRegisterSlot         = 9u;
+	static constexpr size_t s_modelBundleIndexSRVRegisterSlot    = 4u;
+	static constexpr size_t s_meshBoundingSRVRegisterSlot        = 5u;
+	static constexpr size_t s_meshIndexSRVRegisterSlot           = 6u;
+	static constexpr size_t s_meshDetailsSRVRegisterSlot         = 7u;
 	// To write the model indices of the not culled models.
-	static constexpr size_t s_modelIndicesVSCSSRVRegisterSlot    = 10u;
+	static constexpr size_t s_modelIndicesVSCSSRVRegisterSlot    = 8u;
+	// UAV
+	static constexpr size_t s_argumenOutputUAVRegisterSlot       = 0u;
+	static constexpr size_t s_counterUAVRegisterSlot             = 1u;
 
 	// Each Compute Thread Group should have 64 threads.
 	static constexpr float THREADBLOCKSIZE = 64.f;

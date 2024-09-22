@@ -28,7 +28,10 @@ void D3DDescriptorLayout::AddView(const BindingDetails& details) noexcept
     size_t bindingIndex                 = std::numeric_limits<size_t>::max();
 
     if (!oBindingIndex)
+    {
         m_bindingDetails.emplace_back(details);
+        m_offsets.emplace_back(0u);
+    }
     else
     {
         bindingIndex                   = oBindingIndex.value();
@@ -41,28 +44,32 @@ void D3DDescriptorLayout::AddView(const BindingDetails& details) noexcept
 
         for (size_t index = 0u; index < std::size(m_bindingDetails); ++index)
         {
-            m_offsets[index] = offset;
-
             const BindingDetails& bindingDetails = m_bindingDetails[index];
             // Root descriptors and constants don't need descriptor handles.
             // So, no need to add the descriptor count.
             if (bindingDetails.descriptorTable)
-                offset += bindingDetails.descriptorCount;
+            {
+                m_offsets[index] = offset;
+                offset          += bindingDetails.descriptorCount;
+            }
+            else
+                // Set the offset to zero if it is not a table.
+                // This is necessary as I am using the last offset as
+                // the total descriptor count.
+                m_offsets[index] = 0u;
         }
 
         // The last offset will be used as the total descriptor count.
         m_offsets.back() = offset;
     }
 }
-
-UINT D3DDescriptorLayout::GetRegisterOffset(
-    size_t registerIndex, D3D12_DESCRIPTOR_RANGE_TYPE type
-) const noexcept {
+UINT D3DDescriptorLayout::GetBindingIndex(size_t registerIndex, D3D12_DESCRIPTOR_RANGE_TYPE type) const noexcept
+{
     std::optional<size_t> bindingIndex = FindBindingIndex(static_cast<UINT>(registerIndex), type);
 
     assert(bindingIndex && "Register doesn't have a binding.");
 
-    return m_offsets[bindingIndex.value()];
+    return static_cast<UINT>(bindingIndex.value());
 }
 
 D3DDescriptorLayout& D3DDescriptorLayout::AddCBVTable(
@@ -84,16 +91,12 @@ D3DDescriptorLayout& D3DDescriptorLayout::AddCBVTable(
 D3DDescriptorLayout& D3DDescriptorLayout::AddConstants(
     size_t registerSlot, UINT uintCount, D3D12_SHADER_VISIBILITY shaderStage
 ) noexcept {
-    // This layout is for the CBV_SRV_UAV heap. Since sampler needs a separate heap anyway,
-    // not gonna hold any sampler data in this. Instead, to make my life easier
-    // I will use the Sampler type to save the constant values. Which needs its own
-    // register space and stuff in D3D12. And the descriptorCount is the number of
-    // uints. So, putting the table variable to false, so the number doesn't get
-    // added to the total descriptor count.
+    // A CBV descriptor which has its table set to false but has a non-zero descriptor count
+    // would be constant values.
     AddView(
         BindingDetails{
             .visibility      = shaderStage,
-            .type            = D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER,
+            .type            = D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
             .descriptorCount = uintCount,
             .registerIndex   = static_cast<UINT>(registerSlot),
             .descriptorTable = false

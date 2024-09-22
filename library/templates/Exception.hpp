@@ -6,7 +6,7 @@
 class Exception : public std::exception
 {
 public:
-	Exception(std::string_view errorType, std::string_view errorMessage)
+	Exception(std::string errorType, std::string errorMessage)
 		: m_exceptionType{ std::move(errorType) }, m_errorMessage{ std::move(errorMessage) }
 	{}
 
@@ -16,7 +16,7 @@ public:
 	const char* what() const noexcept override { return std::data(m_errorMessage); }
 
 private:
-	std::string_view m_exceptionType;
-	std::string_view m_errorMessage;
+	std::string m_exceptionType;
+	std::string m_errorMessage;
 };
 #endif

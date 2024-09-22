@@ -123,12 +123,101 @@ TEST_F(DescriptorHeapManagerTest, DescriptorLayoutTest)
 	layout.AddCBVTable(1u, 11, D3D12_SHADER_VISIBILITY_AMPLIFICATION);
 	EXPECT_EQ(layout.GetTotalDescriptorCount(), 33u) << "Total descriptor count isn't 33.";
 
-	EXPECT_EQ(layout.GetRegisterOffset(0u, D3D12_DESCRIPTOR_RANGE_TYPE_SRV), 0u)
-		<< "Slot offset for the slot 0 isn't 0.";
-	EXPECT_EQ(layout.GetRegisterOffset(1u, D3D12_DESCRIPTOR_RANGE_TYPE_UAV), 10u)
-		<< "Slot offset for the slot 1 isn't 10.";
-	EXPECT_EQ(layout.GetRegisterOffset(2u, D3D12_DESCRIPTOR_RANGE_TYPE_CBV), 21u)
-		<< "Slot offset for the slot 2 isn't 21.";
+	EXPECT_EQ(layout.GetDescriptorOffset(0u, D3D12_DESCRIPTOR_RANGE_TYPE_SRV), 0u)
+		<< "Descriptor offset for the slot 0 isn't 0.";
+	EXPECT_EQ(layout.GetDescriptorOffset(2u, D3D12_DESCRIPTOR_RANGE_TYPE_UAV), 10u)
+		<< "Descriptor offset for the slot 1 isn't 10.";
+	EXPECT_EQ(layout.GetDescriptorOffset(1u, D3D12_DESCRIPTOR_RANGE_TYPE_CBV), 22u)
+		<< "Descriptor offset for the slot 2 isn't 22.";
+}
+
+TEST_F(DescriptorHeapManagerTest, DescriptorLayoutTest2)
+{
+	D3DDescriptorLayout layout{};
+
+	layout.AddRootCBV(1u, D3D12_SHADER_VISIBILITY_VERTEX);
+	layout.AddConstants(0u, 10u, D3D12_SHADER_VISIBILITY_VERTEX);
+	layout.AddRootSRV(1u, D3D12_SHADER_VISIBILITY_VERTEX);
+	layout.AddRootSRV(0u, D3D12_SHADER_VISIBILITY_VERTEX);
+	layout.AddCBVTable(2u, 20u, D3D12_SHADER_VISIBILITY_VERTEX);
+	layout.AddSRVTable(22u, 20u, D3D12_SHADER_VISIBILITY_VERTEX);
+	layout.AddSRVTable(2u, 20u, D3D12_SHADER_VISIBILITY_VERTEX);
+	layout.AddConstants(22u, 10u, D3D12_SHADER_VISIBILITY_VERTEX);
+	layout.AddRootUAV(0u, D3D12_SHADER_VISIBILITY_VERTEX);
+	layout.AddRootUAV(1u, D3D12_SHADER_VISIBILITY_VERTEX);
+
+	{
+		EXPECT_EQ(layout.GetDescriptorOffset(0u, D3D12_DESCRIPTOR_RANGE_TYPE_CBV), 0u)
+			<< "Descriptor offset exists.";
+		EXPECT_EQ(layout.GetBindingIndex(0u, D3D12_DESCRIPTOR_RANGE_TYPE_CBV), 1u)
+			<< "Binding index isn't 1u.";
+	}
+	{
+		EXPECT_EQ(layout.GetDescriptorOffset(1u, D3D12_DESCRIPTOR_RANGE_TYPE_CBV), 0u)
+			<< "Descriptor offset exists.";
+		EXPECT_EQ(layout.GetBindingIndex(1u, D3D12_DESCRIPTOR_RANGE_TYPE_CBV), 0u)
+			<< "Binding index isn't 0u.";
+	}
+	{
+		EXPECT_EQ(layout.GetDescriptorOffset(2u, D3D12_DESCRIPTOR_RANGE_TYPE_CBV), 0u)
+			<< "Descriptor offset isn't 0u.";
+		EXPECT_EQ(layout.GetBindingIndex(2u, D3D12_DESCRIPTOR_RANGE_TYPE_CBV), 4u)
+			<< "Binding index isn't 4u.";
+	}
+	{
+		EXPECT_EQ(layout.GetDescriptorOffset(22u, D3D12_DESCRIPTOR_RANGE_TYPE_CBV), 0u)
+			<< "Descriptor offset exists.";
+		EXPECT_EQ(layout.GetBindingIndex(22u, D3D12_DESCRIPTOR_RANGE_TYPE_CBV), 7u)
+			<< "Binding index isn't 7u.";
+	}
+	{
+		EXPECT_EQ(layout.GetDescriptorOffset(0u, D3D12_DESCRIPTOR_RANGE_TYPE_SRV), 0u)
+			<< "Descriptor offset exists.";
+		EXPECT_EQ(layout.GetBindingIndex(0u, D3D12_DESCRIPTOR_RANGE_TYPE_SRV), 3u)
+			<< "Binding index isn't 3u.";
+	}
+	{
+		EXPECT_EQ(layout.GetDescriptorOffset(1u, D3D12_DESCRIPTOR_RANGE_TYPE_SRV), 0u)
+			<< "Descriptor offset exists.";
+		EXPECT_EQ(layout.GetBindingIndex(1u, D3D12_DESCRIPTOR_RANGE_TYPE_SRV), 2u)
+			<< "Binding index isn't 2u.";
+	}
+	{
+		EXPECT_EQ(layout.GetDescriptorOffset(2u, D3D12_DESCRIPTOR_RANGE_TYPE_SRV), 40u)
+			<< "Descriptor offset isn't 40u.";
+		EXPECT_EQ(layout.GetBindingIndex(2u, D3D12_DESCRIPTOR_RANGE_TYPE_SRV), 6u)
+			<< "Binding index isn't 6u.";
+	}
+	{
+		EXPECT_EQ(layout.GetDescriptorOffset(22u, D3D12_DESCRIPTOR_RANGE_TYPE_SRV), 20u)
+			<< "Descriptor offset isn't 20u.";
+		EXPECT_EQ(layout.GetBindingIndex(22u, D3D12_DESCRIPTOR_RANGE_TYPE_SRV), 5u)
+			<< "Binding index isn't 5u.";
+	}
+	{
+		EXPECT_EQ(layout.GetDescriptorOffset(0u, D3D12_DESCRIPTOR_RANGE_TYPE_UAV), 0u)
+			<< "Descriptor offset exists.";
+		EXPECT_EQ(layout.GetBindingIndex(0u, D3D12_DESCRIPTOR_RANGE_TYPE_UAV), 8u)
+			<< "Binding index isn't 8u.";
+	}
+	{
+		EXPECT_EQ(layout.GetDescriptorOffset(1u, D3D12_DESCRIPTOR_RANGE_TYPE_UAV), 0u)
+			<< "Descriptor offset exists.";
+		EXPECT_EQ(layout.GetBindingIndex(1u, D3D12_DESCRIPTOR_RANGE_TYPE_UAV), 9u)
+			<< "Binding index isn't 9u.";
+	}
+
+	{
+		std::vector<D3DDescriptorLayout> layouts{};
+		layouts.emplace_back(layout);
+
+		D3DRootSignatureDynamic rsDynamic{};
+
+		rsDynamic.PopulateFromLayouts(layouts);
+		EXPECT_NO_THROW(
+			rsDynamic.CompileSignature(RSCompileFlagBuilder{}.VertexShader(), BindlessLevel::UnboundArray)
+		);
+	}
 }
 
 TEST_F(DescriptorHeapManagerTest, DescriptorManagerTest)
@@ -201,7 +290,10 @@ TEST_F(DescriptorHeapManagerTest, DescriptorManagerTest)
 			D3DRootSignatureDynamic rsDynamic{};
 
 			rsDynamic.PopulateFromLayouts(descriptorManger.GetLayouts());
-			rsDynamic.CompileSignature(RSCompileFlagBuilder{}.MeshShader(), BindlessLevel::UnboundArray);
+
+			EXPECT_NO_THROW(
+				rsDynamic.CompileSignature(RSCompileFlagBuilder{}.MeshShader(), BindlessLevel::UnboundArray)
+			);
 
 			D3DRootSignature rootSignature{};
 			rootSignature.CreateSignature(device, rsDynamic);

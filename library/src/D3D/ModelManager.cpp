@@ -873,10 +873,10 @@ void ModelManagerVSIndirect::SetDescriptorLayoutCS(
 			s_cullingDataBufferSRVRegisterSlot, csRegisterSpace, D3D12_SHADER_VISIBILITY_ALL
 		);
 		descriptorManager.AddRootUAV(
-			s_argumenOutputSRVRegisterSlot, csRegisterSpace, D3D12_SHADER_VISIBILITY_ALL
+			s_argumenOutputUAVRegisterSlot, csRegisterSpace, D3D12_SHADER_VISIBILITY_ALL
 		);
 		descriptorManager.AddRootUAV(
-			s_counterSRVRegisterSlot, csRegisterSpace, D3D12_SHADER_VISIBILITY_ALL
+			s_counterUAVRegisterSlot, csRegisterSpace, D3D12_SHADER_VISIBILITY_ALL
 		);
 		descriptorManager.AddRootSRV(
 			s_modelIndicesCSSRVRegisterSlot, csRegisterSpace, D3D12_SHADER_VISIBILITY_ALL
@@ -922,11 +922,11 @@ void ModelManagerVSIndirect::SetDescriptorsCSOfModels(
 			m_cullingDataBuffer.GetGPUAddress(), false
 		);
 		descriptorManager.SetRootUAV(
-			s_argumenOutputSRVRegisterSlot, csRegisterSpace,
+			s_argumenOutputUAVRegisterSlot, csRegisterSpace,
 			m_argumentOutputBuffers[index].GetGPUAddress(), false
 		);
 		descriptorManager.SetRootUAV(
-			s_counterSRVRegisterSlot, csRegisterSpace, m_counterBuffers[index].GetGPUAddress(), false
+			s_counterUAVRegisterSlot, csRegisterSpace, m_counterBuffers[index].GetGPUAddress(), false
 		);
 		descriptorManager.SetRootSRV(
 			s_modelIndicesCSSRVRegisterSlot, csRegisterSpace,

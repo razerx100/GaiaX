@@ -44,7 +44,12 @@ public:
 	[[nodiscard]]
 	size_t GetBindingCount() const noexcept { return std::size(m_bindingDetails); }
 	[[nodiscard]]
-	UINT GetRegisterOffset(size_t registerIndex, D3D12_DESCRIPTOR_RANGE_TYPE type) const noexcept;
+	UINT GetDescriptorOffset(size_t registerIndex, D3D12_DESCRIPTOR_RANGE_TYPE type) const noexcept
+	{
+		return m_offsets[GetBindingIndex(registerIndex, type)];
+	}
+	[[nodiscard]]
+	UINT GetBindingIndex(size_t registerIndex, D3D12_DESCRIPTOR_RANGE_TYPE type) const noexcept;
 	[[nodiscard]]
 	UINT GetTotalDescriptorCount() const noexcept { return m_offsets.back(); }
 
