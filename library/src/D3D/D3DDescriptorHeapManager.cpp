@@ -293,159 +293,63 @@ void D3DDescriptorMap::Bind(
 D3DDescriptorMap& D3DDescriptorMap::SetRootCBVGfx(
 	UINT rootIndex, D3D12_GPU_VIRTUAL_ADDRESS bufferAddress
 ) noexcept {
-    std::optional<size_t> rootIndexLocation = FindRootIndex<SingleDescriptorMap>(rootIndex);
-
-    if (rootIndexLocation)
-        m_rootDescriptors[rootIndexLocation.value()].bufferAddress = bufferAddress;
-    else
-        m_rootDescriptors.emplace_back(
-            SingleDescriptorMap{
-                .rootIndex        = rootIndex,
-                .bufferAddress    = bufferAddress,
-                .bindViewFunction =
-                &ProxyView<&ID3D12GraphicsCommandList::SetGraphicsRootConstantBufferView>
-            }
-        );
-
-	return *this;
+    return SetRootDescriptor<&ProxyView<&ID3D12GraphicsCommandList::SetGraphicsRootConstantBufferView>>(
+        rootIndex, bufferAddress
+    );
 }
 
 D3DDescriptorMap& D3DDescriptorMap::SetRootCBVCom(
 	UINT rootIndex, D3D12_GPU_VIRTUAL_ADDRESS bufferAddress
 ) noexcept {
-    std::optional<size_t> rootIndexLocation = FindRootIndex<SingleDescriptorMap>(rootIndex);
-
-    if (rootIndexLocation)
-        m_rootDescriptors[rootIndexLocation.value()].bufferAddress = bufferAddress;
-    else
-        m_rootDescriptors.emplace_back(
-            SingleDescriptorMap{
-                .rootIndex        = rootIndex,
-                .bufferAddress    = bufferAddress,
-                .bindViewFunction =
-                &ProxyView<&ID3D12GraphicsCommandList::SetComputeRootConstantBufferView>
-            }
-        );
-
-	return *this;
+    return SetRootDescriptor<&ProxyView<&ID3D12GraphicsCommandList::SetComputeRootConstantBufferView>>(
+        rootIndex, bufferAddress
+    );
 }
 
 D3DDescriptorMap& D3DDescriptorMap::SetRootUAVGfx(
 	UINT rootIndex, D3D12_GPU_VIRTUAL_ADDRESS bufferAddress
 ) noexcept {
-    std::optional<size_t> rootIndexLocation = FindRootIndex<SingleDescriptorMap>(rootIndex);
-
-    if (rootIndexLocation)
-        m_rootDescriptors[rootIndexLocation.value()].bufferAddress = bufferAddress;
-    else
-        m_rootDescriptors.emplace_back(
-            SingleDescriptorMap{
-                .rootIndex        = rootIndex,
-                .bufferAddress    = bufferAddress,
-                .bindViewFunction =
-                &ProxyView<&ID3D12GraphicsCommandList::SetGraphicsRootUnorderedAccessView>
-            }
-        );
-
-	return *this;
+    return SetRootDescriptor<&ProxyView<&ID3D12GraphicsCommandList::SetGraphicsRootUnorderedAccessView>>(
+        rootIndex, bufferAddress
+    );
 }
 
 D3DDescriptorMap& D3DDescriptorMap::SetRootUAVCom(
 	UINT rootIndex, D3D12_GPU_VIRTUAL_ADDRESS bufferAddress
 ) noexcept {
-    std::optional<size_t> rootIndexLocation = FindRootIndex<SingleDescriptorMap>(rootIndex);
-
-    if (rootIndexLocation)
-        m_rootDescriptors[rootIndexLocation.value()].bufferAddress = bufferAddress;
-    else
-        m_rootDescriptors.emplace_back(
-            SingleDescriptorMap{
-                .rootIndex        = rootIndex,
-                .bufferAddress    = bufferAddress,
-                .bindViewFunction =
-                &ProxyView<&ID3D12GraphicsCommandList::SetComputeRootUnorderedAccessView>
-            }
-        );
-
-	return *this;
+    return SetRootDescriptor<&ProxyView<&ID3D12GraphicsCommandList::SetComputeRootUnorderedAccessView>>(
+        rootIndex, bufferAddress
+    );
 }
 
 D3DDescriptorMap& D3DDescriptorMap::SetRootSRVGfx(
 	UINT rootIndex, D3D12_GPU_VIRTUAL_ADDRESS bufferAddress
 ) noexcept {
-    std::optional<size_t> rootIndexLocation = FindRootIndex<SingleDescriptorMap>(rootIndex);
-
-    if (rootIndexLocation)
-        m_rootDescriptors[rootIndexLocation.value()].bufferAddress = bufferAddress;
-    else
-        m_rootDescriptors.emplace_back(
-            SingleDescriptorMap{
-                .rootIndex        = rootIndex,
-                .bufferAddress    = bufferAddress,
-                .bindViewFunction =
-                &ProxyView<&ID3D12GraphicsCommandList::SetGraphicsRootShaderResourceView>
-            }
-        );
-
-	return *this;
+    return SetRootDescriptor<&ProxyView<&ID3D12GraphicsCommandList::SetGraphicsRootShaderResourceView>>(
+        rootIndex, bufferAddress
+    );
 }
 
 D3DDescriptorMap& D3DDescriptorMap::SetRootSRVCom(
 	UINT rootIndex, D3D12_GPU_VIRTUAL_ADDRESS bufferAddress
 ) noexcept {
-    std::optional<size_t> rootIndexLocation = FindRootIndex<SingleDescriptorMap>(rootIndex);
-
-    if (rootIndexLocation)
-        m_rootDescriptors[rootIndexLocation.value()].bufferAddress = bufferAddress;
-    else
-        m_rootDescriptors.emplace_back(
-            SingleDescriptorMap{
-                .rootIndex        = rootIndex,
-                .bufferAddress    = bufferAddress,
-                .bindViewFunction =
-                &ProxyView<&ID3D12GraphicsCommandList::SetComputeRootShaderResourceView>
-            }
-        );
-
-	return *this;
+    return SetRootDescriptor<&ProxyView<&ID3D12GraphicsCommandList::SetComputeRootShaderResourceView>>(
+        rootIndex, bufferAddress
+    );
 }
 
 D3DDescriptorMap& D3DDescriptorMap::SetDescTableGfx(UINT rootIndex, UINT descriptorIndex) noexcept
 {
-    std::optional<size_t> rootIndexLocation = FindRootIndex<DescriptorTableMap>(rootIndex);
-
-    if (rootIndexLocation)
-        m_descriptorTables[rootIndexLocation.value()].descriptorIndex = descriptorIndex;
-    else
-        m_descriptorTables.emplace_back(
-            DescriptorTableMap{
-                .rootIndex         = rootIndex,
-                .descriptorIndex   = descriptorIndex,
-                .bindTableFunction =
-                &ProxyTable<&ID3D12GraphicsCommandList::SetGraphicsRootDescriptorTable>
-            }
-        );
-
-	return *this;
+    return SetDescriptorTable<&ProxyTable<&ID3D12GraphicsCommandList::SetGraphicsRootDescriptorTable>>(
+        rootIndex, descriptorIndex
+    );
 }
 
 D3DDescriptorMap& D3DDescriptorMap::SetDescTableCom(UINT rootIndex, UINT descriptorIndex) noexcept
 {
-    std::optional<size_t> rootIndexLocation = FindRootIndex<DescriptorTableMap>(rootIndex);
-
-    if (rootIndexLocation)
-        m_descriptorTables[rootIndexLocation.value()].descriptorIndex = descriptorIndex;
-    else
-        m_descriptorTables.emplace_back(
-            DescriptorTableMap{
-                .rootIndex         = rootIndex,
-                .descriptorIndex   = descriptorIndex,
-                .bindTableFunction =
-                &ProxyTable<&ID3D12GraphicsCommandList::SetComputeRootDescriptorTable>
-            }
-        );
-
-	return *this;
+    return SetDescriptorTable<&ProxyTable<&ID3D12GraphicsCommandList::SetComputeRootDescriptorTable>>(
+        rootIndex, descriptorIndex
+    );
 }
 
 // D3D Descriptor Manager
@@ -619,43 +523,40 @@ UINT D3DDescriptorManager::GetLayoutOffset(size_t layoutIndex) const noexcept
     return layoutOffset;
 }
 
-UINT D3DDescriptorManager::GetRegisterOffsetCBV(size_t registerIndex, size_t layoutIndex) const noexcept
+UINT D3DDescriptorManager::GetDescriptorOffsetCBV(size_t registerIndex, size_t layoutIndex) const noexcept
 {
     return GetLayoutOffset(layoutIndex)
-        + m_descriptorLayouts[layoutIndex]
-        .GetDescriptorOffset(registerIndex, D3D12_DESCRIPTOR_RANGE_TYPE_CBV);
+        + m_descriptorLayouts[layoutIndex].GetDescriptorOffsetCBV(registerIndex);
 }
 
-UINT D3DDescriptorManager::GetRegisterOffsetSRV(size_t registerIndex, size_t layoutIndex) const noexcept
+UINT D3DDescriptorManager::GetDescriptorOffsetSRV(size_t registerIndex, size_t layoutIndex) const noexcept
 {
     return GetLayoutOffset(layoutIndex)
-        + m_descriptorLayouts[layoutIndex]
-        .GetDescriptorOffset(registerIndex, D3D12_DESCRIPTOR_RANGE_TYPE_SRV);
+        + m_descriptorLayouts[layoutIndex].GetDescriptorOffsetSRV(registerIndex);
 }
 
-UINT D3DDescriptorManager::GetRegisterOffsetUAV(size_t registerIndex, size_t layoutIndex) const noexcept
+UINT D3DDescriptorManager::GetDescriptorOffsetUAV(size_t registerIndex, size_t layoutIndex) const noexcept
 {
     return GetLayoutOffset(layoutIndex)
-        + m_descriptorLayouts[layoutIndex]
-        .GetDescriptorOffset(registerIndex, D3D12_DESCRIPTOR_RANGE_TYPE_UAV);
+        + m_descriptorLayouts[layoutIndex].GetDescriptorOffsetUAV(registerIndex);
 }
 
 UINT D3DDescriptorManager::GetDescriptorOffsetCBV(
     size_t registerIndex, size_t layoutIndex, UINT descriptorIndex
 ) const noexcept {
-    return GetRegisterOffsetCBV(registerIndex, layoutIndex) + descriptorIndex;
+    return GetDescriptorOffsetCBV(registerIndex, layoutIndex) + descriptorIndex;
 }
 
 UINT D3DDescriptorManager::GetDescriptorOffsetSRV(
     size_t registerIndex, size_t layoutIndex, UINT descriptorIndex
 ) const noexcept {
-    return GetRegisterOffsetSRV(registerIndex, layoutIndex) + descriptorIndex;
+    return GetDescriptorOffsetSRV(registerIndex, layoutIndex) + descriptorIndex;
 }
 
 UINT D3DDescriptorManager::GetDescriptorOffsetUAV(
     size_t registerIndex, size_t layoutIndex, UINT descriptorIndex
 ) const noexcept {
-    return GetRegisterOffsetUAV(registerIndex, layoutIndex) + descriptorIndex;
+    return GetDescriptorOffsetUAV(registerIndex, layoutIndex) + descriptorIndex;
 }
 
 UINT D3DDescriptorManager::GetRootIndex(size_t registerIndex, size_t layoutIndex) const noexcept

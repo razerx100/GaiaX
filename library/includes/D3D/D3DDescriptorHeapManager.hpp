@@ -249,6 +249,45 @@ private:
 		return result;
 	}
 
+	template<void(*BindViewFunction)(ID3D12GraphicsCommandList*, UINT, D3D12_GPU_VIRTUAL_ADDRESS)>
+	D3DDescriptorMap& SetRootDescriptor(
+		UINT rootIndex, D3D12_GPU_VIRTUAL_ADDRESS bufferAddress
+	) noexcept {
+		std::optional<size_t> rootIndexLocation = FindRootIndex<SingleDescriptorMap>(rootIndex);
+
+		if (rootIndexLocation)
+			m_rootDescriptors[rootIndexLocation.value()].bufferAddress = bufferAddress;
+		else
+			m_rootDescriptors.emplace_back(
+				SingleDescriptorMap{
+					.rootIndex        = rootIndex,
+					.bufferAddress    = bufferAddress,
+					.bindViewFunction = BindViewFunction
+				}
+			);
+
+		return *this;
+	}
+
+	template<void(*BindTableFunction)(ID3D12GraphicsCommandList*, UINT, D3D12_GPU_DESCRIPTOR_HANDLE)>
+	D3DDescriptorMap& SetDescriptorTable(UINT rootIndex, UINT descriptorIndex) noexcept
+	{
+		std::optional<size_t> rootIndexLocation = FindRootIndex<DescriptorTableMap>(rootIndex);
+
+		if (rootIndexLocation)
+			m_descriptorTables[rootIndexLocation.value()].descriptorIndex = descriptorIndex;
+		else
+			m_descriptorTables.emplace_back(
+				DescriptorTableMap{
+					.rootIndex         = rootIndex,
+					.descriptorIndex   = descriptorIndex,
+					.bindTableFunction = BindTableFunction
+				}
+			);
+
+		return *this;
+	}
+
 private:
 	std::vector<SingleDescriptorMap> m_rootDescriptors;
 	std::vector<DescriptorTableMap>  m_descriptorTables;
@@ -413,11 +452,11 @@ private:
 	[[nodiscard]]
 	UINT GetLayoutOffset(size_t layoutIndex) const noexcept;
 	[[nodiscard]]
-	UINT GetRegisterOffsetCBV(size_t registerIndex, size_t layoutIndex) const noexcept;
+	UINT GetDescriptorOffsetCBV(size_t registerIndex, size_t layoutIndex) const noexcept;
 	[[nodiscard]]
-	UINT GetRegisterOffsetSRV(size_t registerIndex, size_t layoutIndex) const noexcept;
+	UINT GetDescriptorOffsetSRV(size_t registerIndex, size_t layoutIndex) const noexcept;
 	[[nodiscard]]
-	UINT GetRegisterOffsetUAV(size_t registerIndex, size_t layoutIndex) const noexcept;
+	UINT GetDescriptorOffsetUAV(size_t registerIndex, size_t layoutIndex) const noexcept;
 	[[nodiscard]]
 	UINT GetDescriptorOffsetCBV(
 		size_t registerIndex, size_t layoutIndex, UINT descriptorIndex

@@ -1,7 +1,6 @@
 #include <D3DDescriptorLayout.hpp>
 #include <ranges>
 #include <algorithm>
-#include <cassert>
 
 // D3D Descriptor Layout
 std::optional<size_t> D3DDescriptorLayout::FindBindingIndex(
@@ -62,14 +61,6 @@ void D3DDescriptorLayout::AddView(const BindingDetails& details) noexcept
         // The last offset will be used as the total descriptor count.
         m_offsets.back() = offset;
     }
-}
-UINT D3DDescriptorLayout::GetBindingIndex(size_t registerIndex, D3D12_DESCRIPTOR_RANGE_TYPE type) const noexcept
-{
-    std::optional<size_t> bindingIndex = FindBindingIndex(static_cast<UINT>(registerIndex), type);
-
-    assert(bindingIndex && "Register doesn't have a binding.");
-
-    return static_cast<UINT>(bindingIndex.value());
 }
 
 D3DDescriptorLayout& D3DDescriptorLayout::AddCBVTable(

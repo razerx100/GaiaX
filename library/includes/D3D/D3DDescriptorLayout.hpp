@@ -4,6 +4,7 @@
 #include <vector>
 #include <array>
 #include <optional>
+#include <cassert>
 
 class D3DDescriptorLayout
 {
@@ -44,14 +45,38 @@ public:
 	[[nodiscard]]
 	size_t GetBindingCount() const noexcept { return std::size(m_bindingDetails); }
 	[[nodiscard]]
-	UINT GetDescriptorOffset(size_t registerIndex, D3D12_DESCRIPTOR_RANGE_TYPE type) const noexcept
+	UINT GetTotalDescriptorCount() const noexcept { return m_offsets.back(); }
+
+	[[nodiscard]]
+	UINT GetBindingIndexCBV(size_t registerIndex) const noexcept
 	{
-		return m_offsets[GetBindingIndex(registerIndex, type)];
+		return GetBindingIndex<D3D12_DESCRIPTOR_RANGE_TYPE_CBV>(registerIndex);
 	}
 	[[nodiscard]]
-	UINT GetBindingIndex(size_t registerIndex, D3D12_DESCRIPTOR_RANGE_TYPE type) const noexcept;
+	UINT GetBindingIndexSRV(size_t registerIndex) const noexcept
+	{
+		return GetBindingIndex<D3D12_DESCRIPTOR_RANGE_TYPE_SRV>(registerIndex);
+	}
 	[[nodiscard]]
-	UINT GetTotalDescriptorCount() const noexcept { return m_offsets.back(); }
+	UINT GetBindingIndexUAV(size_t registerIndex) const noexcept
+	{
+		return GetBindingIndex<D3D12_DESCRIPTOR_RANGE_TYPE_UAV>(registerIndex);
+	}
+	[[nodiscard]]
+	UINT GetDescriptorOffsetCBV(size_t registerIndex) const noexcept
+	{
+		return GetDescriptorOffset<D3D12_DESCRIPTOR_RANGE_TYPE_CBV>(registerIndex);
+	}
+	[[nodiscard]]
+	UINT GetDescriptorOffsetSRV(size_t registerIndex) const noexcept
+	{
+		return GetDescriptorOffset<D3D12_DESCRIPTOR_RANGE_TYPE_SRV>(registerIndex);
+	}
+	[[nodiscard]]
+	UINT GetDescriptorOffsetUAV(size_t registerIndex) const noexcept
+	{
+		return GetDescriptorOffset<D3D12_DESCRIPTOR_RANGE_TYPE_UAV>(registerIndex);
+	}
 
 private:
 	void AddView(const BindingDetails& details) noexcept;
@@ -60,6 +85,23 @@ private:
 	std::optional<size_t> FindBindingIndex(
 		UINT registerIndex, D3D12_DESCRIPTOR_RANGE_TYPE type
 	) const noexcept;
+
+	template<D3D12_DESCRIPTOR_RANGE_TYPE type>
+	[[nodiscard]]
+	UINT GetBindingIndex(size_t registerIndex) const noexcept
+	{
+		std::optional<size_t> bindingIndex = FindBindingIndex(static_cast<UINT>(registerIndex), type);
+
+		assert(bindingIndex && "Register doesn't have a binding.");
+
+		return static_cast<UINT>(bindingIndex.value());
+	}
+	template<D3D12_DESCRIPTOR_RANGE_TYPE type>
+	[[nodiscard]]
+	UINT GetDescriptorOffset(size_t registerIndex) const noexcept
+	{
+		return m_offsets[GetBindingIndex<type>(registerIndex)];
+	}
 
 private:
 	std::vector<BindingDetails> m_bindingDetails;

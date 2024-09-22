@@ -123,11 +123,11 @@ TEST_F(DescriptorHeapManagerTest, DescriptorLayoutTest)
 	layout.AddCBVTable(1u, 11, D3D12_SHADER_VISIBILITY_AMPLIFICATION);
 	EXPECT_EQ(layout.GetTotalDescriptorCount(), 33u) << "Total descriptor count isn't 33.";
 
-	EXPECT_EQ(layout.GetDescriptorOffset(0u, D3D12_DESCRIPTOR_RANGE_TYPE_SRV), 0u)
+	EXPECT_EQ(layout.GetDescriptorOffsetSRV(0u), 0u)
 		<< "Descriptor offset for the slot 0 isn't 0.";
-	EXPECT_EQ(layout.GetDescriptorOffset(2u, D3D12_DESCRIPTOR_RANGE_TYPE_UAV), 10u)
+	EXPECT_EQ(layout.GetDescriptorOffsetUAV(2u), 10u)
 		<< "Descriptor offset for the slot 1 isn't 10.";
-	EXPECT_EQ(layout.GetDescriptorOffset(1u, D3D12_DESCRIPTOR_RANGE_TYPE_CBV), 22u)
+	EXPECT_EQ(layout.GetDescriptorOffsetCBV(1u), 22u)
 		<< "Descriptor offset for the slot 2 isn't 22.";
 }
 
@@ -147,64 +147,44 @@ TEST_F(DescriptorHeapManagerTest, DescriptorLayoutTest2)
 	layout.AddRootUAV(1u, D3D12_SHADER_VISIBILITY_VERTEX);
 
 	{
-		EXPECT_EQ(layout.GetDescriptorOffset(0u, D3D12_DESCRIPTOR_RANGE_TYPE_CBV), 0u)
-			<< "Descriptor offset exists.";
-		EXPECT_EQ(layout.GetBindingIndex(0u, D3D12_DESCRIPTOR_RANGE_TYPE_CBV), 1u)
-			<< "Binding index isn't 1u.";
+		EXPECT_EQ(layout.GetDescriptorOffsetCBV(0u), 0u) << "Descriptor offset exists.";
+		EXPECT_EQ(layout.GetBindingIndexCBV(0u), 1u) << "Binding index isn't 1u.";
 	}
 	{
-		EXPECT_EQ(layout.GetDescriptorOffset(1u, D3D12_DESCRIPTOR_RANGE_TYPE_CBV), 0u)
-			<< "Descriptor offset exists.";
-		EXPECT_EQ(layout.GetBindingIndex(1u, D3D12_DESCRIPTOR_RANGE_TYPE_CBV), 0u)
-			<< "Binding index isn't 0u.";
+		EXPECT_EQ(layout.GetDescriptorOffsetCBV(1u), 0u) << "Descriptor offset exists.";
+		EXPECT_EQ(layout.GetBindingIndexCBV(1u), 0u) << "Binding index isn't 0u.";
 	}
 	{
-		EXPECT_EQ(layout.GetDescriptorOffset(2u, D3D12_DESCRIPTOR_RANGE_TYPE_CBV), 0u)
-			<< "Descriptor offset isn't 0u.";
-		EXPECT_EQ(layout.GetBindingIndex(2u, D3D12_DESCRIPTOR_RANGE_TYPE_CBV), 4u)
-			<< "Binding index isn't 4u.";
+		EXPECT_EQ(layout.GetDescriptorOffsetCBV(2u), 0u) << "Descriptor offset isn't 0u.";
+		EXPECT_EQ(layout.GetBindingIndexCBV(2u), 4u) << "Binding index isn't 4u.";
 	}
 	{
-		EXPECT_EQ(layout.GetDescriptorOffset(22u, D3D12_DESCRIPTOR_RANGE_TYPE_CBV), 0u)
-			<< "Descriptor offset exists.";
-		EXPECT_EQ(layout.GetBindingIndex(22u, D3D12_DESCRIPTOR_RANGE_TYPE_CBV), 7u)
-			<< "Binding index isn't 7u.";
+		EXPECT_EQ(layout.GetDescriptorOffsetCBV(22u), 0u) << "Descriptor offset exists.";
+		EXPECT_EQ(layout.GetBindingIndexCBV(22u), 7u) << "Binding index isn't 7u.";
 	}
 	{
-		EXPECT_EQ(layout.GetDescriptorOffset(0u, D3D12_DESCRIPTOR_RANGE_TYPE_SRV), 0u)
-			<< "Descriptor offset exists.";
-		EXPECT_EQ(layout.GetBindingIndex(0u, D3D12_DESCRIPTOR_RANGE_TYPE_SRV), 3u)
-			<< "Binding index isn't 3u.";
+		EXPECT_EQ(layout.GetDescriptorOffsetSRV(0u), 0u) << "Descriptor offset exists.";
+		EXPECT_EQ(layout.GetBindingIndexSRV(0u), 3u) << "Binding index isn't 3u.";
 	}
 	{
-		EXPECT_EQ(layout.GetDescriptorOffset(1u, D3D12_DESCRIPTOR_RANGE_TYPE_SRV), 0u)
-			<< "Descriptor offset exists.";
-		EXPECT_EQ(layout.GetBindingIndex(1u, D3D12_DESCRIPTOR_RANGE_TYPE_SRV), 2u)
-			<< "Binding index isn't 2u.";
+		EXPECT_EQ(layout.GetDescriptorOffsetSRV(1u), 0u) << "Descriptor offset exists.";
+		EXPECT_EQ(layout.GetBindingIndexSRV(1u), 2u) << "Binding index isn't 2u.";
 	}
 	{
-		EXPECT_EQ(layout.GetDescriptorOffset(2u, D3D12_DESCRIPTOR_RANGE_TYPE_SRV), 40u)
-			<< "Descriptor offset isn't 40u.";
-		EXPECT_EQ(layout.GetBindingIndex(2u, D3D12_DESCRIPTOR_RANGE_TYPE_SRV), 6u)
-			<< "Binding index isn't 6u.";
+		EXPECT_EQ(layout.GetDescriptorOffsetSRV(2u), 40u) << "Descriptor offset isn't 40u.";
+		EXPECT_EQ(layout.GetBindingIndexSRV(2u), 6u) << "Binding index isn't 6u.";
 	}
 	{
-		EXPECT_EQ(layout.GetDescriptorOffset(22u, D3D12_DESCRIPTOR_RANGE_TYPE_SRV), 20u)
-			<< "Descriptor offset isn't 20u.";
-		EXPECT_EQ(layout.GetBindingIndex(22u, D3D12_DESCRIPTOR_RANGE_TYPE_SRV), 5u)
-			<< "Binding index isn't 5u.";
+		EXPECT_EQ(layout.GetDescriptorOffsetSRV(22u), 20u) << "Descriptor offset isn't 20u.";
+		EXPECT_EQ(layout.GetBindingIndexSRV(22u), 5u) << "Binding index isn't 5u.";
 	}
 	{
-		EXPECT_EQ(layout.GetDescriptorOffset(0u, D3D12_DESCRIPTOR_RANGE_TYPE_UAV), 0u)
-			<< "Descriptor offset exists.";
-		EXPECT_EQ(layout.GetBindingIndex(0u, D3D12_DESCRIPTOR_RANGE_TYPE_UAV), 8u)
-			<< "Binding index isn't 8u.";
+		EXPECT_EQ(layout.GetDescriptorOffsetUAV(0u), 0u) << "Descriptor offset exists.";
+		EXPECT_EQ(layout.GetBindingIndexUAV(0u), 8u) << "Binding index isn't 8u.";
 	}
 	{
-		EXPECT_EQ(layout.GetDescriptorOffset(1u, D3D12_DESCRIPTOR_RANGE_TYPE_UAV), 0u)
-			<< "Descriptor offset exists.";
-		EXPECT_EQ(layout.GetBindingIndex(1u, D3D12_DESCRIPTOR_RANGE_TYPE_UAV), 9u)
-			<< "Binding index isn't 9u.";
+		EXPECT_EQ(layout.GetDescriptorOffsetUAV(1u), 0u) << "Descriptor offset exists.";
+		EXPECT_EQ(layout.GetBindingIndexUAV(1u), 9u) << "Binding index isn't 9u.";
 	}
 
 	{
