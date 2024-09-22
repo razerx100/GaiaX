@@ -40,7 +40,7 @@ private:
 	void SetupPipelineStages();
 
 private:
-	static constexpr size_t s_cameraRegisterSlot = 1u;
+	static constexpr size_t s_cameraRegisterSlot = 2u;
 
 public:
 	RenderEngineVSIndividual(const RenderEngineVSIndividual&) = delete;
@@ -99,7 +99,7 @@ private:
 
 private:
 	// Graphics
-	static constexpr size_t s_cameraRegisterSlot = 2u;
+	static constexpr size_t s_cameraRegisterSlot = 3u;
 
 	// Compute
 	static constexpr size_t s_computePipelineSetLayoutCount = 1u;

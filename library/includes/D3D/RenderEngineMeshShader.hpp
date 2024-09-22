@@ -40,7 +40,7 @@ private:
 
 private:
 	// Graphics
-	static constexpr size_t s_cameraRegisterSlot = 5u;
+	static constexpr size_t s_cameraRegisterSlot = 6u;
 
 public:
 	RenderEngineMS(const RenderEngineMS&) = delete;
