@@ -168,7 +168,8 @@ class TextureManager
 public:
 	TextureManager()
 		: m_inactiveTextureIndices{}, m_inactiveSamplerIndices{},
-		m_availableIndicesTextures{}, m_availableIndicesSamplers{}
+		m_availableIndicesTextures(s_textureDescriptorCount, true),
+		m_availableIndicesSamplers{}
 	{}
 
 	void SetDescriptorLayout(
