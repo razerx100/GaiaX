@@ -167,9 +167,14 @@ public:
 	[[nodiscard]]
 	// The allocation size will be different. This will return the Size of the Texture
 	// if it were to fit in a Buffer.
-	UINT64 GetBufferSize() const noexcept { return GetRowPitch() * m_height * m_depth; }
+	UINT64 GetBufferSize() const noexcept { return GetRowPitchD3DAligned() * m_height * m_depth; }
 	[[nodiscard]]
+	// This will be the RowPitch without any alignment. Usually be the RowPitch
+	// after loading the texture from the Disk drive.
 	UINT64 GetRowPitch() const noexcept;
+	[[nodiscard]]
+	// This will be the RowPitch in a D3DBuffer, which would be aligned to 256B.
+	UINT64 GetRowPitchD3DAligned() const noexcept;
 
 private:
 	void Create(

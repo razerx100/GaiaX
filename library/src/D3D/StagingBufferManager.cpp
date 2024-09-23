@@ -112,7 +112,28 @@ void StagingBufferManager::CopyCPU()
 
 			tasks.emplace_back([&textureInfo, &tempBuffer = m_tempBufferToTexture[index]]
 				{
-					memcpy(tempBuffer->CPUHandle(), textureInfo.cpuHandle, textureInfo.bufferSize);
+					// The RowPitch in a texture which was loaded from the Disk Drive won't have its
+					// rowPitch aligned. But the D3D textures need their rowPitches to be aligned to 256B.
+					// So, the textures need to be copied like this.
+					Texture const* texture = textureInfo.dst;
+
+					const auto rowCount    = static_cast<size_t>(texture->GetHeight());
+					const auto srcRowPitch = static_cast<size_t>(texture->GetRowPitch());
+					const auto dstRowPitch = static_cast<size_t>(texture->GetRowPitchD3DAligned());
+
+					std::uint8_t* dst = tempBuffer->CPUHandle();
+					auto src          = static_cast<std::uint8_t const*>(textureInfo.cpuHandle);
+
+					size_t srcOffset = 0u;
+					size_t dstOffset = 0u;
+
+					for (size_t rowIndex = 0u; rowIndex < rowCount; ++rowIndex)
+					{
+						memcpy(dst + dstOffset, src + srcOffset, srcRowPitch);
+
+						srcOffset += srcRowPitch;
+						dstOffset += dstRowPitch;
+					}
 				});
 
 			currentBatchSize += textureInfo.bufferSize;

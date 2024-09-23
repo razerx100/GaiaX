@@ -50,7 +50,7 @@ void D3DCommandList::Copy(
 		.Width    = static_cast<UINT>(dst.GetWidth()),
 		.Height   = dst.GetHeight(),
 		.Depth    = dst.GetDepth(),
-		.RowPitch = static_cast<UINT>(dst.GetRowPitch())
+		.RowPitch = static_cast<UINT>(dst.GetRowPitchD3DAligned())
 	};
 
 	D3D12_PLACED_SUBRESOURCE_FOOTPRINT srcPlacedFootprint

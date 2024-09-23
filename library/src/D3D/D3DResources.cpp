@@ -314,8 +314,13 @@ UINT64 Texture::GetRowPitch() const noexcept
 	if (formatSize != std::end(formatSizeMap))
 	{
 		const UINT64 sizePerPixel = formatSize->second;
-		rowPitch                  = Align(m_width * sizePerPixel, D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
+		rowPitch                  = m_width * sizePerPixel;
 	}
 
 	return rowPitch;
+}
+
+UINT64 Texture::GetRowPitchD3DAligned() const noexcept
+{
+	return Align(GetRowPitch(), D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
 }
