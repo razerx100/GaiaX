@@ -379,8 +379,16 @@ public:
 
 	void CreateDescriptors();
 
-	void Bind(ID3D12GraphicsCommandList* commandList) const noexcept;
-	void Bind(const D3DCommandList& commandList) const noexcept { Bind(commandList.Get()); }
+	void BindDescriptorHeap(ID3D12GraphicsCommandList* commandList) const noexcept;
+	void BindDescriptorHeap(const D3DCommandList& commandList) const noexcept
+	{
+		BindDescriptorHeap(commandList.Get());
+	}
+	void BindDescriptors(ID3D12GraphicsCommandList* commandList) const noexcept;
+	void BindDescriptors(const D3DCommandList& commandList) const noexcept
+	{
+		BindDescriptors(commandList.Get());
+	}
 
 	void CreateCBV(
 		size_t registerSlot, size_t registerSpace, UINT descriptorIndex,

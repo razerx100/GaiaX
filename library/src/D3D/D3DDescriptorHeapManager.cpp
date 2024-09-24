@@ -378,12 +378,13 @@ void D3DDescriptorManager::CreateDescriptors()
     m_resourceHeapGPU.Create(totalDescriptorCount);
 }
 
-void D3DDescriptorManager::Bind(ID3D12GraphicsCommandList* commandList) const noexcept
+void D3DDescriptorManager::BindDescriptorHeap(ID3D12GraphicsCommandList* commandList) const noexcept
 {
-    // Bind the heap.
     m_resourceHeapGPU.Bind(commandList);
+}
 
-    // Now bind all the descriptors.
+void D3DDescriptorManager::BindDescriptors(ID3D12GraphicsCommandList* commandList) const noexcept
+{
     m_descriptorMap.Bind(m_resourceHeapGPU, commandList);
 }
 

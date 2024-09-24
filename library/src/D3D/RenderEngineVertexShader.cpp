@@ -139,11 +139,13 @@ ID3D12Fence* RenderEngineVSIndividual::DrawingStage(
 
 		m_viewportAndScissors.Bind(graphicsCmdListScope);
 
-		m_graphicsDescriptorManagers[frameIndex].Bind(graphicsCmdListScope);
+		m_graphicsDescriptorManagers[frameIndex].BindDescriptorHeap(graphicsCmdListScope);
 
 		const D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = m_depthBuffer.ClearDSV(graphicsCmdListScope);
 
 		renderTarget.Set(graphicsCmdListScope, m_backgroundColour, &dsvHandle);
+
+		m_graphicsDescriptorManagers[frameIndex].BindDescriptors(graphicsCmdListScope);
 
 		m_modelManager.Draw(graphicsCmdListScope);
 
@@ -344,7 +346,8 @@ ID3D12Fence* RenderEngineVSIndirect::FrustumCullingStage(
 
 		m_modelManager.ResetCounterBuffer(computeCmdList, static_cast<UINT64>(frameIndex));
 
-		m_computeDescriptorManagers[frameIndex].Bind(computeCmdListScope);
+		m_computeDescriptorManagers[frameIndex].BindDescriptorHeap(computeCmdListScope);
+		m_computeDescriptorManagers[frameIndex].BindDescriptors(computeCmdListScope);
 
 		m_modelManager.Dispatch(computeCmdListScope);
 	}
@@ -382,11 +385,13 @@ ID3D12Fence* RenderEngineVSIndirect::DrawingStage(
 
 		m_viewportAndScissors.Bind(graphicsCmdListScope);
 
-		m_graphicsDescriptorManagers[frameIndex].Bind(graphicsCmdListScope);
+		m_graphicsDescriptorManagers[frameIndex].BindDescriptorHeap(graphicsCmdListScope);
 
 		const D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = m_depthBuffer.ClearDSV(graphicsCmdListScope);
 
 		renderTarget.Set(graphicsCmdListScope, m_backgroundColour, &dsvHandle);
+
+		m_graphicsDescriptorManagers[frameIndex].BindDescriptors(graphicsCmdListScope);
 
 		m_modelManager.Draw(frameIndex, graphicsCmdListScope);
 
