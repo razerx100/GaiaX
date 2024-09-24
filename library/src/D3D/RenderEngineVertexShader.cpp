@@ -14,10 +14,27 @@ RenderEngineVSIndividual::RenderEngineVSIndividual(
 	for (auto& descriptorManager : m_graphicsDescriptorManagers)
 		descriptorManager.CreateDescriptors();
 
+	// RS
 	if (!std::empty(m_graphicsDescriptorManagers))
-		m_modelManager.CreateRootSignature(
-			m_graphicsDescriptorManagers.front(), s_vertexShaderRegisterSpace
+	{
+		D3DDescriptorManager& graphicsDescriptorManager = m_graphicsDescriptorManagers.front();
+
+		m_modelManager.SetGraphicsConstantsRootIndex(
+			graphicsDescriptorManager, s_vertexShaderRegisterSpace
 		);
+
+		D3DRootSignatureDynamic rootSignatureDynamic{};
+
+		rootSignatureDynamic.PopulateFromLayouts(graphicsDescriptorManager.GetLayouts());
+
+		rootSignatureDynamic.CompileSignature(
+			RSCompileFlagBuilder{}.VertexShader(), BindlessLevel::UnboundArray
+		);
+
+		m_graphicsRootSignature.CreateSignature(deviceManager.GetDevice(), rootSignatureDynamic);
+
+		m_modelManager.SetGraphicsRootSignature(m_graphicsRootSignature.Get());
+	}
 
 	m_cameraManager.CreateBuffer(static_cast<std::uint32_t>(frameCount));
 
@@ -145,6 +162,8 @@ ID3D12Fence* RenderEngineVSIndividual::DrawingStage(
 
 		renderTarget.Set(graphicsCmdListScope, m_backgroundColour, &dsvHandle);
 
+		m_graphicsRootSignature.BindToGraphics(graphicsCmdListScope);
+
 		m_graphicsDescriptorManagers[frameIndex].BindDescriptors(graphicsCmdListScope);
 
 		m_modelManager.Draw(graphicsCmdListScope);
@@ -174,8 +193,11 @@ ID3D12Fence* RenderEngineVSIndividual::DrawingStage(
 RenderEngineVSIndirect::RenderEngineVSIndirect(
 	const DeviceManager& deviceManager, std::shared_ptr<ThreadPool> threadPool, size_t frameCount
 ) : RenderEngineCommon{ deviceManager, std::move(threadPool), frameCount },
-	m_computeQueue{}, m_computeWait{}, m_computeDescriptorManagers{}
+	m_computeQueue{}, m_computeWait{}, m_computeDescriptorManagers{}, m_computeRootSignature{},
+	m_commandSignature{}
 {
+	ID3D12Device5* device = deviceManager.GetDevice();
+
 	// Graphics Descriptors.
 	// The layout shouldn't change throughout the runtime.
 	m_modelManager.SetDescriptorLayoutVS(
@@ -186,10 +208,29 @@ RenderEngineVSIndirect::RenderEngineVSIndirect(
 	for (auto& descriptorManager : m_graphicsDescriptorManagers)
 		descriptorManager.CreateDescriptors();
 
+	// RS
 	if (!std::empty(m_graphicsDescriptorManagers))
-		m_modelManager.CreateRootSignature(
-			m_graphicsDescriptorManagers.front(), s_vertexShaderRegisterSpace
+	{
+		D3DDescriptorManager& graphicsDescriptorManager = m_graphicsDescriptorManagers.front();
+
+		m_modelManager.SetGraphicsConstantsRootIndex(
+			graphicsDescriptorManager, s_vertexShaderRegisterSpace
 		);
+
+		D3DRootSignatureDynamic rootSignatureDynamic{};
+
+		rootSignatureDynamic.PopulateFromLayouts(graphicsDescriptorManager.GetLayouts());
+
+		rootSignatureDynamic.CompileSignature(
+			RSCompileFlagBuilder{}.VertexShader(), BindlessLevel::UnboundArray
+		);
+
+		m_graphicsRootSignature.CreateSignature(device, rootSignatureDynamic);
+
+		m_modelManager.SetGraphicsRootSignature(m_graphicsRootSignature.Get());
+	}
+
+	CreateCommandSignature(device);
 
 	m_cameraManager.CreateBuffer(static_cast<std::uint32_t>(frameCount));
 
@@ -202,8 +243,6 @@ RenderEngineVSIndirect::RenderEngineVSIndirect(
 	);
 
 	// Compute stuffs.
-	ID3D12Device5* device = deviceManager.GetDevice();
-
 	for (size_t _ = 0u; _ < frameCount; ++_)
 	{
 		m_computeDescriptorManagers.emplace_back(device, s_computePipelineSetLayoutCount);
@@ -225,8 +264,27 @@ RenderEngineVSIndirect::RenderEngineVSIndirect(
 	for (auto& descriptorManagers : m_computeDescriptorManagers)
 		descriptorManagers.CreateDescriptors();
 
+	// RS
 	if (!std::empty(m_computeDescriptorManagers))
-		m_modelManager.CreatePipelineCS(m_computeDescriptorManagers.front(), s_computeShaderRegisterSpace);
+	{
+		D3DDescriptorManager& computeDescriptorManager = m_computeDescriptorManagers.front();
+
+		m_modelManager.SetComputeConstantRootIndex(
+			computeDescriptorManager, s_computeShaderRegisterSpace
+		);
+
+		D3DRootSignatureDynamic rootSignatureDynamic{};
+
+		rootSignatureDynamic.PopulateFromLayouts(computeDescriptorManager.GetLayouts());
+
+		rootSignatureDynamic.CompileSignature(
+			RSCompileFlagBuilder{}.ComputeShader(), BindlessLevel::UnboundArray
+		);
+
+		m_computeRootSignature.CreateSignature(device, rootSignatureDynamic);
+
+		m_modelManager.SetComputeRootSignature(m_computeRootSignature.Get());
+	}
 
 	m_cameraManager.SetDescriptorCompute(
 		m_computeDescriptorManagers, s_cameraCSCBVRegisterSlot, s_computeShaderRegisterSpace
@@ -244,6 +302,22 @@ void RenderEngineVSIndirect::SetupPipelineStages()
 	m_pipelineStages.emplace_back(&RenderEngineVSIndirect::GenericCopyStage);
 	m_pipelineStages.emplace_back(&RenderEngineVSIndirect::FrustumCullingStage);
 	m_pipelineStages.emplace_back(&RenderEngineVSIndirect::DrawingStage);
+}
+
+void RenderEngineVSIndirect::CreateCommandSignature(ID3D12Device* device)
+{
+	// Command Signature
+	D3D12_INDIRECT_ARGUMENT_DESC argumentDesc{ .Type = D3D12_INDIRECT_ARGUMENT_TYPE_DRAW_INDEXED };
+
+	D3D12_COMMAND_SIGNATURE_DESC signatureDesc
+	{
+		.ByteStride       = static_cast<UINT>(sizeof(D3D12_DRAW_INDEXED_ARGUMENTS)),
+		.NumArgumentDescs = 1u,
+		.pArgumentDescs   = &argumentDesc
+	};
+
+	// If the argumentDesc contains only has the draw type, the rootSignature should be null.
+	device->CreateCommandSignature(&signatureDesc, nullptr, IID_PPV_ARGS(&m_commandSignature));
 }
 
 ModelManagerVSIndirect RenderEngineVSIndirect::GetModelManager(
@@ -347,6 +421,9 @@ ID3D12Fence* RenderEngineVSIndirect::FrustumCullingStage(
 		m_modelManager.ResetCounterBuffer(computeCmdList, static_cast<UINT64>(frameIndex));
 
 		m_computeDescriptorManagers[frameIndex].BindDescriptorHeap(computeCmdListScope);
+
+		m_computeRootSignature.BindToCompute(computeCmdListScope);
+
 		m_computeDescriptorManagers[frameIndex].BindDescriptors(computeCmdListScope);
 
 		m_modelManager.Dispatch(computeCmdListScope);
@@ -391,9 +468,11 @@ ID3D12Fence* RenderEngineVSIndirect::DrawingStage(
 
 		renderTarget.Set(graphicsCmdListScope, m_backgroundColour, &dsvHandle);
 
+		m_graphicsRootSignature.BindToGraphics(graphicsCmdListScope);
+
 		m_graphicsDescriptorManagers[frameIndex].BindDescriptors(graphicsCmdListScope);
 
-		m_modelManager.Draw(frameIndex, graphicsCmdListScope);
+		m_modelManager.Draw(frameIndex, graphicsCmdListScope, m_commandSignature.Get());
 
 		renderTarget.ToPresentState(graphicsCmdListScope);
 	}

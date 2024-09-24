@@ -97,6 +97,8 @@ private:
 
 	void SetupPipelineStages();
 
+	void CreateCommandSignature(ID3D12Device* device);
+
 private:
 	// Graphics
 	static constexpr size_t s_cameraCBVRegisterSlot = 1u;
@@ -111,6 +113,8 @@ private:
 	D3DCommandQueue                   m_computeQueue;
 	std::vector<D3DFence>             m_computeWait;
 	std::vector<D3DDescriptorManager> m_computeDescriptorManagers;
+	D3DRootSignature                  m_computeRootSignature;
+	ComPtr<ID3D12CommandSignature>    m_commandSignature;
 
 public:
 	RenderEngineVSIndirect(const RenderEngineVSIndirect&) = delete;
@@ -120,7 +124,9 @@ public:
 		: RenderEngineCommon{ std::move(other) },
 		m_computeQueue{ std::move(other.m_computeQueue) },
 		m_computeWait{ std::move(other.m_computeWait) },
-		m_computeDescriptorManagers{ std::move(other.m_computeDescriptorManagers) }
+		m_computeDescriptorManagers{ std::move(other.m_computeDescriptorManagers) },
+		m_computeRootSignature{ std::move(other.m_computeRootSignature) },
+		m_commandSignature{ std::move(other.m_commandSignature) }
 	{}
 	RenderEngineVSIndirect& operator=(RenderEngineVSIndirect&& other) noexcept
 	{
@@ -128,6 +134,8 @@ public:
 		m_computeQueue              = std::move(other.m_computeQueue);
 		m_computeWait               = std::move(other.m_computeWait);
 		m_computeDescriptorManagers = std::move(other.m_computeDescriptorManagers);
+		m_computeRootSignature      = std::move(other.m_computeRootSignature);
+		m_commandSignature          = std::move(other.m_commandSignature);
 
 		return *this;
 	}

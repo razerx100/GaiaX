@@ -399,18 +399,9 @@ ModelManagerVSIndividual::ModelManagerVSIndividual(
 	m_vertexBuffer{ device, memoryManager }, m_indexBuffer{ device, memoryManager }
 {}
 
-void ModelManagerVSIndividual::CreateRootSignatureImpl(
+void ModelManagerVSIndividual::_setGraphicsConstantRootIndex(
 	const D3DDescriptorManager& descriptorManager, size_t constantsRegisterSpace
-) {
-	D3DRootSignatureDynamic rootSignatureDynamic{};
-
-	rootSignatureDynamic.PopulateFromLayouts(descriptorManager.GetLayouts());
-	rootSignatureDynamic.CompileSignature(
-		RSCompileFlagBuilder{}.VertexShader(), BindlessLevel::UnboundArray
-	);
-
-	m_graphicsRootSignature.CreateSignature(m_device, rootSignatureDynamic);
-
+) noexcept {
 	m_constantsRootIndex = descriptorManager.GetRootIndex(
 		s_constantDataCBVRegisterSlot, constantsRegisterSpace
 	);
@@ -514,8 +505,6 @@ void ModelManagerVSIndividual::Draw(const D3DCommandList& graphicsList) const no
 {
 	auto previousPSOIndex = std::numeric_limits<size_t>::max();
 
-	m_graphicsRootSignature.BindToGraphics(graphicsList);
-
 	GraphicsPipelineBase::SetIATopology(graphicsList);
 
 	for (const auto& modelBundle : m_modelBundles)
@@ -551,7 +540,7 @@ ModelManagerVSIndirect::ModelManagerVSIndirect(
 	m_indexBuffer{ device, memoryManager },
 	m_modelBundleIndexBuffer{ device, memoryManager },
 	m_meshBoundsBuffer{ device, memoryManager },
-	m_computeRootSignature{}, m_computePipeline{}, m_commandSignature{},
+	m_computeRootSignature{ nullptr }, m_computePipeline{},
 	m_dispatchXCount{ 0u }, m_argumentCount{ 0u }, m_constantsVSRootIndex{ 0u },
 	m_constantsCSRootIndex{ 0u }, m_modelBundlesCS{}
 {
@@ -582,48 +571,17 @@ ModelManagerVSIndirect::ModelManagerVSIndirect(
 	}
 }
 
-void ModelManagerVSIndirect::CreateRootSignatureImpl(
+void ModelManagerVSIndirect::_setGraphicsConstantRootIndex(
 	const D3DDescriptorManager& descriptorManager, size_t constantsRegisterSpace
-) {
-	D3DRootSignatureDynamic rootSignatureDynamic{};
-
-	rootSignatureDynamic.PopulateFromLayouts(descriptorManager.GetLayouts());
-	rootSignatureDynamic.CompileSignature(
-		RSCompileFlagBuilder{}.VertexShader(), BindlessLevel::UnboundArray
-	);
-
-	m_graphicsRootSignature.CreateSignature(m_device, rootSignatureDynamic);
-
+) noexcept {
 	m_constantsVSRootIndex = descriptorManager.GetRootIndex(
 		s_constantDataVSCBVRegisterSlot, constantsRegisterSpace
 	);
-
-	// Command Signature
-	D3D12_INDIRECT_ARGUMENT_DESC argumentDesc{ .Type = D3D12_INDIRECT_ARGUMENT_TYPE_DRAW_INDEXED };
-
-	D3D12_COMMAND_SIGNATURE_DESC signatureDesc
-	{
-		.ByteStride       = static_cast<UINT>(sizeof(D3D12_DRAW_INDEXED_ARGUMENTS)),
-		.NumArgumentDescs = 1u,
-		.pArgumentDescs   = &argumentDesc
-	};
-
-	// If the argumentDesc contains only has the draw type, the rootSignature should be null.
-	m_device->CreateCommandSignature(&signatureDesc, nullptr, IID_PPV_ARGS(&m_commandSignature));
 }
 
-void ModelManagerVSIndirect::CreatePipelineCS(
+void ModelManagerVSIndirect::SetComputeConstantRootIndex(
 	const D3DDescriptorManager& descriptorManager, size_t constantsRegisterSpace
-) {
-	D3DRootSignatureDynamic rootSignatureDynamic{};
-
-	rootSignatureDynamic.PopulateFromLayouts(descriptorManager.GetLayouts());
-	rootSignatureDynamic.CompileSignature(
-		RSCompileFlagBuilder{}.ComputeShader(), BindlessLevel::UnboundArray
-	);
-
-	m_graphicsRootSignature.CreateSignature(m_device, rootSignatureDynamic);
-
+) noexcept {
 	m_constantsVSRootIndex = descriptorManager.GetRootIndex(
 		s_constantDataCSCBVRegisterSlot, constantsRegisterSpace
 	);
@@ -959,8 +917,6 @@ void ModelManagerVSIndirect::Dispatch(const D3DCommandList& computeList) const n
 {
 	ID3D12GraphicsCommandList* cmdList = computeList.Get();
 
-	m_computeRootSignature.BindToCompute(computeList);
-
 	m_computePipeline.Bind(computeList);
 
 	{
@@ -981,11 +937,10 @@ void ModelManagerVSIndirect::Dispatch(const D3DCommandList& computeList) const n
 	cmdList->Dispatch(m_dispatchXCount, 1u, 1u);
 }
 
-void ModelManagerVSIndirect::Draw(size_t frameIndex, const D3DCommandList& graphicsList) const noexcept
-{
+void ModelManagerVSIndirect::Draw(
+	size_t frameIndex, const D3DCommandList& graphicsList, ID3D12CommandSignature* commandSignature
+) const noexcept {
 	auto previousPSOIndex = std::numeric_limits<size_t>::max();
-
-	m_graphicsRootSignature.BindToGraphics(graphicsList);
 
 	GraphicsPipelineBase::SetIATopology(graphicsList);
 
@@ -998,7 +953,7 @@ void ModelManagerVSIndirect::Draw(size_t frameIndex, const D3DCommandList& graph
 		BindMesh(modelBundle, graphicsList);
 
 		// Model
-		modelBundle.Draw(frameIndex, m_commandSignature.Get(), graphicsList, m_constantsVSRootIndex);
+		modelBundle.Draw(frameIndex, commandSignature, graphicsList, m_constantsVSRootIndex);
 	}
 }
 
@@ -1128,18 +1083,9 @@ void ModelManagerMS::ConfigureMeshBundle(
 	);
 }
 
-void ModelManagerMS::CreateRootSignatureImpl(
+void ModelManagerMS::_setGraphicsConstantRootIndex(
 	const D3DDescriptorManager& descriptorManager, size_t constantsRegisterSpace
-) {
-	D3DRootSignatureDynamic rootSignatureDynamic{};
-
-	rootSignatureDynamic.PopulateFromLayouts(descriptorManager.GetLayouts());
-	rootSignatureDynamic.CompileSignature(
-		RSCompileFlagBuilder{}.MeshShader(), BindlessLevel::UnboundArray
-	);
-
-	m_graphicsRootSignature.CreateSignature(m_device, rootSignatureDynamic);
-
+) noexcept {
 	m_constantsRootIndex = descriptorManager.GetRootIndex(
 		s_constantDataCBVRegisterSlot, constantsRegisterSpace
 	);
@@ -1241,8 +1187,6 @@ void ModelManagerMS::Draw(const D3DCommandList& graphicsList) const noexcept
 {
 	auto previousPSOIndex              = std::numeric_limits<size_t>::max();
 	ID3D12GraphicsCommandList* cmdList = graphicsList.Get();
-
-	m_graphicsRootSignature.BindToGraphics(graphicsList);
 
 	for (const auto& modelBundle : m_modelBundles)
 	{

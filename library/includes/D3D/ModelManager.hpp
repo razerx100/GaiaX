@@ -14,7 +14,6 @@
 #include <ComputePipeline.hpp>
 #include <MeshManagerMeshShader.hpp>
 #include <MeshManagerVertexShader.hpp>
-#include <D3DRootSignature.hpp>
 
 class ModelBundle
 {
@@ -452,22 +451,22 @@ public:
 	ModelManager(
 		ID3D12Device5* device, MemoryManager* memoryManager, std::uint32_t frameCount
 	) : m_device{ device }, m_memoryManager{ memoryManager },
-		m_graphicsRootSignature{}, m_shaderPath{},
+		m_graphicsRootSignature{ nullptr }, m_shaderPath{},
 		m_modelBuffers{ device, memoryManager, frameCount },
 		m_graphicsPipelines{}, m_meshBundles{}, m_modelBundles{}, m_tempCopyNecessary{ true }
 	{}
 
-	// The Root signature should be the same across the multiple descriptors for each frame.
-	void CreateRootSignature(
-		const D3DDescriptorManager& descriptorManager, size_t constantsRegisterSpace
-	) {
-		static_cast<Derived*>(this)->CreateRootSignatureImpl(descriptorManager, constantsRegisterSpace);
+	void SetGraphicsRootSignature(ID3D12RootSignature* rootSignature) noexcept
+	{
+		m_graphicsRootSignature = rootSignature;
 	}
 
-	[[nodiscard]]
-	const D3DRootSignature& GetGraphicsRootSignature() const noexcept
-	{
-		return m_graphicsRootSignature;
+	void SetGraphicsConstantsRootIndex(
+		const D3DDescriptorManager& descriptorManager, size_t constantsRegisterSpace
+	) noexcept {
+		static_cast<Derived*>(this)->_setGraphicsConstantRootIndex(
+			descriptorManager, constantsRegisterSpace
+		);
 	}
 
 	void UpdatePerFrame(UINT64 frameIndex) const noexcept
@@ -626,7 +625,7 @@ protected:
 
 			Pipeline pipeline = static_cast<Derived*>(this)->CreatePipelineObject();
 
-			pipeline.Create(m_device, m_graphicsRootSignature.Get(), m_shaderPath, pixelShader);
+			pipeline.Create(m_device, m_graphicsRootSignature, m_shaderPath, pixelShader);
 
 			m_graphicsPipelines.emplace_back(std::move(pipeline));
 		}
@@ -695,7 +694,7 @@ private:
 protected:
 	ID3D12Device5*               m_device;
 	MemoryManager*               m_memoryManager;
-	D3DRootSignature             m_graphicsRootSignature;
+	ID3D12RootSignature*         m_graphicsRootSignature;
 	std::wstring                 m_shaderPath;
 	ModelBuffers                 m_modelBuffers;
 	std::vector<Pipeline>        m_graphicsPipelines;
@@ -714,7 +713,7 @@ public:
 	ModelManager(ModelManager&& other) noexcept
 		: m_device{ other.m_device },
 		m_memoryManager{ other.m_memoryManager },
-		m_graphicsRootSignature{ std::move(other.m_graphicsRootSignature) },
+		m_graphicsRootSignature{ other.m_graphicsRootSignature },
 		m_shaderPath{ std::move(other.m_shaderPath) },
 		m_modelBuffers{ std::move(other.m_modelBuffers) },
 		m_graphicsPipelines{ std::move(other.m_graphicsPipelines) },
@@ -726,7 +725,7 @@ public:
 	{
 		m_device                = other.m_device;
 		m_memoryManager         = other.m_memoryManager;
-		m_graphicsRootSignature = std::move(other.m_graphicsRootSignature);
+		m_graphicsRootSignature = other.m_graphicsRootSignature;
 		m_shaderPath            = std::move(other.m_shaderPath);
 		m_modelBuffers          = std::move(other.m_modelBuffers);
 		m_graphicsPipelines     = std::move(other.m_graphicsPipelines);
@@ -775,9 +774,9 @@ public:
 	void CopyTempData(const D3DCommandList& copyList) noexcept;
 
 private:
-	void CreateRootSignatureImpl(
+	void _setGraphicsConstantRootIndex(
 		const D3DDescriptorManager& descriptorManager, size_t constantsRegisterSpace
-	);
+	) noexcept;
 
 	void ConfigureModelBundle(
 		ModelBundleVSIndividual& modelBundleObj,
@@ -862,14 +861,13 @@ public:
 
 	void ResetCounterBuffer(const D3DCommandList& computeList, size_t frameIndex) const noexcept;
 
-	void CreatePipelineCS(
+	void SetComputeConstantRootIndex(
 		const D3DDescriptorManager& descriptorManager, size_t constantsRegisterSpace
-	);
+	) noexcept;
 
-	[[nodiscard]]
-	const D3DRootSignature& GetComputeRootSignature() const noexcept
+	void SetComputeRootSignature(ID3D12RootSignature* rootSignature) noexcept
 	{
-		return m_computeRootSignature;
+		m_computeRootSignature = rootSignature;
 	}
 
 	void CopyTempBuffers(const D3DCommandList& copyList) noexcept;
@@ -894,13 +892,15 @@ public:
 		std::vector<D3DDescriptorManager>& descriptorManagers, size_t csRegisterSpace
 	) const;
 
-	void Draw(size_t frameIndex, const D3DCommandList& graphicsList) const noexcept;
+	void Draw(
+		size_t frameIndex, const D3DCommandList& graphicsList, ID3D12CommandSignature* commandSignature
+	) const noexcept;
 	void Dispatch(const D3DCommandList& computeList) const noexcept;
 
 private:
-	void CreateRootSignatureImpl(
+	void _setGraphicsConstantRootIndex(
 		const D3DDescriptorManager& descriptorManager, size_t constantsRegisterSpace
-	);
+	) noexcept;
 
 	void ConfigureModelBundle(
 		ModelBundleVSIndirect& modelBundleObj, std::vector<std::uint32_t>&& modelIndices,
@@ -949,9 +949,8 @@ private:
 	SharedBufferGPU                       m_indexBuffer;
 	SharedBufferGPU                       m_modelBundleIndexBuffer;
 	SharedBufferGPU                       m_meshBoundsBuffer;
-	D3DRootSignature                      m_computeRootSignature;
+	ID3D12RootSignature*                  m_computeRootSignature;
 	ComputePipeline                       m_computePipeline;
-	ComPtr<ID3D12CommandSignature>        m_commandSignature;
 	UINT                                  m_dispatchXCount;
 	std::uint32_t                         m_argumentCount;
 	UINT                                  m_constantsVSRootIndex;
@@ -1012,9 +1011,8 @@ public:
 		m_indexBuffer{ std::move(other.m_indexBuffer) },
 		m_modelBundleIndexBuffer{ std::move(other.m_modelBundleIndexBuffer) },
 		m_meshBoundsBuffer{ std::move(other.m_meshBoundsBuffer) },
-		m_computeRootSignature{ std::move(other.m_computeRootSignature) },
+		m_computeRootSignature{ other.m_computeRootSignature },
 		m_computePipeline{ std::move(other.m_computePipeline) },
-		m_commandSignature{ std::move(other.m_commandSignature) },
 		m_dispatchXCount{ other.m_dispatchXCount },
 		m_argumentCount{ other.m_argumentCount },
 		m_constantsVSRootIndex{ other.m_constantsVSRootIndex },
@@ -1038,9 +1036,8 @@ public:
 		m_indexBuffer            = std::move(other.m_indexBuffer);
 		m_modelBundleIndexBuffer = std::move(other.m_modelBundleIndexBuffer);
 		m_meshBoundsBuffer       = std::move(other.m_meshBoundsBuffer);
-		m_computeRootSignature   = std::move(other.m_computeRootSignature);
+		m_computeRootSignature   = other.m_computeRootSignature;
 		m_computePipeline        = std::move(other.m_computePipeline);
-		m_commandSignature       = std::move(other.m_commandSignature);
 		m_dispatchXCount         = other.m_dispatchXCount;
 		m_argumentCount          = other.m_argumentCount;
 		m_constantsVSRootIndex   = other.m_constantsVSRootIndex;
@@ -1095,9 +1092,9 @@ public:
 	void Draw(const D3DCommandList& graphicsList) const noexcept;
 
 private:
-	void CreateRootSignatureImpl(
+	void _setGraphicsConstantRootIndex(
 		const D3DDescriptorManager& descriptorManager, size_t constantsRegisterSpace
-	);
+	) noexcept;
 	void ConfigureModelBundle(
 		ModelBundleMSIndividual& modelBundleObj, std::vector<std::uint32_t>&& modelIndices,
 		std::shared_ptr<ModelBundleMS>&& modelBundle, TemporaryDataBufferGPU& tempBuffer

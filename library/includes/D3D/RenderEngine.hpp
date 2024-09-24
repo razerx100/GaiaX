@@ -14,6 +14,7 @@
 #include <DepthBuffer.hpp>
 #include <CameraManager.hpp>
 #include <ViewportAndScissorManager.hpp>
+#include <D3DRootSignature.hpp>
 #include <D3DRenderTarget.hpp>
 #include <Model.hpp>
 #include <Shader.hpp>
@@ -126,6 +127,7 @@ protected:
 	std::vector<D3DFence>             m_copyWait;
 	StagingBufferManager              m_stagingManager;
 	std::vector<D3DDescriptorManager> m_graphicsDescriptorManagers;
+	D3DRootSignature                  m_graphicsRootSignature;
 	TextureStorage                    m_textureStorage;
 	TextureManager                    m_textureManager;
 	MaterialBuffers                   m_materialBuffers;
@@ -151,6 +153,7 @@ public:
 		m_copyWait{ std::move(other.m_copyWait) },
 		m_stagingManager{ std::move(other.m_stagingManager) },
 		m_graphicsDescriptorManagers{ std::move(other.m_graphicsDescriptorManagers) },
+		m_graphicsRootSignature{ std::move(other.m_graphicsRootSignature) },
 		m_textureStorage{ std::move(other.m_textureStorage) },
 		m_textureManager{ std::move(other.m_textureManager) },
 		m_materialBuffers{ std::move(other.m_materialBuffers) },
@@ -173,6 +176,7 @@ public:
 		m_copyWait                   = std::move(other.m_copyWait);
 		m_stagingManager             = std::move(other.m_stagingManager);
 		m_graphicsDescriptorManagers = std::move(other.m_graphicsDescriptorManagers);
+		m_graphicsRootSignature      = std::move(other.m_graphicsRootSignature);
 		m_textureStorage             = std::move(other.m_textureStorage);
 		m_textureManager             = std::move(other.m_textureManager);
 		m_materialBuffers            = std::move(other.m_materialBuffers);

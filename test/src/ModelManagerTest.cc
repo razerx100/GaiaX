@@ -364,7 +364,26 @@ TEST_F(ModelManagerTest, ModelManagerVSIndividualTest)
 	for (auto& descManager : descManagers)
 		descManager.CreateDescriptors();
 
-	vsIndividual.CreateRootSignature(descManagers.front(), Constants::vsRegisterSpace);
+	D3DRootSignature rootSignature{};
+
+	if (!std::empty(descManagers))
+	{
+		D3DDescriptorManager& graphicsDescriptorManager = descManagers.front();
+
+		vsIndividual.SetGraphicsConstantsRootIndex(
+			graphicsDescriptorManager, Constants::vsRegisterSpace
+		);
+
+		D3DRootSignatureDynamic rootSignatureDynamic{};
+
+		rootSignatureDynamic.PopulateFromLayouts(graphicsDescriptorManager.GetLayouts());
+
+		rootSignatureDynamic.CompileSignature(
+			RSCompileFlagBuilder{}.VertexShader(), BindlessLevel::UnboundArray
+		);
+
+		rootSignature.CreateSignature(device, rootSignatureDynamic);
+	}
 
 	TemporaryDataBufferGPU tempDataBuffer{};
 
@@ -472,8 +491,47 @@ TEST_F(ModelManagerTest, ModelManagerVSIndirectTest)
 	for (auto& descManager : descManagersCS)
 		descManager.CreateDescriptors();
 
-	vsIndirect.CreateRootSignature(descManagersVS.front(), Constants::vsRegisterSpace);
-	vsIndirect.CreatePipelineCS(descManagersCS.front(), Constants::csRegisterSpace);
+	D3DRootSignature rootSignatureVS{};
+
+	if (!std::empty(descManagersVS))
+	{
+		D3DDescriptorManager& graphicsDescriptorManager = descManagersVS.front();
+
+		vsIndirect.SetGraphicsConstantsRootIndex(
+			graphicsDescriptorManager, Constants::vsRegisterSpace
+		);
+
+		D3DRootSignatureDynamic rootSignatureDynamic{};
+
+		rootSignatureDynamic.PopulateFromLayouts(graphicsDescriptorManager.GetLayouts());
+
+		rootSignatureDynamic.CompileSignature(
+			RSCompileFlagBuilder{}.VertexShader(), BindlessLevel::UnboundArray
+		);
+
+		rootSignatureVS.CreateSignature(device, rootSignatureDynamic);
+	}
+
+	D3DRootSignature rootSignatureCS{};
+
+	if (!std::empty(descManagersCS))
+	{
+		D3DDescriptorManager& computeDescriptorManager = descManagersCS.front();
+
+		vsIndirect.SetComputeConstantRootIndex(
+			computeDescriptorManager, Constants::csRegisterSpace
+		);
+
+		D3DRootSignatureDynamic rootSignatureDynamic{};
+
+		rootSignatureDynamic.PopulateFromLayouts(computeDescriptorManager.GetLayouts());
+
+		rootSignatureDynamic.CompileSignature(
+			RSCompileFlagBuilder{}.ComputeShader(), BindlessLevel::UnboundArray
+		);
+
+		rootSignatureVS.CreateSignature(device, rootSignatureDynamic);
+	}
 
 	TemporaryDataBufferGPU tempDataBuffer{};
 
@@ -596,7 +654,26 @@ TEST_F(ModelManagerTest, ModelManagerMS)
 	for (auto& descManager : descManagers)
 		descManager.CreateDescriptors();
 
-	managerMS.CreateRootSignature(descManagers.front(), Constants::vsRegisterSpace);
+	D3DRootSignature rootSignature{};
+
+	if (!std::empty(descManagers))
+	{
+		D3DDescriptorManager& graphicsDescriptorManager = descManagers.front();
+
+		managerMS.SetGraphicsConstantsRootIndex(
+			graphicsDescriptorManager, Constants::vsRegisterSpace
+		);
+
+		D3DRootSignatureDynamic rootSignatureDynamic{};
+
+		rootSignatureDynamic.PopulateFromLayouts(graphicsDescriptorManager.GetLayouts());
+
+		rootSignatureDynamic.CompileSignature(
+			RSCompileFlagBuilder{}.MeshShader(), BindlessLevel::UnboundArray
+		);
+
+		rootSignature.CreateSignature(device, rootSignatureDynamic);
+	}
 
 	TemporaryDataBufferGPU tempDataBuffer{};
 

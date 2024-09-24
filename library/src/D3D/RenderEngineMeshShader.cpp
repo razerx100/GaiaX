@@ -13,10 +13,27 @@ RenderEngineMS::RenderEngineMS(
 	for (auto& descriptorManager : m_graphicsDescriptorManagers)
 		descriptorManager.CreateDescriptors();
 
+	// RS
 	if (!std::empty(m_graphicsDescriptorManagers))
-		m_modelManager.CreateRootSignature(
-			m_graphicsDescriptorManagers.front(), s_vertexShaderRegisterSpace
+	{
+		D3DDescriptorManager& graphicsDescriptorManager = m_graphicsDescriptorManagers.front();
+
+		m_modelManager.SetGraphicsConstantsRootIndex(
+			graphicsDescriptorManager, s_vertexShaderRegisterSpace
 		);
+
+		D3DRootSignatureDynamic rootSignatureDynamic{};
+
+		rootSignatureDynamic.PopulateFromLayouts(graphicsDescriptorManager.GetLayouts());
+
+		rootSignatureDynamic.CompileSignature(
+			RSCompileFlagBuilder{}.MeshShader(), BindlessLevel::UnboundArray
+		);
+
+		m_graphicsRootSignature.CreateSignature(deviceManager.GetDevice(), rootSignatureDynamic);
+
+		m_modelManager.SetGraphicsRootSignature(m_graphicsRootSignature.Get());
+	}
 
 	m_cameraManager.CreateBuffer(static_cast<std::uint32_t>(frameCount));
 
@@ -140,6 +157,8 @@ ID3D12Fence* RenderEngineMS::DrawingStage(
 		const D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = m_depthBuffer.ClearDSV(graphicsCmdListScope);
 
 		renderTarget.Set(graphicsCmdListScope, m_backgroundColour, &dsvHandle);
+
+		m_graphicsRootSignature.BindToGraphics(graphicsCmdListScope);
 
 		m_graphicsDescriptorManagers[frameIndex].BindDescriptors(graphicsCmdListScope);
 
