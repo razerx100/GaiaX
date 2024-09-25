@@ -6,7 +6,7 @@ Gaia::Gaia(
 	void* windowHandle, UINT width, UINT height, std::uint32_t bufferCount,
 	std::shared_ptr<ThreadPool> threadPool, RenderEngineType engineType
 ) : m_deviceManager{}, m_renderEngine{}, m_rtvHeap{}, m_swapchain{},
-	m_windowWidth{ width }, m_windowHeight{ height }
+	m_windowWidth{ 0u }, m_windowHeight{ 0u }
 {
 	CreateDevice();
 
