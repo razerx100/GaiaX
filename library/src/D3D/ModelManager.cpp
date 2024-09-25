@@ -402,7 +402,7 @@ ModelManagerVSIndividual::ModelManagerVSIndividual(
 void ModelManagerVSIndividual::_setGraphicsConstantRootIndex(
 	const D3DDescriptorManager& descriptorManager, size_t constantsRegisterSpace
 ) noexcept {
-	m_constantsRootIndex = descriptorManager.GetRootIndex(
+	m_constantsRootIndex = descriptorManager.GetRootIndexCBV(
 		s_constantDataCBVRegisterSlot, constantsRegisterSpace
 	);
 }
@@ -574,7 +574,7 @@ ModelManagerVSIndirect::ModelManagerVSIndirect(
 void ModelManagerVSIndirect::_setGraphicsConstantRootIndex(
 	const D3DDescriptorManager& descriptorManager, size_t constantsRegisterSpace
 ) noexcept {
-	m_constantsVSRootIndex = descriptorManager.GetRootIndex(
+	m_constantsVSRootIndex = descriptorManager.GetRootIndexCBV(
 		s_constantDataVSCBVRegisterSlot, constantsRegisterSpace
 	);
 }
@@ -582,7 +582,7 @@ void ModelManagerVSIndirect::_setGraphicsConstantRootIndex(
 void ModelManagerVSIndirect::SetComputeConstantRootIndex(
 	const D3DDescriptorManager& descriptorManager, size_t constantsRegisterSpace
 ) noexcept {
-	m_constantsVSRootIndex = descriptorManager.GetRootIndex(
+	m_constantsVSRootIndex = descriptorManager.GetRootIndexCBV(
 		s_constantDataCSCBVRegisterSlot, constantsRegisterSpace
 	);
 }
@@ -1086,7 +1086,7 @@ void ModelManagerMS::ConfigureMeshBundle(
 void ModelManagerMS::_setGraphicsConstantRootIndex(
 	const D3DDescriptorManager& descriptorManager, size_t constantsRegisterSpace
 ) noexcept {
-	m_constantsRootIndex = descriptorManager.GetRootIndex(
+	m_constantsRootIndex = descriptorManager.GetRootIndexCBV(
 		s_constantDataCBVRegisterSlot, constantsRegisterSpace
 	);
 }

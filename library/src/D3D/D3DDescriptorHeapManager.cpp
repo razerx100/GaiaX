@@ -439,9 +439,9 @@ void D3DDescriptorManager::SetRootCBV(
     bool graphicsQueue
 ) {
     if (!graphicsQueue)
-        m_descriptorMap.SetRootCBVCom(GetRootIndex(registerSlot, registerSpace), resourceAddress);
+        m_descriptorMap.SetRootCBVCom(GetRootIndexCBV(registerSlot, registerSpace), resourceAddress);
     else
-        m_descriptorMap.SetRootCBVGfx(GetRootIndex(registerSlot, registerSpace), resourceAddress);
+        m_descriptorMap.SetRootCBVGfx(GetRootIndexCBV(registerSlot, registerSpace), resourceAddress);
 }
 
 void D3DDescriptorManager::SetRootSRV(
@@ -449,9 +449,9 @@ void D3DDescriptorManager::SetRootSRV(
     bool graphicsQueue
 ) {
     if (!graphicsQueue)
-        m_descriptorMap.SetRootSRVCom(GetRootIndex(registerSlot, registerSpace), resourceAddress);
+        m_descriptorMap.SetRootSRVCom(GetRootIndexSRV(registerSlot, registerSpace), resourceAddress);
     else
-        m_descriptorMap.SetRootSRVGfx(GetRootIndex(registerSlot, registerSpace), resourceAddress);
+        m_descriptorMap.SetRootSRVGfx(GetRootIndexSRV(registerSlot, registerSpace), resourceAddress);
 }
 
 void D3DDescriptorManager::SetRootUAV(
@@ -459,9 +459,9 @@ void D3DDescriptorManager::SetRootUAV(
     bool graphicsQueue
 ) {
     if (!graphicsQueue)
-        m_descriptorMap.SetRootUAVCom(GetRootIndex(registerSlot, registerSpace), resourceAddress);
+        m_descriptorMap.SetRootUAVCom(GetRootIndexUAV(registerSlot, registerSpace), resourceAddress);
     else
-        m_descriptorMap.SetRootUAVGfx(GetRootIndex(registerSlot, registerSpace), resourceAddress);
+        m_descriptorMap.SetRootUAVGfx(GetRootIndexUAV(registerSlot, registerSpace), resourceAddress);
 }
 
 void D3DDescriptorManager::SetDescriptorTableCBV(
@@ -469,12 +469,12 @@ void D3DDescriptorManager::SetDescriptorTableCBV(
 ) {
     if (!graphicsQueue)
         m_descriptorMap.SetDescTableCom(
-            GetRootIndex(registerSlot, registerSpace),
+            GetRootIndexCBV(registerSlot, registerSpace),
             GetDescriptorOffsetCBV(registerSlot, registerSpace, descriptorIndex)
         );
     else
         m_descriptorMap.SetDescTableGfx(
-            GetRootIndex(registerSlot, registerSpace),
+            GetRootIndexCBV(registerSlot, registerSpace),
             GetDescriptorOffsetCBV(registerSlot, registerSpace, descriptorIndex)
         );
 }
@@ -484,12 +484,12 @@ void D3DDescriptorManager::SetDescriptorTableSRV(
 ) {
     if (!graphicsQueue)
         m_descriptorMap.SetDescTableCom(
-            GetRootIndex(registerSlot, registerSpace),
+            GetRootIndexSRV(registerSlot, registerSpace),
             GetDescriptorOffsetSRV(registerSlot, registerSpace, descriptorIndex)
         );
     else
         m_descriptorMap.SetDescTableGfx(
-            GetRootIndex(registerSlot, registerSpace),
+            GetRootIndexSRV(registerSlot, registerSpace),
             GetDescriptorOffsetSRV(registerSlot, registerSpace, descriptorIndex)
         );
 }
@@ -499,12 +499,12 @@ void D3DDescriptorManager::SetDescriptorTableUAV(
 ) {
     if (!graphicsQueue)
         m_descriptorMap.SetDescTableCom(
-            GetRootIndex(registerSlot, registerSpace),
+            GetRootIndexUAV(registerSlot, registerSpace),
             GetDescriptorOffsetUAV(registerSlot, registerSpace, descriptorIndex)
         );
     else
         m_descriptorMap.SetDescTableGfx(
-            GetRootIndex(registerSlot, registerSpace),
+            GetRootIndexUAV(registerSlot, registerSpace),
             GetDescriptorOffsetUAV(registerSlot, registerSpace, descriptorIndex)
         );
 }
@@ -558,17 +558,6 @@ UINT D3DDescriptorManager::GetDescriptorOffsetUAV(
     size_t registerIndex, size_t layoutIndex, UINT descriptorIndex
 ) const noexcept {
     return GetDescriptorOffsetUAV(registerIndex, layoutIndex) + descriptorIndex;
-}
-
-UINT D3DDescriptorManager::GetRootIndex(size_t registerIndex, size_t layoutIndex) const noexcept
-{
-    // Each layout will be ordered one after another.
-    auto rootIndex = static_cast<UINT>(registerIndex);
-
-    for (size_t index = 0u; index < layoutIndex; ++index)
-        rootIndex += static_cast<UINT>(m_descriptorLayouts[index].GetBindingCount());
-
-    return rootIndex;
 }
 
 D3D12_CPU_DESCRIPTOR_HANDLE D3DDescriptorManager::GetCPUHandleCBV(

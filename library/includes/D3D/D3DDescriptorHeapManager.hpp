@@ -453,8 +453,22 @@ public:
 
 	[[nodiscard]]
 	const std::vector<D3DDescriptorLayout>& GetLayouts() const noexcept { return m_descriptorLayouts; }
+
 	[[nodiscard]]
-	UINT GetRootIndex(size_t registerIndex, size_t layoutIndex) const noexcept;
+	UINT GetRootIndexCBV(size_t registerIndex, size_t layoutIndex) const noexcept
+	{
+		return GetRootIndex<D3D12_DESCRIPTOR_RANGE_TYPE_CBV>(registerIndex, layoutIndex);
+	}
+	[[nodiscard]]
+	UINT GetRootIndexSRV(size_t registerIndex, size_t layoutIndex) const noexcept
+	{
+		return GetRootIndex<D3D12_DESCRIPTOR_RANGE_TYPE_SRV>(registerIndex, layoutIndex);
+	}
+	[[nodiscard]]
+	UINT GetRootIndexUAV(size_t registerIndex, size_t layoutIndex) const noexcept
+	{
+		return GetRootIndex<D3D12_DESCRIPTOR_RANGE_TYPE_UAV>(registerIndex, layoutIndex);
+	}
 
 private:
 	[[nodiscard]]
@@ -477,6 +491,21 @@ private:
 	UINT GetDescriptorOffsetUAV(
 		size_t registerIndex, size_t layoutIndex, UINT descriptorIndex
 	) const noexcept;
+
+	template<D3D12_DESCRIPTOR_RANGE_TYPE type>
+	[[nodiscard]]
+	UINT GetRootIndex(size_t registerIndex, size_t layoutIndex) const noexcept
+	{
+		// Each layout will be ordered one after another.
+		const UINT localRootIndex = m_descriptorLayouts[layoutIndex].GetBindingIndex<type>(registerIndex);
+
+		UINT rootOffset = 0u;
+
+		for (size_t index = 0u; index < layoutIndex; ++index)
+			rootOffset += static_cast<UINT>(m_descriptorLayouts[index].GetBindingCount());
+
+		return localRootIndex + rootOffset;
+	}
 
 private:
 	D3DDescriptorHeap                m_resourceHeapGPU;

@@ -47,6 +47,16 @@ public:
 	[[nodiscard]]
 	UINT GetTotalDescriptorCount() const noexcept { return m_offsets.back(); }
 
+	template<D3D12_DESCRIPTOR_RANGE_TYPE type>
+	[[nodiscard]]
+	UINT GetBindingIndex(size_t registerIndex) const noexcept
+	{
+		std::optional<size_t> bindingIndex = FindBindingIndex(static_cast<UINT>(registerIndex), type);
+
+		assert(bindingIndex && "Register doesn't have a binding.");
+
+		return static_cast<UINT>(bindingIndex.value());
+	}
 	[[nodiscard]]
 	UINT GetBindingIndexCBV(size_t registerIndex) const noexcept
 	{
@@ -86,16 +96,6 @@ private:
 		UINT registerIndex, D3D12_DESCRIPTOR_RANGE_TYPE type
 	) const noexcept;
 
-	template<D3D12_DESCRIPTOR_RANGE_TYPE type>
-	[[nodiscard]]
-	UINT GetBindingIndex(size_t registerIndex) const noexcept
-	{
-		std::optional<size_t> bindingIndex = FindBindingIndex(static_cast<UINT>(registerIndex), type);
-
-		assert(bindingIndex && "Register doesn't have a binding.");
-
-		return static_cast<UINT>(bindingIndex.value());
-	}
 	template<D3D12_DESCRIPTOR_RANGE_TYPE type>
 	[[nodiscard]]
 	UINT GetDescriptorOffset(size_t registerIndex) const noexcept
