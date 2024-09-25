@@ -13,7 +13,7 @@ RenderEngine::RenderEngine(
 ) : m_threadPool{ std::move(threadPool) },
 	m_memoryManager{ adapter, device, 20_MB, 400_KB },
 	// The fences will be initialised as 0. So, the starting value should be 1.
-	m_counterValue{ 1u },
+	m_counterValues(frameCount, 0u),
 	m_graphicsQueue{}, m_graphicsWait{},
 	m_copyQueue{}, m_copyWait{},
 	m_stagingManager{ device, &m_memoryManager, m_threadPool.get() },
@@ -160,22 +160,32 @@ void RenderEngine::Update(UINT64 frameIndex) const noexcept
 
 void RenderEngine::WaitForGPUToFinish()
 {
+	// We will have a counter value per frame. So, we should get which of them
+	// has the highest value and signal and wait for that.
+	UINT64 highestCounterValue = 0u;
+
+	for (UINT64 counterValue : m_counterValues)
+		highestCounterValue = std::max(highestCounterValue, counterValue);
+
 	// Increase the counter value so it gets to a value which hasn't been signalled
 	// in the queues yet. So, if we signal this value in the queues now, when it
 	// is signalled, we will know that the queues are finished.
-	++m_counterValue;
+	++highestCounterValue;
 
 	for (size_t index = 0u; index < std::size(m_graphicsWait); ++index)
 	{
-		m_graphicsQueue.Signal(m_graphicsWait[index].Get(), m_counterValue);
-		m_copyQueue.Signal(m_copyWait[index].Get(), m_counterValue);
+		m_graphicsQueue.Signal(m_graphicsWait[index].Get(), highestCounterValue);
+		m_copyQueue.Signal(m_copyWait[index].Get(), highestCounterValue);
 	}
 
 	for (size_t index = 0u; index < std::size(m_graphicsWait); ++index)
 	{
-		m_graphicsWait[index].Wait(m_counterValue);
-		m_copyWait[index].Wait(m_counterValue);
+		m_graphicsWait[index].Wait(highestCounterValue);
+		m_copyWait[index].Wait(highestCounterValue);
 	}
+
+	for (UINT64& counterValue : m_counterValues)
+		counterValue = highestCounterValue;
 }
 
 void RenderEngine::SetCommonGraphicsDescriptorLayout(

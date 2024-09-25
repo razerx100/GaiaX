@@ -329,6 +329,38 @@ ModelManagerVSIndirect RenderEngineVSIndirect::GetModelManager(
 	};
 }
 
+void RenderEngineVSIndirect::WaitForGPUToFinish()
+{
+	// We will have a counter value per frame. So, we should get which of them
+	// has the highest value and signal and wait for that.
+	UINT64 highestCounterValue = 0u;
+
+	for (UINT64 counterValue : m_counterValues)
+		highestCounterValue = std::max(highestCounterValue, counterValue);
+
+	// Increase the counter value so it gets to a value which hasn't been signalled
+	// in the queues yet. So, if we signal this value in the queues now, when it
+	// is signalled, we will know that the queues are finished.
+	++highestCounterValue;
+
+	for (size_t index = 0u; index < std::size(m_graphicsWait); ++index)
+	{
+		m_graphicsQueue.Signal(m_graphicsWait[index].Get(), highestCounterValue);
+		m_computeQueue.Signal(m_computeWait[index].Get(), highestCounterValue);
+		m_copyQueue.Signal(m_copyWait[index].Get(), highestCounterValue);
+	}
+
+	for (size_t index = 0u; index < std::size(m_graphicsWait); ++index)
+	{
+		m_graphicsWait[index].Wait(highestCounterValue);
+		m_computeWait[index].Wait(highestCounterValue);
+		m_copyWait[index].Wait(highestCounterValue);
+	}
+
+	for (UINT64& counterValue : m_counterValues)
+		counterValue = highestCounterValue;
+}
+
 std::uint32_t RenderEngineVSIndirect::AddModelBundle(
 	std::shared_ptr<ModelBundleVS>&& modelBundle, const ShaderName& pixelShader
 ) {

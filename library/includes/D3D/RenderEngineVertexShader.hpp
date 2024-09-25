@@ -75,6 +75,8 @@ public:
 	[[nodiscard]]
 	std::uint32_t AddMeshBundle(std::unique_ptr<MeshBundleVS> meshBundle) override;
 
+	void WaitForGPUToFinish() override;
+
 private:
 	[[nodiscard]]
 	static ModelManagerVSIndirect GetModelManager(

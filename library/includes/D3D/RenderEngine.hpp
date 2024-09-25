@@ -120,7 +120,7 @@ protected:
 protected:
 	std::shared_ptr<ThreadPool>       m_threadPool;
 	MemoryManager                     m_memoryManager;
-	UINT64                            m_counterValue;
+	std::vector<UINT64>               m_counterValues;
 	D3DCommandQueue                   m_graphicsQueue;
 	std::vector<D3DFence>             m_graphicsWait;
 	D3DCommandQueue                   m_copyQueue;
@@ -146,7 +146,7 @@ public:
 	RenderEngine(RenderEngine&& other) noexcept
 		: m_threadPool{ std::move(other.m_threadPool) },
 		m_memoryManager{ std::move(other.m_memoryManager) },
-		m_counterValue{ other.m_counterValue },
+		m_counterValues{ std::move(other.m_counterValues) },
 		m_graphicsQueue{ std::move(other.m_graphicsQueue) },
 		m_graphicsWait{ std::move(other.m_graphicsWait) },
 		m_copyQueue{ std::move(other.m_copyQueue) },
@@ -169,7 +169,7 @@ public:
 	{
 		m_threadPool                 = std::move(other.m_threadPool);
 		m_memoryManager              = std::move(other.m_memoryManager);
-		m_counterValue               = other.m_counterValue;
+		m_counterValues              = std::move(other.m_counterValues);
 		m_graphicsQueue              = std::move(other.m_graphicsQueue);
 		m_graphicsWait               = std::move(other.m_graphicsWait);
 		m_copyQueue                  = std::move(other.m_copyQueue);
@@ -251,7 +251,9 @@ public:
 	void Render(size_t frameIndex, const RenderTarget& renderTarget) final
 	{
 		// Wait for the previous Graphics command buffer to finish.
-		m_graphicsWait[frameIndex].Wait(m_counterValue);
+		UINT64& counterValue = m_counterValues[frameIndex];
+
+		m_graphicsWait[frameIndex].Wait(counterValue);
 		// It should be okay to clear the data now that the frame has finished
 		// its submission.
 		m_temporaryDataBuffer.Clear(frameIndex);
@@ -265,7 +267,7 @@ public:
 
 		for (auto pipelineStage : m_pipelineStages)
 			waitFence = (static_cast<Derived*>(this)->*pipelineStage)(
-				frameIndex, renderTarget, m_counterValue, waitFence
+				frameIndex, renderTarget, counterValue, waitFence
 			);
 	}
 
