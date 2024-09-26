@@ -25,7 +25,10 @@ void CameraManager::RemoveCamera(std::uint32_t index) noexcept
 
 void CameraManager::CreateBuffer(std::uint32_t frameCount)
 {
-	m_cameraBufferInstanceSize    = static_cast<UINT64>(sizeof(CameraBufferData));
+	// Since I will set the camera data as a Constant buffer, I need to align the size.
+	// The first one would be fine and be aligned to 256B but the subsequent ones wouldn't
+	// be aligned unless the size is aligned.
+	m_cameraBufferInstanceSize    = Buffer::GetCBVAlignedAddress(sizeof(CameraBufferData));
 
 	const UINT64 cameraBufferSize = m_cameraBufferInstanceSize * frameCount;
 

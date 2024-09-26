@@ -86,6 +86,12 @@ public:
 		return m_resource->GetGPUVirtualAddress();
 	}
 
+	template<std::integral T>
+	static UINT64 GetCBVAlignedAddress(T address) noexcept
+	{
+		return static_cast<UINT64>(Align(address, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT));
+	}
+
 	[[nodiscard]]
 	static D3D12_UNORDERED_ACCESS_VIEW_DESC GetUAVDesc(
 		UINT elementCount, UINT strideSize, UINT64 firstElement = 0u, bool raw = false
