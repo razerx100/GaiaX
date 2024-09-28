@@ -307,17 +307,30 @@ void RenderEngineVSIndirect::SetupPipelineStages()
 void RenderEngineVSIndirect::CreateCommandSignature(ID3D12Device* device)
 {
 	// Command Signature
-	D3D12_INDIRECT_ARGUMENT_DESC argumentDesc{ .Type = D3D12_INDIRECT_ARGUMENT_TYPE_DRAW_INDEXED };
+	std::array argumentDescs
+	{
+		D3D12_INDIRECT_ARGUMENT_DESC{
+			.Type     = D3D12_INDIRECT_ARGUMENT_TYPE_CONSTANT,
+			.Constant = {
+				.RootParameterIndex      = m_modelManager.GetConstantsVSRootIndex(),
+				.DestOffsetIn32BitValues = 0u,
+				.Num32BitValuesToSet     = ModelBundleVSIndirect::GetConstantCount()
+			}
+		},
+		D3D12_INDIRECT_ARGUMENT_DESC{ .Type = D3D12_INDIRECT_ARGUMENT_TYPE_DRAW_INDEXED }
+	};
 
 	D3D12_COMMAND_SIGNATURE_DESC signatureDesc
 	{
-		.ByteStride       = static_cast<UINT>(sizeof(D3D12_DRAW_INDEXED_ARGUMENTS)),
-		.NumArgumentDescs = 1u,
-		.pArgumentDescs   = &argumentDesc
+		.ByteStride       = static_cast<UINT>(sizeof(ModelBundleCSIndirect::IndirectArgument)),
+		.NumArgumentDescs = static_cast<UINT>(std::size(argumentDescs)),
+		.pArgumentDescs   = std::data(argumentDescs)
 	};
 
 	// If the argumentDesc contains only has the draw type, the rootSignature should be null.
-	device->CreateCommandSignature(&signatureDesc, nullptr, IID_PPV_ARGS(&m_commandSignature));
+	device->CreateCommandSignature(
+		&signatureDesc, m_graphicsRootSignature.Get(), IID_PPV_ARGS(&m_commandSignature)
+	);
 }
 
 ModelManagerVSIndirect RenderEngineVSIndirect::GetModelManager(

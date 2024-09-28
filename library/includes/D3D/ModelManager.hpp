@@ -168,6 +168,12 @@ public:
 		std::uint32_t commandOffset;// Next Vec2 starts at 8bytes offset
 	};
 
+	struct IndirectArgument
+	{
+		UINT                         modelIndex;
+		D3D12_DRAW_INDEXED_ARGUMENTS drawArguments;
+	};
+
 public:
 	ModelBundleCSIndirect();
 
@@ -176,25 +182,35 @@ public:
 		StagingBufferManager& stagingBufferMan,
 		std::vector<SharedBufferCPU>& argumentInputSharedBuffer,
 		SharedBufferGPU& cullingSharedBuffer, SharedBufferGPU& modelBundleIndexSharedBuffer,
-		SharedBufferGPU& modelIndicesBuffer, const std::vector<std::uint32_t>& modelIndices,
-		TemporaryDataBufferGPU& tempBuffer
+		std::vector<std::uint32_t> modelIndices, TemporaryDataBufferGPU& tempBuffer
 	);
-
-	void SetID(std::uint32_t bundleID) noexcept { m_bundleID = bundleID; }
 
 	void Update(size_t bufferIndex) const noexcept;
 
 	[[nodiscard]]
-	std::uint32_t GetID() const noexcept { return m_bundleID; }
-	[[nodiscard]]
 	std::uint32_t GetMeshIndex() const noexcept { return m_modelBundle->GetMeshIndex(); }
 
+	[[nodiscard]]
+	std::uint32_t GetID() const noexcept
+	{
+		if (!std::empty(m_modelIndices))
+			return m_modelIndices.front();
+		else
+			return std::numeric_limits<std::uint32_t>::max();
+	}
 	[[nodiscard]]
 	// Must be called after the buffers have been created.
 	std::uint32_t GetModelBundleIndex() const noexcept
 	{
 		return static_cast<std::uint32_t>(m_cullingSharedData.offset / sizeof(CullingData));
 	}
+	[[nodiscard]]
+	UINT GetModelCount() const noexcept
+	{
+		return static_cast<UINT>(std::size(m_modelIndices));
+	}
+	[[nodiscard]]
+	const std::vector<std::uint32_t>& GetModelIndices() const noexcept { return m_modelIndices; }
 
 	[[nodiscard]]
 	const std::vector<SharedBufferData>& GetArgumentInputSharedData() const noexcept
@@ -208,20 +224,14 @@ public:
 	{
 		return m_modelBundleIndexSharedData;
 	}
-	[[nodiscard]]
-	const SharedBufferData& GetModelIndicesSharedData() const noexcept
-	{
-		return m_modelIndicesSharedData;
-	}
 
 private:
 	SharedBufferData               m_modelBundleIndexSharedData;
 	SharedBufferData               m_cullingSharedData;
-	SharedBufferData               m_modelIndicesSharedData;
 	std::vector<SharedBufferData>  m_argumentInputSharedData;
+	std::vector<std::uint32_t>     m_modelIndices;
 	std::shared_ptr<ModelBundleVS> m_modelBundle;
 	std::unique_ptr<CullingData>   m_cullingData;
-	std::uint32_t                  m_bundleID;
 
 public:
 	ModelBundleCSIndirect(const ModelBundleCSIndirect&) = delete;
@@ -230,21 +240,19 @@ public:
 	ModelBundleCSIndirect(ModelBundleCSIndirect&& other) noexcept
 		: m_modelBundleIndexSharedData{ other.m_modelBundleIndexSharedData },
 		m_cullingSharedData{ other.m_cullingSharedData },
-		m_modelIndicesSharedData{ other.m_modelIndicesSharedData },
 		m_argumentInputSharedData{ std::move(other.m_argumentInputSharedData) },
+		m_modelIndices{ std::move(other.m_modelIndices) },
 		m_modelBundle{ std::move(other.m_modelBundle) },
-		m_cullingData{ std::move(other.m_cullingData) },
-		m_bundleID{ other.m_bundleID }
+		m_cullingData{ std::move(other.m_cullingData) }
 	{}
 	ModelBundleCSIndirect& operator=(ModelBundleCSIndirect&& other) noexcept
 	{
 		m_modelBundleIndexSharedData = other.m_modelBundleIndexSharedData;
 		m_cullingSharedData          = other.m_cullingSharedData;
-		m_modelIndicesSharedData     = other.m_modelIndicesSharedData;
 		m_argumentInputSharedData    = std::move(other.m_argumentInputSharedData);
+		m_modelIndices               = std::move(other.m_modelIndices);
 		m_modelBundle                = std::move(other.m_modelBundle);
 		m_cullingData                = std::move(other.m_cullingData);
-		m_bundleID                   = other.m_bundleID;
 
 		return *this;
 	}
@@ -255,41 +263,22 @@ class ModelBundleVSIndirect : public ModelBundle
 public:
 	ModelBundleVSIndirect();
 
-	void SetModelBundle(
-		std::shared_ptr<ModelBundleVS> bundle, std::vector<std::uint32_t> modelBufferIndices
-	) noexcept;
+	void SetModelBundle(std::shared_ptr<ModelBundleVS> bundle) noexcept;
 
 	void CreateBuffers(
 		std::vector<SharedBufferGPUWriteOnly>& argumentOutputSharedBuffers,
-		std::vector<SharedBufferGPUWriteOnly>& counterSharedBuffers,
-		std::vector<SharedBufferGPUWriteOnly>& modelIndicesSharedBuffers
+		std::vector<SharedBufferGPUWriteOnly>& counterSharedBuffers, UINT modelCount
 	);
 	void Draw(
-		size_t frameIndex, ID3D12CommandSignature* commandSignature,
-		const D3DCommandList& graphicsList, UINT constantsRootIndex
+		size_t frameIndex, ID3D12CommandSignature* commandSignature, const D3DCommandList& graphicsList
 	) const noexcept;
 
+	void SetID(std::uint32_t bundleID) noexcept { m_bundleID = bundleID; }
 	[[nodiscard]]
-	const std::vector<std::uint32_t>& GetModelIndices() const noexcept { return m_modelIndices; }
-
-	[[nodiscard]]
-	std::uint32_t GetID() const noexcept
-	{
-		if (!std::empty(m_modelIndices))
-			return m_modelIndices.front();
-		else
-			return std::numeric_limits<std::uint32_t>::max();
-	}
+	std::uint32_t GetID() const noexcept { return m_bundleID; }
 
 	[[nodiscard]]
 	std::uint32_t GetMeshIndex() const noexcept { return m_modelBundle->GetMeshIndex(); }
-	[[nodiscard]]
-	UINT GetModelCount() const noexcept
-	{
-		return static_cast<UINT>(std::size(m_modelIndices));
-	}
-	[[nodiscard]]
-	std::uint32_t GetModelOffset() const noexcept { return m_modelOffset; }
 	[[nodiscard]]
 	const std::vector<SharedBufferData>& GetArgumentOutputSharedData() const noexcept
 	{
@@ -300,11 +289,6 @@ public:
 	{
 		return m_counterSharedData;
 	}
-	[[nodiscard]]
-	const std::vector<SharedBufferData>& GetModelIndicesSharedData() const noexcept
-	{
-		return m_modelIndicesSharedData;
-	}
 
 	[[nodiscard]]
 	static UINT64 GetCounterBufferSize() noexcept { return s_counterBufferSize; }
@@ -313,16 +297,11 @@ public:
 	static constexpr UINT GetConstantCount() noexcept { return 1u; }
 
 private:
-	std::uint32_t                  m_modelOffset;
+	UINT                           m_modelCount;
 	std::shared_ptr<ModelBundleVS> m_modelBundle;
 	std::vector<SharedBufferData>  m_argumentOutputSharedData;
 	std::vector<SharedBufferData>  m_counterSharedData;
-	std::vector<SharedBufferData>  m_modelIndicesSharedData;
-
-	// I am gonna use the DrawIndex in the Vertex shader and the thread Index in the Compute shader
-	// to index into this buffer and that will give us the actual model index.
-	// Should replace this with a better alternative one day.
-	std::vector<std::uint32_t>     m_modelIndices;
+	std::uint32_t                  m_bundleID;
 
 	inline static UINT64 s_counterBufferSize = static_cast<UINT64>(sizeof(std::uint32_t));
 
@@ -331,22 +310,21 @@ public:
 	ModelBundleVSIndirect& operator=(const ModelBundleVSIndirect&) = delete;
 
 	ModelBundleVSIndirect(ModelBundleVSIndirect&& other) noexcept
-		: ModelBundle{ std::move(other) }, m_modelOffset{ other.m_modelOffset },
+		: ModelBundle{ std::move(other) },
+		m_modelCount{ other.m_modelCount },
 		m_modelBundle{ std::move(other.m_modelBundle) },
 		m_argumentOutputSharedData{ std::move(other.m_argumentOutputSharedData) },
 		m_counterSharedData{ std::move(other.m_counterSharedData) },
-		m_modelIndicesSharedData{ std::move(other.m_modelIndicesSharedData) },
-		m_modelIndices{ std::move(other.m_modelIndices) }
+		m_bundleID{ other.m_bundleID }
 	{}
 	ModelBundleVSIndirect& operator=(ModelBundleVSIndirect&& other) noexcept
 	{
 		ModelBundle::operator=(std::move(other));
-		m_modelOffset              = other.m_modelOffset;
+		m_modelCount               = other.m_modelCount;
 		m_modelBundle              = std::move(other.m_modelBundle);
 		m_argumentOutputSharedData = std::move(other.m_argumentOutputSharedData);
 		m_counterSharedData        = std::move(other.m_counterSharedData);
-		m_modelIndicesSharedData   = std::move(other.m_modelIndicesSharedData);
-		m_modelIndices             = std::move(other.m_modelIndices);
+		m_bundleID                 = other.m_bundleID;
 
 		return *this;
 	}
@@ -897,6 +875,9 @@ public:
 	) const noexcept;
 	void Dispatch(const D3DCommandList& computeList) const noexcept;
 
+	[[nodiscard]]
+	UINT GetConstantsVSRootIndex() const noexcept { return m_constantsVSRootIndex; }
+
 private:
 	void _setGraphicsConstantRootIndex(
 		const D3DDescriptorManager& descriptorManager, size_t constantsRegisterSpace
@@ -938,13 +919,11 @@ private:
 	StagingBufferManager*                 m_stagingBufferMan;
 	std::vector<SharedBufferCPU>          m_argumentInputBuffers;
 	std::vector<SharedBufferGPUWriteOnly> m_argumentOutputBuffers;
-	std::vector<SharedBufferGPUWriteOnly> m_modelIndicesVSBuffers;
 	SharedBufferGPU                       m_cullingDataBuffer;
 	std::vector<SharedBufferGPUWriteOnly> m_counterBuffers;
 	Buffer                                m_counterResetBuffer;
 	MultiInstanceCPUBuffer<std::uint32_t> m_meshIndexBuffer;
 	ReusableCPUBuffer<BoundsDetails>      m_meshDetailsBuffer;
-	SharedBufferGPU                       m_modelIndicesCSBuffer;
 	SharedBufferGPU                       m_vertexBuffer;
 	SharedBufferGPU                       m_indexBuffer;
 	SharedBufferGPU                       m_modelBundleIndexBuffer;
@@ -962,23 +941,18 @@ private:
 	// Vertex Shader ones
 	// CBV
 	static constexpr size_t s_constantDataVSCBVRegisterSlot = 0u;
-	// SRV
-	static constexpr size_t s_modelIndicesVSSRVRegisterSlot = 1u;
 
 	// Compute Shader ones
 	// CBV
 	static constexpr size_t s_constantDataCSCBVRegisterSlot      = 0u;
 	// SRV
 	static constexpr size_t s_modelBuffersCSSRVRegisterSlot      = 0u;
-	static constexpr size_t s_modelIndicesCSSRVRegisterSlot      = 1u;
-	static constexpr size_t s_argumentInputBufferSRVRegisterSlot = 2u;
-	static constexpr size_t s_cullingDataBufferSRVRegisterSlot   = 3u;
-	static constexpr size_t s_modelBundleIndexSRVRegisterSlot    = 4u;
-	static constexpr size_t s_meshBoundingSRVRegisterSlot        = 5u;
-	static constexpr size_t s_meshIndexSRVRegisterSlot           = 6u;
-	static constexpr size_t s_meshDetailsSRVRegisterSlot         = 7u;
-	// To write the model indices of the not culled models.
-	static constexpr size_t s_modelIndicesVSCSSRVRegisterSlot    = 8u;
+	static constexpr size_t s_argumentInputBufferSRVRegisterSlot = 1u;
+	static constexpr size_t s_cullingDataBufferSRVRegisterSlot   = 2u;
+	static constexpr size_t s_modelBundleIndexSRVRegisterSlot    = 3u;
+	static constexpr size_t s_meshBoundingSRVRegisterSlot        = 4u;
+	static constexpr size_t s_meshIndexSRVRegisterSlot           = 5u;
+	static constexpr size_t s_meshDetailsSRVRegisterSlot         = 6u;
 	// UAV
 	static constexpr size_t s_argumenOutputUAVRegisterSlot       = 0u;
 	static constexpr size_t s_counterUAVRegisterSlot             = 1u;
@@ -1000,13 +974,11 @@ public:
 		m_stagingBufferMan{ other.m_stagingBufferMan },
 		m_argumentInputBuffers{ std::move(other.m_argumentInputBuffers) },
 		m_argumentOutputBuffers{ std::move(other.m_argumentOutputBuffers) },
-		m_modelIndicesVSBuffers{ std::move(other.m_modelIndicesVSBuffers) },
 		m_cullingDataBuffer{ std::move(other.m_cullingDataBuffer) },
 		m_counterBuffers{ std::move(other.m_counterBuffers) },
 		m_counterResetBuffer{ std::move(other.m_counterResetBuffer) },
 		m_meshIndexBuffer{ std::move(other.m_meshIndexBuffer) },
 		m_meshDetailsBuffer{ std::move(other.m_meshDetailsBuffer) },
-		m_modelIndicesCSBuffer{ std::move(other.m_modelIndicesCSBuffer) },
 		m_vertexBuffer{ std::move(other.m_vertexBuffer) },
 		m_indexBuffer{ std::move(other.m_indexBuffer) },
 		m_modelBundleIndexBuffer{ std::move(other.m_modelBundleIndexBuffer) },
@@ -1025,13 +997,11 @@ public:
 		m_stagingBufferMan       = other.m_stagingBufferMan;
 		m_argumentInputBuffers   = std::move(other.m_argumentInputBuffers);
 		m_argumentOutputBuffers  = std::move(other.m_argumentOutputBuffers);
-		m_modelIndicesVSBuffers  = std::move(other.m_modelIndicesVSBuffers);
 		m_cullingDataBuffer      = std::move(other.m_cullingDataBuffer);
 		m_counterBuffers         = std::move(other.m_counterBuffers);
 		m_counterResetBuffer     = std::move(other.m_counterResetBuffer);
 		m_meshIndexBuffer        = std::move(other.m_meshIndexBuffer);
 		m_meshDetailsBuffer      = std::move(other.m_meshDetailsBuffer);
-		m_modelIndicesCSBuffer   = std::move(other.m_modelIndicesCSBuffer);
 		m_vertexBuffer           = std::move(other.m_vertexBuffer);
 		m_indexBuffer            = std::move(other.m_indexBuffer);
 		m_modelBundleIndexBuffer = std::move(other.m_modelBundleIndexBuffer);
