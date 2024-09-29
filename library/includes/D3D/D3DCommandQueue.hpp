@@ -181,18 +181,18 @@ public:
 		const QueueSubmitBuilder<WaitCount, SignalCount, CommandListCount>& builder
 	) const noexcept {
 		{
-			const std::array<ID3D12CommandList*, CommandListCount>& commandLists = builder.GetCommandLists();
-
-			ExecuteCommandLists(std::data(commandLists), CommandListCount);
-		}
-
-		{
 			// GPU Wait.
 			const std::array<ID3D12Fence*, WaitCount>& waitFences = builder.GetWaitFences();
 			const std::array<UINT64, WaitCount>& waitValues       = builder.GetWaitValues();
 
 			for (size_t index = 0u; index < WaitCount; ++index)
 				Wait(waitFences[index], waitValues[index]);
+		}
+
+		{
+			const std::array<ID3D12CommandList*, CommandListCount>& commandLists = builder.GetCommandLists();
+
+			ExecuteCommandLists(std::data(commandLists), CommandListCount);
 		}
 
 		{
