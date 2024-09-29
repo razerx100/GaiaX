@@ -32,6 +32,22 @@ public:
 		Create(device, graphicsRootSignature.Get(), shaderPath, pixelShader);
 	}
 
+	void Recreate(
+		ID3D12Device2* device, ID3D12RootSignature* graphicsRootSignature,
+		const std::wstring& shaderPath
+	) {
+		m_graphicsPipeline = static_cast<Derived*>(this)->_createGraphicsPipeline(
+			device, graphicsRootSignature, shaderPath, m_pixelShader
+		);
+	}
+
+	void Recreate(
+		ID3D12Device2* device, const D3DRootSignature& graphicsRootSignature,
+		const std::wstring& shaderPath
+	) {
+		Recreate(device, graphicsRootSignature.Get(), shaderPath);
+	}
+
 	void Bind(const D3DCommandList& graphicsCmdList) const noexcept
 	{
 		ID3D12GraphicsCommandList* cmdList = graphicsCmdList.Get();
