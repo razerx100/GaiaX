@@ -8,10 +8,11 @@ void DeviceManager::Create(D3D_FEATURE_LEVEL featureLevel /* = D3D_FEATURE_LEVEL
 
 #ifdef _DEBUG
     {
-        ComPtr<ID3D12Debug> debugController{};
+        ComPtr<ID3D12Debug5> debugController{};
         D3D12GetDebugInterface(IID_PPV_ARGS(&debugController));
 
         debugController->EnableDebugLayer();
+        debugController->SetEnableAutoName(TRUE);
 
         dxgiFactoryFlags |= DXGI_CREATE_FACTORY_DEBUG;
     }
