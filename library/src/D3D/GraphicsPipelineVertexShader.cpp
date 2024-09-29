@@ -4,17 +4,17 @@
 
 // Vertex Shader
 std::unique_ptr<D3DPipelineObject> GraphicsPipelineVertexShader::CreateGraphicsPipelineVS(
-	ID3D12Device2* device, ID3D12RootSignature* graphicsRootSignature,
+	ID3D12Device2* device, ID3D12RootSignature* graphicsRootSignature, ShaderType binaryType,
 	const std::wstring& shaderPath, const ShaderName& pixelShader, const ShaderName& vertexShader
 ) {
 	auto vs              = std::make_unique<D3DShader>();
 	const bool vsSuccess = vs->LoadBinary(
-		shaderPath + vertexShader.GetNameWithExtension(s_shaderBytecodeType)
+		shaderPath + vertexShader.GetNameWithExtension(binaryType)
 	);
 
 	auto ps              = std::make_unique<D3DShader>();
 	const bool fsSuccess = ps->LoadBinary(
-		shaderPath + pixelShader.GetNameWithExtension(s_shaderBytecodeType)
+		shaderPath + pixelShader.GetNameWithExtension(binaryType)
 	);
 
 	auto pso = std::make_unique<D3DPipelineObject>();
@@ -36,15 +36,11 @@ std::unique_ptr<D3DPipelineObject> GraphicsPipelineVertexShader::CreateGraphicsP
 	return pso;
 }
 
-void GraphicsPipelineVertexShader::Create(
-	ID3D12Device2* device, ID3D12RootSignature* graphicsRootSignature,
-	const std::wstring& shaderPath, const ShaderName& pixelShader
-) {
-	m_pixelShader = pixelShader;
+void GraphicsPipelineVertexShader::SetIATopology(const D3DCommandList& graphicsCmdList) noexcept
+{
+	ID3D12GraphicsCommandList* cmdList = graphicsCmdList.Get();
 
-	m_graphicsPipeline = _createGraphicsPipeline(
-		device, graphicsRootSignature, shaderPath, m_pixelShader
-	);
+	cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 }
 
 // Indirect Draw
@@ -52,8 +48,9 @@ std::unique_ptr<D3DPipelineObject> GraphicsPipelineIndirectDraw::_createGraphics
 	ID3D12Device2* device, ID3D12RootSignature* graphicsRootSignature,
 	const std::wstring& shaderPath, const ShaderName& pixelShader
 ) const {
-	return CreateGraphicsPipelineVS(
-		device, graphicsRootSignature, shaderPath, pixelShader, L"VertexShaderIndirect"
+	return GraphicsPipelineVertexShader::CreateGraphicsPipelineVS(
+		device, graphicsRootSignature, s_shaderBytecodeType,shaderPath, pixelShader,
+		L"VertexShaderIndirect"
 	);
 }
 
@@ -62,7 +59,8 @@ std::unique_ptr<D3DPipelineObject> GraphicsPipelineIndividualDraw::_createGraphi
 	ID3D12Device2* device, ID3D12RootSignature* graphicsRootSignature,
 	const std::wstring& shaderPath, const ShaderName& pixelShader
 ) const {
-	return CreateGraphicsPipelineVS(
-		device, graphicsRootSignature, shaderPath, pixelShader, L"VertexShaderIndividual"
+	return GraphicsPipelineVertexShader::CreateGraphicsPipelineVS(
+		device, graphicsRootSignature, s_shaderBytecodeType, shaderPath, pixelShader,
+		L"VertexShaderIndividual"
 	);
 }

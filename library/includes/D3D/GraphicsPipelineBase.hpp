@@ -8,15 +8,22 @@
 #include <D3DCommandQueue.hpp>
 #include <Shader.hpp>
 
+template<typename Derived>
 class GraphicsPipelineBase
 {
 public:
 	GraphicsPipelineBase() : m_graphicsPipeline{}, m_pixelShader{} {}
 
-	virtual void Create(
+	void Create(
 		ID3D12Device2* device, ID3D12RootSignature* graphicsRootSignature,
 		const std::wstring& shaderPath, const ShaderName& pixelShader
-	) = 0;
+	) {
+		m_pixelShader      = pixelShader;
+
+		m_graphicsPipeline = static_cast<Derived*>(this)->_createGraphicsPipeline(
+			device, graphicsRootSignature, shaderPath, m_pixelShader
+		);
+	}
 
 	void Create(
 		ID3D12Device2* device, const D3DRootSignature& graphicsRootSignature,
@@ -25,9 +32,12 @@ public:
 		Create(device, graphicsRootSignature.Get(), shaderPath, pixelShader);
 	}
 
-	void Bind(const D3DCommandList& graphicsCmdList) const noexcept;
+	void Bind(const D3DCommandList& graphicsCmdList) const noexcept
+	{
+		ID3D12GraphicsCommandList* cmdList = graphicsCmdList.Get();
 
-	static void SetIATopology(const D3DCommandList& graphicsCmdList) noexcept;
+		cmdList->SetPipelineState(m_graphicsPipeline->Get());
+	}
 
 	[[nodiscard]]
 	ShaderName GetPixelShader() const noexcept { return m_pixelShader; }

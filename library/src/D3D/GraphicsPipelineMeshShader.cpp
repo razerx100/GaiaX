@@ -1,39 +1,37 @@
 #include <GraphicsPipelineMeshShader.hpp>
 #include <D3DShader.hpp>
 
-void GraphicsPipelineMeshShader::Create(
+std::unique_ptr<D3DPipelineObject> GraphicsPipelineMeshShader::_createGraphicsPipeline(
 	ID3D12Device2* device, ID3D12RootSignature* graphicsRootSignature,
 	const std::wstring& shaderPath, const ShaderName& pixelShader
-) {
-	m_pixelShader = pixelShader;
-
+) const {
 	constexpr const wchar_t* meshShaderName = L"MeshShaderIndividual";
 	constexpr const wchar_t* taskShaderName = L"MeshShaderTSIndividual";
 
 	if (m_useAmplificationShader)
-		m_graphicsPipeline = CreateGraphicsPipelineMS(
-			device, graphicsRootSignature, shaderPath, m_pixelShader, meshShaderName,
+		return CreateGraphicsPipelineMS(
+			device, graphicsRootSignature, s_shaderBytecodeType, shaderPath, pixelShader, meshShaderName,
 			taskShaderName
 		);
 	else
-		m_graphicsPipeline = CreateGraphicsPipelineMS(
-			device, graphicsRootSignature, shaderPath, m_pixelShader, meshShaderName
+		return CreateGraphicsPipelineMS(
+			device, graphicsRootSignature, s_shaderBytecodeType, shaderPath, pixelShader, meshShaderName
 		);
 }
 
 std::unique_ptr<D3DPipelineObject> GraphicsPipelineMeshShader::CreateGraphicsPipelineMS(
 	ID3D12Device2* device, ID3D12RootSignature* graphicsRootSignature,
-	const std::wstring& shaderPath, const ShaderName& pixelShader,
+	ShaderType binaryType, const std::wstring& shaderPath, const ShaderName& pixelShader,
 	const ShaderName& meshShader, const ShaderName& amplificationShader/* = {} */
 ) {
 	auto ms              = std::make_unique<D3DShader>();
 	const bool msSuccess = ms->LoadBinary(
-		shaderPath + meshShader.GetNameWithExtension(s_shaderBytecodeType)
+		shaderPath + meshShader.GetNameWithExtension(binaryType)
 	);
 
 	auto ps              = std::make_unique<D3DShader>();
 	const bool fsSuccess = ps->LoadBinary(
-		shaderPath + pixelShader.GetNameWithExtension(s_shaderBytecodeType)
+		shaderPath + pixelShader.GetNameWithExtension(binaryType)
 	);
 
 	GraphicsPipelineBuilderMS builder{ graphicsRootSignature };
@@ -44,7 +42,7 @@ std::unique_ptr<D3DPipelineObject> GraphicsPipelineMeshShader::CreateGraphicsPip
 	{
 		auto as   = std::make_unique<D3DShader>();
 		asSuccess = as->LoadBinary(
-			shaderPath + amplificationShader.GetNameWithExtension(s_shaderBytecodeType)
+			shaderPath + amplificationShader.GetNameWithExtension(binaryType)
 		);
 
 		if (asSuccess)
