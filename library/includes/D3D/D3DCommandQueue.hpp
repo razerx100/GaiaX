@@ -187,21 +187,21 @@ public:
 		}
 
 		{
-			// GPU Signal.
-			const std::array<ID3D12Fence*, SignalCount>& signalFences = builder.GetSignalFences();
-			const std::array<UINT64, SignalCount>& signalValues       = builder.GetSignalValues();
-
-			for (size_t index = 0u; index < SignalCount; ++index)
-				Signal(signalFences[index], signalValues[index]);
-		}
-
-		{
 			// GPU Wait.
 			const std::array<ID3D12Fence*, WaitCount>& waitFences = builder.GetWaitFences();
 			const std::array<UINT64, WaitCount>& waitValues       = builder.GetWaitValues();
 
 			for (size_t index = 0u; index < WaitCount; ++index)
 				Wait(waitFences[index], waitValues[index]);
+		}
+
+		{
+			// GPU Signal.
+			const std::array<ID3D12Fence*, SignalCount>& signalFences = builder.GetSignalFences();
+			const std::array<UINT64, SignalCount>& signalValues       = builder.GetSignalValues();
+
+			for (size_t index = 0u; index < SignalCount; ++index)
+				Signal(signalFences[index], signalValues[index]);
 		}
 	}
 
