@@ -575,6 +575,12 @@ public:
 		m_meshBundles.RemoveElement(bundleIndex);
 	}
 
+	void RecreateGraphicsPipelines()
+	{
+		for (auto& graphicsPipeline : m_graphicsPipelines)
+			graphicsPipeline.Recreate(m_device, m_graphicsRootSignature, m_shaderPath);
+	}
+
 protected:
 	[[nodiscard]]
 	std::optional<std::uint32_t> TryToGetPSOIndex(const ShaderName& pixelShader) const noexcept
@@ -646,12 +652,6 @@ protected:
 			m_modelBundles,
 			[bundleID](const ModelBundleType& bundle) { return bundle.GetID() == bundleID; }
 		);
-	}
-
-	void RecreateGraphicsPipelines()
-	{
-		for (auto& graphicsPipeline : m_graphicsPipelines)
-			graphicsPipeline.Recreate(m_device, m_graphicsRootSignature, m_shaderPath);
 	}
 
 private:
