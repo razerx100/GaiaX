@@ -379,9 +379,7 @@ void D3DDescriptorManager::RecreateDescriptors(const std::vector<D3DDescriptorLa
 
     {
         D3DDescriptorHeap newCPUHeap{
-            m_device,
-            D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
-            D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE
+            m_device, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE
         };
 
         newCPUHeap.Create(newDescriptorCount);
