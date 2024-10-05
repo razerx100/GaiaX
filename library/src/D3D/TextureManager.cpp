@@ -107,7 +107,7 @@ void TextureManager::SetDescriptorLayout(
 	if (textureDescCount)
 		descriptorManager.AddSRVTable(
 			texturesRegisterSlot, textureRegisterSpace, textureDescCount,
-			D3D12_SHADER_VISIBILITY_PIXEL
+			D3D12_SHADER_VISIBILITY_PIXEL, true
 		);
 }
 

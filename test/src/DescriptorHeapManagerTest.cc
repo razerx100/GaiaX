@@ -140,7 +140,7 @@ TEST_F(DescriptorHeapManagerTest, DescriptorLayoutTest2)
 	layout.AddRootSRV(1u, D3D12_SHADER_VISIBILITY_VERTEX);
 	layout.AddRootSRV(0u, D3D12_SHADER_VISIBILITY_VERTEX);
 	layout.AddCBVTable(2u, 20u, D3D12_SHADER_VISIBILITY_VERTEX);
-	layout.AddSRVTable(22u, 20u, D3D12_SHADER_VISIBILITY_VERTEX);
+	layout.AddSRVTable(22u, 20u, D3D12_SHADER_VISIBILITY_VERTEX, true);
 	layout.AddSRVTable(2u, 20u, D3D12_SHADER_VISIBILITY_VERTEX);
 	layout.AddConstants(22u, 10u, D3D12_SHADER_VISIBILITY_VERTEX);
 	layout.AddRootUAV(0u, D3D12_SHADER_VISIBILITY_VERTEX);
@@ -210,12 +210,12 @@ TEST_F(DescriptorHeapManagerTest, DescriptorManagerTest)
 
 		D3DDescriptorManager descriptorManger{ device, layoutCount };
 
-		descriptorManger.AddSRVTable(0u, 1u, 5u, D3D12_SHADER_VISIBILITY_PIXEL);
-		descriptorManger.AddUAVTable(0u, 0u, 1u, D3D12_SHADER_VISIBILITY_MESH);
-		descriptorManger.AddUAVTable(1u, 0u, 2u, D3D12_SHADER_VISIBILITY_MESH);
+		descriptorManger.AddSRVTable(0u, 1u, 5u, D3D12_SHADER_VISIBILITY_PIXEL, false);
+		descriptorManger.AddUAVTable(0u, 0u, 1u, D3D12_SHADER_VISIBILITY_MESH, false);
+		descriptorManger.AddUAVTable(1u, 0u, 2u, D3D12_SHADER_VISIBILITY_MESH, false);
 		descriptorManger.AddRootSRV(2u, 0u, D3D12_SHADER_VISIBILITY_MESH);
 		descriptorManger.AddRootCBV(3u, 0u, D3D12_SHADER_VISIBILITY_MESH);
-		descriptorManger.AddSRVTable(0u, 2u, 1u, D3D12_SHADER_VISIBILITY_MESH);
+		descriptorManger.AddSRVTable(0u, 2u, 1u, D3D12_SHADER_VISIBILITY_MESH, false);
 
 		descriptorManger.CreateDescriptors();
 

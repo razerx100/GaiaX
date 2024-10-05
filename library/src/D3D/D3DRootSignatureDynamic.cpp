@@ -148,10 +148,17 @@ void D3DRootSignatureDynamic::PopulateFromLayouts(const std::vector<D3DDescripto
 			);
 
 			if (bindingDetails.descriptorTable)
+			{
+				UINT descriptorCount = bindingDetails.descriptorCount;
+
+				if (bindingDetails.bindless)
+					descriptorCount = std::numeric_limits<UINT>::max();
+
 				AddDescriptorTable(
-					bindingDetails.type, bindingDetails.descriptorCount,
+					bindingDetails.type, descriptorCount,
 					bindingDetails.visibility, bindingDetails.registerIndex, registerSpace
 				);
+			}
 			else
 			{
 				if (bindingDetails.type == D3D12_DESCRIPTOR_RANGE_TYPE_CBV)

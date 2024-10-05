@@ -333,25 +333,31 @@ public:
 	}
 	D3DDescriptorManager& AddCBVTable(
 		size_t registerSlot, size_t registerSpace, UINT descriptorCount,
-		D3D12_SHADER_VISIBILITY shaderStage
+		D3D12_SHADER_VISIBILITY shaderStage, bool bindless
 	) noexcept {
-		m_descriptorLayouts[registerSpace].AddCBVTable(registerSlot, descriptorCount, shaderStage);
+		m_descriptorLayouts[registerSpace].AddCBVTable(
+			registerSlot, descriptorCount, shaderStage, bindless
+		);
 
 		return *this;
 	}
 	D3DDescriptorManager& AddSRVTable(
 		size_t registerSlot, size_t registerSpace, UINT descriptorCount,
-		D3D12_SHADER_VISIBILITY shaderStage
+		D3D12_SHADER_VISIBILITY shaderStage, bool bindless
 	) noexcept {
-		m_descriptorLayouts[registerSpace].AddSRVTable(registerSlot, descriptorCount, shaderStage);
+		m_descriptorLayouts[registerSpace].AddSRVTable(
+			registerSlot, descriptorCount, shaderStage, bindless
+		);
 
 		return *this;
 	}
 	D3DDescriptorManager& AddUAVTable(
 		size_t registerSlot, size_t registerSpace, UINT descriptorCount,
-		D3D12_SHADER_VISIBILITY shaderStage
+		D3D12_SHADER_VISIBILITY shaderStage, bool bindless
 	) noexcept {
-		m_descriptorLayouts[registerSpace].AddUAVTable(registerSlot, descriptorCount, shaderStage);
+		m_descriptorLayouts[registerSpace].AddUAVTable(
+			registerSlot, descriptorCount, shaderStage, bindless
+		);
 
 		return *this;
 	}

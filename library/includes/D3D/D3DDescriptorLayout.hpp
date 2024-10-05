@@ -16,6 +16,7 @@ public:
 		UINT                        descriptorCount;
 		UINT                        registerIndex;
 		bool                        descriptorTable;
+		bool                        bindless;
 	};
 
 public:
@@ -25,13 +26,16 @@ public:
 		size_t registerSlot, UINT uintCount, D3D12_SHADER_VISIBILITY shaderStage
 	) noexcept;
 	D3DDescriptorLayout& AddCBVTable(
-		size_t registerSlot, UINT descriptorCount, D3D12_SHADER_VISIBILITY shaderStage
+		size_t registerSlot, UINT descriptorCount, D3D12_SHADER_VISIBILITY shaderStage,
+		bool bindless = false
 	) noexcept;
 	D3DDescriptorLayout& AddSRVTable(
-		size_t registerSlot, UINT descriptorCount, D3D12_SHADER_VISIBILITY shaderStage
+		size_t registerSlot, UINT descriptorCount, D3D12_SHADER_VISIBILITY shaderStage,
+		bool bindless = false
 	) noexcept;
 	D3DDescriptorLayout& AddUAVTable(
-		size_t registerSlot, UINT descriptorCount, D3D12_SHADER_VISIBILITY shaderStage
+		size_t registerSlot, UINT descriptorCount, D3D12_SHADER_VISIBILITY shaderStage,
+		bool bindless = false
 	) noexcept;
 	D3DDescriptorLayout& AddRootCBV(size_t registerSlot, D3D12_SHADER_VISIBILITY shaderStage) noexcept;
 	D3DDescriptorLayout& AddRootSRV(size_t registerSlot, D3D12_SHADER_VISIBILITY shaderStage) noexcept;

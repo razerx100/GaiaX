@@ -64,7 +64,8 @@ void D3DDescriptorLayout::AddView(const BindingDetails& details) noexcept
 }
 
 D3DDescriptorLayout& D3DDescriptorLayout::AddCBVTable(
-    size_t registerSlot, UINT descriptorCount, D3D12_SHADER_VISIBILITY shaderStage
+    size_t registerSlot, UINT descriptorCount, D3D12_SHADER_VISIBILITY shaderStage,
+    bool bindless /* = false */
 ) noexcept {
     AddView(
         BindingDetails{
@@ -72,7 +73,8 @@ D3DDescriptorLayout& D3DDescriptorLayout::AddCBVTable(
             .type            = D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
             .descriptorCount = descriptorCount,
             .registerIndex   = static_cast<UINT>(registerSlot),
-            .descriptorTable = true
+            .descriptorTable = true,
+            .bindless        = bindless
         }
     );
 
@@ -90,7 +92,8 @@ D3DDescriptorLayout& D3DDescriptorLayout::AddConstants(
             .type            = D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
             .descriptorCount = uintCount,
             .registerIndex   = static_cast<UINT>(registerSlot),
-            .descriptorTable = false
+            .descriptorTable = false,
+            .bindless        = false
         }
     );
 
@@ -98,7 +101,8 @@ D3DDescriptorLayout& D3DDescriptorLayout::AddConstants(
 }
 
 D3DDescriptorLayout& D3DDescriptorLayout::AddSRVTable(
-    size_t registerSlot, UINT descriptorCount, D3D12_SHADER_VISIBILITY shaderStage
+    size_t registerSlot, UINT descriptorCount, D3D12_SHADER_VISIBILITY shaderStage,
+    bool bindless /* = false */
 ) noexcept {
     AddView(
         BindingDetails{
@@ -106,7 +110,8 @@ D3DDescriptorLayout& D3DDescriptorLayout::AddSRVTable(
             .type            = D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
             .descriptorCount = descriptorCount,
             .registerIndex   = static_cast<UINT>(registerSlot),
-            .descriptorTable = true
+            .descriptorTable = true,
+            .bindless        = bindless
         }
     );
 
@@ -114,7 +119,8 @@ D3DDescriptorLayout& D3DDescriptorLayout::AddSRVTable(
 }
 
 D3DDescriptorLayout& D3DDescriptorLayout::AddUAVTable(
-    size_t registerSlot, UINT descriptorCount, D3D12_SHADER_VISIBILITY shaderStage
+    size_t registerSlot, UINT descriptorCount, D3D12_SHADER_VISIBILITY shaderStage,
+    bool bindless /* = false */
 ) noexcept {
     AddView(
         BindingDetails{
@@ -122,7 +128,8 @@ D3DDescriptorLayout& D3DDescriptorLayout::AddUAVTable(
             .type            = D3D12_DESCRIPTOR_RANGE_TYPE_UAV,
             .descriptorCount = descriptorCount,
             .registerIndex   = static_cast<UINT>(registerSlot),
-            .descriptorTable = true
+            .descriptorTable = true,
+            .bindless        = bindless
         }
     );
 
@@ -138,7 +145,8 @@ D3DDescriptorLayout& D3DDescriptorLayout::AddRootCBV(
             .type            = D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
             .descriptorCount = 0u,
             .registerIndex   = static_cast<UINT>(registerSlot),
-            .descriptorTable = false
+            .descriptorTable = false,
+            .bindless        = false
         }
     );
 
@@ -154,7 +162,8 @@ D3DDescriptorLayout& D3DDescriptorLayout::AddRootSRV(
             .type            = D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
             .descriptorCount = 0u,
             .registerIndex   = static_cast<UINT>(registerSlot),
-            .descriptorTable = false
+            .descriptorTable = false,
+            .bindless        = false
         }
     );
 
@@ -170,7 +179,8 @@ D3DDescriptorLayout& D3DDescriptorLayout::AddRootUAV(
             .type            = D3D12_DESCRIPTOR_RANGE_TYPE_UAV,
             .descriptorCount = 0u,
             .registerIndex   = static_cast<UINT>(registerSlot),
-            .descriptorTable = false
+            .descriptorTable = false,
+            .bindless        = false
         }
     );
 
