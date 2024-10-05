@@ -346,7 +346,7 @@ D3DDescriptorManager::D3DDescriptorManager(ID3D12Device* device, size_t layoutCo
     }, m_descriptorMap{},
     m_resourceHeapCPU{
         device, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE
-    }, m_device{ device }, m_descriptorLayouts{layoutCount, D3DDescriptorLayout{}}
+    }, m_device{ device }, m_descriptorLayouts{ layoutCount, D3DDescriptorLayout{} }
 {}
 
 void D3DDescriptorManager::CreateDescriptors()
@@ -403,7 +403,7 @@ void D3DDescriptorManager::RecreateDescriptors(const std::vector<D3DDescriptorLa
             const size_t bindingCount = std::size(oldBindingDetails);
 
             // If any new binding is added, it should be added at the back. So, it should be
-            // fine to just iterate throught the old bindings and copying them.
+            // fine to just iterate through the old bindings and copying them.
             for (size_t bindingIndex = 0u; bindingIndex < bindingCount; ++bindingIndex)
             {
                 const BindingDetails& details = oldBindingDetails[bindingIndex];
