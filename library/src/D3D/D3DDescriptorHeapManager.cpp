@@ -15,6 +15,11 @@ void D3DDescriptorHeap::Create(UINT descriptorCount)
     m_device->CreateDescriptorHeap(&m_descriptorDesc, IID_PPV_ARGS(&m_descriptorHeap));
 }
 
+void D3DDescriptorHeap::CopyDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE handle, UINT offset) const
+{
+    m_device->CopyDescriptorsSimple(1u, GetCPUHandle(offset), handle, m_descriptorDesc.Type);
+}
+
 void D3DDescriptorHeap::CopyDescriptors(
     const D3DDescriptorHeap& src, UINT descriptorCount, UINT srcOffset, UINT dstOffset
 ) const {
@@ -477,6 +482,51 @@ void D3DDescriptorManager::CreateUAV(
     );
 
     m_resourceHeapCPU.CreateUAV(resource, counterResource, uavDesc, descriptorIndexInHeap);
+
+    m_resourceHeapGPU.CopyDescriptors(
+        m_resourceHeapCPU, 1u, descriptorIndexInHeap, descriptorIndexInHeap
+    );
+}
+
+void D3DDescriptorManager::SetDescriptorCBV(
+    D3D12_CPU_DESCRIPTOR_HANDLE handle,
+    size_t registerSlot, size_t registerSpace, UINT descriptorIndex
+) const {
+    const UINT descriptorIndexInHeap = GetDescriptorOffsetUAV(
+        registerSlot, registerSpace, descriptorIndex
+    );
+
+    m_resourceHeapCPU.CopyDescriptor(handle, descriptorIndexInHeap);
+
+    m_resourceHeapGPU.CopyDescriptors(
+        m_resourceHeapCPU, 1u, descriptorIndexInHeap, descriptorIndexInHeap
+    );
+}
+
+void D3DDescriptorManager::SetDescriptorSRV(
+    D3D12_CPU_DESCRIPTOR_HANDLE handle,
+    size_t registerSlot, size_t registerSpace, UINT descriptorIndex
+) const {
+    const UINT descriptorIndexInHeap = GetDescriptorOffsetUAV(
+        registerSlot, registerSpace, descriptorIndex
+    );
+
+    m_resourceHeapCPU.CopyDescriptor(handle, descriptorIndexInHeap);
+
+    m_resourceHeapGPU.CopyDescriptors(
+        m_resourceHeapCPU, 1u, descriptorIndexInHeap, descriptorIndexInHeap
+    );
+}
+
+void D3DDescriptorManager::SetDescriptorUAV(
+    D3D12_CPU_DESCRIPTOR_HANDLE handle,
+    size_t registerSlot, size_t registerSpace, UINT descriptorIndex
+) const {
+    const UINT descriptorIndexInHeap = GetDescriptorOffsetUAV(
+        registerSlot, registerSpace, descriptorIndex
+    );
+
+    m_resourceHeapCPU.CopyDescriptor(handle, descriptorIndexInHeap);
 
     m_resourceHeapGPU.CopyDescriptors(
         m_resourceHeapCPU, 1u, descriptorIndexInHeap, descriptorIndexInHeap

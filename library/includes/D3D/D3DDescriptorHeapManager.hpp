@@ -19,6 +19,7 @@ public:
 
 	void Create(UINT descriptorCount);
 
+	void CopyDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE handle, UINT offset) const;
 	// The heap type must be the same.
 	void CopyDescriptors(
 		const D3DDescriptorHeap& src, UINT descriptorCount, UINT srcOffset, UINT dstOffset
@@ -414,6 +415,19 @@ public:
 		size_t registerSlot, size_t registerSpace, UINT descriptorIndex,
 		ID3D12Resource* resource, ID3D12Resource* counterResource,
 		const D3D12_UNORDERED_ACCESS_VIEW_DESC& uavDesc
+	) const;
+
+	void SetDescriptorCBV(
+		D3D12_CPU_DESCRIPTOR_HANDLE handle,
+		size_t registerSlot, size_t registerSpace, UINT descriptorIndex
+	) const;
+	void SetDescriptorSRV(
+		D3D12_CPU_DESCRIPTOR_HANDLE handle,
+		size_t registerSlot, size_t registerSpace, UINT descriptorIndex
+	) const;
+	void SetDescriptorUAV(
+		D3D12_CPU_DESCRIPTOR_HANDLE handle,
+		size_t registerSlot, size_t registerSpace, UINT descriptorIndex
 	) const;
 
 	void SetRootCBV(

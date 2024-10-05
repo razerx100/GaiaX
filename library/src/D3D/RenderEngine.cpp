@@ -19,7 +19,7 @@ RenderEngine::RenderEngine(
 	m_stagingManager{ device, &m_memoryManager, m_threadPool.get() },
 	m_graphicsDescriptorManagers{}, m_graphicsRootSignature{},
 	m_textureStorage{ device, &m_memoryManager },
-	m_textureManager{},
+	m_textureManager{ device },
 	m_materialBuffers{ device, &m_memoryManager },
 	m_cameraManager{ device, &m_memoryManager },
 	m_dsvHeap{ device, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE },
@@ -102,7 +102,17 @@ void RenderEngine::UnbindTexture(size_t textureIndex)
 	const UINT globalDescIndex = m_textureStorage.GetTextureBindingIndex(textureIndex);
 
 	if (!std::empty(m_graphicsDescriptorManagers))
+	{
+		D3DDescriptorManager& descriptorManager = m_graphicsDescriptorManagers.front();
+
+		D3D12_CPU_DESCRIPTOR_HANDLE globalDescriptor = descriptorManager.GetCPUHandleSRV(
+			s_textureSRVRegisterSlot, s_pixelShaderRegisterSpace, globalDescIndex
+		);
+
+		m_textureManager.SetLocalTextureDescriptor(globalDescriptor, static_cast<UINT>(textureIndex));
+
 		m_textureManager.SetAvailableIndex<D3D12_DESCRIPTOR_RANGE_TYPE_SRV>(globalDescIndex, true);
+	}
 }
 
 std::uint32_t RenderEngine::BindTexture(size_t textureIndex)
@@ -141,11 +151,24 @@ std::uint32_t RenderEngine::BindTexture(size_t textureIndex)
 	m_textureManager.SetAvailableIndex<DescType>(freeGlobalDescIndex, false);
 	m_textureStorage.SetTextureBindingIndex(textureIndex, freeGlobalDescIndex);
 
-	for (auto& descriptorManager : m_graphicsDescriptorManagers)
-		descriptorManager.CreateSRV(
-			s_textureSRVRegisterSlot, s_pixelShaderRegisterSpace, freeGlobalDescIndex,
-			texture.Get(), texture.GetSRVDesc()
-		);
+	auto localDesc = m_textureManager.GetLocalTextureDescriptor(static_cast<UINT>(textureIndex));
+
+	if (localDesc)
+	{
+		D3D12_CPU_DESCRIPTOR_HANDLE localDescriptor = localDesc.value();
+
+		for (auto& descriptorManager : m_graphicsDescriptorManagers)
+			descriptorManager.SetDescriptorSRV(
+				localDescriptor, s_textureSRVRegisterSlot, s_pixelShaderRegisterSpace,
+				freeGlobalDescIndex
+			);
+	}
+	else
+		for (auto& descriptorManager : m_graphicsDescriptorManagers)
+			descriptorManager.CreateSRV(
+				s_textureSRVRegisterSlot, s_pixelShaderRegisterSpace, freeGlobalDescIndex,
+				texture.Get(), texture.GetSRVDesc()
+			);
 	// Since it is a descriptor table, there is no point in setting it every time.
 	// It should be fine to just bind it once after the descriptorManagers have
 	// been created.
@@ -156,6 +179,8 @@ std::uint32_t RenderEngine::BindTexture(size_t textureIndex)
 void RenderEngine::RemoveTexture(size_t index)
 {
 	WaitForGPUToFinish();
+
+	m_textureManager.RemoveLocalTextureDescriptor(static_cast<UINT>(index));
 
 	const UINT globalDescriptorIndex = m_textureStorage.GetTextureBindingIndex(index);
 	m_textureManager.SetAvailableIndex<D3D12_DESCRIPTOR_RANGE_TYPE_SRV>(

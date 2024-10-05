@@ -129,3 +129,78 @@ std::optional<UINT> TextureManager::FindFreeIndex(
 
 	return {};
 }
+
+void TextureManager::SetLocalTextureDescriptor(
+	D3D12_CPU_DESCRIPTOR_HANDLE unboundHandle, UINT inactiveIndex
+) {
+	constexpr D3D12_DESCRIPTOR_RANGE_TYPE type = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+
+	// The local heap will have a binding for each descriptor type.
+	std::vector<UINT>& inactiveDescDetails     = GetInactiveDetails<type>();
+	UINT& localDescCount                       = GetLocalDescCount<type>();
+
+	// We add any new items to the end of the inactive indices. The actual heap might
+	// be able to house more items, as we will erase the inactive index when it is active
+	// so let's check if the buffer can house the new number of inactive indices. If not
+	// recreate the heap to be bigger.
+	auto localDescIndex = static_cast<UINT>(std::size(inactiveDescDetails));
+
+	const UINT requiredCount = localDescIndex + 1u;
+
+	if (localDescCount < requiredCount)
+	{
+		localDescCount += s_localDescriptorCount;
+
+		if (m_localDescHeap.Get() != nullptr)
+		{
+			D3DDescriptorHeap newLocalHeap{
+				m_device, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE
+			};
+
+			newLocalHeap.Create(localDescCount);
+
+			// Since we can't put samplers in an SRV_CBV_UAV heap, this heap
+			// should only have textures. So, copying the whole old heap
+			// should be fine.
+			newLocalHeap.CopyHeap(m_localDescHeap);
+
+			m_localDescHeap = std::move(newLocalHeap);
+		}
+		else
+			m_localDescHeap.Create(localDescCount);
+	}
+
+	m_localDescHeap.CopyDescriptor(unboundHandle, localDescIndex);
+
+	inactiveDescDetails.emplace_back(inactiveIndex);
+}
+
+std::optional<D3D12_CPU_DESCRIPTOR_HANDLE> TextureManager::GetLocalTextureDescriptor(
+	UINT inactiveIndex
+) noexcept {
+	constexpr D3D12_DESCRIPTOR_RANGE_TYPE type = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+	std::vector<UINT>& inactiveDescDetails     = GetInactiveDetails<type>();
+
+	auto result = std::ranges::find(inactiveDescDetails, inactiveIndex);
+
+	if (result != std::end(inactiveDescDetails))
+	{
+		const auto localDescIndex = static_cast<UINT>(
+			std::distance(std::begin(inactiveDescDetails), result)
+			);
+
+		inactiveDescDetails.erase(result);
+
+		return m_localDescHeap.GetCPUHandle(localDescIndex);
+	}
+
+	return {};
+}
+
+void TextureManager::RemoveLocalTextureDescriptor(UINT inactiveIndex) noexcept
+{
+	constexpr D3D12_DESCRIPTOR_RANGE_TYPE type = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+	std::vector<UINT>& inactiveDescDetails     = GetInactiveDetails<type>();
+
+	std::erase(inactiveDescDetails, inactiveIndex);
+}
