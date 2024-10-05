@@ -115,14 +115,26 @@ std::uint32_t RenderEngine::BindTexture(size_t textureIndex)
 	auto oFreeGlobalDescIndex = m_textureManager.GetFreeGlobalDescriptorIndex<DescType>();
 
 	// If there is no free global index, increase the limit. Right now it should be possible to
-	// have 65535 bound textures at once. There could be more textures. Adding new descriptors
-	// would change the PipelineLayout and that would require every single Pipeline Object to be
-	// recreated. Which isn't worth it. And it should be fine to have only 65535 textures bound
-	// at once.
-	assert(
-		oFreeGlobalDescIndex.has_value()
-		&& "No descriptor available to bind the texture. Free some already bound textures."
-	);
+	// have 65535 bound textures at once. There could be more textures.
+	if (!oFreeGlobalDescIndex)
+	{
+		m_textureManager.IncreaseAvailableIndices<DescType>();
+
+		for (auto& descriptorManager : m_graphicsDescriptorManagers)
+		{
+			const std::vector<D3DDescriptorLayout> oldLayouts = descriptorManager.GetLayouts();
+
+			m_textureManager.SetDescriptorLayout(
+				descriptorManager, s_textureSRVRegisterSlot, s_pixelShaderRegisterSpace
+			);
+
+			descriptorManager.RecreateDescriptors(oldLayouts);
+		}
+
+		oFreeGlobalDescIndex = m_textureManager.GetFreeGlobalDescriptorIndex<DescType>();
+
+		// Don't need to reset the pipelines, since the table was created as bindless.
+	}
 
 	const UINT freeGlobalDescIndex = oFreeGlobalDescIndex.value();
 

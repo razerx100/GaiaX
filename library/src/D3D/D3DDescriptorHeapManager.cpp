@@ -10,22 +10,9 @@ D3DDescriptorHeap::D3DDescriptorHeap(
 
 void D3DDescriptorHeap::Create(UINT descriptorCount)
 {
-    const UINT oldDescriptorCount   = m_descriptorDesc.NumDescriptors;
     m_descriptorDesc.NumDescriptors = descriptorCount;
 
-    ComPtr<ID3D12DescriptorHeap> newDescriptorHeap{};
-
-    m_device->CreateDescriptorHeap(&m_descriptorDesc, IID_PPV_ARGS(&newDescriptorHeap));
-
-    if (m_descriptorHeap && oldDescriptorCount <= descriptorCount)
-        m_device->CopyDescriptorsSimple(
-            oldDescriptorCount,
-            newDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
-            m_descriptorHeap->GetCPUDescriptorHandleForHeapStart(),
-            m_descriptorDesc.Type
-        );
-
-    m_descriptorHeap = std::move(newDescriptorHeap);
+    m_device->CreateDescriptorHeap(&m_descriptorDesc, IID_PPV_ARGS(&m_descriptorHeap));
 }
 
 void D3DDescriptorHeap::CopyDescriptors(
@@ -359,7 +346,7 @@ D3DDescriptorManager::D3DDescriptorManager(ID3D12Device* device, size_t layoutCo
     }, m_descriptorMap{},
     m_resourceHeapCPU{
         device, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE
-    }, m_descriptorLayouts{ layoutCount, D3DDescriptorLayout{} }
+    }, m_device{ device }, m_descriptorLayouts{layoutCount, D3DDescriptorLayout{}}
 {}
 
 void D3DDescriptorManager::CreateDescriptors()
@@ -376,6 +363,70 @@ void D3DDescriptorManager::CreateDescriptors()
 
     m_resourceHeapCPU.Create(totalDescriptorCount);
     m_resourceHeapGPU.Create(totalDescriptorCount);
+}
+
+void D3DDescriptorManager::RecreateDescriptors(const std::vector<D3DDescriptorLayout>& oldLayouts)
+{
+    UINT newDescriptorCount = 0u;
+
+    for (const D3DDescriptorLayout& layout : m_descriptorLayouts)
+        newDescriptorCount += layout.GetTotalDescriptorCount();
+
+    // If the total descriptor count is 0, make it one so everything else doesn't fail.
+    // As this would only be the case in tests anyway.
+    if (!newDescriptorCount)
+        newDescriptorCount = 1u;
+
+    {
+        D3DDescriptorHeap newCPUHeap{
+            m_device,
+            D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
+            D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE
+        };
+
+        newCPUHeap.Create(newDescriptorCount);
+
+        const size_t layoutCount = std::size(m_descriptorLayouts);
+
+        for (size_t index = 0u; index < layoutCount; ++index)
+        {
+            const D3DDescriptorLayout& newLayout = m_descriptorLayouts[index];
+            const D3DDescriptorLayout& oldLayout = oldLayouts[index];
+
+            using BindingDetails = D3DDescriptorLayout::BindingDetails;
+
+            const std::vector<BindingDetails>& oldBindingDetails = oldLayout.GetAllBindingDetails();
+
+            const std::vector<UINT>& newOffsets = newLayout.GetOffsets();
+            const std::vector<UINT>& oldOffsets = oldLayout.GetOffsets();
+
+            const size_t bindingCount = std::size(oldBindingDetails);
+
+            // If any new binding is added, it should be added at the back. So, it should be
+            // fine to just iterate throught the old bindings and copying them.
+            for (size_t bindingIndex = 0u; bindingIndex < bindingCount; ++bindingIndex)
+            {
+                const BindingDetails& details = oldBindingDetails[bindingIndex];
+
+                if (details.descriptorTable)
+                {
+                    const UINT oldDescriptorOffset = oldOffsets[bindingIndex];
+                    const UINT newDescriptorOffset = newOffsets[bindingIndex];
+
+                    newCPUHeap.CopyDescriptors(
+                        m_resourceHeapCPU, details.descriptorCount,
+                        oldDescriptorOffset, newDescriptorOffset
+                    );
+                }
+            }
+        }
+
+        m_resourceHeapCPU = std::move(newCPUHeap);
+    }
+
+    m_resourceHeapGPU.Create(newDescriptorCount);
+
+    m_resourceHeapGPU.CopyHeap(m_resourceHeapCPU);
 }
 
 void D3DDescriptorManager::BindDescriptorHeap(ID3D12GraphicsCommandList* commandList) const noexcept

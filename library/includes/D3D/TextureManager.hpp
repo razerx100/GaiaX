@@ -231,6 +231,21 @@ public:
 			availableIndices[static_cast<size_t>(descriptorIndex)] = availablity;
 	}
 
+	template<D3D12_DESCRIPTOR_RANGE_TYPE type>
+	void IncreaseAvailableIndices() noexcept
+	{
+		if constexpr (type == D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER)
+		{
+			const size_t newSize = std::size(m_availableIndicesSamplers) + s_samplerDescriptorCount;
+			m_availableIndicesSamplers.resize(newSize, true);
+		}
+		else
+		{
+			const size_t newSize = std::size(m_availableIndicesTextures) + s_textureDescriptorCount;
+			m_availableIndicesTextures.resize(newSize, true);
+		}
+	}
+
 public:
 	TextureManager(const TextureManager&) = delete;
 	TextureManager& operator=(const TextureManager&) = delete;

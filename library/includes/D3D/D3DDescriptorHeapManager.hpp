@@ -23,6 +23,11 @@ public:
 	void CopyDescriptors(
 		const D3DDescriptorHeap& src, UINT descriptorCount, UINT srcOffset, UINT dstOffset
 	) const;
+	// The src heap must be CPU accessible.
+	void CopyHeap(const D3DDescriptorHeap& src) const
+	{
+		CopyDescriptors(src, src.GetDescriptorCount(), 0u, 0u);
+	}
 
 	void Bind(ID3D12GraphicsCommandList* commandList) const noexcept;
 	void Bind(const D3DCommandList& commandList) const noexcept { Bind(commandList.Get()); }
@@ -384,6 +389,7 @@ public:
 	}
 
 	void CreateDescriptors();
+	void RecreateDescriptors(const std::vector<D3DDescriptorLayout>& oldLayouts);
 
 	void BindDescriptorHeap(ID3D12GraphicsCommandList* commandList) const noexcept;
 	void BindDescriptorHeap(const D3DCommandList& commandList) const noexcept
@@ -517,6 +523,7 @@ private:
 	D3DDescriptorHeap                m_resourceHeapGPU;
 	D3DDescriptorMap                 m_descriptorMap;
 	D3DDescriptorHeap                m_resourceHeapCPU;
+	ID3D12Device*                    m_device;
 	std::vector<D3DDescriptorLayout> m_descriptorLayouts;
 
 public:
@@ -527,6 +534,7 @@ public:
 		: m_resourceHeapGPU{ std::move(other.m_resourceHeapGPU) },
 		m_descriptorMap{ std::move(other.m_descriptorMap) },
 		m_resourceHeapCPU{ std::move(other.m_resourceHeapCPU) },
+		m_device{ other.m_device },
 		m_descriptorLayouts{ std::move(other.m_descriptorLayouts) }
 	{}
 	D3DDescriptorManager& operator=(D3DDescriptorManager&& other) noexcept
@@ -534,6 +542,7 @@ public:
 		m_resourceHeapGPU   = std::move(other.m_resourceHeapGPU);
 		m_descriptorMap     = std::move(other.m_descriptorMap);
 		m_resourceHeapCPU   = std::move(other.m_resourceHeapCPU);
+		m_device            = other.m_device;
 		m_descriptorLayouts = std::move(other.m_descriptorLayouts);
 
 		return *this;

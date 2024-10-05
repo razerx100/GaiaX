@@ -47,6 +47,10 @@ public:
 		return m_bindingDetails[bindingIndex];
 	}
 	[[nodiscard]]
+	const std::vector<BindingDetails>& GetAllBindingDetails() const noexcept { return m_bindingDetails; }
+	[[nodiscard]]
+	const std::vector<UINT>& GetOffsets() const noexcept { return m_offsets; }
+	[[nodiscard]]
 	size_t GetBindingCount() const noexcept { return std::size(m_bindingDetails); }
 	[[nodiscard]]
 	UINT GetTotalDescriptorCount() const noexcept { return m_offsets.back(); }
