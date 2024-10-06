@@ -492,7 +492,7 @@ void D3DDescriptorManager::SetDescriptorCBV(
     D3D12_CPU_DESCRIPTOR_HANDLE handle,
     size_t registerSlot, size_t registerSpace, UINT descriptorIndex
 ) const {
-    const UINT descriptorIndexInHeap = GetDescriptorOffsetUAV(
+    const UINT descriptorIndexInHeap = GetDescriptorOffsetCBV(
         registerSlot, registerSpace, descriptorIndex
     );
 
@@ -507,7 +507,7 @@ void D3DDescriptorManager::SetDescriptorSRV(
     D3D12_CPU_DESCRIPTOR_HANDLE handle,
     size_t registerSlot, size_t registerSpace, UINT descriptorIndex
 ) const {
-    const UINT descriptorIndexInHeap = GetDescriptorOffsetUAV(
+    const UINT descriptorIndexInHeap = GetDescriptorOffsetSRV(
         registerSlot, registerSpace, descriptorIndex
     );
 
