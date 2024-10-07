@@ -10,9 +10,8 @@
 #define GAIAX_DLL __declspec(dllimport)
 #endif
 
-GAIAX_DLL std::shared_ptr<Renderer> CreateGaiaInstance(
-	const char* appName,
-	void* windowHandle,
+GAIAX_DLL std::unique_ptr<Renderer> CreateGaiaInstance(
+	const char* appName, void* windowHandle,
 	std::uint32_t width, std::uint32_t height, std::shared_ptr<ThreadPool> threadPool,
 	RenderEngineType engineType, std::uint32_t bufferCount = 2u
 );
