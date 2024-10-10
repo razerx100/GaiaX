@@ -19,8 +19,8 @@ class Renderer
 public:
 	struct Resolution
 	{
-		std::uint64_t width;
-		std::uint64_t height;
+		std::uint32_t width;
+		std::uint32_t height;
 	};
 
 	virtual ~Renderer() = default;
