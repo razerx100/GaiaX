@@ -565,7 +565,6 @@ void ModelManagerVSIndirect::UpdateDispatchX() noexcept
 	// ThreadBlockSize is the number of threads in a thread group. If the argumentCount/ModelCount
 	// is more than the BlockSize then dispatch more groups. Ex: Threads 64, Model 60 = Group 1
 	// Threads 64, Model 65 = Group 2.
-
 	m_dispatchXCount = static_cast<UINT>(std::ceil(m_argumentCount / THREADBLOCKSIZE));
 }
 
@@ -838,7 +837,9 @@ void ModelManagerVSIndirect::SetDescriptorsCSOfModels(
 		);
 
 		m_meshIndexBuffer.SetRootSRVCom(descriptorManager, s_meshIndexSRVRegisterSlot, csRegisterSpace);
-		m_meshDetailsBuffer.SetRootSRVCom(descriptorManager, s_meshDetailsSRVRegisterSlot, csRegisterSpace);
+		m_meshDetailsBuffer.SetRootSRVCom(
+			descriptorManager, s_meshDetailsSRVRegisterSlot, csRegisterSpace
+		);
 	}
 }
 
@@ -860,11 +861,17 @@ void ModelManagerVSIndirect::Dispatch(const D3DCommandList& computeList) const n
 	{
 		constexpr auto pushConstantCount = GetConstantCount();
 
-		constexpr ConstantData constantData
+		constexpr Bounds maxBounds
 		{
 			.maxXBounds = XBOUNDS,
 			.maxYBounds = YBOUNDS,
 			.maxZBounds = ZBOUNDS
+		};
+
+		const ConstantData constantData
+		{
+			.maxBounds  = maxBounds,
+			.modelCount = m_argumentCount
 		};
 
 		cmdList->SetComputeRoot32BitConstants(

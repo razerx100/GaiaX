@@ -830,11 +830,16 @@ class ModelManagerVSIndirect : public
 		>;
 	friend class ModelManagerVSIndirectTest;
 
-	struct ConstantData
+	struct Bounds
 	{
 		DirectX::XMFLOAT2 maxXBounds;
 		DirectX::XMFLOAT2 maxYBounds;
 		DirectX::XMFLOAT2 maxZBounds;
+	};
+	struct ConstantData
+	{
+		Bounds        maxBounds;
+		std::uint32_t modelCount;
 	};
 
 public:
