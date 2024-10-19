@@ -60,7 +60,7 @@ void ModelBundleMSIndividual::SetModelBundle(
 }
 
 void ModelBundleMSIndividual::Draw(
-	const D3DCommandList& graphicsList, UINT constantsRootIndex
+	const D3DCommandList& graphicsList, UINT constantsASRootIndex, UINT constantsMSRootIndex
 ) const noexcept {
 	ID3D12GraphicsCommandList6* cmdList = graphicsList.Get();
 	const auto& models                  = m_modelBundle->GetModels();
@@ -69,25 +69,34 @@ void ModelBundleMSIndividual::Draw(
 	{
 		const auto& model = models[index];
 
-		constexpr UINT pushConstantCount = GetConstantCount();
-		const MeshDetailsMS meshDetails  = model->GetMeshDetailsMS();
+		constexpr UINT pushConstantMSCount = GetMSConstantCount();
+		constexpr UINT pushConstantASCount = GetASConstantCount();
+
+		const MeshDetailsMS meshDetails    = model->GetMeshDetailsMS();
 
 		const ModelDetails msConstants
 		{
-			.modelBufferIndex = m_modelBufferIndices[index],
-			.meshletOffset    = meshDetails.meshletOffset
+			.meshDetails      = meshDetails,
+			.modelBufferIndex = m_modelBufferIndices[index]
 		};
 
-		constexpr UINT offset = MeshManagerMeshShader::GetConstantCount();
-
 		cmdList->SetGraphicsRoot32BitConstants(
-			constantsRootIndex, pushConstantCount, &msConstants, offset
+			constantsASRootIndex, pushConstantASCount, &meshDetails.meshletCount, 0u
+		);
+		cmdList->SetGraphicsRoot32BitConstants(
+			constantsMSRootIndex, pushConstantMSCount, &msConstants, 0u
 		);
 
-		// Unlike the Compute Shader where we process the data of a model with a thread, here
-		// each group handles a Meshlet and its threads handle the vertices and primitives.
-		// So, we need a thread group for each Meshlet.
-		cmdList->DispatchMesh(meshDetails.meshletCount, 1u, 1u);
+		// If we have an Amplification shader, this will launch an amplification global workGroup.
+		// We would want each Amplification shader lane to process a meshlet and launch the necessary
+		// Mesh Shader workGroups. On Nvdia we can have a maximum of 32 lanes active
+		// in a wave and 64 on AMD. So, a workGroup will be able to work on 32/64
+		// meshlets concurrently.
+		const UINT amplficationGroupCount = DivRoundUp(
+			meshDetails.meshletCount, s_amplificationLaneCount
+		);
+
+		cmdList->DispatchMesh(amplficationGroupCount, 1u, 1u);
 		// It might be worth checking if we are reaching the Group Count Limit and if needed
 		// launch more Groups. Could achieve that by passing a GroupLaunch index.
 	}
@@ -491,11 +500,6 @@ void ModelManagerVSIndividual::Draw(const D3DCommandList& graphicsList) const no
 		// Model
 		modelBundle.Draw(graphicsList, m_constantsRootIndex);
 	}
-}
-
-GraphicsPipelineIndividualDraw ModelManagerVSIndividual::CreatePipelineObject()
-{
-	return GraphicsPipelineIndividualDraw{};
 }
 
 // Model Manager VS Indirect.
@@ -963,17 +967,13 @@ void ModelManagerVSIndirect::UpdateCounterResetValues()
 	}
 }
 
-GraphicsPipelineIndirectDraw ModelManagerVSIndirect::CreatePipelineObject()
-{
-	return GraphicsPipelineIndirectDraw{};
-}
-
 // Model Manager MS.
 ModelManagerMS::ModelManagerMS(
 	ID3D12Device5* device, MemoryManager* memoryManager, StagingBufferManager* stagingBufferMan,
 	std::uint32_t frameCount
 ) : ModelManager{ device, memoryManager, frameCount },
-	m_constantsRootIndex{ 0u },
+	m_constantsMSRootIndex{ 0u },
+	m_constantsASRootIndex{ 0u },
 	m_stagingBufferMan{ stagingBufferMan },
 	m_meshletBuffer{ device, memoryManager },
 	m_vertexBuffer{ device, memoryManager },
@@ -1030,8 +1030,11 @@ void ModelManagerMS::ConfigureMeshBundle(
 void ModelManagerMS::_setGraphicsConstantRootIndex(
 	const D3DDescriptorManager& descriptorManager, size_t constantsRegisterSpace
 ) noexcept {
-	m_constantsRootIndex = descriptorManager.GetRootIndexCBV(
-		s_constantDataCBVRegisterSlot, constantsRegisterSpace
+	m_constantsMSRootIndex = descriptorManager.GetRootIndexCBV(
+		s_constantDataMSCBVRegisterSlot, constantsRegisterSpace
+	);
+	m_constantsASRootIndex = descriptorManager.GetRootIndexCBV(
+		s_constantDataASCBVRegisterSlot, constantsRegisterSpace
 	);
 }
 
@@ -1052,16 +1055,21 @@ void ModelManagerMS::SetDescriptorLayout(
 	std::vector<D3DDescriptorManager>& descriptorManagers, size_t msRegisterSpace,
 	size_t psRegisterSpace
 ) const noexcept {
-	const auto frameCount             = std::size(descriptorManagers);
-	constexpr UINT meshConstantCount  = MeshManagerMeshShader::GetConstantCount();
-	constexpr UINT modelConstantCount = ModelBundleMSIndividual::GetConstantCount();
+	const auto frameCount               = std::size(descriptorManagers);
+	constexpr UINT meshConstantCount    = MeshManagerMeshShader::GetConstantCount();
+	constexpr UINT modelASConstantCount = ModelBundleMSIndividual::GetASConstantCount();
+	constexpr UINT modelMSConstantCount = ModelBundleMSIndividual::GetMSConstantCount();
 
 	for (size_t index = 0u; index < frameCount; ++index)
 	{
 		D3DDescriptorManager& descriptorManager = descriptorManagers[index];
 
 		descriptorManager.AddConstants(
-			s_constantDataCBVRegisterSlot, msRegisterSpace, meshConstantCount + modelConstantCount,
+			s_constantDataASCBVRegisterSlot, msRegisterSpace, modelASConstantCount,
+			D3D12_SHADER_VISIBILITY_AMPLIFICATION
+		);
+		descriptorManager.AddConstants(
+			s_constantDataMSCBVRegisterSlot, msRegisterSpace, meshConstantCount + modelMSConstantCount,
 			D3D12_SHADER_VISIBILITY_MESH
 		);
 		descriptorManager.AddRootSRV(
@@ -1140,21 +1148,18 @@ void ModelManagerMS::Draw(const D3DCommandList& graphicsList) const noexcept
 		{
 			const size_t meshIndex                  = modelBundle.GetMeshIndex();
 			const MeshManagerMeshShader& meshBundle = m_meshBundles.at(meshIndex);
+
+			constexpr UINT constBufferOffset        = ModelBundleMSIndividual::GetMSConstantCount();
 			constexpr UINT constBufferCount         = MeshManagerMeshShader::GetConstantCount();
 
 			const MeshManagerMeshShader::MeshDetails meshDetails = meshBundle.GetMeshDetails();
 
 			cmdList->SetGraphicsRoot32BitConstants(
-				m_constantsRootIndex, constBufferCount, &meshDetails, 0u
+				m_constantsMSRootIndex, constBufferCount, &meshDetails, constBufferOffset
 			);
 		}
 
 		// Model
-		modelBundle.Draw(graphicsList, m_constantsRootIndex);
+		modelBundle.Draw(graphicsList, m_constantsASRootIndex, m_constantsMSRootIndex);
 	}
-}
-
-GraphicsPipelineMeshShader ModelManagerMS::CreatePipelineObject()
-{
-	return GraphicsPipelineMeshShader{ false };
 }

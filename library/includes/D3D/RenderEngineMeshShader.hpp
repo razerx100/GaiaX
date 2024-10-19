@@ -41,7 +41,7 @@ private:
 private:
 	// Graphics
 	// CBV
-	static constexpr size_t s_cameraCBVRegisterSlot = 1u;
+	static constexpr size_t s_cameraCBVRegisterSlot = 2u;
 
 public:
 	RenderEngineMS(const RenderEngineMS&) = delete;

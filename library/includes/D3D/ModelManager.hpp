@@ -103,8 +103,8 @@ class ModelBundleMSIndividual : public ModelBundle
 public:
 	struct ModelDetails
 	{
+		MeshDetailsMS meshDetails;
 		std::uint32_t modelBufferIndex;
-		std::uint32_t meshletOffset;
 	};
 
 public:
@@ -114,12 +114,19 @@ public:
 		std::shared_ptr<ModelBundleMS> bundle, std::vector<std::uint32_t> modelBufferIndices
 	) noexcept;
 
-	void Draw(const D3DCommandList& graphicsList, UINT constantsRootIndex) const noexcept;
+	void Draw(
+		const D3DCommandList& graphicsList, UINT constantsASRootIndex, UINT constantsMSRootIndex
+	) const noexcept;
 
 	[[nodiscard]]
-	static consteval UINT GetConstantCount() noexcept
+	static consteval UINT GetMSConstantCount() noexcept
 	{
 		return static_cast<UINT>(sizeof(ModelDetails) / sizeof(UINT));
+	}
+	[[nodiscard]]
+	static consteval UINT GetASConstantCount() noexcept
+	{
+		return static_cast<UINT>(sizeof(UINT) / sizeof(UINT));
 	}
 
 	[[nodiscard]]
@@ -137,8 +144,17 @@ public:
 	}
 
 private:
+	[[nodiscard]]
+	static UINT DivRoundUp(UINT num, UINT den) noexcept
+	{
+		return (num + den - 1) / den;
+	}
+
+private:
 	std::shared_ptr<ModelBundleMS> m_modelBundle;
 	std::vector<std::uint32_t>     m_modelBufferIndices;
+
+	static constexpr UINT s_amplificationLaneCount = 32u;
 
 public:
 	ModelBundleMSIndividual(const ModelBundleMSIndividual&) = delete;
@@ -607,7 +623,7 @@ protected:
 		{
 			psoIndex          = static_cast<std::uint32_t>(std::size(m_graphicsPipelines));
 
-			Pipeline pipeline = static_cast<Derived*>(this)->CreatePipelineObject();
+			Pipeline pipeline{};
 
 			pipeline.Create(m_device, m_graphicsRootSignature, m_shaderPath, pixelShader);
 
@@ -780,9 +796,6 @@ private:
 	// To create compute shader pipelines.
 	void ShaderPathSet() {}
 
-	[[nodiscard]]
-	static GraphicsPipelineIndividualDraw CreatePipelineObject();
-
 private:
 	UINT            m_constantsRootIndex;
 	SharedBufferGPU m_vertexBuffer;
@@ -914,9 +927,6 @@ private:
 
 	void UpdateDispatchX() noexcept;
 	void UpdateCounterResetValues();
-
-	[[nodiscard]]
-	GraphicsPipelineIndirectDraw CreatePipelineObject();
 
 	[[nodiscard]]
 	static consteval UINT GetConstantCount() noexcept
@@ -1092,11 +1102,9 @@ private:
 	// To create compute shader pipelines.
 	void ShaderPathSet() {}
 
-	[[nodiscard]]
-	GraphicsPipelineMeshShader CreatePipelineObject();
-
 private:
-	UINT                  m_constantsRootIndex;
+	UINT                  m_constantsMSRootIndex;
+	UINT                  m_constantsASRootIndex;
 	StagingBufferManager* m_stagingBufferMan;
 	SharedBufferGPU       m_meshletBuffer;
 	SharedBufferGPU       m_vertexBuffer;
@@ -1104,7 +1112,8 @@ private:
 	SharedBufferGPU       m_primIndicesBuffer;
 
 	// CBV
-	static constexpr size_t s_constantDataCBVRegisterSlot        = 0u;
+	static constexpr size_t s_constantDataASCBVRegisterSlot      = 0u;
+	static constexpr size_t s_constantDataMSCBVRegisterSlot      = 1u;
 	// SRV
 	static constexpr size_t s_meshletBufferSRVRegisterSlot       = 1u;
 	static constexpr size_t s_vertexBufferSRVRegisterSlot        = 2u;
@@ -1117,7 +1126,8 @@ public:
 
 	ModelManagerMS(ModelManagerMS&& other) noexcept
 		: ModelManager{ std::move(other) },
-		m_constantsRootIndex{ other.m_constantsRootIndex },
+		m_constantsMSRootIndex{ other.m_constantsMSRootIndex },
+		m_constantsASRootIndex{ other.m_constantsASRootIndex },
 		m_stagingBufferMan{ other.m_stagingBufferMan },
 		m_meshletBuffer{ std::move(other.m_meshletBuffer) },
 		m_vertexBuffer{ std::move(other.m_vertexBuffer) },
@@ -1127,12 +1137,13 @@ public:
 	ModelManagerMS& operator=(ModelManagerMS&& other) noexcept
 	{
 		ModelManager::operator=(std::move(other));
-		m_constantsRootIndex  = other.m_constantsRootIndex;
-		m_stagingBufferMan    = other.m_stagingBufferMan;
-		m_meshletBuffer       = std::move(other.m_meshletBuffer);
-		m_vertexBuffer        = std::move(other.m_vertexBuffer);
-		m_vertexIndicesBuffer = std::move(other.m_vertexIndicesBuffer);
-		m_primIndicesBuffer   = std::move(other.m_primIndicesBuffer);
+		m_constantsMSRootIndex = other.m_constantsMSRootIndex;
+		m_constantsASRootIndex = other.m_constantsASRootIndex;
+		m_stagingBufferMan     = other.m_stagingBufferMan;
+		m_meshletBuffer        = std::move(other.m_meshletBuffer);
+		m_vertexBuffer         = std::move(other.m_vertexBuffer);
+		m_vertexIndicesBuffer  = std::move(other.m_vertexIndicesBuffer);
+		m_primIndicesBuffer    = std::move(other.m_primIndicesBuffer);
 
 		return *this;
 	}

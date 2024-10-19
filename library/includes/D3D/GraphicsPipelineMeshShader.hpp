@@ -7,16 +7,14 @@ class GraphicsPipelineMeshShader : public GraphicsPipelineBase<GraphicsPipelineM
 	friend class GraphicsPipelineBase<GraphicsPipelineMeshShader>;
 
 public:
-	GraphicsPipelineMeshShader(bool useAmplificationShader = true)
-		: GraphicsPipelineBase{}, m_useAmplificationShader{ useAmplificationShader }
-	{}
+	GraphicsPipelineMeshShader() : GraphicsPipelineBase{} {}
 
 private:
 	[[nodiscard]]
 	static std::unique_ptr<D3DPipelineObject> CreateGraphicsPipelineMS(
 		ID3D12Device2* device, ID3D12RootSignature* graphicsRootSignature,
 		ShaderType binaryType, const std::wstring& shaderPath, const ShaderName& pixelShader,
-		const ShaderName& meshShader, const ShaderName& amplificationShader = {}
+		const ShaderName& meshShader, const ShaderName& amplificationShader
 	);
 
 	[[nodiscard]]
@@ -25,21 +23,16 @@ private:
 		const std::wstring& shaderPath, const ShaderName& pixelShader
 	) const;
 
-private:
-	bool m_useAmplificationShader;
-
 public:
 	GraphicsPipelineMeshShader(const GraphicsPipelineMeshShader&) = delete;
 	GraphicsPipelineMeshShader& operator=(const GraphicsPipelineMeshShader&) = delete;
 
 	GraphicsPipelineMeshShader(GraphicsPipelineMeshShader&& other) noexcept
-		: GraphicsPipelineBase{ std::move(other) },
-		m_useAmplificationShader{ other.m_useAmplificationShader }
+		: GraphicsPipelineBase{ std::move(other) }
 	{}
 	GraphicsPipelineMeshShader& operator=(GraphicsPipelineMeshShader&& other) noexcept
 	{
 		GraphicsPipelineBase::operator=(std::move(other));
-		m_useAmplificationShader      = other.m_useAmplificationShader;
 
 		return *this;
 	}

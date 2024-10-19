@@ -5,28 +5,28 @@ std::unique_ptr<D3DPipelineObject> GraphicsPipelineMeshShader::_createGraphicsPi
 	ID3D12Device2* device, ID3D12RootSignature* graphicsRootSignature,
 	const std::wstring& shaderPath, const ShaderName& pixelShader
 ) const {
-	constexpr const wchar_t* meshShaderName = L"MeshShaderIndividual";
-	constexpr const wchar_t* taskShaderName = L"MeshShaderTSIndividual";
+	constexpr const wchar_t* meshShaderName = L"MeshShaderMSIndividual";
+	constexpr const wchar_t* ampShaderName  = L"MeshShaderASIndividual";
 
-	if (m_useAmplificationShader)
-		return CreateGraphicsPipelineMS(
-			device, graphicsRootSignature, s_shaderBytecodeType, shaderPath, pixelShader, meshShaderName,
-			taskShaderName
-		);
-	else
-		return CreateGraphicsPipelineMS(
-			device, graphicsRootSignature, s_shaderBytecodeType, shaderPath, pixelShader, meshShaderName
-		);
+	return CreateGraphicsPipelineMS(
+		device, graphicsRootSignature, s_shaderBytecodeType, shaderPath, pixelShader, meshShaderName,
+		ampShaderName
+	);
 }
 
 std::unique_ptr<D3DPipelineObject> GraphicsPipelineMeshShader::CreateGraphicsPipelineMS(
 	ID3D12Device2* device, ID3D12RootSignature* graphicsRootSignature,
 	ShaderType binaryType, const std::wstring& shaderPath, const ShaderName& pixelShader,
-	const ShaderName& meshShader, const ShaderName& amplificationShader/* = {} */
+	const ShaderName& meshShader, const ShaderName& amplificationShader
 ) {
 	auto ms              = std::make_unique<D3DShader>();
 	const bool msSuccess = ms->LoadBinary(
 		shaderPath + meshShader.GetNameWithExtension(binaryType)
+	);
+
+	auto as              = std::make_unique<D3DShader>();
+	const bool asSuccess = as->LoadBinary(
+		shaderPath + amplificationShader.GetNameWithExtension(binaryType)
 	);
 
 	auto ps              = std::make_unique<D3DShader>();
@@ -36,24 +36,12 @@ std::unique_ptr<D3DPipelineObject> GraphicsPipelineMeshShader::CreateGraphicsPip
 
 	GraphicsPipelineBuilderMS builder{ graphicsRootSignature };
 
-	bool asSuccess = true;
-
-	if (!std::empty(amplificationShader))
-	{
-		auto as   = std::make_unique<D3DShader>();
-		asSuccess = as->LoadBinary(
-			shaderPath + amplificationShader.GetNameWithExtension(binaryType)
-		);
-
-		if (asSuccess)
-			builder.SetAmplificationStage(as->GetByteCode());
-	}
-
 	auto pso = std::make_unique<D3DPipelineObject>();
 
 	if (msSuccess && fsSuccess && asSuccess)
 	{
-		builder.SetMeshStage(ms->GetByteCode(), ps->GetByteCode());
+		builder.SetAmplificationStage(as->GetByteCode())
+			.SetMeshStage(ms->GetByteCode(), ps->GetByteCode());
 		pso->CreateGraphicsPipeline(device, builder);
 	}
 
