@@ -101,10 +101,18 @@ public:
 class ModelBundleMSIndividual : public ModelBundle
 {
 public:
-	struct ModelDetails
+	// In D3D12, root constants are laid out as vec4, so we need
+	// to align to 16bytes.
+	struct ModelDetailsMS
 	{
 		MeshDetailsMS meshDetails;
 		std::uint32_t modelBufferIndex;
+		std::uint32_t padding;
+	};
+	struct ModelDetailsAS
+	{
+		std::uint32_t meshletCount;
+		std::uint32_t padding[3];
 	};
 
 public:
@@ -121,12 +129,12 @@ public:
 	[[nodiscard]]
 	static consteval UINT GetMSConstantCount() noexcept
 	{
-		return static_cast<UINT>(sizeof(ModelDetails) / sizeof(UINT));
+		return static_cast<UINT>(sizeof(ModelDetailsMS) / sizeof(UINT));
 	}
 	[[nodiscard]]
 	static consteval UINT GetASConstantCount() noexcept
 	{
-		return static_cast<UINT>(sizeof(UINT) / sizeof(UINT));
+		return static_cast<UINT>(sizeof(ModelDetailsAS) / sizeof(UINT));
 	}
 
 	[[nodiscard]]

@@ -74,14 +74,19 @@ void ModelBundleMSIndividual::Draw(
 
 		const MeshDetailsMS meshDetails    = model->GetMeshDetailsMS();
 
-		const ModelDetails msConstants
+		const ModelDetailsMS msConstants
 		{
 			.meshDetails      = meshDetails,
 			.modelBufferIndex = m_modelBufferIndices[index]
 		};
 
+		const ModelDetailsAS asConstants
+		{
+			.meshletCount = meshDetails.meshletCount
+		};
+
 		cmdList->SetGraphicsRoot32BitConstants(
-			constantsASRootIndex, pushConstantASCount, &meshDetails.meshletCount, 0u
+			constantsASRootIndex, pushConstantASCount, &asConstants, 0u
 		);
 		cmdList->SetGraphicsRoot32BitConstants(
 			constantsMSRootIndex, pushConstantMSCount, &msConstants, 0u
