@@ -101,8 +101,10 @@ public:
 class ModelBundleMSIndividual : public ModelBundle
 {
 public:
-	// In D3D12, root constants are laid out as vec4, so we need
-	// to align to 16bytes.
+	// In D3D12, root constants/CBV are laid out as vec4, so we need
+	// to align to 16bytes. Since, there are 4 more values after
+	// this on the Mesh Shader, must put a padding at the end so the rest
+	// 4 are aligned correctly.
 	struct ModelDetailsMS
 	{
 		MeshDetailsMS meshDetails;
@@ -112,7 +114,6 @@ public:
 	struct ModelDetailsAS
 	{
 		std::uint32_t meshletCount;
-		std::uint32_t padding[3];
 	};
 
 public:
