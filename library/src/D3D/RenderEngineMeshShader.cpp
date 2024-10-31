@@ -59,7 +59,7 @@ void RenderEngineMS::SetupPipelineStages()
 }
 
 std::uint32_t RenderEngineMS::AddModelBundle(
-	std::shared_ptr<ModelBundleMS>&& modelBundle, const ShaderName& pixelShader
+	std::shared_ptr<ModelBundle>&& modelBundle, const ShaderName& pixelShader
 ) {
 	WaitForGPUToFinish();
 

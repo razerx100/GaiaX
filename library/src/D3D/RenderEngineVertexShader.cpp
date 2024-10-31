@@ -68,7 +68,7 @@ ModelManagerVSIndividual RenderEngineVSIndividual::GetModelManager(
 }
 
 std::uint32_t RenderEngineVSIndividual::AddModelBundle(
-	std::shared_ptr<ModelBundleVS>&& modelBundle, const ShaderName& pixelShader
+	std::shared_ptr<ModelBundle>&& modelBundle, const ShaderName& pixelShader
 ) {
 	WaitForGPUToFinish();
 
@@ -375,7 +375,7 @@ void RenderEngineVSIndirect::WaitForGPUToFinish()
 }
 
 std::uint32_t RenderEngineVSIndirect::AddModelBundle(
-	std::shared_ptr<ModelBundleVS>&& modelBundle, const ShaderName& pixelShader
+	std::shared_ptr<ModelBundle>&& modelBundle, const ShaderName& pixelShader
 ) {
 	WaitForGPUToFinish();
 

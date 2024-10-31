@@ -248,14 +248,7 @@ std::uint32_t RenderEngine::AddMeshBundle([[maybe_unused]] std::unique_ptr<MeshB
 }
 
 std::uint32_t RenderEngine::AddModelBundle(
-	[[maybe_unused]] std::shared_ptr<ModelBundleVS>&& modelBundle,
-	[[maybe_unused]] const ShaderName& pixelShader
-) {
-	return std::numeric_limits<std::uint32_t>::max();
-}
-
-std::uint32_t RenderEngine::AddModelBundle(
-	[[maybe_unused]] std::shared_ptr<ModelBundleMS>&& modelBundle,
+	[[maybe_unused]] std::shared_ptr<ModelBundle>&& modelBundle,
 	[[maybe_unused]] const ShaderName& pixelShader
 ) {
 	return std::numeric_limits<std::uint32_t>::max();

@@ -3,7 +3,7 @@
 
 MeshManagerVertexShader::MeshManagerVertexShader()
 	: m_vertexBufferSharedData{ nullptr, 0u, 0u }, m_indexBufferSharedData{ nullptr, 0u, 0u },
-	m_meshBoundsSharedData{ nullptr, 0u, 0u }
+	m_meshBoundsSharedData{ nullptr, 0u, 0u }, m_bundleDetails{}
 {}
 
 void MeshManagerVertexShader::SetMeshBundle(
@@ -44,6 +44,8 @@ void MeshManagerVertexShader::SetMeshBundle(
 			tempBuffer
 		);
 	}
+
+	m_bundleDetails = std::move(meshBundle->GetBundleDetails());
 }
 
 void MeshManagerVertexShader::SetMeshBundle(

@@ -45,11 +45,17 @@ public:
 
 	[[nodiscard]]
 	BoundsDetails GetBoundsDetails() const noexcept;
+	[[nodiscard]]
+	const MeshDetails& GetMeshDetails(size_t index) const noexcept
+	{
+		return m_bundleDetails.meshDetails[index];
+	}
 
 private:
-	SharedBufferData m_vertexBufferSharedData;
-	SharedBufferData m_indexBufferSharedData;
-	SharedBufferData m_meshBoundsSharedData;
+	SharedBufferData  m_vertexBufferSharedData;
+	SharedBufferData  m_indexBufferSharedData;
+	SharedBufferData  m_meshBoundsSharedData;
+	MeshBundleDetails m_bundleDetails;
 
 public:
 	MeshManagerVertexShader(const MeshManagerVertexShader&) = delete;
@@ -58,13 +64,15 @@ public:
 	MeshManagerVertexShader(MeshManagerVertexShader&& other) noexcept
 		: m_vertexBufferSharedData{ other.m_vertexBufferSharedData },
 		m_indexBufferSharedData{ other.m_indexBufferSharedData },
-		m_meshBoundsSharedData{ other.m_meshBoundsSharedData }
+		m_meshBoundsSharedData{ other.m_meshBoundsSharedData },
+		m_bundleDetails{ std::move(other.m_bundleDetails) }
 	{}
 	MeshManagerVertexShader& operator=(MeshManagerVertexShader&& other) noexcept
 	{
 		m_vertexBufferSharedData = other.m_vertexBufferSharedData;
 		m_indexBufferSharedData  = other.m_indexBufferSharedData;
 		m_meshBoundsSharedData   = other.m_meshBoundsSharedData;
+		m_bundleDetails          = std::move(other.m_bundleDetails);
 
 		return *this;
 	}

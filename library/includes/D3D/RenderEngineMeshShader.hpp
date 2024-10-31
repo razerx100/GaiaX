@@ -14,7 +14,7 @@ public:
 
 	[[nodiscard]]
 	std::uint32_t AddModelBundle(
-		std::shared_ptr<ModelBundleMS>&& modelBundle, const ShaderName& pixelShader
+		std::shared_ptr<ModelBundle>&& modelBundle, const ShaderName& pixelShader
 	) override;
 
 	[[nodiscard]]

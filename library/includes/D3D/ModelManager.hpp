@@ -15,10 +15,10 @@
 #include <MeshManagerMeshShader.hpp>
 #include <MeshManagerVertexShader.hpp>
 
-class ModelBundle
+class ModelBundleBase
 {
 public:
-	ModelBundle() : m_psoIndex{ 0u } {}
+	ModelBundleBase() : m_psoIndex{ 0u } {}
 
 	void SetPSOIndex(std::uint32_t index) noexcept { m_psoIndex = index; }
 
@@ -27,20 +27,20 @@ public:
 
 	[[nodiscard]]
 	static D3D12_DRAW_INDEXED_ARGUMENTS GetDrawIndexedIndirectCommand(
-		const std::shared_ptr<ModelVS>& model
+		const MeshDetails& meshDetails
 	) noexcept;
 
 protected:
 	std::uint32_t m_psoIndex;
 
 public:
-	ModelBundle(const ModelBundle&) = delete;
-	ModelBundle& operator=(const ModelBundle&) = delete;
+	ModelBundleBase(const ModelBundleBase&) = delete;
+	ModelBundleBase& operator=(const ModelBundleBase&) = delete;
 
-	ModelBundle(ModelBundle&& other) noexcept
+	ModelBundleBase(ModelBundleBase&& other) noexcept
 		: m_psoIndex{ other.m_psoIndex }
 	{}
-	ModelBundle& operator=(ModelBundle&& other) noexcept
+	ModelBundleBase& operator=(ModelBundleBase&& other) noexcept
 	{
 		m_psoIndex = other.m_psoIndex;
 
@@ -48,21 +48,24 @@ public:
 	}
 };
 
-class ModelBundleVSIndividual : public ModelBundle
+class ModelBundleVSIndividual : public ModelBundleBase
 {
 public:
-	ModelBundleVSIndividual() : ModelBundle{}, m_modelBufferIndices{}, m_modelBundle{} {}
+	ModelBundleVSIndividual() : ModelBundleBase{}, m_modelBufferIndices{}, m_modelBundle{} {}
 
 	void SetModelBundle(
-		std::shared_ptr<ModelBundleVS> bundle, std::vector<std::uint32_t> modelBufferIndices
+		std::shared_ptr<ModelBundle> bundle, std::vector<std::uint32_t> modelBufferIndices
 	) noexcept;
-	void Draw(const D3DCommandList& graphicsList, UINT constantsRootIndex) const noexcept;
+	void Draw(
+		const D3DCommandList& graphicsList, UINT constantsRootIndex,
+		const MeshManagerVertexShader& meshBundle
+	) const noexcept;
 
 	[[nodiscard]]
 	static consteval UINT GetConstantCount() noexcept { return 1u; }
 
 	[[nodiscard]]
-	std::uint32_t GetMeshIndex() const noexcept { return m_modelBundle->GetMeshIndex(); }
+	std::uint32_t GetMeshBundleIndex() const noexcept { return m_modelBundle->GetMeshBundleIndex(); }
 	[[nodiscard]]
 	const std::vector<std::uint32_t>& GetIndices() const noexcept { return m_modelBufferIndices; }
 
@@ -76,29 +79,29 @@ public:
 	}
 
 private:
-	std::vector<std::uint32_t>     m_modelBufferIndices;
-	std::shared_ptr<ModelBundleVS> m_modelBundle;
+	std::vector<std::uint32_t>   m_modelBufferIndices;
+	std::shared_ptr<ModelBundle> m_modelBundle;
 
 public:
 	ModelBundleVSIndividual(const ModelBundleVSIndividual&) = delete;
 	ModelBundleVSIndividual& operator=(const ModelBundleVSIndividual&) = delete;
 
 	ModelBundleVSIndividual(ModelBundleVSIndividual&& other) noexcept
-		: ModelBundle{ std::move(other) },
+		: ModelBundleBase{ std::move(other) },
 		m_modelBufferIndices{ std::move(other.m_modelBufferIndices) },
 		m_modelBundle{ std::move(other.m_modelBundle) }
 	{}
 	ModelBundleVSIndividual& operator=(ModelBundleVSIndividual&& other) noexcept
 	{
-		ModelBundle::operator=(std::move(other));
-		m_modelBufferIndices = std::move(other.m_modelBufferIndices);
-		m_modelBundle        = std::move(other.m_modelBundle);
+		ModelBundleBase::operator=(std::move(other));
+		m_modelBufferIndices     = std::move(other.m_modelBufferIndices);
+		m_modelBundle            = std::move(other.m_modelBundle);
 
 		return *this;
 	}
 };
 
-class ModelBundleMSIndividual : public ModelBundle
+class ModelBundleMSIndividual : public ModelBundleBase
 {
 public:
 	// In D3D12, root constants/CBV are laid out as vec4, so we need
@@ -107,7 +110,7 @@ public:
 	// 4 are aligned correctly.
 	struct ModelDetailsMS
 	{
-		MeshDetailsMS meshDetails;
+		MeshDetails   meshDetails;
 		std::uint32_t modelBufferIndex;
 		std::uint32_t padding;
 	};
@@ -117,14 +120,15 @@ public:
 	};
 
 public:
-	ModelBundleMSIndividual() : ModelBundle{}, m_modelBundle{}, m_modelBufferIndices{} {}
+	ModelBundleMSIndividual() : ModelBundleBase{}, m_modelBundle{}, m_modelBufferIndices{} {}
 
 	void SetModelBundle(
-		std::shared_ptr<ModelBundleMS> bundle, std::vector<std::uint32_t> modelBufferIndices
+		std::shared_ptr<ModelBundle> bundle, std::vector<std::uint32_t> modelBufferIndices
 	) noexcept;
 
 	void Draw(
-		const D3DCommandList& graphicsList, UINT constantsASRootIndex, UINT constantsMSRootIndex
+		const D3DCommandList& graphicsList, UINT constantsASRootIndex, UINT constantsMSRootIndex,
+		const MeshManagerMeshShader& meshBundle
 	) const noexcept;
 
 	[[nodiscard]]
@@ -141,7 +145,7 @@ public:
 	[[nodiscard]]
 	const std::vector<std::uint32_t>& GetIndices() const noexcept { return m_modelBufferIndices; }
 	[[nodiscard]]
-	std::uint32_t GetMeshIndex() const noexcept { return m_modelBundle->GetMeshIndex(); }
+	std::uint32_t GetMeshBundleIndex() const noexcept { return m_modelBundle->GetMeshBundleIndex(); }
 
 	[[nodiscard]]
 	std::uint32_t GetID() const noexcept
@@ -160,8 +164,8 @@ private:
 	}
 
 private:
-	std::shared_ptr<ModelBundleMS> m_modelBundle;
-	std::vector<std::uint32_t>     m_modelBufferIndices;
+	std::shared_ptr<ModelBundle> m_modelBundle;
+	std::vector<std::uint32_t>   m_modelBufferIndices;
 
 	static constexpr UINT s_amplificationLaneCount = 32u;
 
@@ -170,15 +174,15 @@ public:
 	ModelBundleMSIndividual& operator=(const ModelBundleMSIndividual&) = delete;
 
 	ModelBundleMSIndividual(ModelBundleMSIndividual&& other) noexcept
-		: ModelBundle{ std::move(other) },
+		: ModelBundleBase{ std::move(other) },
 		m_modelBundle{ std::move(other.m_modelBundle) },
 		m_modelBufferIndices{ std::move(other.m_modelBufferIndices) }
 	{}
 	ModelBundleMSIndividual& operator=(ModelBundleMSIndividual&& other) noexcept
 	{
-		ModelBundle::operator=(std::move(other));
-		m_modelBundle        = std::move(other.m_modelBundle);
-		m_modelBufferIndices = std::move(other.m_modelBufferIndices);
+		ModelBundleBase::operator=(std::move(other));
+		m_modelBundle            = std::move(other.m_modelBundle);
+		m_modelBufferIndices     = std::move(other.m_modelBufferIndices);
 
 		return *this;
 	}
@@ -202,7 +206,7 @@ public:
 public:
 	ModelBundleCSIndirect();
 
-	void SetModelBundle(std::shared_ptr<ModelBundleVS> bundle) noexcept;
+	void SetModelBundle(std::shared_ptr<ModelBundle> bundle) noexcept;
 	void CreateBuffers(
 		StagingBufferManager& stagingBufferMan,
 		std::vector<SharedBufferCPU>& argumentInputSharedBuffer,
@@ -210,10 +214,10 @@ public:
 		std::vector<std::uint32_t> modelIndices, TemporaryDataBufferGPU& tempBuffer
 	);
 
-	void Update(size_t bufferIndex) const noexcept;
+	void Update(size_t bufferIndex, const MeshManagerVertexShader& meshBundle) const noexcept;
 
 	[[nodiscard]]
-	std::uint32_t GetMeshIndex() const noexcept { return m_modelBundle->GetMeshIndex(); }
+	std::uint32_t GetMeshBundleIndex() const noexcept { return m_modelBundle->GetMeshBundleIndex(); }
 
 	[[nodiscard]]
 	std::uint32_t GetID() const noexcept
@@ -251,12 +255,12 @@ public:
 	}
 
 private:
-	SharedBufferData               m_modelBundleIndexSharedData;
-	SharedBufferData               m_cullingSharedData;
-	std::vector<SharedBufferData>  m_argumentInputSharedData;
-	std::vector<std::uint32_t>     m_modelIndices;
-	std::shared_ptr<ModelBundleVS> m_modelBundle;
-	std::unique_ptr<CullingData>   m_cullingData;
+	SharedBufferData              m_modelBundleIndexSharedData;
+	SharedBufferData              m_cullingSharedData;
+	std::vector<SharedBufferData> m_argumentInputSharedData;
+	std::vector<std::uint32_t>    m_modelIndices;
+	std::shared_ptr<ModelBundle>  m_modelBundle;
+	std::unique_ptr<CullingData>  m_cullingData;
 
 public:
 	ModelBundleCSIndirect(const ModelBundleCSIndirect&) = delete;
@@ -283,12 +287,12 @@ public:
 	}
 };
 
-class ModelBundleVSIndirect : public ModelBundle
+class ModelBundleVSIndirect : public ModelBundleBase
 {
 public:
 	ModelBundleVSIndirect();
 
-	void SetModelBundle(std::shared_ptr<ModelBundleVS> bundle) noexcept;
+	void SetModelBundle(std::shared_ptr<ModelBundle> bundle) noexcept;
 
 	void CreateBuffers(
 		std::vector<SharedBufferGPUWriteOnly>& argumentOutputSharedBuffers,
@@ -303,7 +307,7 @@ public:
 	std::uint32_t GetID() const noexcept { return m_bundleID; }
 
 	[[nodiscard]]
-	std::uint32_t GetMeshIndex() const noexcept { return m_modelBundle->GetMeshIndex(); }
+	std::uint32_t GetMeshBundleIndex() const noexcept { return m_modelBundle->GetMeshBundleIndex(); }
 	[[nodiscard]]
 	const std::vector<SharedBufferData>& GetArgumentOutputSharedData() const noexcept
 	{
@@ -322,11 +326,11 @@ public:
 	static constexpr UINT GetConstantCount() noexcept { return 1u; }
 
 private:
-	UINT                           m_modelCount;
-	std::shared_ptr<ModelBundleVS> m_modelBundle;
-	std::vector<SharedBufferData>  m_argumentOutputSharedData;
-	std::vector<SharedBufferData>  m_counterSharedData;
-	std::uint32_t                  m_bundleID;
+	UINT                          m_modelCount;
+	std::shared_ptr<ModelBundle>  m_modelBundle;
+	std::vector<SharedBufferData> m_argumentOutputSharedData;
+	std::vector<SharedBufferData> m_counterSharedData;
+	std::uint32_t                 m_bundleID;
 
 	inline static UINT64 s_counterBufferSize = static_cast<UINT64>(sizeof(std::uint32_t));
 
@@ -335,7 +339,7 @@ public:
 	ModelBundleVSIndirect& operator=(const ModelBundleVSIndirect&) = delete;
 
 	ModelBundleVSIndirect(ModelBundleVSIndirect&& other) noexcept
-		: ModelBundle{ std::move(other) },
+		: ModelBundleBase{ std::move(other) },
 		m_modelCount{ other.m_modelCount },
 		m_modelBundle{ std::move(other.m_modelBundle) },
 		m_argumentOutputSharedData{ std::move(other.m_argumentOutputSharedData) },
@@ -344,7 +348,7 @@ public:
 	{}
 	ModelBundleVSIndirect& operator=(ModelBundleVSIndirect&& other) noexcept
 	{
-		ModelBundle::operator=(std::move(other));
+		ModelBundleBase::operator=(std::move(other));
 		m_modelCount               = other.m_modelCount;
 		m_modelBundle              = std::move(other.m_modelBundle);
 		m_argumentOutputSharedData = std::move(other.m_argumentOutputSharedData);
@@ -445,8 +449,7 @@ template<
 	class Pipeline,
 	class MeshManager,
 	class MeshType,
-	class ModelBundleType,
-	class ModelBundleSType
+	class ModelBundleType
 >
 class ModelManager
 {
@@ -488,7 +491,7 @@ public:
 
 	[[nodiscard]]
 	std::uint32_t AddModelBundle(
-		std::shared_ptr<ModelBundleSType>&& modelBundle, const ShaderName& pixelShader,
+		std::shared_ptr<ModelBundle>&& modelBundle, const ShaderName& pixelShader,
 		TemporaryDataBufferGPU& tempBuffer
 	) {
 		const auto& models      = modelBundle->GetModels();
@@ -660,16 +663,6 @@ protected:
 		}
 	}
 
-	void BindMesh(
-		const ModelBundleType& modelBundle, const D3DCommandList& graphicsCmdList
-	) const noexcept {
-		// We could also do the same for the meshes, but we can only sort by a single thing and
-		// PSO binding is more costly, so it is better to sort the models by their PSO indices.
-		const size_t meshIndex = modelBundle.GetMeshIndex();
-
-		m_meshBundles.at(meshIndex).Bind(graphicsCmdList);
-	}
-
 	[[nodiscard]]
 	std::vector<ModelBundleType>::iterator GetModelBundle(std::uint32_t bundleID) noexcept
 	{
@@ -752,7 +745,7 @@ class ModelManagerVSIndividual : public
 		ModelManagerVSIndividual,
 		GraphicsPipelineIndividualDraw,
 		MeshManagerVertexShader, MeshBundleVS,
-		ModelBundleVSIndividual, ModelBundleVS
+		ModelBundleVSIndividual
 	>
 {
 	friend class ModelManager
@@ -760,7 +753,7 @@ class ModelManagerVSIndividual : public
 			ModelManagerVSIndividual,
 			GraphicsPipelineIndividualDraw,
 			MeshManagerVertexShader, MeshBundleVS,
-			ModelBundleVSIndividual, ModelBundleVS
+			ModelBundleVSIndividual
 		>;
 	friend class ModelManagerVSIndividualTest;
 
@@ -790,7 +783,7 @@ private:
 	void ConfigureModelBundle(
 		ModelBundleVSIndividual& modelBundleObj,
 		std::vector<std::uint32_t>&& modelIndices,
-		std::shared_ptr<ModelBundleVS>&& modelBundle,
+		std::shared_ptr<ModelBundle>&& modelBundle,
 		TemporaryDataBufferGPU& tempBuffer
 	) const noexcept;
 
@@ -840,7 +833,7 @@ class ModelManagerVSIndirect : public
 		ModelManagerVSIndirect,
 		GraphicsPipelineIndirectDraw,
 		MeshManagerVertexShader, MeshBundleVS,
-		ModelBundleVSIndirect, ModelBundleVS
+		ModelBundleVSIndirect
 	>
 {
 	friend class ModelManager
@@ -848,7 +841,7 @@ class ModelManagerVSIndirect : public
 			ModelManagerVSIndirect,
 			GraphicsPipelineIndirectDraw,
 			MeshManagerVertexShader, MeshBundleVS,
-			ModelBundleVSIndirect, ModelBundleVS
+			ModelBundleVSIndirect
 		>;
 	friend class ModelManagerVSIndirectTest;
 
@@ -918,7 +911,7 @@ private:
 
 	void ConfigureModelBundle(
 		ModelBundleVSIndirect& modelBundleObj, std::vector<std::uint32_t>&& modelIndices,
-		std::shared_ptr<ModelBundleVS>&& modelBundle,
+		std::shared_ptr<ModelBundle>&& modelBundle,
 		TemporaryDataBufferGPU& tempBuffer
 	);
 
@@ -1054,7 +1047,7 @@ class ModelManagerMS : public
 		ModelManagerMS,
 		GraphicsPipelineMeshShader,
 		MeshManagerMeshShader, MeshBundleMS,
-		ModelBundleMSIndividual, ModelBundleMS
+		ModelBundleMSIndividual
 	>
 {
 	friend class ModelManager
@@ -1062,7 +1055,7 @@ class ModelManagerMS : public
 			ModelManagerMS,
 			GraphicsPipelineMeshShader,
 			MeshManagerMeshShader, MeshBundleMS,
-			ModelBundleMSIndividual, ModelBundleMS
+			ModelBundleMSIndividual
 		>;
 	friend class ModelManagerMSTest;
 
@@ -1097,7 +1090,7 @@ private:
 	) noexcept;
 	void ConfigureModelBundle(
 		ModelBundleMSIndividual& modelBundleObj, std::vector<std::uint32_t>&& modelIndices,
-		std::shared_ptr<ModelBundleMS>&& modelBundle, TemporaryDataBufferGPU& tempBuffer
+		std::shared_ptr<ModelBundle>&& modelBundle, TemporaryDataBufferGPU& tempBuffer
 	);
 
 	void ConfigureModelRemove(size_t bundleIndex) noexcept;

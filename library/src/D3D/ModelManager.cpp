@@ -3,16 +3,14 @@
 #include <D3DRootSignatureDynamic.hpp>
 
 // Model Bundle
-D3D12_DRAW_INDEXED_ARGUMENTS ModelBundle::GetDrawIndexedIndirectCommand(
-	const std::shared_ptr<ModelVS>& model
+D3D12_DRAW_INDEXED_ARGUMENTS ModelBundleBase::GetDrawIndexedIndirectCommand(
+	const MeshDetails& meshDetails
 ) noexcept {
-	MeshDetailsVS meshDetails = model->GetMeshDetailsVS();
-
 	const D3D12_DRAW_INDEXED_ARGUMENTS indirectCommand
 	{
-		.IndexCountPerInstance = meshDetails.indexCount,
+		.IndexCountPerInstance = meshDetails.elementCount,
 		.InstanceCount         = 1u,
-		.StartIndexLocation    = meshDetails.indexOffset,
+		.StartIndexLocation    = meshDetails.elementOffset,
 		.BaseVertexLocation    = 0,
 		.StartInstanceLocation = 0u
 	};
@@ -22,14 +20,15 @@ D3D12_DRAW_INDEXED_ARGUMENTS ModelBundle::GetDrawIndexedIndirectCommand(
 
 // Model Bundle VS Individual
 void ModelBundleVSIndividual::SetModelBundle(
-	std::shared_ptr<ModelBundleVS> bundle, std::vector<std::uint32_t> modelBufferIndices
+	std::shared_ptr<ModelBundle> bundle, std::vector<std::uint32_t> modelBufferIndices
 ) noexcept {
 	m_modelBufferIndices = std::move(modelBufferIndices);
 	m_modelBundle        = std::move(bundle);
 }
 
 void ModelBundleVSIndividual::Draw(
-	const D3DCommandList& graphicsList, UINT constantsRootIndex
+	const D3DCommandList& graphicsList, UINT constantsRootIndex,
+	const MeshManagerVertexShader& meshBundle
 ) const noexcept {
 	ID3D12GraphicsCommandList* cmdList = graphicsList.Get();
 	const auto& models                 = m_modelBundle->GetModels();
@@ -42,7 +41,11 @@ void ModelBundleVSIndividual::Draw(
 			constantsRootIndex, pushConstantCount, &m_modelBufferIndices[index], 0u
 		);
 
-		const D3D12_DRAW_INDEXED_ARGUMENTS meshArgs = GetDrawIndexedIndirectCommand(models[index]);
+		const std::shared_ptr<Model>& model = models[index];
+
+		const D3D12_DRAW_INDEXED_ARGUMENTS meshArgs = GetDrawIndexedIndirectCommand(
+			meshBundle.GetMeshDetails(model->GetMeshIndex())
+		);
 
 		cmdList->DrawIndexedInstanced(
 			meshArgs.IndexCountPerInstance, meshArgs.InstanceCount, meshArgs.StartIndexLocation,
@@ -53,14 +56,15 @@ void ModelBundleVSIndividual::Draw(
 
 // Model Bundle MS
 void ModelBundleMSIndividual::SetModelBundle(
-	std::shared_ptr<ModelBundleMS> bundle, std::vector<std::uint32_t> modelBufferIndices
+	std::shared_ptr<ModelBundle> bundle, std::vector<std::uint32_t> modelBufferIndices
 ) noexcept {
 	m_modelBundle        = std::move(bundle);
 	m_modelBufferIndices = std::move(modelBufferIndices);
 }
 
 void ModelBundleMSIndividual::Draw(
-	const D3DCommandList& graphicsList, UINT constantsASRootIndex, UINT constantsMSRootIndex
+	const D3DCommandList& graphicsList, UINT constantsASRootIndex, UINT constantsMSRootIndex,
+	const MeshManagerMeshShader& meshBundle
 ) const noexcept {
 	ID3D12GraphicsCommandList6* cmdList = graphicsList.Get();
 	const auto& models                  = m_modelBundle->GetModels();
@@ -72,7 +76,7 @@ void ModelBundleMSIndividual::Draw(
 		constexpr UINT pushConstantMSCount = GetMSConstantCount();
 		constexpr UINT pushConstantASCount = GetASConstantCount();
 
-		const MeshDetailsMS meshDetails    = model->GetMeshDetailsMS();
+		const MeshDetails meshDetails      = meshBundle.GetMeshDetails(model->GetMeshIndex());
 
 		const ModelDetailsMS msConstants
 		{
@@ -82,7 +86,7 @@ void ModelBundleMSIndividual::Draw(
 
 		const ModelDetailsAS asConstants
 		{
-			.meshletCount = meshDetails.meshletCount
+			.meshletCount = meshDetails.elementCount
 		};
 
 		cmdList->SetGraphicsRoot32BitConstants(
@@ -98,7 +102,7 @@ void ModelBundleMSIndividual::Draw(
 		// in a wave and 64 on AMD. So, a workGroup will be able to work on 32/64
 		// meshlets concurrently.
 		const UINT amplficationGroupCount = DivRoundUp(
-			meshDetails.meshletCount, s_amplificationLaneCount
+			meshDetails.elementCount, s_amplificationLaneCount
 		);
 
 		cmdList->DispatchMesh(amplficationGroupCount, 1u, 1u);
@@ -121,7 +125,7 @@ ModelBundleCSIndirect::ModelBundleCSIndirect()
 	}
 {}
 
-void ModelBundleCSIndirect::SetModelBundle(std::shared_ptr<ModelBundleVS> bundle) noexcept
+void ModelBundleCSIndirect::SetModelBundle(std::shared_ptr<ModelBundle> bundle) noexcept
 {
 	m_modelBundle = std::move(bundle);
 }
@@ -189,8 +193,9 @@ void ModelBundleCSIndirect::CreateBuffers(
 	m_modelIndices = std::move(modelIndices);
 }
 
-void ModelBundleCSIndirect::Update(size_t bufferIndex) const noexcept
-{
+void ModelBundleCSIndirect::Update(
+	size_t bufferIndex, const MeshManagerVertexShader& meshBundle
+) const noexcept {
 	const SharedBufferData& argumentInputSharedData = m_argumentInputSharedData[bufferIndex];
 
 	std::uint8_t* argumentInputStart
@@ -204,13 +209,15 @@ void ModelBundleCSIndirect::Update(size_t bufferIndex) const noexcept
 
 	for (size_t index = 0u; index < modelCount; ++index)
 	{
-		const std::shared_ptr<ModelVS>& model = models[index];
-		const UINT modelIndex                 = m_modelIndices[index];
+		const std::shared_ptr<Model>& model = models[index];
+		const UINT modelIndex               = m_modelIndices[index];
 
 		IndirectArgument arguments
 		{
 			.modelIndex    = modelIndex,
-			.drawArguments = ModelBundle::GetDrawIndexedIndirectCommand(model)
+			.drawArguments = ModelBundleBase::GetDrawIndexedIndirectCommand(
+				meshBundle.GetMeshDetails(model->GetMeshIndex())
+			)
 		};
 
 		memcpy(argumentInputStart + modelOffset, &arguments, argumentStride);
@@ -221,11 +228,11 @@ void ModelBundleCSIndirect::Update(size_t bufferIndex) const noexcept
 
 // Model Bundle VS Indirect
 ModelBundleVSIndirect::ModelBundleVSIndirect()
-	: ModelBundle{}, m_modelCount{ 0u }, m_modelBundle{}, m_argumentOutputSharedData{},
+	: ModelBundleBase{}, m_modelCount{ 0u }, m_modelBundle{}, m_argumentOutputSharedData{},
 	m_counterSharedData{}, m_bundleID{ 0u }
 {}
 
-void ModelBundleVSIndirect::SetModelBundle(std::shared_ptr<ModelBundleVS> bundle) noexcept
+void ModelBundleVSIndirect::SetModelBundle(std::shared_ptr<ModelBundle> bundle) noexcept
 {
 	m_modelBundle = std::move(bundle);
 }
@@ -396,7 +403,7 @@ void ModelManagerVSIndividual::_setGraphicsConstantRootIndex(
 
 void ModelManagerVSIndividual::ConfigureModelBundle(
 	ModelBundleVSIndividual& modelBundleObj, std::vector<std::uint32_t>&& modelIndices,
-	std::shared_ptr<ModelBundleVS>&& modelBundle, TemporaryDataBufferGPU&// Not needed in this system.
+	std::shared_ptr<ModelBundle>&& modelBundle, TemporaryDataBufferGPU&// Not needed in this system.
 ) const noexcept {
 	modelBundleObj.SetModelBundle(std::move(modelBundle), std::move(modelIndices));
 }
@@ -500,10 +507,14 @@ void ModelManagerVSIndividual::Draw(const D3DCommandList& graphicsList) const no
 		BindPipeline(modelBundle, graphicsList, previousPSOIndex);
 
 		// Mesh
-		BindMesh(modelBundle, graphicsList);
+		const MeshManagerVertexShader& meshBundle = m_meshBundles.at(
+			static_cast<size_t>(modelBundle.GetMeshBundleIndex())
+		);
+
+		meshBundle.Bind(graphicsList);
 
 		// Model
-		modelBundle.Draw(graphicsList, m_constantsRootIndex);
+		modelBundle.Draw(graphicsList, m_constantsRootIndex, meshBundle);
 	}
 }
 
@@ -579,7 +590,7 @@ void ModelManagerVSIndirect::UpdateDispatchX() noexcept
 
 void ModelManagerVSIndirect::ConfigureModelBundle(
 	ModelBundleVSIndirect& modelBundleObj, std::vector<std::uint32_t>&& modelIndices,
-	std::shared_ptr<ModelBundleVS>&& modelBundle, TemporaryDataBufferGPU& tempBuffer
+	std::shared_ptr<ModelBundle>&& modelBundle, TemporaryDataBufferGPU& tempBuffer
 ) {
 	ModelBundleCSIndirect modelBundleCS{};
 
@@ -712,14 +723,17 @@ void ModelManagerVSIndirect::_updatePerFrame(UINT64 frameIndex) const noexcept
 	// are cpu data which is reset every frame.
 	for (const ModelBundleCSIndirect& bundle : m_modelBundlesCS)
 	{
-		bundle.Update(static_cast<size_t>(frameIndex));
+		const std::uint32_t meshBundleIndex  = bundle.GetMeshBundleIndex();
 
-		const std::uint32_t meshIndex        = bundle.GetMeshIndex();
+		bundle.Update(
+			static_cast<size_t>(frameIndex), m_meshBundles.at(static_cast<size_t>(meshBundleIndex))
+		);
+
 		const std::uint32_t modelBundleIndex = bundle.GetModelBundleIndex();
 
 		bufferOffset = strideSize * modelBundleIndex;
 
-		memcpy(bufferOffsetPtr + bufferOffset, &meshIndex, strideSize);
+		memcpy(bufferOffsetPtr + bufferOffset, &meshBundleIndex, strideSize);
 	}
 }
 
@@ -904,7 +918,11 @@ void ModelManagerVSIndirect::Draw(
 		BindPipeline(modelBundle, graphicsList, previousPSOIndex);
 
 		// Mesh
-		BindMesh(modelBundle, graphicsList);
+		const MeshManagerVertexShader& meshBundle = m_meshBundles.at(
+			static_cast<size_t>(modelBundle.GetMeshBundleIndex())
+		);
+
+		meshBundle.Bind(graphicsList);
 
 		// Model
 		modelBundle.Draw(frameIndex, commandSignature, graphicsList);
@@ -988,7 +1006,7 @@ ModelManagerMS::ModelManagerMS(
 
 void ModelManagerMS::ConfigureModelBundle(
 	ModelBundleMSIndividual& modelBundleObj, std::vector<std::uint32_t>&& modelIndices,
-	std::shared_ptr<ModelBundleMS>&& modelBundle, [[maybe_unused]] TemporaryDataBufferGPU& tempBuffer
+	std::shared_ptr<ModelBundle>&& modelBundle, [[maybe_unused]] TemporaryDataBufferGPU& tempBuffer
 ) {
 	modelBundleObj.SetModelBundle(std::move(modelBundle), std::move(modelIndices));
 }
@@ -1150,21 +1168,21 @@ void ModelManagerMS::Draw(const D3DCommandList& graphicsList) const noexcept
 		// Pipeline Object.
 		BindPipeline(modelBundle, graphicsList, previousPSOIndex);
 
-		{
-			const size_t meshIndex                  = modelBundle.GetMeshIndex();
-			const MeshManagerMeshShader& meshBundle = m_meshBundles.at(meshIndex);
+		const auto meshBundleIndex              = static_cast<size_t>(
+			modelBundle.GetMeshBundleIndex()
+		);
+		const MeshManagerMeshShader& meshBundle = m_meshBundles.at(meshBundleIndex);
 
-			constexpr UINT constBufferOffset        = ModelBundleMSIndividual::GetMSConstantCount();
-			constexpr UINT constBufferCount         = MeshManagerMeshShader::GetConstantCount();
+		constexpr UINT constBufferOffset = ModelBundleMSIndividual::GetMSConstantCount();
+		constexpr UINT constBufferCount  = MeshManagerMeshShader::GetConstantCount();
 
-			const MeshManagerMeshShader::MeshDetails meshDetails = meshBundle.GetMeshDetails();
+		const MeshManagerMeshShader::MeshDetailsMS meshDetailsMS = meshBundle.GetMeshDetailsMS();
 
-			cmdList->SetGraphicsRoot32BitConstants(
-				m_constantsMSRootIndex, constBufferCount, &meshDetails, constBufferOffset
-			);
-		}
+		cmdList->SetGraphicsRoot32BitConstants(
+			m_constantsMSRootIndex, constBufferCount, &meshDetailsMS, constBufferOffset
+		);
 
 		// Model
-		modelBundle.Draw(graphicsList, m_constantsASRootIndex, m_constantsMSRootIndex);
+		modelBundle.Draw(graphicsList, m_constantsASRootIndex, m_constantsMSRootIndex, meshBundle);
 	}
 }

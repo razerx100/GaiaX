@@ -72,13 +72,7 @@ void RendererDx12::WaitForGPUToFinish()
 }
 
 std::uint32_t RendererDx12::AddModelBundle(
-	std::shared_ptr<ModelBundleVS>&& modelBundle, const ShaderName& pixelShader
-) {
-	return m_gaia.GetRenderEngine().AddModelBundle(std::move(modelBundle), pixelShader);
-}
-
-std::uint32_t RendererDx12::AddModelBundle(
-	std::shared_ptr<ModelBundleMS>&& modelBundle, const ShaderName& pixelShader
+	std::shared_ptr<ModelBundle>&& modelBundle, const ShaderName& pixelShader
 ) {
 	return m_gaia.GetRenderEngine().AddModelBundle(std::move(modelBundle), pixelShader);
 }

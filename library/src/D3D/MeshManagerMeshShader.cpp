@@ -5,7 +5,7 @@ MeshManagerMeshShader::MeshManagerMeshShader()
 	: m_vertexBufferSharedData{ nullptr, 0u, 0u },
 	m_vertexIndicesBufferSharedData{ nullptr, 0u, 0u }, m_primIndicesBufferSharedData{ nullptr, 0u, 0u },
 	m_meshletBufferSharedData{ nullptr, 0u, 0u }, m_meshBoundsSharedData{ nullptr, 0u, 0u },
-	m_meshDetails{ 0u, 0u, 0u }
+	m_meshDetails{ 0u, 0u, 0u }, m_bundleDetails{}
 {}
 
 void MeshManagerMeshShader::SetMeshBundle(
@@ -57,6 +57,8 @@ void MeshManagerMeshShader::SetMeshBundle(
 		meshlets, stagingBufferMan, meshletSharedBuffer, m_meshletBufferSharedData,
 		m_meshDetails.meshletOffset, tempBuffer
 	);
+
+	m_bundleDetails = std::move(meshBundle->GetBundleDetails());
 }
 
 void MeshManagerMeshShader::SetMeshBundle(

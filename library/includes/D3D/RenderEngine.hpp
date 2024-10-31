@@ -74,11 +74,7 @@ public:
 
 	[[nodiscard]]
 	virtual std::uint32_t AddModelBundle(
-		std::shared_ptr<ModelBundleVS>&& modelBundle, const ShaderName& pixelShader
-	);
-	[[nodiscard]]
-	virtual std::uint32_t AddModelBundle(
-		std::shared_ptr<ModelBundleMS>&& modelBundle, const ShaderName& pixelShader
+		std::shared_ptr<ModelBundle>&& modelBundle, const ShaderName& pixelShader
 	);
 
 	virtual void RemoveModelBundle(std::uint32_t bundleID) noexcept = 0;
