@@ -110,7 +110,8 @@ public:
 	// 4 are aligned correctly.
 	struct ModelDetailsMS
 	{
-		MeshDetails   meshDetails;
+		std::uint32_t meshletCount;
+		std::uint32_t meshletOffset;
 		std::uint32_t modelBufferIndex;
 		std::uint32_t padding;
 	};

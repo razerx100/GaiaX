@@ -80,7 +80,8 @@ void ModelBundleMSIndividual::Draw(
 
 		const ModelDetailsMS msConstants
 		{
-			.meshDetails      = meshDetails,
+			.meshletCount     = meshDetails.elementCount,
+			.meshletOffset    = meshDetails.elementOffset,
 			.modelBufferIndex = m_modelBufferIndices[index]
 		};
 
