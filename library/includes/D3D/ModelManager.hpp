@@ -937,8 +937,6 @@ private:
 		return static_cast<UINT>(sizeof(ConstantData) / sizeof(UINT));
 	}
 
-	using BoundsDetails = MeshManagerVertexShader::BoundsDetails;
-
 private:
 	StagingBufferManager*                 m_stagingBufferMan;
 	std::vector<SharedBufferCPU>          m_argumentInputBuffers;
@@ -947,7 +945,6 @@ private:
 	std::vector<SharedBufferGPUWriteOnly> m_counterBuffers;
 	Buffer                                m_counterResetBuffer;
 	MultiInstanceCPUBuffer<std::uint32_t> m_meshIndexBuffer;
-	ReusableCPUBuffer<BoundsDetails>      m_meshDetailsBuffer;
 	SharedBufferGPU                       m_vertexBuffer;
 	SharedBufferGPU                       m_indexBuffer;
 	SharedBufferGPU                       m_modelBundleIndexBuffer;
@@ -976,7 +973,6 @@ private:
 	static constexpr size_t s_modelBundleIndexSRVRegisterSlot    = 3u;
 	static constexpr size_t s_meshBoundingSRVRegisterSlot        = 4u;
 	static constexpr size_t s_meshIndexSRVRegisterSlot           = 5u;
-	static constexpr size_t s_meshDetailsSRVRegisterSlot         = 6u;
 	// UAV
 	static constexpr size_t s_argumenOutputUAVRegisterSlot       = 0u;
 	static constexpr size_t s_counterUAVRegisterSlot             = 1u;
@@ -1002,7 +998,6 @@ public:
 		m_counterBuffers{ std::move(other.m_counterBuffers) },
 		m_counterResetBuffer{ std::move(other.m_counterResetBuffer) },
 		m_meshIndexBuffer{ std::move(other.m_meshIndexBuffer) },
-		m_meshDetailsBuffer{ std::move(other.m_meshDetailsBuffer) },
 		m_vertexBuffer{ std::move(other.m_vertexBuffer) },
 		m_indexBuffer{ std::move(other.m_indexBuffer) },
 		m_modelBundleIndexBuffer{ std::move(other.m_modelBundleIndexBuffer) },
@@ -1025,7 +1020,6 @@ public:
 		m_counterBuffers         = std::move(other.m_counterBuffers);
 		m_counterResetBuffer     = std::move(other.m_counterResetBuffer);
 		m_meshIndexBuffer        = std::move(other.m_meshIndexBuffer);
-		m_meshDetailsBuffer      = std::move(other.m_meshDetailsBuffer);
 		m_vertexBuffer           = std::move(other.m_vertexBuffer);
 		m_indexBuffer            = std::move(other.m_indexBuffer);
 		m_modelBundleIndexBuffer = std::move(other.m_modelBundleIndexBuffer);

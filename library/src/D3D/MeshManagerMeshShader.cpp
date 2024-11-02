@@ -67,14 +67,30 @@ void MeshManagerMeshShader::SetMeshBundle(
 	SharedBufferGPU& primIndicesSharedBuffer, SharedBufferGPU& meshletSharedBuffer,
 	SharedBufferGPU& boundsSharedBuffer, TemporaryDataBufferGPU& tempBuffer
 ) {
-	const std::vector<MeshBound>& bounds = meshBundle->GetBounds();
+	constexpr auto boundStride = sizeof(AxisAlignedBoundingBox);
 
-	constexpr auto boundStride = sizeof(MeshBound);
-	const auto boundSize       = static_cast<UINT64>(boundStride * std::size(bounds));
+	// Need this or else the overload which returns the R value ref will be called.
+	const MeshBundleMS& meshBundleR             = *meshBundle;
+	const std::vector<MeshDetails>& meshDetails = meshBundleR.GetBundleDetails().meshDetails;
+
+	const size_t meshCount = std::size(meshDetails);
+	const auto boundSize   = static_cast<UINT64>(boundStride * meshCount);
 
 	m_meshBoundsSharedData = boundsSharedBuffer.AllocateAndGetSharedData(boundSize, tempBuffer);
 
-	std::shared_ptr<std::uint8_t[]> boundBufferData = CopyVectorToSharedPtr(bounds);
+	auto boundBufferData   = std::make_shared<std::uint8_t[]>(boundSize);
+
+	{
+		size_t boundOffset             = 0u;
+		std::uint8_t* boundBufferStart = boundBufferData.get();
+
+		for (const MeshDetails& meshDetail : meshDetails)
+		{
+			memcpy(boundBufferStart + boundOffset, &meshDetail.aabb, boundStride);
+
+			boundOffset += boundStride;
+		}
+	}
 
 	stagingBufferMan.AddBuffer(
 		std::move(boundBufferData), boundSize,
@@ -86,14 +102,4 @@ void MeshManagerMeshShader::SetMeshBundle(
 		stagingBufferMan, vertexSharedBuffer, vertexIndicesSharedBuffer, primIndicesSharedBuffer,
 		meshletSharedBuffer, tempBuffer
 	);
-}
-
-MeshManagerMeshShader::BoundsDetails MeshManagerMeshShader::GetBoundsDetails() const noexcept
-{
-	constexpr auto stride = sizeof(MeshBound);
-
-	return BoundsDetails{
-		.offset = static_cast<std::uint32_t>(m_meshBoundsSharedData.offset / stride),
-		.count  = static_cast<std::uint32_t>(m_meshBoundsSharedData.size / stride)
-	};
 }

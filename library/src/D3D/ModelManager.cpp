@@ -527,7 +527,7 @@ ModelManagerVSIndirect::ModelManagerVSIndirect(
 	m_stagingBufferMan{ stagingBufferMan }, m_argumentInputBuffers{}, m_argumentOutputBuffers{},
 	m_cullingDataBuffer{ device, memoryManager }, m_counterBuffers{},
 	m_counterResetBuffer{ device, memoryManager, D3D12_HEAP_TYPE_UPLOAD },
-	m_meshIndexBuffer{ device, memoryManager, frameCount }, m_meshDetailsBuffer{ device, memoryManager },
+	m_meshIndexBuffer{ device, memoryManager, frameCount },
 	m_vertexBuffer{ device, memoryManager },
 	m_indexBuffer{ device, memoryManager },
 	m_modelBundleIndexBuffer{ device, memoryManager },
@@ -700,14 +700,6 @@ void ModelManagerVSIndirect::ConfigureMeshBundle(
 		std::move(meshBundle), stagingBufferMan, m_vertexBuffer, m_indexBuffer, m_meshBoundsBuffer,
 		tempBuffer
 	);
-
-	// This function is also used by the the Add function. Calling it early
-	// here should make it so it won't be called again the in Add function.
-	// But the returned value should be the same.
-	const size_t meshIndex = m_meshBundles.GetNextFreeIndex();
-
-	BoundsDetails details = meshManager.GetBoundsDetails();
-	m_meshDetailsBuffer.Add(meshIndex, details);
 }
 
 void ModelManagerVSIndirect::_updatePerFrame(UINT64 frameIndex) const noexcept
@@ -820,9 +812,6 @@ void ModelManagerVSIndirect::SetDescriptorLayoutCS(
 		descriptorManager.AddRootSRV(
 			s_meshIndexSRVRegisterSlot, csRegisterSpace, D3D12_SHADER_VISIBILITY_ALL
 		);
-		descriptorManager.AddRootSRV(
-			s_meshDetailsSRVRegisterSlot, csRegisterSpace, D3D12_SHADER_VISIBILITY_ALL
-		);
 	}
 }
 
@@ -861,9 +850,6 @@ void ModelManagerVSIndirect::SetDescriptorsCSOfModels(
 		);
 
 		m_meshIndexBuffer.SetRootSRVCom(descriptorManager, s_meshIndexSRVRegisterSlot, csRegisterSpace);
-		m_meshDetailsBuffer.SetRootSRVCom(
-			descriptorManager, s_meshDetailsSRVRegisterSlot, csRegisterSpace
-		);
 	}
 }
 

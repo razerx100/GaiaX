@@ -12,13 +12,6 @@
 class MeshManagerVertexShader
 {
 public:
-	struct BoundsDetails
-	{
-		std::uint32_t offset;
-		std::uint32_t count;
-	};
-
-public:
 	MeshManagerVertexShader();
 
 	// Without bound data.
@@ -43,8 +36,6 @@ public:
 	[[nodiscard]]
 	const SharedBufferData& GetBoundsSharedData() const noexcept { return m_meshBoundsSharedData; }
 
-	[[nodiscard]]
-	BoundsDetails GetBoundsDetails() const noexcept;
 	[[nodiscard]]
 	const MeshDetails& GetMeshDetails(size_t index) const noexcept
 	{

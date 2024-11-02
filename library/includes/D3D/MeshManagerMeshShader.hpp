@@ -21,12 +21,6 @@ public:
 		std::uint32_t meshletOffset;
 	};
 
-	struct BoundsDetails
-	{
-		std::uint32_t offset;
-		std::uint32_t count;
-	};
-
 public:
 	MeshManagerMeshShader();
 
@@ -64,9 +58,6 @@ public:
 	}
 	[[nodiscard]]
 	const SharedBufferData& GetBoundsSharedData() const noexcept { return m_meshBoundsSharedData; }
-
-	[[nodiscard]]
-	BoundsDetails GetBoundsDetails() const noexcept;
 
 	[[nodiscard]]
 	MeshDetailsMS GetMeshDetailsMS() const noexcept { return m_meshDetails; }
