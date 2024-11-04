@@ -46,6 +46,7 @@ private:
 	{
 		DirectX::XMMATRIX view;
 		DirectX::XMMATRIX projection;
+		Frustum           viewFrustum;
 	};
 
 private:

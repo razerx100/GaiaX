@@ -52,7 +52,18 @@ void CameraManager::Update(UINT64 index) const noexcept
 
 		memcpy(bufferAddress, &view, matrixSize);
 
-		activeCamera->GetProjectionMatrix(bufferAddress + matrixSize);
+		// Projection matrix's address
+		bufferAddress += matrixSize;
+
+		activeCamera->GetProjectionMatrix(bufferAddress);
+
+		// Frustum's address
+		bufferAddress += matrixSize;
+
+		// In the clip space.
+		const Frustum viewFrustum = activeCamera->GetViewFrustum(view);
+
+		memcpy(bufferAddress, &viewFrustum, sizeof(Frustum));
 	}
 }
 
