@@ -11,20 +11,24 @@
 
 class MeshManagerVertexShader
 {
+	struct PerMeshBundleData
+	{
+		std::uint32_t meshOffset;
+	};
+
 public:
 	MeshManagerVertexShader();
 
-	// Without bound data.
 	void SetMeshBundle(
 		std::unique_ptr<MeshBundleVS> meshBundle, StagingBufferManager& stagingBufferMan,
 		SharedBufferGPU& vertexSharedBuffer, SharedBufferGPU& indexSharedBuffer,
 		TemporaryDataBufferGPU& tempBuffer
 	);
-	// With bound data when the bound data has shared ownership.
 	void SetMeshBundle(
 		std::unique_ptr<MeshBundleVS> meshBundle, StagingBufferManager& stagingBufferMan,
 		SharedBufferGPU& vertexSharedBuffer, SharedBufferGPU& indexSharedBuffer,
-		SharedBufferGPU& boundsSharedBuffer, TemporaryDataBufferGPU& tempBuffer
+		SharedBufferGPU& perMeshSharedBuffer, SharedBufferGPU& perMeshBundleSharedBuffer,
+		TemporaryDataBufferGPU& tempBuffer
 	);
 
 	void Bind(const D3DCommandList& graphicsCmdList) const noexcept;
@@ -34,7 +38,12 @@ public:
 	[[nodiscard]]
 	const SharedBufferData& GetIndexSharedData() const noexcept { return m_indexBufferSharedData; }
 	[[nodiscard]]
-	const SharedBufferData& GetBoundsSharedData() const noexcept { return m_meshBoundsSharedData; }
+	const SharedBufferData& GetPerMeshSharedData() const noexcept { return m_perMeshSharedData; }
+	[[nodiscard]]
+	const SharedBufferData& GetPerMeshBundleSharedData() const noexcept
+	{
+		return m_perMeshBundleSharedData;
+	}
 
 	[[nodiscard]]
 	const MeshDetails& GetMeshDetails(size_t index) const noexcept
@@ -45,7 +54,8 @@ public:
 private:
 	SharedBufferData  m_vertexBufferSharedData;
 	SharedBufferData  m_indexBufferSharedData;
-	SharedBufferData  m_meshBoundsSharedData;
+	SharedBufferData  m_perMeshSharedData;
+	SharedBufferData  m_perMeshBundleSharedData;
 	MeshBundleDetails m_bundleDetails;
 
 public:
@@ -55,15 +65,17 @@ public:
 	MeshManagerVertexShader(MeshManagerVertexShader&& other) noexcept
 		: m_vertexBufferSharedData{ other.m_vertexBufferSharedData },
 		m_indexBufferSharedData{ other.m_indexBufferSharedData },
-		m_meshBoundsSharedData{ other.m_meshBoundsSharedData },
+		m_perMeshSharedData{ other.m_perMeshSharedData },
+		m_perMeshBundleSharedData{ other.m_perMeshBundleSharedData },
 		m_bundleDetails{ std::move(other.m_bundleDetails) }
 	{}
 	MeshManagerVertexShader& operator=(MeshManagerVertexShader&& other) noexcept
 	{
-		m_vertexBufferSharedData = other.m_vertexBufferSharedData;
-		m_indexBufferSharedData  = other.m_indexBufferSharedData;
-		m_meshBoundsSharedData   = other.m_meshBoundsSharedData;
-		m_bundleDetails          = std::move(other.m_bundleDetails);
+		m_vertexBufferSharedData  = other.m_vertexBufferSharedData;
+		m_indexBufferSharedData   = other.m_indexBufferSharedData;
+		m_perMeshSharedData       = other.m_perMeshSharedData;
+		m_perMeshBundleSharedData = other.m_perMeshBundleSharedData;
+		m_bundleDetails           = std::move(other.m_bundleDetails);
 
 		return *this;
 	}

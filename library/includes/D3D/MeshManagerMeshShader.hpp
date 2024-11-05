@@ -24,19 +24,17 @@ public:
 public:
 	MeshManagerMeshShader();
 
-	// Without bound data.
 	void SetMeshBundle(
 		std::unique_ptr<MeshBundleMS> meshBundle, StagingBufferManager& stagingBufferMan,
 		SharedBufferGPU& vertexSharedBuffer, SharedBufferGPU& vertexIndicesSharedBuffer,
 		SharedBufferGPU& primIndicesSharedBuffer, SharedBufferGPU& meshletSharedBuffer,
 		TemporaryDataBufferGPU& tempBuffer
 	);
-	// With bound data when the bound data has shared ownership.
 	void SetMeshBundle(
 		std::unique_ptr<MeshBundleMS> meshBundle, StagingBufferManager& stagingBufferMan,
 		SharedBufferGPU& vertexSharedBuffer, SharedBufferGPU& vertexIndicesSharedBuffer,
 		SharedBufferGPU& primIndicesSharedBuffer, SharedBufferGPU& meshletSharedBuffer,
-		SharedBufferGPU& boundsSharedBuffer, TemporaryDataBufferGPU& tempBuffer
+		SharedBufferGPU& meshletBoundsSharedBuffer, TemporaryDataBufferGPU& tempBuffer
 	);
 
 	[[nodiscard]]
@@ -57,7 +55,10 @@ public:
 		return m_meshletBufferSharedData;
 	}
 	[[nodiscard]]
-	const SharedBufferData& GetBoundsSharedData() const noexcept { return m_meshBoundsSharedData; }
+	const SharedBufferData& GeMeshletBoundsSharedData() const noexcept
+	{
+		return m_meshletBoundsSharedData;
+	}
 
 	[[nodiscard]]
 	MeshDetailsMS GetMeshDetailsMS() const noexcept { return m_meshDetails; }
@@ -78,7 +79,7 @@ private:
 	SharedBufferData  m_vertexIndicesBufferSharedData;
 	SharedBufferData  m_primIndicesBufferSharedData;
 	SharedBufferData  m_meshletBufferSharedData;
-	SharedBufferData  m_meshBoundsSharedData;
+	SharedBufferData  m_meshletBoundsSharedData;
 	MeshDetailsMS     m_meshDetails;
 	MeshBundleDetails m_bundleDetails;
 
@@ -91,7 +92,7 @@ public:
 		m_vertexIndicesBufferSharedData{ other.m_vertexIndicesBufferSharedData },
 		m_primIndicesBufferSharedData{ other.m_primIndicesBufferSharedData },
 		m_meshletBufferSharedData{ other.m_meshletBufferSharedData },
-		m_meshBoundsSharedData{ other.m_meshBoundsSharedData },
+		m_meshletBoundsSharedData{ other.m_meshletBoundsSharedData },
 		m_meshDetails{ other.m_meshDetails },
 		m_bundleDetails{ std::move(other.m_bundleDetails) }
 	{}
@@ -102,7 +103,7 @@ public:
 		m_vertexIndicesBufferSharedData = other.m_vertexIndicesBufferSharedData;
 		m_primIndicesBufferSharedData   = other.m_primIndicesBufferSharedData;
 		m_meshletBufferSharedData       = other.m_meshletBufferSharedData;
-		m_meshBoundsSharedData          = other.m_meshBoundsSharedData;
+		m_meshletBoundsSharedData       = other.m_meshletBoundsSharedData;
 		m_meshDetails                   = other.m_meshDetails;
 		m_bundleDetails                 = std::move(other.m_bundleDetails);
 

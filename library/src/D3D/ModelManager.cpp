@@ -345,7 +345,7 @@ void ModelBuffers::Update(UINT64 bufferIndex) const noexcept
 	constexpr size_t pixelStrideSize = GetPixelStride();
 	size_t pixelModelOffset          = 0u;
 
-	const size_t modelCount = m_elements.GetCount();
+	const size_t modelCount          = m_elements.GetCount();
 
 	// All of the models will be here. Even after multiple models have been removed, there
 	// should be null models there. It is necessary to keep them to preserve the model indices,
@@ -360,10 +360,12 @@ void ModelBuffers::Update(UINT64 bufferIndex) const noexcept
 
 			// Vertex Data
 			{
-				const ModelVertexData modelVertexData{
+				const ModelVertexData modelVertexData
+				{
 					.modelMatrix   = model->GetModelMatrix(),
 					.modelOffset   = model->GetModelOffset(),
-					.materialIndex = model->GetMaterialIndex()
+					.materialIndex = model->GetMaterialIndex(),
+					.meshIndex     = model->GetMeshIndex()
 				};
 
 				memcpy(vertexBufferOffset + vertexModelOffset, &modelVertexData, vertexStrideSize);
@@ -371,7 +373,8 @@ void ModelBuffers::Update(UINT64 bufferIndex) const noexcept
 
 			// Pixel Data
 			{
-				const ModelPixelData modelPixelData{
+				const ModelPixelData modelPixelData
+				{
 					.diffuseTexUVInfo  = model->GetDiffuseUVInfo(),
 					.specularTexUVInfo = model->GetSpecularUVInfo(),
 					.diffuseTexIndex   = model->GetDiffuseIndex(),
@@ -532,6 +535,7 @@ ModelManagerVSIndirect::ModelManagerVSIndirect(
 	m_indexBuffer{ device, memoryManager },
 	m_perModelDataBuffer{ device, memoryManager },
 	m_perMeshDataBuffer{ device, memoryManager },
+	m_perMeshBundleDataBuffer{ device, memoryManager },
 	m_computeRootSignature{ nullptr }, m_computePipeline{},
 	m_dispatchXCount{ 0u }, m_argumentCount{ 0u }, m_constantsVSRootIndex{ 0u },
 	m_constantsCSRootIndex{ 0u }, m_modelBundlesCS{}
@@ -687,8 +691,11 @@ void ModelManagerVSIndirect::ConfigureRemoveMesh(size_t bundleIndex) noexcept
 		const SharedBufferData& indexSharedData = meshManager.GetIndexSharedData();
 		m_indexBuffer.RelinquishMemory(indexSharedData);
 
-		const SharedBufferData& meshBoundsSharedData = meshManager.GetBoundsSharedData();
-		m_perMeshDataBuffer.RelinquishMemory(meshBoundsSharedData);
+		const SharedBufferData& perMeshSharedData = meshManager.GetPerMeshSharedData();
+		m_perMeshDataBuffer.RelinquishMemory(perMeshSharedData);
+
+		const SharedBufferData& perMeshBundleSharedData = meshManager.GetPerMeshBundleSharedData();
+		m_perMeshBundleDataBuffer.RelinquishMemory(perMeshBundleSharedData);
 	}
 }
 
@@ -698,7 +705,7 @@ void ModelManagerVSIndirect::ConfigureMeshBundle(
 ) {
 	meshManager.SetMeshBundle(
 		std::move(meshBundle), stagingBufferMan, m_vertexBuffer, m_indexBuffer, m_perMeshDataBuffer,
-		tempBuffer
+		m_perMeshBundleDataBuffer, tempBuffer
 	);
 }
 
@@ -810,6 +817,9 @@ void ModelManagerVSIndirect::SetDescriptorLayoutCS(
 			s_perMeshDataSRVRegisterSlot, csRegisterSpace, D3D12_SHADER_VISIBILITY_ALL
 		);
 		descriptorManager.AddRootSRV(
+			s_perMeshBundleDataSRVRegisterSlot, csRegisterSpace, D3D12_SHADER_VISIBILITY_ALL
+		);
+		descriptorManager.AddRootSRV(
 			s_meshBundleIndexSRVRegisterSlot, csRegisterSpace, D3D12_SHADER_VISIBILITY_ALL
 		);
 	}
@@ -859,9 +869,15 @@ void ModelManagerVSIndirect::SetDescriptorsCSOfMeshes(
 	std::vector<D3DDescriptorManager>& descriptorManagers, size_t csRegisterSpace
 ) const {
 	for (auto& descriptorManager : descriptorManagers)
+	{
 		descriptorManager.SetRootSRV(
 			s_perMeshDataSRVRegisterSlot, csRegisterSpace, m_perMeshDataBuffer.GetGPUAddress(), false
 		);
+		descriptorManager.SetRootSRV(
+			s_perMeshBundleDataSRVRegisterSlot, csRegisterSpace,
+			m_perMeshBundleDataBuffer.GetGPUAddress(), false
+		);
+	}
 }
 
 void ModelManagerVSIndirect::Dispatch(const D3DCommandList& computeList) const noexcept
@@ -873,16 +889,8 @@ void ModelManagerVSIndirect::Dispatch(const D3DCommandList& computeList) const n
 	{
 		constexpr auto pushConstantCount = GetConstantCount();
 
-		constexpr Bounds maxBounds
-		{
-			.maxXBounds = XBOUNDS,
-			.maxYBounds = YBOUNDS,
-			.maxZBounds = ZBOUNDS
-		};
-
 		const ConstantData constantData
 		{
-			.maxBounds  = maxBounds,
 			.modelCount = m_argumentCount
 		};
 
@@ -927,6 +935,7 @@ void ModelManagerVSIndirect::CopyTempBuffers(const D3DCommandList& copyList) noe
 		m_indexBuffer.CopyOldBuffer(copyList);
 		m_perModelDataBuffer.CopyOldBuffer(copyList);
 		m_perMeshDataBuffer.CopyOldBuffer(copyList);
+		m_perMeshBundleDataBuffer.CopyOldBuffer(copyList);
 
 		// I don't think copying is needed for the Output Argument
 		// and the counter buffers. As their data will be only

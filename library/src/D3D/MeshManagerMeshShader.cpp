@@ -4,7 +4,7 @@
 MeshManagerMeshShader::MeshManagerMeshShader()
 	: m_vertexBufferSharedData{ nullptr, 0u, 0u },
 	m_vertexIndicesBufferSharedData{ nullptr, 0u, 0u }, m_primIndicesBufferSharedData{ nullptr, 0u, 0u },
-	m_meshletBufferSharedData{ nullptr, 0u, 0u }, m_meshBoundsSharedData{ nullptr, 0u, 0u },
+	m_meshletBufferSharedData{ nullptr, 0u, 0u }, m_meshletBoundsSharedData{ nullptr, 0u, 0u },
 	m_meshDetails{ 0u, 0u, 0u }, m_bundleDetails{}
 {}
 
@@ -65,36 +65,38 @@ void MeshManagerMeshShader::SetMeshBundle(
 	std::unique_ptr<MeshBundleMS> meshBundle, StagingBufferManager& stagingBufferMan,
 	SharedBufferGPU& vertexSharedBuffer, SharedBufferGPU& vertexIndicesSharedBuffer,
 	SharedBufferGPU& primIndicesSharedBuffer, SharedBufferGPU& meshletSharedBuffer,
-	SharedBufferGPU& boundsSharedBuffer, TemporaryDataBufferGPU& tempBuffer
+	SharedBufferGPU& meshletBoundsSharedBuffer, TemporaryDataBufferGPU& tempBuffer
 ) {
-	constexpr auto boundStride = sizeof(AxisAlignedBoundingBox);
+	constexpr auto perMeshDataStride = sizeof(AxisAlignedBoundingBox);
 
 	// Need this or else the overload which returns the R value ref will be called.
 	const MeshBundleMS& meshBundleR             = *meshBundle;
 	const std::vector<MeshDetails>& meshDetails = meshBundleR.GetBundleDetails().meshDetails;
 
-	const size_t meshCount = std::size(meshDetails);
-	const auto boundSize   = static_cast<UINT64>(boundStride * meshCount);
+	const size_t meshCount     = std::size(meshDetails);
+	const auto perMeshDataSize = static_cast<UINT64>(perMeshDataStride * meshCount);
 
-	m_meshBoundsSharedData = boundsSharedBuffer.AllocateAndGetSharedData(boundSize, tempBuffer);
+	m_meshletBoundsSharedData  = meshletBoundsSharedBuffer.AllocateAndGetSharedData(
+		perMeshDataSize, tempBuffer
+	);
 
-	auto boundBufferData   = std::make_shared<std::uint8_t[]>(boundSize);
+	auto perMeshBufferData     = std::make_shared<std::uint8_t[]>(perMeshDataSize);
 
 	{
-		size_t boundOffset             = 0u;
-		std::uint8_t* boundBufferStart = boundBufferData.get();
+		size_t perMeshOffset             = 0u;
+		std::uint8_t* perMeshBufferStart = perMeshBufferData.get();
 
 		for (const MeshDetails& meshDetail : meshDetails)
 		{
-			memcpy(boundBufferStart + boundOffset, &meshDetail.aabb, boundStride);
+			memcpy(perMeshBufferStart + perMeshOffset, &meshDetail.aabb, perMeshDataStride);
 
-			boundOffset += boundStride;
+			perMeshOffset += perMeshDataStride;
 		}
 	}
 
 	stagingBufferMan.AddBuffer(
-		std::move(boundBufferData), boundSize,
-		m_meshBoundsSharedData.bufferData, m_meshBoundsSharedData.offset, tempBuffer
+		std::move(perMeshBufferData), perMeshDataSize,
+		m_meshletBoundsSharedData.bufferData, m_meshletBoundsSharedData.offset, tempBuffer
 	);
 
 	SetMeshBundle(
