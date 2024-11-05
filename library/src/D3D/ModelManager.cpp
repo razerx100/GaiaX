@@ -114,7 +114,7 @@ void ModelBundleMSIndividual::Draw(
 
 // Model Bundle CS Indirect
 ModelBundleCSIndirect::ModelBundleCSIndirect()
-	: m_modelBundleIndexSharedData{ nullptr, 0u, 0u }, m_cullingSharedData{ nullptr, 0u, 0u },
+	: m_perModelSharedData{ nullptr, 0u, 0u }, m_cullingSharedData{ nullptr, 0u, 0u },
 	m_argumentInputSharedData{}, m_modelBundle{}, m_modelIndices{},
 	m_cullingData{
 		std::make_unique<CullingData>(
@@ -134,16 +134,16 @@ void ModelBundleCSIndirect::SetModelBundle(std::shared_ptr<ModelBundle> bundle) 
 void ModelBundleCSIndirect::CreateBuffers(
 	StagingBufferManager& stagingBufferMan,
 	std::vector<SharedBufferCPU>& argumentInputSharedBuffer,
-	SharedBufferGPU& cullingSharedBuffer, SharedBufferGPU& modelBundleIndexSharedBuffer,
+	SharedBufferGPU& cullingSharedBuffer, SharedBufferGPU& perModelDataSharedBuffer,
 	std::vector<std::uint32_t> modelIndices, TemporaryDataBufferGPU& tempBuffer
 ) {
 	constexpr size_t strideSize = sizeof(IndirectArgument);
 	const auto argumentCount    = static_cast<std::uint32_t>(std::size(m_modelBundle->GetModels()));
 	m_cullingData->commandCount = argumentCount;
 
-	const auto argumentBufferSize         = static_cast<UINT64>(strideSize * argumentCount);
-	const auto cullingDataSize            = static_cast<UINT64>(sizeof(CullingData));
-	const auto modelBundleIndicesDataSize = static_cast<UINT64>(sizeof(std::uint32_t) * argumentCount);
+	const auto argumentBufferSize = static_cast<UINT64>(strideSize * argumentCount);
+	const auto cullingDataSize    = static_cast<UINT64>(sizeof(CullingData));
+	const auto perModelDataSize   = static_cast<UINT64>(sizeof(std::uint32_t) * argumentCount);
 
 	{
 		const size_t argumentInputBufferCount = std::size(argumentInputSharedBuffer);
@@ -163,11 +163,11 @@ void ModelBundleCSIndirect::CreateBuffers(
 		}
 	}
 
-	m_cullingSharedData          = cullingSharedBuffer.AllocateAndGetSharedData(
+	m_cullingSharedData         = cullingSharedBuffer.AllocateAndGetSharedData(
 		cullingDataSize, tempBuffer
 	);
-	m_modelBundleIndexSharedData = modelBundleIndexSharedBuffer.AllocateAndGetSharedData(
-		modelBundleIndicesDataSize, tempBuffer
+	m_perModelSharedData        = perModelDataSharedBuffer.AllocateAndGetSharedData(
+		perModelDataSize, tempBuffer
 	);
 
 	const auto modelBundleIndex = GetModelBundleIndex();
@@ -177,7 +177,7 @@ void ModelBundleCSIndirect::CreateBuffers(
 	// set the index as constantData per bundle. So, we will be giving each model the index
 	// of its bundle so each thread can work independently.
 	auto modelBundleIndicesInModels = std::vector<std::uint32_t>(argumentCount, modelBundleIndex);
-	std::shared_ptr<std::uint8_t[]> modelBundleIndicesInModelsData = CopyVectorToSharedPtr(
+	std::shared_ptr<std::uint8_t[]> perModelTempData = CopyVectorToSharedPtr(
 		modelBundleIndicesInModels
 	);
 
@@ -186,8 +186,8 @@ void ModelBundleCSIndirect::CreateBuffers(
 		m_cullingSharedData.offset, tempBuffer
 	);
 	stagingBufferMan.AddBuffer(
-		std::move(modelBundleIndicesInModelsData), modelBundleIndicesDataSize,
-		m_modelBundleIndexSharedData.bufferData, m_modelBundleIndexSharedData.offset,
+		std::move(perModelTempData), perModelDataSize,
+		m_perModelSharedData.bufferData, m_perModelSharedData.offset,
 		tempBuffer
 	);
 
@@ -527,11 +527,11 @@ ModelManagerVSIndirect::ModelManagerVSIndirect(
 	m_stagingBufferMan{ stagingBufferMan }, m_argumentInputBuffers{}, m_argumentOutputBuffers{},
 	m_cullingDataBuffer{ device, memoryManager }, m_counterBuffers{},
 	m_counterResetBuffer{ device, memoryManager, D3D12_HEAP_TYPE_UPLOAD },
-	m_meshIndexBuffer{ device, memoryManager, frameCount },
+	m_meshBundleIndexBuffer{ device, memoryManager, frameCount },
 	m_vertexBuffer{ device, memoryManager },
 	m_indexBuffer{ device, memoryManager },
-	m_modelBundleIndexBuffer{ device, memoryManager },
-	m_meshBoundsBuffer{ device, memoryManager },
+	m_perModelDataBuffer{ device, memoryManager },
+	m_perMeshDataBuffer{ device, memoryManager },
 	m_computeRootSignature{ nullptr }, m_computePipeline{},
 	m_dispatchXCount{ 0u }, m_argumentCount{ 0u }, m_constantsVSRootIndex{ 0u },
 	m_constantsCSRootIndex{ 0u }, m_modelBundlesCS{}
@@ -599,7 +599,7 @@ void ModelManagerVSIndirect::ConfigureModelBundle(
 	modelBundleObj.SetModelBundle(std::move(modelBundle));
 
 	modelBundleCS.CreateBuffers(
-		*m_stagingBufferMan, m_argumentInputBuffers, m_cullingDataBuffer, m_modelBundleIndexBuffer,
+		*m_stagingBufferMan, m_argumentInputBuffers, m_cullingDataBuffer, m_perModelDataBuffer,
 		std::move(modelIndices), tempBuffer
 	);
 
@@ -613,7 +613,7 @@ void ModelManagerVSIndirect::ConfigureModelBundle(
 
 	const auto modelBundleIndexInBuffer = modelBundleCS.GetModelBundleIndex();
 
-	m_meshIndexBuffer.Add(modelBundleIndexInBuffer);
+	m_meshBundleIndexBuffer.Add(modelBundleIndexInBuffer);
 
 	m_argumentCount += modelBundleCS.GetModelCount();
 
@@ -659,7 +659,7 @@ void ModelManagerVSIndirect::ConfigureModelRemove(size_t bundleIndex) noexcept
 				}
 
 				m_cullingDataBuffer.RelinquishMemory(bundle.GetCullingSharedData());
-				m_modelBundleIndexBuffer.RelinquishMemory(bundle.GetModelBundleIndexSharedData());
+				m_perModelDataBuffer.RelinquishMemory(bundle.GetPerModelDataSharedData());
 
 				const auto& modelIndices = bundle.GetModelIndices();
 
@@ -688,7 +688,7 @@ void ModelManagerVSIndirect::ConfigureRemoveMesh(size_t bundleIndex) noexcept
 		m_indexBuffer.RelinquishMemory(indexSharedData);
 
 		const SharedBufferData& meshBoundsSharedData = meshManager.GetBoundsSharedData();
-		m_meshBoundsBuffer.RelinquishMemory(meshBoundsSharedData);
+		m_perMeshDataBuffer.RelinquishMemory(meshBoundsSharedData);
 	}
 }
 
@@ -697,14 +697,14 @@ void ModelManagerVSIndirect::ConfigureMeshBundle(
 	MeshManagerVertexShader& meshManager, TemporaryDataBufferGPU& tempBuffer
 ) {
 	meshManager.SetMeshBundle(
-		std::move(meshBundle), stagingBufferMan, m_vertexBuffer, m_indexBuffer, m_meshBoundsBuffer,
+		std::move(meshBundle), stagingBufferMan, m_vertexBuffer, m_indexBuffer, m_perMeshDataBuffer,
 		tempBuffer
 	);
 }
 
 void ModelManagerVSIndirect::_updatePerFrame(UINT64 frameIndex) const noexcept
 {
-	std::uint8_t* bufferOffsetPtr = m_meshIndexBuffer.GetInstancePtr(frameIndex);
+	std::uint8_t* bufferOffsetPtr = m_meshBundleIndexBuffer.GetInstancePtr(frameIndex);
 	constexpr size_t strideSize   = sizeof(std::uint32_t);
 	size_t bufferOffset           = 0u;
 
@@ -804,13 +804,13 @@ void ModelManagerVSIndirect::SetDescriptorLayoutCS(
 			s_counterUAVRegisterSlot, csRegisterSpace, D3D12_SHADER_VISIBILITY_ALL
 		);
 		descriptorManager.AddRootSRV(
-			s_modelBundleIndexSRVRegisterSlot, csRegisterSpace, D3D12_SHADER_VISIBILITY_ALL
+			s_perModelDataSRVRegisterSlot, csRegisterSpace, D3D12_SHADER_VISIBILITY_ALL
 		);
 		descriptorManager.AddRootSRV(
-			s_meshBoundingSRVRegisterSlot, csRegisterSpace, D3D12_SHADER_VISIBILITY_ALL
+			s_perMeshDataSRVRegisterSlot, csRegisterSpace, D3D12_SHADER_VISIBILITY_ALL
 		);
 		descriptorManager.AddRootSRV(
-			s_meshIndexSRVRegisterSlot, csRegisterSpace, D3D12_SHADER_VISIBILITY_ALL
+			s_meshBundleIndexSRVRegisterSlot, csRegisterSpace, D3D12_SHADER_VISIBILITY_ALL
 		);
 	}
 }
@@ -845,11 +845,13 @@ void ModelManagerVSIndirect::SetDescriptorsCSOfModels(
 			s_counterUAVRegisterSlot, csRegisterSpace, m_counterBuffers[index].GetGPUAddress(), false
 		);
 		descriptorManager.SetRootSRV(
-			s_modelBundleIndexSRVRegisterSlot, csRegisterSpace,
-			m_modelBundleIndexBuffer.GetGPUAddress(), false
+			s_perModelDataSRVRegisterSlot, csRegisterSpace,
+			m_perModelDataBuffer.GetGPUAddress(), false
 		);
 
-		m_meshIndexBuffer.SetRootSRVCom(descriptorManager, s_meshIndexSRVRegisterSlot, csRegisterSpace);
+		m_meshBundleIndexBuffer.SetRootSRVCom(
+			descriptorManager, s_meshBundleIndexSRVRegisterSlot, csRegisterSpace
+		);
 	}
 }
 
@@ -858,7 +860,7 @@ void ModelManagerVSIndirect::SetDescriptorsCSOfMeshes(
 ) const {
 	for (auto& descriptorManager : descriptorManagers)
 		descriptorManager.SetRootSRV(
-			s_meshBoundingSRVRegisterSlot, csRegisterSpace, m_meshBoundsBuffer.GetGPUAddress(), false
+			s_perMeshDataSRVRegisterSlot, csRegisterSpace, m_perMeshDataBuffer.GetGPUAddress(), false
 		);
 }
 
@@ -923,8 +925,8 @@ void ModelManagerVSIndirect::CopyTempBuffers(const D3DCommandList& copyList) noe
 		m_cullingDataBuffer.CopyOldBuffer(copyList);
 		m_vertexBuffer.CopyOldBuffer(copyList);
 		m_indexBuffer.CopyOldBuffer(copyList);
-		m_modelBundleIndexBuffer.CopyOldBuffer(copyList);
-		m_meshBoundsBuffer.CopyOldBuffer(copyList);
+		m_perModelDataBuffer.CopyOldBuffer(copyList);
+		m_perMeshDataBuffer.CopyOldBuffer(copyList);
 
 		// I don't think copying is needed for the Output Argument
 		// and the counter buffers. As their data will be only

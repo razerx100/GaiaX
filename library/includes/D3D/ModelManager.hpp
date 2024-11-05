@@ -211,7 +211,7 @@ public:
 	void CreateBuffers(
 		StagingBufferManager& stagingBufferMan,
 		std::vector<SharedBufferCPU>& argumentInputSharedBuffer,
-		SharedBufferGPU& cullingSharedBuffer, SharedBufferGPU& modelBundleIndexSharedBuffer,
+		SharedBufferGPU& cullingSharedBuffer, SharedBufferGPU& perModelDataSharedBuffer,
 		std::vector<std::uint32_t> modelIndices, TemporaryDataBufferGPU& tempBuffer
 	);
 
@@ -250,13 +250,13 @@ public:
 	[[nodiscard]]
 	const SharedBufferData& GetCullingSharedData() const noexcept { return m_cullingSharedData; }
 	[[nodiscard]]
-	const SharedBufferData& GetModelBundleIndexSharedData() const noexcept
+	const SharedBufferData& GetPerModelDataSharedData() const noexcept
 	{
-		return m_modelBundleIndexSharedData;
+		return m_perModelSharedData;
 	}
 
 private:
-	SharedBufferData              m_modelBundleIndexSharedData;
+	SharedBufferData              m_perModelSharedData;
 	SharedBufferData              m_cullingSharedData;
 	std::vector<SharedBufferData> m_argumentInputSharedData;
 	std::vector<std::uint32_t>    m_modelIndices;
@@ -268,7 +268,7 @@ public:
 	ModelBundleCSIndirect& operator=(const ModelBundleCSIndirect&) = delete;
 
 	ModelBundleCSIndirect(ModelBundleCSIndirect&& other) noexcept
-		: m_modelBundleIndexSharedData{ other.m_modelBundleIndexSharedData },
+		: m_perModelSharedData{ other.m_perModelSharedData },
 		m_cullingSharedData{ other.m_cullingSharedData },
 		m_argumentInputSharedData{ std::move(other.m_argumentInputSharedData) },
 		m_modelIndices{ std::move(other.m_modelIndices) },
@@ -277,12 +277,12 @@ public:
 	{}
 	ModelBundleCSIndirect& operator=(ModelBundleCSIndirect&& other) noexcept
 	{
-		m_modelBundleIndexSharedData = other.m_modelBundleIndexSharedData;
-		m_cullingSharedData          = other.m_cullingSharedData;
-		m_argumentInputSharedData    = std::move(other.m_argumentInputSharedData);
-		m_modelIndices               = std::move(other.m_modelIndices);
-		m_modelBundle                = std::move(other.m_modelBundle);
-		m_cullingData                = std::move(other.m_cullingData);
+		m_perModelSharedData      = other.m_perModelSharedData;
+		m_cullingSharedData       = other.m_cullingSharedData;
+		m_argumentInputSharedData = std::move(other.m_argumentInputSharedData);
+		m_modelIndices            = std::move(other.m_modelIndices);
+		m_modelBundle             = std::move(other.m_modelBundle);
+		m_cullingData             = std::move(other.m_cullingData);
 
 		return *this;
 	}
@@ -944,11 +944,11 @@ private:
 	SharedBufferGPU                       m_cullingDataBuffer;
 	std::vector<SharedBufferGPUWriteOnly> m_counterBuffers;
 	Buffer                                m_counterResetBuffer;
-	MultiInstanceCPUBuffer<std::uint32_t> m_meshIndexBuffer;
+	MultiInstanceCPUBuffer<std::uint32_t> m_meshBundleIndexBuffer;
 	SharedBufferGPU                       m_vertexBuffer;
 	SharedBufferGPU                       m_indexBuffer;
-	SharedBufferGPU                       m_modelBundleIndexBuffer;
-	SharedBufferGPU                       m_meshBoundsBuffer;
+	SharedBufferGPU                       m_perModelDataBuffer;
+	SharedBufferGPU                       m_perMeshDataBuffer;
 	ID3D12RootSignature*                  m_computeRootSignature;
 	ComputePipeline                       m_computePipeline;
 	UINT                                  m_dispatchXCount;
@@ -970,9 +970,9 @@ private:
 	static constexpr size_t s_modelBuffersCSSRVRegisterSlot      = 0u;
 	static constexpr size_t s_argumentInputBufferSRVRegisterSlot = 1u;
 	static constexpr size_t s_cullingDataBufferSRVRegisterSlot   = 2u;
-	static constexpr size_t s_modelBundleIndexSRVRegisterSlot    = 3u;
-	static constexpr size_t s_meshBoundingSRVRegisterSlot        = 4u;
-	static constexpr size_t s_meshIndexSRVRegisterSlot           = 5u;
+	static constexpr size_t s_perModelDataSRVRegisterSlot        = 3u;
+	static constexpr size_t s_perMeshDataSRVRegisterSlot         = 4u;
+	static constexpr size_t s_meshBundleIndexSRVRegisterSlot     = 5u;
 	// UAV
 	static constexpr size_t s_argumenOutputUAVRegisterSlot       = 0u;
 	static constexpr size_t s_counterUAVRegisterSlot             = 1u;
@@ -997,11 +997,11 @@ public:
 		m_cullingDataBuffer{ std::move(other.m_cullingDataBuffer) },
 		m_counterBuffers{ std::move(other.m_counterBuffers) },
 		m_counterResetBuffer{ std::move(other.m_counterResetBuffer) },
-		m_meshIndexBuffer{ std::move(other.m_meshIndexBuffer) },
+		m_meshBundleIndexBuffer{ std::move(other.m_meshBundleIndexBuffer) },
 		m_vertexBuffer{ std::move(other.m_vertexBuffer) },
 		m_indexBuffer{ std::move(other.m_indexBuffer) },
-		m_modelBundleIndexBuffer{ std::move(other.m_modelBundleIndexBuffer) },
-		m_meshBoundsBuffer{ std::move(other.m_meshBoundsBuffer) },
+		m_perModelDataBuffer{ std::move(other.m_perModelDataBuffer) },
+		m_perMeshDataBuffer{ std::move(other.m_perMeshDataBuffer) },
 		m_computeRootSignature{ other.m_computeRootSignature },
 		m_computePipeline{ std::move(other.m_computePipeline) },
 		m_dispatchXCount{ other.m_dispatchXCount },
@@ -1019,11 +1019,11 @@ public:
 		m_cullingDataBuffer      = std::move(other.m_cullingDataBuffer);
 		m_counterBuffers         = std::move(other.m_counterBuffers);
 		m_counterResetBuffer     = std::move(other.m_counterResetBuffer);
-		m_meshIndexBuffer        = std::move(other.m_meshIndexBuffer);
+		m_meshBundleIndexBuffer  = std::move(other.m_meshBundleIndexBuffer);
 		m_vertexBuffer           = std::move(other.m_vertexBuffer);
 		m_indexBuffer            = std::move(other.m_indexBuffer);
-		m_modelBundleIndexBuffer = std::move(other.m_modelBundleIndexBuffer);
-		m_meshBoundsBuffer       = std::move(other.m_meshBoundsBuffer);
+		m_perModelDataBuffer     = std::move(other.m_perModelDataBuffer);
+		m_perMeshDataBuffer      = std::move(other.m_perMeshDataBuffer);
 		m_computeRootSignature   = other.m_computeRootSignature;
 		m_computePipeline        = std::move(other.m_computePipeline);
 		m_dispatchXCount         = other.m_dispatchXCount;
