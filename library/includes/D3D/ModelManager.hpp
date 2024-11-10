@@ -395,7 +395,10 @@ private:
 		// The materialIndex must be grabbed from the z component.
 		std::uint32_t     materialIndex;
 		std::uint32_t     meshIndex;
-		std::uint32_t     padding;
+		// This struct is 16 bytes aligned thanks to the Matrix. So, putting the correct
+		// amount of padding. Just to make it more obvious though, as it would have been
+		// put anyway. Structured Buffer doesn't require any specific alignment.
+		std::uint32_t     padding[3];
 	};
 
 	struct ModelPixelData
@@ -953,7 +956,7 @@ private:
 	UINT                                  m_constantsCSRootIndex;
 
 	// These CS models will have the data to be uploaded and the dispatching will be done on the Manager.
-	std::vector<ModelBundleCSIndirect>   m_modelBundlesCS;
+	std::vector<ModelBundleCSIndirect>    m_modelBundlesCS;
 
 	// Vertex Shader ones
 	// CBV
