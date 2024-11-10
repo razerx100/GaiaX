@@ -247,7 +247,7 @@ public:
 
 	[[nodiscard]]
 	// The offset from the start of the buffer will be returned.
-	SharedBufferData AllocateAndGetSharedData(UINT64 size)
+	SharedBufferData AllocateAndGetSharedData(UINT64 size, bool copyOldBuffer = false)
 	{
 		auto availableAllocIndex = m_allocator.GetAvailableAllocInfo(size);
 		SharedBufferAllocator::AllocInfo allocInfo{ .offset = 0u, .size = 0u };
@@ -255,7 +255,7 @@ public:
 		if (!availableAllocIndex)
 		{
 			allocInfo.size   = size;
-			allocInfo.offset = ExtendBuffer(size);
+			allocInfo.offset = ExtendBuffer(size, copyOldBuffer);
 		}
 		else
 			allocInfo = m_allocator.GetAndRemoveAllocInfo(*availableAllocIndex);
@@ -273,13 +273,8 @@ public:
 	}
 
 private:
-	void CreateBuffer(UINT64 size)
-	{
-		m_buffer.Create(size, m_resourceState, m_bufferFlag);
-	}
-
 	[[nodiscard]]
-	UINT64 ExtendBuffer(UINT64 size)
+	UINT64 ExtendBuffer(UINT64 size, bool copyOldBuffer)
 	{
 		// I probably don't need to worry about aligning here, since it's all inside a single buffer?
 		const UINT64 oldSize = m_buffer.BufferSize();
@@ -291,7 +286,16 @@ private:
 		// the offset would be correct, but the buffer would be unnecessarily recreated, even though
 		// it is not necessary. So, putting a check here.
 		if (newSize > oldSize)
-			CreateBuffer(newSize);
+		{
+			Buffer newBuffer{ m_device, m_memoryManager, MemoryType };
+
+			newBuffer.Create(newSize, m_resourceState, m_bufferFlag);
+
+			if (copyOldBuffer)
+				memcpy(newBuffer.CPUHandle(), m_buffer.CPUHandle(), static_cast<size_t>(oldSize));
+
+			m_buffer = std::move(newBuffer);
+		}
 
 		return offset;
 	}
