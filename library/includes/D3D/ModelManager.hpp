@@ -211,11 +211,13 @@ public:
 	void CreateBuffers(
 		StagingBufferManager& stagingBufferMan,
 		std::vector<SharedBufferCPU>& argumentInputSharedBuffer,
-		SharedBufferGPU& cullingSharedBuffer, SharedBufferGPU& perModelDataSharedBuffer,
+		SharedBufferCPU& cullingSharedBuffer, SharedBufferGPU& perModelDataSharedBuffer,
 		std::vector<std::uint32_t> modelIndices, TemporaryDataBufferGPU& tempBuffer
 	);
 
 	void Update(size_t bufferIndex, const MeshManagerVertexShader& meshBundle) const noexcept;
+
+	void ResetCullingData() const noexcept;
 
 	[[nodiscard]]
 	std::uint32_t GetMeshBundleIndex() const noexcept { return m_modelBundle->GetMeshBundleIndex(); }
@@ -261,7 +263,6 @@ private:
 	std::vector<SharedBufferData> m_argumentInputSharedData;
 	std::vector<std::uint32_t>    m_modelIndices;
 	std::shared_ptr<ModelBundle>  m_modelBundle;
-	std::unique_ptr<CullingData>  m_cullingData;
 
 public:
 	ModelBundleCSIndirect(const ModelBundleCSIndirect&) = delete;
@@ -272,8 +273,7 @@ public:
 		m_cullingSharedData{ other.m_cullingSharedData },
 		m_argumentInputSharedData{ std::move(other.m_argumentInputSharedData) },
 		m_modelIndices{ std::move(other.m_modelIndices) },
-		m_modelBundle{ std::move(other.m_modelBundle) },
-		m_cullingData{ std::move(other.m_cullingData) }
+		m_modelBundle{ std::move(other.m_modelBundle) }
 	{}
 	ModelBundleCSIndirect& operator=(ModelBundleCSIndirect&& other) noexcept
 	{
@@ -282,7 +282,6 @@ public:
 		m_argumentInputSharedData = std::move(other.m_argumentInputSharedData);
 		m_modelIndices            = std::move(other.m_modelIndices);
 		m_modelBundle             = std::move(other.m_modelBundle);
-		m_cullingData             = std::move(other.m_cullingData);
 
 		return *this;
 	}
@@ -939,7 +938,7 @@ private:
 	StagingBufferManager*                 m_stagingBufferMan;
 	std::vector<SharedBufferCPU>          m_argumentInputBuffers;
 	std::vector<SharedBufferGPUWriteOnly> m_argumentOutputBuffers;
-	SharedBufferGPU                       m_cullingDataBuffer;
+	SharedBufferCPU                       m_cullingDataBuffer;
 	std::vector<SharedBufferGPUWriteOnly> m_counterBuffers;
 	Buffer                                m_counterResetBuffer;
 	MultiInstanceCPUBuffer<std::uint32_t> m_meshBundleIndexBuffer;

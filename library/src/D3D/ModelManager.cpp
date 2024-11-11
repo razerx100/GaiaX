@@ -115,15 +115,7 @@ void ModelBundleMSIndividual::Draw(
 // Model Bundle CS Indirect
 ModelBundleCSIndirect::ModelBundleCSIndirect()
 	: m_perModelSharedData{ nullptr, 0u, 0u }, m_cullingSharedData{ nullptr, 0u, 0u },
-	m_argumentInputSharedData{}, m_modelBundle{}, m_modelIndices{},
-	m_cullingData{
-		std::make_unique<CullingData>(
-			CullingData{
-				.commandCount = 0u,
-				.commandOffset = 0u
-			}
-		)
-	}
+	m_argumentInputSharedData{}, m_modelBundle{}, m_modelIndices{}
 {}
 
 void ModelBundleCSIndirect::SetModelBundle(std::shared_ptr<ModelBundle> bundle) noexcept
@@ -131,17 +123,30 @@ void ModelBundleCSIndirect::SetModelBundle(std::shared_ptr<ModelBundle> bundle) 
 	m_modelBundle = std::move(bundle);
 }
 
+void ModelBundleCSIndirect::ResetCullingData() const noexcept
+{
+	// Before destroying an object the command count needs to be set to 0,
+	// so the model isn't processed in the compute shader anymore.
+	std::uint32_t commandCount  = 0u;
+
+	Buffer const* cullingBuffer = m_cullingSharedData.bufferData;
+
+	memcpy(
+		cullingBuffer->CPUHandle() + m_cullingSharedData.offset,
+		&commandCount, sizeof(std::uint32_t)
+	);
+}
+
 void ModelBundleCSIndirect::CreateBuffers(
 	StagingBufferManager& stagingBufferMan,
 	std::vector<SharedBufferCPU>& argumentInputSharedBuffer,
-	SharedBufferGPU& cullingSharedBuffer, SharedBufferGPU& perModelDataSharedBuffer,
+	SharedBufferCPU& cullingSharedBuffer, SharedBufferGPU& perModelDataSharedBuffer,
 	std::vector<std::uint32_t> modelIndices, TemporaryDataBufferGPU& tempBuffer
 ) {
-	constexpr size_t strideSize = sizeof(IndirectArgument);
-	const auto argumentCount    = static_cast<std::uint32_t>(std::size(m_modelBundle->GetModels()));
-	m_cullingData->commandCount = argumentCount;
+	constexpr size_t argumentStrideSize = sizeof(IndirectArgument);
 
-	const auto argumentBufferSize = static_cast<UINT64>(strideSize * argumentCount);
+	const auto argumentCount      = static_cast<std::uint32_t>(std::size(m_modelBundle->GetModels()));
+	const auto argumentBufferSize = static_cast<UINT64>(argumentStrideSize * argumentCount);
 	const auto cullingDataSize    = static_cast<UINT64>(sizeof(CullingData));
 	const auto perModelDataSize   = static_cast<UINT64>(sizeof(std::uint32_t) * argumentCount);
 
@@ -150,23 +155,42 @@ void ModelBundleCSIndirect::CreateBuffers(
 		m_argumentInputSharedData.resize(argumentInputBufferCount);
 
 		for (size_t index = 0u; index < argumentInputBufferCount; ++index)
-		{
-			SharedBufferData& argumentInputSharedData = m_argumentInputSharedData[index];
-
-			argumentInputSharedData = argumentInputSharedBuffer[index].AllocateAndGetSharedData(
+			m_argumentInputSharedData[index] = argumentInputSharedBuffer[index].AllocateAndGetSharedData(
 				argumentBufferSize
 			);
-
-			// The offset on each sharedBuffer should be the same.
-			m_cullingData->commandOffset
-				= static_cast<std::uint32_t>(argumentInputSharedData.offset / strideSize);
-		}
 	}
 
-	m_cullingSharedData         = cullingSharedBuffer.AllocateAndGetSharedData(
-		cullingDataSize, tempBuffer
-	);
-	m_perModelSharedData        = perModelDataSharedBuffer.AllocateAndGetSharedData(
+	// Set the culling data.
+	{
+		m_cullingSharedData = cullingSharedBuffer.AllocateAndGetSharedData(
+			cullingDataSize, true
+		);
+
+		CullingData cullingData
+		{
+			.commandCount  = argumentCount,
+			.commandOffset = 0u
+		};
+
+		if (!std::empty(m_argumentInputSharedData))
+		{
+			const SharedBufferData& sharedBufferData = m_argumentInputSharedData.front();
+
+			// The offset on each sharedBuffer should be the same.
+			cullingData.commandOffset = static_cast<std::uint32_t>(
+				sharedBufferData.offset / argumentStrideSize
+			);
+		}
+
+		Buffer const* cullingBuffer = m_cullingSharedData.bufferData;
+
+		memcpy(
+			cullingBuffer->CPUHandle() + m_cullingSharedData.offset,
+			&cullingData, cullingDataSize
+		);
+	}
+
+	m_perModelSharedData = perModelDataSharedBuffer.AllocateAndGetSharedData(
 		perModelDataSize, tempBuffer
 	);
 
@@ -177,14 +201,11 @@ void ModelBundleCSIndirect::CreateBuffers(
 	// set the index as constantData per bundle. So, we will be giving each model the index
 	// of its bundle so each thread can work independently.
 	auto modelBundleIndicesInModels = std::vector<std::uint32_t>(argumentCount, modelBundleIndex);
+
 	std::shared_ptr<std::uint8_t[]> perModelTempData = CopyVectorToSharedPtr(
 		modelBundleIndicesInModels
 	);
 
-	stagingBufferMan.AddBuffer(
-		std::move(m_cullingData), cullingDataSize, m_cullingSharedData.bufferData,
-		m_cullingSharedData.offset, tempBuffer
-	);
 	stagingBufferMan.AddBuffer(
 		std::move(perModelTempData), perModelDataSize,
 		m_perModelSharedData.bufferData, m_perModelSharedData.offset,
@@ -528,7 +549,8 @@ ModelManagerVSIndirect::ModelManagerVSIndirect(
 	std::uint32_t frameCount
 ) : ModelManager{ device, memoryManager, frameCount },
 	m_stagingBufferMan{ stagingBufferMan }, m_argumentInputBuffers{}, m_argumentOutputBuffers{},
-	m_cullingDataBuffer{ device, memoryManager }, m_counterBuffers{},
+	m_cullingDataBuffer{ device, memoryManager, D3D12_RESOURCE_STATE_GENERIC_READ },
+	m_counterBuffers{},
 	m_counterResetBuffer{ device, memoryManager, D3D12_HEAP_TYPE_UPLOAD },
 	m_meshBundleIndexBuffer{ device, memoryManager, frameCount },
 	m_vertexBuffer{ device, memoryManager },
@@ -662,6 +684,8 @@ void ModelManagerVSIndirect::ConfigureModelRemove(size_t bundleIndex) noexcept
 						m_argumentInputBuffers[index].RelinquishMemory(argumentInputSharedData[index]);
 				}
 
+				bundle.ResetCullingData();
+
 				m_cullingDataBuffer.RelinquishMemory(bundle.GetCullingSharedData());
 				m_perModelDataBuffer.RelinquishMemory(bundle.GetPerModelDataSharedData());
 
@@ -669,10 +693,6 @@ void ModelManagerVSIndirect::ConfigureModelRemove(size_t bundleIndex) noexcept
 
 				for (const auto& modelIndex : modelIndices)
 					m_modelBuffers.Remove(modelIndex);
-
-				m_argumentCount -= static_cast<std::uint32_t>(std::size(modelIndices));
-
-				UpdateDispatchX();
 			}
 
 			return result;
@@ -930,7 +950,6 @@ void ModelManagerVSIndirect::CopyTempBuffers(const D3DCommandList& copyList) noe
 {
 	if (m_tempCopyNecessary)
 	{
-		m_cullingDataBuffer.CopyOldBuffer(copyList);
 		m_vertexBuffer.CopyOldBuffer(copyList);
 		m_indexBuffer.CopyOldBuffer(copyList);
 		m_perModelDataBuffer.CopyOldBuffer(copyList);
