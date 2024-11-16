@@ -37,9 +37,9 @@ void MeshManagerMeshShader::SetMeshBundle(
 		);
 	};
 
-	const std::vector<std::uint32_t>& vertexIndices = meshBundle->GetVertexIndices();
-	const std::vector<std::uint32_t>& primIndices   = meshBundle->GetPrimIndices();
-	const std::vector<Meshlet>& meshlets            = meshBundle->GetMeshlets();
+	const std::vector<std::uint32_t>& vertexIndices   = meshBundle->GetVertexIndices();
+	const std::vector<std::uint32_t>& primIndices     = meshBundle->GetPrimIndices();
+	const std::vector<MeshletDetails>& meshletDetails = meshBundle->GetMeshletDetails();
 
 	ConfigureBuffer(
 		vertices, stagingBufferMan, vertexSharedBuffer, m_vertexBufferSharedData,
@@ -54,7 +54,7 @@ void MeshManagerMeshShader::SetMeshBundle(
 		m_meshDetails.primIndicesOffset, tempBuffer
 	);
 	ConfigureBuffer(
-		meshlets, stagingBufferMan, meshletSharedBuffer, m_meshletBufferSharedData,
+		meshletDetails, stagingBufferMan, meshletSharedBuffer, m_meshletBufferSharedData,
 		m_meshDetails.meshletOffset, tempBuffer
 	);
 

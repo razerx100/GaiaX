@@ -118,11 +118,11 @@ public:
 
 class MeshDummyMS : public MeshBundleMS
 {
-	std::vector<Meshlet>       m_meshlets      = { Meshlet{}, Meshlet{} };
-	std::vector<Vertex>        m_vertices      = { Vertex{} };
-	std::vector<std::uint32_t> m_vertexIndices = { 0u, 1u, 2u };
-	std::vector<std::uint32_t> m_primIndices   = { 0u };
-	MeshBundleDetails          m_meshBundleDetails{ .meshDetails = { MeshDetails{} } };
+	std::vector<MeshletDetails> m_meshletDetails = { MeshletDetails{}, MeshletDetails{} };
+	std::vector<Vertex>         m_vertices       = { Vertex{} };
+	std::vector<std::uint32_t>  m_vertexIndices  = { 0u, 1u, 2u };
+	std::vector<std::uint32_t>  m_primIndices    = { 0u };
+	MeshBundleDetails           m_meshBundleDetails{ .meshDetails = { MeshDetails{} } };
 
 public:
 	[[nodiscard]]
@@ -147,9 +147,9 @@ public:
 		return m_primIndices;
 	}
 	[[nodiscard]]
-	const std::vector<Meshlet>& GetMeshlets() const noexcept override
+	const std::vector<MeshletDetails>& GetMeshletDetails() const noexcept override
 	{
-		return m_meshlets;
+		return m_meshletDetails;
 	}
 	[[nodiscard]]
 	MeshBundleDetails&& GetBundleDetails() noexcept
