@@ -4,8 +4,8 @@
 MeshManagerMeshShader::MeshManagerMeshShader()
 	: m_vertexBufferSharedData{ nullptr, 0u, 0u },
 	m_vertexIndicesBufferSharedData{ nullptr, 0u, 0u }, m_primIndicesBufferSharedData{ nullptr, 0u, 0u },
-	m_meshletBufferSharedData{ nullptr, 0u, 0u }, m_meshletBoundsSharedData{ nullptr, 0u, 0u },
-	m_meshDetails{ 0u, 0u, 0u }, m_bundleDetails{}
+	m_meshletBufferSharedData{ nullptr, 0u, 0u }, m_perMeshSharedData{ nullptr, 0u, 0u },
+	m_perMeshBundleSharedData{ nullptr, 0u, 0u }, m_meshDetails{ 0u, 0u, 0u }, m_bundleDetails{}
 {}
 
 void MeshManagerMeshShader::SetMeshBundle(
@@ -65,7 +65,8 @@ void MeshManagerMeshShader::SetMeshBundle(
 	std::unique_ptr<MeshBundleMS> meshBundle, StagingBufferManager& stagingBufferMan,
 	SharedBufferGPU& vertexSharedBuffer, SharedBufferGPU& vertexIndicesSharedBuffer,
 	SharedBufferGPU& primIndicesSharedBuffer, SharedBufferGPU& meshletSharedBuffer,
-	SharedBufferGPU& meshletBoundsSharedBuffer, TemporaryDataBufferGPU& tempBuffer
+	SharedBufferGPU& perMeshSharedBuffer, SharedBufferGPU& perMeshBundleSharedBuffer,
+	TemporaryDataBufferGPU& tempBuffer
 ) {
 	constexpr auto perMeshDataStride = sizeof(AxisAlignedBoundingBox);
 
@@ -76,11 +77,9 @@ void MeshManagerMeshShader::SetMeshBundle(
 	const size_t meshCount     = std::size(meshDetails);
 	const auto perMeshDataSize = static_cast<UINT64>(perMeshDataStride * meshCount);
 
-	m_meshletBoundsSharedData  = meshletBoundsSharedBuffer.AllocateAndGetSharedData(
-		perMeshDataSize, tempBuffer
-	);
+	m_perMeshSharedData    = perMeshSharedBuffer.AllocateAndGetSharedData(perMeshDataSize, tempBuffer);
 
-	auto perMeshBufferData     = std::make_shared<std::uint8_t[]>(perMeshDataSize);
+	auto perMeshBufferData = std::make_shared<std::uint8_t[]>(perMeshDataSize);
 
 	{
 		size_t perMeshOffset             = 0u;
@@ -94,9 +93,32 @@ void MeshManagerMeshShader::SetMeshBundle(
 		}
 	}
 
+	// Mesh Bundle Data
+	constexpr size_t perMeshBundleDataSize = sizeof(PerMeshBundleData);
+
+	auto perBundleData = std::make_shared<std::uint8_t[]>(perMeshBundleDataSize);
+
+	m_perMeshBundleSharedData = perMeshBundleSharedBuffer.AllocateAndGetSharedData(
+		perMeshBundleDataSize, tempBuffer
+	);
+
+	{
+		PerMeshBundleData bundleData
+		{
+			.meshOffset = static_cast<std::uint32_t>(m_perMeshSharedData.offset / perMeshDataStride)
+		};
+
+		memcpy(perBundleData.get(), &bundleData, perMeshBundleDataSize);
+	}
+
+	stagingBufferMan.AddBuffer(
+		std::move(perBundleData), perMeshBundleDataSize,
+		m_perMeshBundleSharedData.bufferData, m_perMeshBundleSharedData.offset, tempBuffer
+	);
+
 	stagingBufferMan.AddBuffer(
 		std::move(perMeshBufferData), perMeshDataSize,
-		m_meshletBoundsSharedData.bufferData, m_meshletBoundsSharedData.offset, tempBuffer
+		m_perMeshSharedData.bufferData, m_perMeshSharedData.offset, tempBuffer
 	);
 
 	SetMeshBundle(
