@@ -1015,7 +1015,7 @@ ModelManagerMS::ModelManagerMS(
 	m_constantsMSRootIndex{ 0u },
 	m_constantsASRootIndex{ 0u },
 	m_stagingBufferMan{ stagingBufferMan },
-	m_meshletBuffer{ device, memoryManager },
+	m_perMeshletBuffer{ device, memoryManager },
 	m_vertexBuffer{ device, memoryManager },
 	m_vertexIndicesBuffer{ device, memoryManager },
 	m_primIndicesBuffer{ device, memoryManager }
@@ -1052,8 +1052,8 @@ void ModelManagerMS::ConfigureRemoveMesh(size_t bundleIndex) noexcept
 		const SharedBufferData& primIndicesSharedData = meshManager.GetPrimIndicesSharedData();
 		m_primIndicesBuffer.RelinquishMemory(primIndicesSharedData);
 
-		const SharedBufferData& meshletSharedData = meshManager.GetMeshletSharedData();
-		m_meshletBuffer.RelinquishMemory(meshletSharedData);
+		const SharedBufferData& perMeshletSharedData = meshManager.GetPerMeshletSharedData();
+		m_perMeshletBuffer.RelinquishMemory(perMeshletSharedData);
 	}
 }
 
@@ -1063,7 +1063,7 @@ void ModelManagerMS::ConfigureMeshBundle(
 ) {
 	meshManager.SetMeshBundle(
 		std::move(meshBundle), stagingBufferMan, m_vertexBuffer, m_vertexIndicesBuffer,
-		m_primIndicesBuffer, m_meshletBuffer, tempBuffer
+		m_primIndicesBuffer, m_perMeshletBuffer, tempBuffer
 	);
 }
 
@@ -1082,7 +1082,7 @@ void ModelManagerMS::CopyTempBuffers(const D3DCommandList& copyList) noexcept
 {
 	if (m_tempCopyNecessary)
 	{
-		m_meshletBuffer.CopyOldBuffer(copyList);
+		m_perMeshletBuffer.CopyOldBuffer(copyList);
 		m_vertexBuffer.CopyOldBuffer(copyList);
 		m_vertexIndicesBuffer.CopyOldBuffer(copyList);
 		m_primIndicesBuffer.CopyOldBuffer(copyList);
@@ -1119,7 +1119,7 @@ void ModelManagerMS::SetDescriptorLayout(
 			s_modelBuffersPixelSRVRegisterSlot, psRegisterSpace, D3D12_SHADER_VISIBILITY_PIXEL
 		);
 		descriptorManager.AddRootSRV(
-			s_meshletBufferSRVRegisterSlot, msRegisterSpace, D3D12_SHADER_VISIBILITY_MESH
+			s_perMeshletBufferSRVRegisterSlot, msRegisterSpace, D3D12_SHADER_VISIBILITY_MESH
 		);
 		descriptorManager.AddRootSRV(
 			s_vertexBufferSRVRegisterSlot, msRegisterSpace, D3D12_SHADER_VISIBILITY_MESH
@@ -1170,7 +1170,7 @@ void ModelManagerMS::SetDescriptorsOfMeshes(
 			true
 		);
 		descriptorManager.SetRootSRV(
-			s_meshletBufferSRVRegisterSlot, msRegisterSpace, m_meshletBuffer.GetGPUAddress(), true
+			s_perMeshletBufferSRVRegisterSlot, msRegisterSpace, m_perMeshletBuffer.GetGPUAddress(), true
 		);
 	}
 }

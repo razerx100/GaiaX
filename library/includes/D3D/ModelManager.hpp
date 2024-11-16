@@ -1099,7 +1099,7 @@ private:
 	UINT                  m_constantsMSRootIndex;
 	UINT                  m_constantsASRootIndex;
 	StagingBufferManager* m_stagingBufferMan;
-	SharedBufferGPU       m_meshletBuffer;
+	SharedBufferGPU       m_perMeshletBuffer;
 	SharedBufferGPU       m_vertexBuffer;
 	SharedBufferGPU       m_vertexIndicesBuffer;
 	SharedBufferGPU       m_primIndicesBuffer;
@@ -1108,7 +1108,7 @@ private:
 	static constexpr size_t s_constantDataASCBVRegisterSlot      = 0u;
 	static constexpr size_t s_constantDataMSCBVRegisterSlot      = 1u;
 	// SRV
-	static constexpr size_t s_meshletBufferSRVRegisterSlot       = 1u;
+	static constexpr size_t s_perMeshletBufferSRVRegisterSlot    = 1u;
 	static constexpr size_t s_vertexBufferSRVRegisterSlot        = 2u;
 	static constexpr size_t s_vertexIndicesBufferSRVRegisterSlot = 3u;
 	static constexpr size_t s_primIndicesBufferSRVRegisterSlot   = 4u;
@@ -1122,7 +1122,7 @@ public:
 		m_constantsMSRootIndex{ other.m_constantsMSRootIndex },
 		m_constantsASRootIndex{ other.m_constantsASRootIndex },
 		m_stagingBufferMan{ other.m_stagingBufferMan },
-		m_meshletBuffer{ std::move(other.m_meshletBuffer) },
+		m_perMeshletBuffer{ std::move(other.m_perMeshletBuffer) },
 		m_vertexBuffer{ std::move(other.m_vertexBuffer) },
 		m_vertexIndicesBuffer{ std::move(other.m_vertexIndicesBuffer) },
 		m_primIndicesBuffer{ std::move(other.m_primIndicesBuffer) }
@@ -1133,7 +1133,7 @@ public:
 		m_constantsMSRootIndex = other.m_constantsMSRootIndex;
 		m_constantsASRootIndex = other.m_constantsASRootIndex;
 		m_stagingBufferMan     = other.m_stagingBufferMan;
-		m_meshletBuffer        = std::move(other.m_meshletBuffer);
+		m_perMeshletBuffer     = std::move(other.m_perMeshletBuffer);
 		m_vertexBuffer         = std::move(other.m_vertexBuffer);
 		m_vertexIndicesBuffer  = std::move(other.m_vertexIndicesBuffer);
 		m_primIndicesBuffer    = std::move(other.m_primIndicesBuffer);

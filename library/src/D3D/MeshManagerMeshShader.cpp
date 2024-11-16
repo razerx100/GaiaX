@@ -4,14 +4,14 @@
 MeshManagerMeshShader::MeshManagerMeshShader()
 	: m_vertexBufferSharedData{ nullptr, 0u, 0u },
 	m_vertexIndicesBufferSharedData{ nullptr, 0u, 0u }, m_primIndicesBufferSharedData{ nullptr, 0u, 0u },
-	m_meshletBufferSharedData{ nullptr, 0u, 0u }, m_perMeshSharedData{ nullptr, 0u, 0u },
+	m_perMeshletBufferSharedData{ nullptr, 0u, 0u }, m_perMeshSharedData{ nullptr, 0u, 0u },
 	m_perMeshBundleSharedData{ nullptr, 0u, 0u }, m_meshDetails{ 0u, 0u, 0u }, m_bundleDetails{}
 {}
 
 void MeshManagerMeshShader::SetMeshBundle(
 	std::unique_ptr<MeshBundleMS> meshBundle, StagingBufferManager& stagingBufferMan,
 	SharedBufferGPU& vertexSharedBuffer, SharedBufferGPU& vertexIndicesSharedBuffer,
-	SharedBufferGPU& primIndicesSharedBuffer, SharedBufferGPU& meshletSharedBuffer,
+	SharedBufferGPU& primIndicesSharedBuffer, SharedBufferGPU& perMeshletSharedBuffer,
 	TemporaryDataBufferGPU& tempBuffer
 ) {
 	const std::vector<Vertex>& vertices  = meshBundle->GetVertices();
@@ -54,7 +54,7 @@ void MeshManagerMeshShader::SetMeshBundle(
 		m_meshDetails.primIndicesOffset, tempBuffer
 	);
 	ConfigureBuffer(
-		meshletDetails, stagingBufferMan, meshletSharedBuffer, m_meshletBufferSharedData,
+		meshletDetails, stagingBufferMan, perMeshletSharedBuffer, m_perMeshletBufferSharedData,
 		m_meshDetails.meshletOffset, tempBuffer
 	);
 
@@ -64,7 +64,7 @@ void MeshManagerMeshShader::SetMeshBundle(
 void MeshManagerMeshShader::SetMeshBundle(
 	std::unique_ptr<MeshBundleMS> meshBundle, StagingBufferManager& stagingBufferMan,
 	SharedBufferGPU& vertexSharedBuffer, SharedBufferGPU& vertexIndicesSharedBuffer,
-	SharedBufferGPU& primIndicesSharedBuffer, SharedBufferGPU& meshletSharedBuffer,
+	SharedBufferGPU& primIndicesSharedBuffer, SharedBufferGPU& perMeshletSharedBuffer,
 	SharedBufferGPU& perMeshSharedBuffer, SharedBufferGPU& perMeshBundleSharedBuffer,
 	TemporaryDataBufferGPU& tempBuffer
 ) {
@@ -96,7 +96,7 @@ void MeshManagerMeshShader::SetMeshBundle(
 	// Mesh Bundle Data
 	constexpr size_t perMeshBundleDataSize = sizeof(PerMeshBundleData);
 
-	auto perBundleData = std::make_shared<std::uint8_t[]>(perMeshBundleDataSize);
+	auto perBundleData        = std::make_shared<std::uint8_t[]>(perMeshBundleDataSize);
 
 	m_perMeshBundleSharedData = perMeshBundleSharedBuffer.AllocateAndGetSharedData(
 		perMeshBundleDataSize, tempBuffer
@@ -124,6 +124,6 @@ void MeshManagerMeshShader::SetMeshBundle(
 	SetMeshBundle(
 		std::move(meshBundle),
 		stagingBufferMan, vertexSharedBuffer, vertexIndicesSharedBuffer, primIndicesSharedBuffer,
-		meshletSharedBuffer, tempBuffer
+		perMeshletSharedBuffer, tempBuffer
 	);
 }
