@@ -63,8 +63,7 @@ void ModelBundleMSIndividual::SetModelBundle(
 }
 
 void ModelBundleMSIndividual::Draw(
-	const D3DCommandList& graphicsList, UINT constantsASRootIndex, UINT constantsMSRootIndex,
-	const MeshManagerMeshShader& meshBundle
+	const D3DCommandList& graphicsList, UINT constantsRootIndex, const MeshManagerMeshShader& meshBundle
 ) const noexcept {
 	ID3D12GraphicsCommandList6* cmdList = graphicsList.Get();
 	const auto& models                  = m_modelBundle->GetModels();
@@ -73,28 +72,19 @@ void ModelBundleMSIndividual::Draw(
 	{
 		const auto& model = models[index];
 
-		constexpr UINT pushConstantMSCount = GetMSConstantCount();
-		constexpr UINT pushConstantASCount = GetASConstantCount();
+		constexpr UINT pushConstantCount = GetConstantCount();
 
 		const MeshDetails meshDetails      = meshBundle.GetMeshDetails(model->GetMeshIndex());
 
-		const ModelDetailsMS msConstants
+		const ModelDetailsMS constants
 		{
 			.meshletCount     = meshDetails.elementCount,
 			.meshletOffset    = meshDetails.elementOffset,
 			.modelBufferIndex = m_modelBufferIndices[index]
 		};
 
-		const ModelDetailsAS asConstants
-		{
-			.meshletCount = meshDetails.elementCount
-		};
-
 		cmdList->SetGraphicsRoot32BitConstants(
-			constantsASRootIndex, pushConstantASCount, &asConstants, 0u
-		);
-		cmdList->SetGraphicsRoot32BitConstants(
-			constantsMSRootIndex, pushConstantMSCount, &msConstants, 0u
+			constantsRootIndex, pushConstantCount, &constants, 0u
 		);
 
 		// If we have an Amplification shader, this will launch an amplification global workGroup.
@@ -1012,8 +1002,7 @@ ModelManagerMS::ModelManagerMS(
 	ID3D12Device5* device, MemoryManager* memoryManager, StagingBufferManager* stagingBufferMan,
 	std::uint32_t frameCount
 ) : ModelManager{ device, memoryManager, frameCount },
-	m_constantsMSRootIndex{ 0u },
-	m_constantsASRootIndex{ 0u },
+	m_constantsRootIndex{ 0u },
 	m_stagingBufferMan{ stagingBufferMan },
 	m_perMeshletBuffer{ device, memoryManager },
 	m_vertexBuffer{ device, memoryManager },
@@ -1070,11 +1059,8 @@ void ModelManagerMS::ConfigureMeshBundle(
 void ModelManagerMS::_setGraphicsConstantRootIndex(
 	const D3DDescriptorManager& descriptorManager, size_t constantsRegisterSpace
 ) noexcept {
-	m_constantsMSRootIndex = descriptorManager.GetRootIndexCBV(
-		s_constantDataMSCBVRegisterSlot, constantsRegisterSpace
-	);
-	m_constantsASRootIndex = descriptorManager.GetRootIndexCBV(
-		s_constantDataASCBVRegisterSlot, constantsRegisterSpace
+	m_constantsRootIndex = descriptorManager.GetRootIndexCBV(
+		s_constantDataCBVRegisterSlot, constantsRegisterSpace
 	);
 }
 
@@ -1095,32 +1081,27 @@ void ModelManagerMS::SetDescriptorLayout(
 	std::vector<D3DDescriptorManager>& descriptorManagers, size_t msRegisterSpace,
 	size_t psRegisterSpace
 ) const noexcept {
-	const auto frameCount               = std::size(descriptorManagers);
-	constexpr UINT meshConstantCount    = MeshManagerMeshShader::GetConstantCount();
-	constexpr UINT modelASConstantCount = ModelBundleMSIndividual::GetASConstantCount();
-	constexpr UINT modelMSConstantCount = ModelBundleMSIndividual::GetMSConstantCount();
+	const auto frameCount             = std::size(descriptorManagers);
+	constexpr UINT meshConstantCount  = MeshManagerMeshShader::GetConstantCount();
+	constexpr UINT modelConstantCount = ModelBundleMSIndividual::GetConstantCount();
 
 	for (size_t index = 0u; index < frameCount; ++index)
 	{
 		D3DDescriptorManager& descriptorManager = descriptorManagers[index];
 
 		descriptorManager.AddConstants(
-			s_constantDataASCBVRegisterSlot, msRegisterSpace, modelASConstantCount,
-			D3D12_SHADER_VISIBILITY_AMPLIFICATION
-		);
-		descriptorManager.AddConstants(
-			s_constantDataMSCBVRegisterSlot, msRegisterSpace, meshConstantCount + modelMSConstantCount,
-			D3D12_SHADER_VISIBILITY_MESH
-		);
+			s_constantDataCBVRegisterSlot, msRegisterSpace, meshConstantCount + modelConstantCount,
+			D3D12_SHADER_VISIBILITY_ALL
+		); // Both the AS and MS will use it.
 		descriptorManager.AddRootSRV(
-			s_modelBuffersGraphicsSRVRegisterSlot, msRegisterSpace, D3D12_SHADER_VISIBILITY_MESH
-		);
+			s_modelBuffersGraphicsSRVRegisterSlot, msRegisterSpace, D3D12_SHADER_VISIBILITY_ALL
+		); // Both the AS and MS will use it.
 		descriptorManager.AddRootSRV(
 			s_modelBuffersPixelSRVRegisterSlot, psRegisterSpace, D3D12_SHADER_VISIBILITY_PIXEL
 		);
 		descriptorManager.AddRootSRV(
-			s_perMeshletBufferSRVRegisterSlot, msRegisterSpace, D3D12_SHADER_VISIBILITY_MESH
-		);
+			s_perMeshletBufferSRVRegisterSlot, msRegisterSpace, D3D12_SHADER_VISIBILITY_ALL
+		); // Both the AS and MS will use it.
 		descriptorManager.AddRootSRV(
 			s_vertexBufferSRVRegisterSlot, msRegisterSpace, D3D12_SHADER_VISIBILITY_MESH
 		);
@@ -1190,16 +1171,16 @@ void ModelManagerMS::Draw(const D3DCommandList& graphicsList) const noexcept
 		);
 		const MeshManagerMeshShader& meshBundle = m_meshBundles.at(meshBundleIndex);
 
-		constexpr UINT constBufferOffset = ModelBundleMSIndividual::GetMSConstantCount();
+		constexpr UINT constBufferOffset = ModelBundleMSIndividual::GetConstantCount();
 		constexpr UINT constBufferCount  = MeshManagerMeshShader::GetConstantCount();
 
 		const MeshManagerMeshShader::MeshDetailsMS meshDetailsMS = meshBundle.GetMeshDetailsMS();
 
 		cmdList->SetGraphicsRoot32BitConstants(
-			m_constantsMSRootIndex, constBufferCount, &meshDetailsMS, constBufferOffset
+			m_constantsRootIndex, constBufferCount, &meshDetailsMS, constBufferOffset
 		);
 
 		// Model
-		modelBundle.Draw(graphicsList, m_constantsASRootIndex, m_constantsMSRootIndex, meshBundle);
+		modelBundle.Draw(graphicsList, m_constantsRootIndex, meshBundle);
 	}
 }

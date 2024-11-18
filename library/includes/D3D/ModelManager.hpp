@@ -115,10 +115,6 @@ public:
 		std::uint32_t modelBufferIndex;
 		std::uint32_t padding;
 	};
-	struct ModelDetailsAS
-	{
-		std::uint32_t meshletCount;
-	};
 
 public:
 	ModelBundleMSIndividual() : ModelBundleBase{}, m_modelBundle{}, m_modelBufferIndices{} {}
@@ -128,19 +124,14 @@ public:
 	) noexcept;
 
 	void Draw(
-		const D3DCommandList& graphicsList, UINT constantsASRootIndex, UINT constantsMSRootIndex,
+		const D3DCommandList& graphicsList, UINT constantsRootIndex,
 		const MeshManagerMeshShader& meshBundle
 	) const noexcept;
 
 	[[nodiscard]]
-	static consteval UINT GetMSConstantCount() noexcept
+	static consteval UINT GetConstantCount() noexcept
 	{
 		return static_cast<UINT>(sizeof(ModelDetailsMS) / sizeof(UINT));
-	}
-	[[nodiscard]]
-	static consteval UINT GetASConstantCount() noexcept
-	{
-		return static_cast<UINT>(sizeof(ModelDetailsAS) / sizeof(UINT));
 	}
 
 	[[nodiscard]]
@@ -1096,8 +1087,7 @@ private:
 	void ShaderPathSet() {}
 
 private:
-	UINT                  m_constantsMSRootIndex;
-	UINT                  m_constantsASRootIndex;
+	UINT                  m_constantsRootIndex;
 	StagingBufferManager* m_stagingBufferMan;
 	SharedBufferGPU       m_perMeshletBuffer;
 	SharedBufferGPU       m_vertexBuffer;
@@ -1105,8 +1095,7 @@ private:
 	SharedBufferGPU       m_primIndicesBuffer;
 
 	// CBV
-	static constexpr size_t s_constantDataASCBVRegisterSlot      = 0u;
-	static constexpr size_t s_constantDataMSCBVRegisterSlot      = 1u;
+	static constexpr size_t s_constantDataCBVRegisterSlot        = 0u;
 	// SRV
 	static constexpr size_t s_perMeshletBufferSRVRegisterSlot    = 1u;
 	static constexpr size_t s_vertexBufferSRVRegisterSlot        = 2u;
@@ -1119,8 +1108,7 @@ public:
 
 	ModelManagerMS(ModelManagerMS&& other) noexcept
 		: ModelManager{ std::move(other) },
-		m_constantsMSRootIndex{ other.m_constantsMSRootIndex },
-		m_constantsASRootIndex{ other.m_constantsASRootIndex },
+		m_constantsRootIndex{ other.m_constantsRootIndex },
 		m_stagingBufferMan{ other.m_stagingBufferMan },
 		m_perMeshletBuffer{ std::move(other.m_perMeshletBuffer) },
 		m_vertexBuffer{ std::move(other.m_vertexBuffer) },
@@ -1130,13 +1118,12 @@ public:
 	ModelManagerMS& operator=(ModelManagerMS&& other) noexcept
 	{
 		ModelManager::operator=(std::move(other));
-		m_constantsMSRootIndex = other.m_constantsMSRootIndex;
-		m_constantsASRootIndex = other.m_constantsASRootIndex;
-		m_stagingBufferMan     = other.m_stagingBufferMan;
-		m_perMeshletBuffer     = std::move(other.m_perMeshletBuffer);
-		m_vertexBuffer         = std::move(other.m_vertexBuffer);
-		m_vertexIndicesBuffer  = std::move(other.m_vertexIndicesBuffer);
-		m_primIndicesBuffer    = std::move(other.m_primIndicesBuffer);
+		m_constantsRootIndex  = other.m_constantsRootIndex;
+		m_stagingBufferMan    = other.m_stagingBufferMan;
+		m_perMeshletBuffer    = std::move(other.m_perMeshletBuffer);
+		m_vertexBuffer        = std::move(other.m_vertexBuffer);
+		m_vertexIndicesBuffer = std::move(other.m_vertexIndicesBuffer);
+		m_primIndicesBuffer   = std::move(other.m_primIndicesBuffer);
 
 		return *this;
 	}

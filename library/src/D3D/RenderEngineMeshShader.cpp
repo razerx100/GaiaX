@@ -8,7 +8,7 @@ RenderEngineMS::RenderEngineMS(
 	m_modelManager.SetDescriptorLayout(
 		m_graphicsDescriptorManagers, s_vertexShaderRegisterSpace, s_pixelShaderRegisterSpace
 	);
-	SetCommonGraphicsDescriptorLayout(D3D12_SHADER_VISIBILITY_MESH);
+	SetCommonGraphicsDescriptorLayout(D3D12_SHADER_VISIBILITY_ALL); // Both the AS and MS will use it.
 
 	for (auto& descriptorManager : m_graphicsDescriptorManagers)
 		descriptorManager.CreateDescriptors();
