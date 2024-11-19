@@ -55,9 +55,11 @@ public:
 	[[nodiscard]]
 	UVInfo GetDiffuseUVInfo() const noexcept override { return UVInfo{}; }
 	[[nodiscard]]
-	std::uint32_t GetSpecularIndex() const noexcept { return 0u; }
+	std::uint32_t GetSpecularIndex() const noexcept override { return 0u; }
 	[[nodiscard]]
-	UVInfo GetSpecularUVInfo() const noexcept { return UVInfo{}; }
+	UVInfo GetSpecularUVInfo() const noexcept override { return UVInfo{}; }
+	[[nodiscard]]
+	float GetModelScale() const noexcept override { return 1.f; }
 };
 
 class ModelBundleDummy : public ModelBundle

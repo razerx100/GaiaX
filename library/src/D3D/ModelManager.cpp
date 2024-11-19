@@ -376,7 +376,8 @@ void ModelBuffers::Update(UINT64 bufferIndex) const noexcept
 					.modelMatrix   = model->GetModelMatrix(),
 					.modelOffset   = model->GetModelOffset(),
 					.materialIndex = model->GetMaterialIndex(),
-					.meshIndex     = model->GetMeshIndex()
+					.meshIndex     = model->GetMeshIndex(),
+					.modelScale    = model->GetModelScale()
 				};
 
 				memcpy(vertexBufferOffset + vertexModelOffset, &modelVertexData, vertexStrideSize);
