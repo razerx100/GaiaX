@@ -61,9 +61,18 @@ void CameraManager::Update(UINT64 index) const noexcept
 		bufferAddress += matrixSize;
 
 		// In the clip space.
-		const Frustum viewFrustum = activeCamera->GetViewFrustum(view);
+		const Frustum viewFrustum        = activeCamera->GetViewFrustum(view);
 
-		memcpy(bufferAddress, &viewFrustum, sizeof(Frustum));
+		constexpr size_t frustumDataSize = sizeof(Frustum);
+
+		memcpy(bufferAddress, &viewFrustum, frustumDataSize);
+
+		// View position's address
+		bufferAddress += frustumDataSize;
+
+		const DirectX::XMFLOAT3 viewPosition = activeCamera->GetCameraPosition();
+
+		memcpy(bufferAddress, &viewPosition, sizeof(DirectX::XMFLOAT3));
 	}
 }
 
