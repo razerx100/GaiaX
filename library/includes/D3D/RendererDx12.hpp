@@ -42,9 +42,7 @@ public:
 	void RemoveModelBundle(std::uint32_t bundleID) noexcept override;
 
 	[[nodiscard]]
-	std::uint32_t AddMeshBundle(std::unique_ptr<MeshBundleVS> meshBundle) override;
-	[[nodiscard]]
-	std::uint32_t AddMeshBundle(std::unique_ptr<MeshBundleMS> meshBundle) override;
+	std::uint32_t AddMeshBundle(std::unique_ptr<MeshBundleTemporary> meshBundle) override;
 	void RemoveMeshBundle(std::uint32_t bundleIndex) noexcept override;
 
 	[[nodiscard]]

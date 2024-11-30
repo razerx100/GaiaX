@@ -18,7 +18,7 @@ public:
 	) override;
 
 	[[nodiscard]]
-	std::uint32_t AddMeshBundle(std::unique_ptr<MeshBundleMS> meshBundle) override;
+	std::uint32_t AddMeshBundle(std::unique_ptr<MeshBundleTemporary> meshBundle) override;
 
 private:
 	[[nodiscard]]

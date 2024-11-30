@@ -78,7 +78,7 @@ std::uint32_t RenderEngineMS::AddModelBundle(
 	return index;
 }
 
-std::uint32_t RenderEngineMS::AddMeshBundle(std::unique_ptr<MeshBundleMS> meshBundle)
+std::uint32_t RenderEngineMS::AddMeshBundle(std::unique_ptr<MeshBundleTemporary> meshBundle)
 {
 	WaitForGPUToFinish();
 

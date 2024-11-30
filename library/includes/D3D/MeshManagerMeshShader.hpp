@@ -30,13 +30,13 @@ public:
 	MeshManagerMeshShader();
 
 	void SetMeshBundle(
-		std::unique_ptr<MeshBundleMS> meshBundle, StagingBufferManager& stagingBufferMan,
+		std::unique_ptr<MeshBundleTemporary> meshBundle, StagingBufferManager& stagingBufferMan,
 		SharedBufferGPU& vertexSharedBuffer, SharedBufferGPU& vertexIndicesSharedBuffer,
 		SharedBufferGPU& primIndicesSharedBuffer, SharedBufferGPU& perMeshletSharedBuffer,
 		TemporaryDataBufferGPU& tempBuffer
 	);
 	void SetMeshBundle(
-		std::unique_ptr<MeshBundleMS> meshBundle, StagingBufferManager& stagingBufferMan,
+		std::unique_ptr<MeshBundleTemporary> meshBundle, StagingBufferManager& stagingBufferMan,
 		SharedBufferGPU& vertexSharedBuffer, SharedBufferGPU& vertexIndicesSharedBuffer,
 		SharedBufferGPU& primIndicesSharedBuffer, SharedBufferGPU& perMeshletSharedBuffer,
 		SharedBufferGPU& perMeshSharedBuffer, SharedBufferGPU& perMeshBundleSharedBuffer,
@@ -81,6 +81,14 @@ public:
 	{
 		return static_cast<UINT>(sizeof(MeshDetails) / sizeof(UINT));
 	}
+
+private:
+	void _setMeshBundle(
+		std::unique_ptr<MeshBundleTemporary> meshBundle, StagingBufferManager& stagingBufferMan,
+		SharedBufferGPU& vertexSharedBuffer, SharedBufferGPU& vertexIndicesSharedBuffer,
+		SharedBufferGPU& primIndicesSharedBuffer, SharedBufferGPU& perMeshletSharedBuffer,
+		TemporaryDataBufferGPU& tempBuffer
+	);
 
 private:
 	SharedBufferData  m_vertexBufferSharedData;

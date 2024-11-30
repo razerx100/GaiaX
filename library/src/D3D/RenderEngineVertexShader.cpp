@@ -87,7 +87,7 @@ std::uint32_t RenderEngineVSIndividual::AddModelBundle(
 	return index;
 }
 
-std::uint32_t RenderEngineVSIndividual::AddMeshBundle(std::unique_ptr<MeshBundleVS> meshBundle)
+std::uint32_t RenderEngineVSIndividual::AddMeshBundle(std::unique_ptr<MeshBundleTemporary> meshBundle)
 {
 	WaitForGPUToFinish();
 
@@ -395,7 +395,7 @@ std::uint32_t RenderEngineVSIndirect::AddModelBundle(
 	return index;
 }
 
-std::uint32_t RenderEngineVSIndirect::AddMeshBundle(std::unique_ptr<MeshBundleVS> meshBundle)
+std::uint32_t RenderEngineVSIndirect::AddMeshBundle(std::unique_ptr<MeshBundleTemporary> meshBundle)
 {
 	WaitForGPUToFinish();
 

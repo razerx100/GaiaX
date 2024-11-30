@@ -75,14 +75,12 @@ public:
 	[[nodiscard]]
 	virtual std::uint32_t AddModelBundle(
 		std::shared_ptr<ModelBundle>&& modelBundle, const ShaderName& pixelShader
-	);
+	) = 0;
 
 	virtual void RemoveModelBundle(std::uint32_t bundleID) noexcept = 0;
 
 	[[nodiscard]]
-	virtual std::uint32_t AddMeshBundle(std::unique_ptr<MeshBundleVS> meshBundle);
-	[[nodiscard]]
-	virtual std::uint32_t AddMeshBundle(std::unique_ptr<MeshBundleMS> meshBundle);
+	virtual std::uint32_t AddMeshBundle(std::unique_ptr<MeshBundleTemporary> meshBundle) = 0;
 
 	virtual void RemoveMeshBundle(std::uint32_t bundleIndex) noexcept = 0;
 

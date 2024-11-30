@@ -82,12 +82,7 @@ void RendererDx12::RemoveModelBundle(std::uint32_t bundleID) noexcept
 	m_gaia.GetRenderEngine().RemoveModelBundle(bundleID);
 }
 
-std::uint32_t RendererDx12::AddMeshBundle(std::unique_ptr<MeshBundleVS> meshBundle)
-{
-	return m_gaia.GetRenderEngine().AddMeshBundle(std::move(meshBundle));
-}
-
-std::uint32_t RendererDx12::AddMeshBundle(std::unique_ptr<MeshBundleMS> meshBundle)
+std::uint32_t RendererDx12::AddMeshBundle(std::unique_ptr<MeshBundleTemporary> meshBundle)
 {
 	return m_gaia.GetRenderEngine().AddMeshBundle(std::move(meshBundle));
 }

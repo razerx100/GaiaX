@@ -236,20 +236,3 @@ void RenderEngine::SetCommonGraphicsDescriptorLayout(
 		m_graphicsDescriptorManagers, s_materialSRVRegisterSlot, s_pixelShaderRegisterSpace
 	);
 }
-
-std::uint32_t RenderEngine::AddMeshBundle([[maybe_unused]] std::unique_ptr<MeshBundleVS> meshBundle)
-{
-	return std::numeric_limits<std::uint32_t>::max();
-}
-
-std::uint32_t RenderEngine::AddMeshBundle([[maybe_unused]] std::unique_ptr<MeshBundleMS> meshBundle)
-{
-	return std::numeric_limits<std::uint32_t>::max();
-}
-
-std::uint32_t RenderEngine::AddModelBundle(
-	[[maybe_unused]] std::shared_ptr<ModelBundle>&& modelBundle,
-	[[maybe_unused]] const ShaderName& pixelShader
-) {
-	return std::numeric_limits<std::uint32_t>::max();
-}

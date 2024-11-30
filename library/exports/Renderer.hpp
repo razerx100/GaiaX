@@ -52,9 +52,7 @@ public:
 	virtual void RemoveModelBundle(std::uint32_t bundleID) noexcept = 0;
 
 	[[nodiscard]]
-	virtual std::uint32_t AddMeshBundle(std::unique_ptr<MeshBundleVS> meshBundle) = 0;
-	[[nodiscard]]
-	virtual std::uint32_t AddMeshBundle(std::unique_ptr<MeshBundleMS> meshBundle) = 0;
+	virtual std::uint32_t AddMeshBundle(std::unique_ptr<MeshBundleTemporary> meshBundle) = 0;
 	virtual void RemoveMeshBundle(std::uint32_t bundleIndex) noexcept = 0;
 
 	[[nodiscard]]

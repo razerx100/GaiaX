@@ -19,7 +19,7 @@ public:
 	) override;
 
 	[[nodiscard]]
-	std::uint32_t AddMeshBundle(std::unique_ptr<MeshBundleVS> meshBundle) override;
+	std::uint32_t AddMeshBundle(std::unique_ptr<MeshBundleTemporary> meshBundle) override;
 
 private:
 	[[nodiscard]]
@@ -73,7 +73,7 @@ public:
 	) override;
 
 	[[nodiscard]]
-	std::uint32_t AddMeshBundle(std::unique_ptr<MeshBundleVS> meshBundle) override;
+	std::uint32_t AddMeshBundle(std::unique_ptr<MeshBundleTemporary> meshBundle) override;
 
 	void WaitForGPUToFinish() override;
 
