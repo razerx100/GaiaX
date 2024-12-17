@@ -88,7 +88,7 @@ class MeshBundleTemporaryDummy : public MeshBundleTemporary
 	std::vector<Vertex>         m_vertices = { Vertex{} };
 	std::vector<std::uint32_t>  m_vertexIndices = { 0u, 1u, 2u };
 	std::vector<std::uint32_t>  m_primIndices = { 0u };
-	MeshBundleDetails           m_bundleDetails{ .meshDetails = { MeshDetails{} } };
+	MeshBundleTemporaryDetails  m_bundleDetails{ .meshTemporaryDetailsVS = { MeshTemporaryDetailsVS{} } };
 
 public:
 	void GenerateTemporaryData(bool) override {}
@@ -105,12 +105,12 @@ public:
 		return m_vertexIndices;
 	}
 	[[nodiscard]]
-	const MeshBundleDetails& GetBundleDetails() const noexcept override
+	const MeshBundleTemporaryDetails& GetTemporaryBundleDetails() const noexcept override
 	{
 		return m_bundleDetails;
 	}
 	[[nodiscard]]
-	MeshBundleDetails&& GetBundleDetails() noexcept override
+	MeshBundleTemporaryDetails&& GetTemporaryBundleDetails() noexcept override
 	{
 		return std::move(m_bundleDetails);
 	}

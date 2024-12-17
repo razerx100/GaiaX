@@ -46,9 +46,9 @@ public:
 	}
 
 	[[nodiscard]]
-	const MeshDetails& GetMeshDetails(size_t index) const noexcept
+	const MeshTemporaryDetailsVS& GetMeshDetails(size_t index) const noexcept
 	{
-		return m_bundleDetails.meshDetails[index];
+		return m_bundleDetails.meshTemporaryDetailsVS[index];
 	}
 
 private:
@@ -59,11 +59,11 @@ private:
 	);
 
 private:
-	SharedBufferData  m_vertexBufferSharedData;
-	SharedBufferData  m_indexBufferSharedData;
-	SharedBufferData  m_perMeshSharedData;
-	SharedBufferData  m_perMeshBundleSharedData;
-	MeshBundleDetails m_bundleDetails;
+	SharedBufferData           m_vertexBufferSharedData;
+	SharedBufferData           m_indexBufferSharedData;
+	SharedBufferData           m_perMeshSharedData;
+	SharedBufferData           m_perMeshBundleSharedData;
+	MeshBundleTemporaryDetails m_bundleDetails;
 
 public:
 	MeshManagerVertexShader(const MeshManagerVertexShader&) = delete;

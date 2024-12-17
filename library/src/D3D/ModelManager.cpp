@@ -4,13 +4,13 @@
 
 // Model Bundle
 D3D12_DRAW_INDEXED_ARGUMENTS ModelBundleBase::GetDrawIndexedIndirectCommand(
-	const MeshDetails& meshDetails
+	const MeshTemporaryDetailsVS& meshDetailsVS
 ) noexcept {
 	const D3D12_DRAW_INDEXED_ARGUMENTS indirectCommand
 	{
-		.IndexCountPerInstance = meshDetails.elementCount,
+		.IndexCountPerInstance = meshDetailsVS.indexCount,
 		.InstanceCount         = 1u,
-		.StartIndexLocation    = meshDetails.elementOffset,
+		.StartIndexLocation    = meshDetailsVS.indexOffset,
 		.BaseVertexLocation    = 0,
 		.StartInstanceLocation = 0u
 	};
@@ -74,12 +74,17 @@ void ModelBundleMSIndividual::Draw(
 
 		constexpr UINT pushConstantCount = GetConstantCount();
 
-		const MeshDetails meshDetails      = meshBundle.GetMeshDetails(model->GetMeshIndex());
+		const MeshTemporaryDetailsMS& meshDetailsMS = meshBundle.GetMeshDetails(model->GetMeshIndex());
 
 		const ModelDetailsMS constants
 		{
-			.meshletCount     = meshDetails.elementCount,
-			.meshletOffset    = meshDetails.elementOffset,
+			.meshDetails      = MeshDetails
+				{
+					.meshletCount  = meshDetailsMS.meshletCount,
+					.meshletOffset = meshDetailsMS.meshletOffset,
+					.primOffset    = meshDetailsMS.primitiveOffset,
+					.vertexOffset  = meshDetailsMS.vertexOffset,
+				},
 			.modelBufferIndex = m_modelBufferIndices[index]
 		};
 
@@ -93,7 +98,7 @@ void ModelBundleMSIndividual::Draw(
 		// in a wave and 64 on AMD. So, a workGroup will be able to work on 32/64
 		// meshlets concurrently.
 		const UINT amplficationGroupCount = DivRoundUp(
-			meshDetails.elementCount, s_amplificationLaneCount
+			meshDetailsMS.meshletCount, s_amplificationLaneCount
 		);
 
 		cmdList->DispatchMesh(amplficationGroupCount, 1u, 1u);
@@ -1175,10 +1180,11 @@ void ModelManagerMS::Draw(const D3DCommandList& graphicsList) const noexcept
 		constexpr UINT constBufferOffset = ModelBundleMSIndividual::GetConstantCount();
 		constexpr UINT constBufferCount  = MeshManagerMeshShader::GetConstantCount();
 
-		const MeshManagerMeshShader::MeshDetailsMS meshDetailsMS = meshBundle.GetMeshDetailsMS();
+		const MeshManagerMeshShader::MeshBundleDetailsMS meshBundleDetailsMS
+			= meshBundle.GetMeshBundleDetailsMS();
 
 		cmdList->SetGraphicsRoot32BitConstants(
-			m_constantsRootIndex, constBufferCount, &meshDetailsMS, constBufferOffset
+			m_constantsRootIndex, constBufferCount, &meshBundleDetailsMS, constBufferOffset
 		);
 
 		// Model

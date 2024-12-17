@@ -5,7 +5,8 @@ MeshManagerMeshShader::MeshManagerMeshShader()
 	: m_vertexBufferSharedData{ nullptr, 0u, 0u },
 	m_vertexIndicesBufferSharedData{ nullptr, 0u, 0u }, m_primIndicesBufferSharedData{ nullptr, 0u, 0u },
 	m_perMeshletBufferSharedData{ nullptr, 0u, 0u }, m_perMeshSharedData{ nullptr, 0u, 0u },
-	m_perMeshBundleSharedData{ nullptr, 0u, 0u }, m_meshDetails{ 0u, 0u, 0u }, m_bundleDetails{}
+	m_perMeshBundleSharedData{ nullptr, 0u, 0u }, m_meshBundleDetails{ 0u, 0u, 0u, 0u },
+	m_bundleDetails{}
 {}
 
 void MeshManagerMeshShader::_setMeshBundle(
@@ -43,22 +44,22 @@ void MeshManagerMeshShader::_setMeshBundle(
 
 	ConfigureBuffer(
 		vertices, stagingBufferMan, vertexSharedBuffer, m_vertexBufferSharedData,
-		m_meshDetails.vertexOffset, tempBuffer
+		m_meshBundleDetails.vertexOffset, tempBuffer
 	);
 	ConfigureBuffer(
 		vertexIndices, stagingBufferMan, vertexIndicesSharedBuffer, m_vertexIndicesBufferSharedData,
-		m_meshDetails.vertexIndicesOffset, tempBuffer
+		m_meshBundleDetails.vertexIndicesOffset, tempBuffer
 	);
 	ConfigureBuffer(
 		primIndices, stagingBufferMan, primIndicesSharedBuffer, m_primIndicesBufferSharedData,
-		m_meshDetails.primIndicesOffset, tempBuffer
+		m_meshBundleDetails.primIndicesOffset, tempBuffer
 	);
 	ConfigureBuffer(
 		meshletDetails, stagingBufferMan, perMeshletSharedBuffer, m_perMeshletBufferSharedData,
-		m_meshDetails.meshletOffset, tempBuffer
+		m_meshBundleDetails.meshletOffset, tempBuffer
 	);
 
-	m_bundleDetails = std::move(meshBundle->GetBundleDetails());
+	m_bundleDetails = std::move(meshBundle->GetTemporaryBundleDetails());
 }
 
 void MeshManagerMeshShader::SetMeshBundle(
@@ -90,10 +91,11 @@ void MeshManagerMeshShader::SetMeshBundle(
 	meshBundle->GenerateTemporaryData(true);
 
 	// Need this or else the overload which returns the R value ref will be called.
-	const MeshBundleTemporary& meshBundleR      = *meshBundle;
-	const std::vector<MeshDetails>& meshDetails = meshBundleR.GetBundleDetails().meshDetails;
+	const MeshBundleTemporary& meshBundleR = *meshBundle;
+	const std::vector<MeshTemporaryDetailsMS>& meshDetailsMS
+		= meshBundleR.GetTemporaryBundleDetails().meshTemporaryDetailsMS;
 
-	const size_t meshCount     = std::size(meshDetails);
+	const size_t meshCount     = std::size(meshDetailsMS);
 	const auto perMeshDataSize = static_cast<UINT64>(perMeshDataStride * meshCount);
 
 	m_perMeshSharedData    = perMeshSharedBuffer.AllocateAndGetSharedData(perMeshDataSize, tempBuffer);
@@ -104,7 +106,7 @@ void MeshManagerMeshShader::SetMeshBundle(
 		size_t perMeshOffset             = 0u;
 		std::uint8_t* perMeshBufferStart = perMeshBufferData.get();
 
-		for (const MeshDetails& meshDetail : meshDetails)
+		for (const MeshTemporaryDetailsMS& meshDetail : meshDetailsMS)
 		{
 			memcpy(perMeshBufferStart + perMeshOffset, &meshDetail.aabb, perMeshDataStride);
 

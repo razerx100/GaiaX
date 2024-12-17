@@ -27,7 +27,7 @@ public:
 
 	[[nodiscard]]
 	static D3D12_DRAW_INDEXED_ARGUMENTS GetDrawIndexedIndirectCommand(
-		const MeshDetails& meshDetails
+		const MeshTemporaryDetailsVS& meshDetailsVS
 	) noexcept;
 
 protected:
@@ -108,12 +108,18 @@ public:
 	// to align to 16bytes. Since, there are 4 more values after
 	// this on the Mesh Shader, must put a padding at the end so the rest
 	// 4 are aligned correctly.
-	struct ModelDetailsMS
+	struct MeshDetails
 	{
 		std::uint32_t meshletCount;
 		std::uint32_t meshletOffset;
+		std::uint32_t primOffset;
+		std::uint32_t vertexOffset;
+	};
+	struct ModelDetailsMS
+	{
+		MeshDetails   meshDetails;
 		std::uint32_t modelBufferIndex;
-		std::uint32_t padding;
+		std::uint32_t padding[3];
 	};
 
 public:
