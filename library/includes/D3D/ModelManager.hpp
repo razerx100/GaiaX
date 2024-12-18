@@ -110,6 +110,7 @@ public:
 	{
 		std::uint32_t meshletCount;
 		std::uint32_t meshletOffset;
+		std::uint32_t indexOffset;
 		std::uint32_t primOffset;
 		std::uint32_t vertexOffset;
 	};
