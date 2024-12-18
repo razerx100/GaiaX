@@ -73,6 +73,7 @@ void ModelBundleMSIndividual::Draw(
 		const auto& model = models[index];
 
 		constexpr UINT pushConstantCount = GetConstantCount();
+		constexpr UINT constBufferOffset = MeshManagerMeshShader::GetConstantCount();
 
 		const MeshTemporaryDetailsMS& meshDetailsMS = meshBundle.GetMeshDetails(model->GetMeshIndex());
 
@@ -89,7 +90,7 @@ void ModelBundleMSIndividual::Draw(
 		};
 
 		cmdList->SetGraphicsRoot32BitConstants(
-			constantsRootIndex, pushConstantCount, &constants, 0u
+			constantsRootIndex, pushConstantCount, &constants, constBufferOffset
 		);
 
 		// If we have an Amplification shader, this will launch an amplification global workGroup.
@@ -1177,14 +1178,13 @@ void ModelManagerMS::Draw(const D3DCommandList& graphicsList) const noexcept
 		);
 		const MeshManagerMeshShader& meshBundle = m_meshBundles.at(meshBundleIndex);
 
-		constexpr UINT constBufferOffset = ModelBundleMSIndividual::GetConstantCount();
 		constexpr UINT constBufferCount  = MeshManagerMeshShader::GetConstantCount();
 
 		const MeshManagerMeshShader::MeshBundleDetailsMS meshBundleDetailsMS
 			= meshBundle.GetMeshBundleDetailsMS();
 
 		cmdList->SetGraphicsRoot32BitConstants(
-			m_constantsRootIndex, constBufferCount, &meshBundleDetailsMS, constBufferOffset
+			m_constantsRootIndex, constBufferCount, &meshBundleDetailsMS, 0u
 		);
 
 		// Model
