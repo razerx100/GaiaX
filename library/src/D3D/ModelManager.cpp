@@ -463,14 +463,14 @@ void ModelManagerVSIndividual::ConfigureMeshBundle(
 	);
 }
 
-void ModelManagerVSIndividual::CopyTempData(const D3DCommandList& copyList) noexcept
+void ModelManagerVSIndividual::CopyOldBuffers(const D3DCommandList& copyList) noexcept
 {
-	if (m_tempCopyNecessary)
+	if (m_oldBufferCopyNecessary)
 	{
 		m_indexBuffer.CopyOldBuffer(copyList);
 		m_vertexBuffer.CopyOldBuffer(copyList);
 
-		m_tempCopyNecessary = false;
+		m_oldBufferCopyNecessary = false;
 	}
 }
 
@@ -944,9 +944,9 @@ void ModelManagerVSIndirect::Draw(
 	}
 }
 
-void ModelManagerVSIndirect::CopyTempBuffers(const D3DCommandList& copyList) noexcept
+void ModelManagerVSIndirect::CopyOldBuffers(const D3DCommandList& copyList) noexcept
 {
-	if (m_tempCopyNecessary)
+	if (m_oldBufferCopyNecessary)
 	{
 		m_vertexBuffer.CopyOldBuffer(copyList);
 		m_indexBuffer.CopyOldBuffer(copyList);
@@ -958,7 +958,7 @@ void ModelManagerVSIndirect::CopyTempBuffers(const D3DCommandList& copyList) noe
 		// and the counter buffers. As their data will be only
 		// needed on the same frame and not afterwards.
 
-		m_tempCopyNecessary = false;
+		m_oldBufferCopyNecessary = false;
 	}
 }
 
@@ -1072,16 +1072,16 @@ void ModelManagerMS::_setGraphicsConstantRootIndex(
 	);
 }
 
-void ModelManagerMS::CopyTempBuffers(const D3DCommandList& copyList) noexcept
+void ModelManagerMS::CopyOldBuffers(const D3DCommandList& copyList) noexcept
 {
-	if (m_tempCopyNecessary)
+	if (m_oldBufferCopyNecessary)
 	{
 		m_perMeshletBuffer.CopyOldBuffer(copyList);
 		m_vertexBuffer.CopyOldBuffer(copyList);
 		m_vertexIndicesBuffer.CopyOldBuffer(copyList);
 		m_primIndicesBuffer.CopyOldBuffer(copyList);
 
-		m_tempCopyNecessary = false;
+		m_oldBufferCopyNecessary = false;
 	}
 }
 

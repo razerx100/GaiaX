@@ -113,8 +113,10 @@ ID3D12Fence* RenderEngineVSIndividual::GenericCopyStage(
 		{
 			const CommandListScope copyCmdListScope{ copyCmdList };
 
-			m_stagingManager.CopyAndClear(copyCmdListScope);
-			m_modelManager.CopyTempData(copyCmdListScope);
+			// Need to copy the old buffers first to avoid empty data being copied over
+			// the queued data.
+			m_modelManager.CopyOldBuffers(copyCmdListScope);
+			m_stagingManager.CopyAndClearQueuedBuffers(copyCmdListScope);
 		}
 
 		const D3DFence& copyWaitFence = m_copyWait[frameIndex];
@@ -425,8 +427,10 @@ ID3D12Fence* RenderEngineVSIndirect::GenericCopyStage(
 		{
 			const CommandListScope copyCmdListScope{ copyCmdList };
 
-			m_stagingManager.CopyAndClear(copyCmdListScope);
-			m_modelManager.CopyTempBuffers(copyCmdListScope);
+			// Need to copy the old buffers first to avoid empty data being copied over
+			// the queued data.
+			m_modelManager.CopyOldBuffers(copyCmdListScope);
+			m_stagingManager.CopyAndClearQueuedBuffers(copyCmdListScope);
 		}
 
 		const D3DFence& copyWaitFence = m_copyWait[frameIndex];

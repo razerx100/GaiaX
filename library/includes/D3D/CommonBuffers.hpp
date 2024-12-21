@@ -193,7 +193,7 @@ public:
 			// manual transition in some cases though.
 			device, memoryManager, D3D12_RESOURCE_STATE_COMMON, bufferFlag,
 			GetGPUResource<Buffer>(device, memoryManager)
-		}, m_tempBuffer{}
+		}, m_oldBuffer{}
 	{}
 
 	void CopyOldBuffer(const D3DCommandList& copyList) noexcept;
@@ -213,7 +213,7 @@ private:
 	UINT64 ExtendBuffer(UINT64 size, TemporaryDataBufferGPU& tempBuffer);
 
 private:
-	std::shared_ptr<Buffer> m_tempBuffer;
+	std::shared_ptr<Buffer> m_oldBuffer;
 
 public:
 	SharedBufferGPU(const SharedBufferGPU&) = delete;
@@ -221,12 +221,12 @@ public:
 
 	SharedBufferGPU(SharedBufferGPU&& other) noexcept
 		: SharedBufferBase{ std::move(other) },
-		m_tempBuffer{ std::move(other.m_tempBuffer) }
+		m_oldBuffer{ std::move(other.m_oldBuffer) }
 	{}
 	SharedBufferGPU& operator=(SharedBufferGPU&& other) noexcept
 	{
 		SharedBufferBase::operator=(std::move(other));
-		m_tempBuffer = std::move(other.m_tempBuffer);
+		m_oldBuffer = std::move(other.m_oldBuffer);
 
 		return *this;
 	}

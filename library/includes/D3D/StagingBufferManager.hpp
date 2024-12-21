@@ -27,7 +27,7 @@ public:
 		TemporaryDataBufferGPU& tempDataBuffer
 	);
 
-	void CopyAndClear(const D3DCommandList& copyCmdList);
+	void CopyAndClearQueuedBuffers(const D3DCommandList& copyCmdList);
 
 private:
 	void CopyCPU();

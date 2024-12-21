@@ -212,7 +212,7 @@ void StagingBufferManager::CopyGPU(const D3DCommandList& copyCmdList)
 	}
 }
 
-void StagingBufferManager::CopyAndClear(const D3DCommandList& copyCmdList)
+void StagingBufferManager::CopyAndClearQueuedBuffers(const D3DCommandList& copyCmdList)
 {
 	// Since these are first copied to temp buffers and those are
 	// copied on the GPU, we don't need any cpu synchronisation.

@@ -114,9 +114,9 @@ UINT64 SharedBufferAllocator::AllocateMemory(const AllocInfo& allocInfo, UINT64 
 // Shared Buffer GPU
 void SharedBufferGPU::CreateBuffer(UINT64 size, TemporaryDataBufferGPU& tempBuffer)
 {
-	// Moving it into the temp, as we will want to copy it back to the new bigger buffer.
+	// Moving it into the old buffer, as we will want to copy it back to the new bigger buffer.
 
-	// This part is really important. So, the temp buffer should be null after a copy is done
+	// The temp old buffer should be null after a copy is done
 	// and it has been destroyed. If it is at the beginning and the old buffer didn't have any
 	// data, just moving wouldn't be an issue. But once it has some data, if we try to increase
 	// the buffer size twice, it will move the old buffer with the data to the tempbuffer, but
@@ -128,10 +128,15 @@ void SharedBufferGPU::CreateBuffer(UINT64 size, TemporaryDataBufferGPU& tempBuff
 	// buffer, it won't be null and so we wouldn't replace it and the data should be preserved and
 	// safely copied to the main buffer upon calling CopyOldBuffer next.
 	// Also no need to copy if the main buffer doesn't exist.
-	if (m_buffer.Get() != nullptr && m_tempBuffer == nullptr)
+
+	// To add, if the buffer is increased twice in the beginning, before a copy is made, the
+	// old temp buffer will be empty. And so we have to copy the old buffer first on the gpu.
+	// Checking if that range is copied would also work, but this should only happen once, so
+	// one empty copy should be fine.
+	if (m_buffer.Get() && !m_oldBuffer)
 	{
-		m_tempBuffer = std::make_shared<Buffer>(std::move(m_buffer));
-		tempBuffer.Add(m_tempBuffer);
+		m_oldBuffer = std::make_shared<Buffer>(std::move(m_buffer));
+		tempBuffer.Add(m_oldBuffer);
 	}
 
 	m_buffer = GetGPUResource<Buffer>(m_device, m_memoryManager);
@@ -157,13 +162,13 @@ UINT64 SharedBufferGPU::ExtendBuffer(UINT64 size, TemporaryDataBufferGPU& tempBu
 
 void SharedBufferGPU::CopyOldBuffer(const D3DCommandList& copyList) noexcept
 {
-	if (m_tempBuffer)
+	if (m_oldBuffer)
 	{
 		// The temp buffer should get promoted to COPY_SRC and the new buffer
 		// to COPY_DST and then get decayed to COMMON afterwards and then
 		// to the desired state.
-		std::shared_ptr<Buffer> tempBuffer = std::move(m_tempBuffer);
-		copyList.CopyWhole(*tempBuffer, m_buffer);
+		std::shared_ptr<Buffer> oldBuffer = std::move(m_oldBuffer);
+		copyList.CopyWhole(*oldBuffer, m_buffer);
 	}
 }
 

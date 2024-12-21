@@ -70,7 +70,7 @@ TEST_F(StagingBufferTest, StagingTest)
 	{
 		const CommandListScope cmdListScope{ copyCmdList };
 
-		stagingBufferMan.CopyAndClear(cmdListScope);
+		stagingBufferMan.CopyAndClearQueuedBuffers(cmdListScope);
 	}
 
 	D3DFence waitFence{};

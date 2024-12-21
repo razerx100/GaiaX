@@ -459,7 +459,7 @@ public:
 	) : m_device{ device }, m_memoryManager{ memoryManager },
 		m_graphicsRootSignature{ nullptr }, m_shaderPath{},
 		m_modelBuffers{ device, memoryManager, frameCount },
-		m_graphicsPipelines{}, m_meshBundles{}, m_modelBundles{}, m_tempCopyNecessary{ true }
+		m_graphicsPipelines{}, m_meshBundles{}, m_modelBundles{}, m_oldBufferCopyNecessary{ false }
 	{}
 
 	void SetGraphicsRootSignature(ID3D12RootSignature* rootSignature) noexcept
@@ -529,7 +529,7 @@ public:
 
 			AddModelBundle(std::move(modelBundleObj));
 
-			m_tempCopyNecessary = true;
+			m_oldBufferCopyNecessary = true;
 
 			return bundleID;
 		}
@@ -587,9 +587,9 @@ public:
 			std::move(meshBundle), stagingBufferMan, meshManager, tempBuffer
 		);
 
-		auto meshIndex = m_meshBundles.Add(std::move(meshManager));
+		auto meshIndex           = m_meshBundles.Add(std::move(meshManager));
 
-		m_tempCopyNecessary = true;
+		m_oldBufferCopyNecessary = true;
 
 		return static_cast<std::uint32_t>(meshIndex);
 	}
@@ -702,7 +702,7 @@ protected:
 	std::vector<Pipeline>        m_graphicsPipelines;
 	ReusableVector<MeshManager>  m_meshBundles;
 	std::vector<ModelBundleType> m_modelBundles;
-	bool                         m_tempCopyNecessary;
+	bool                         m_oldBufferCopyNecessary;
 
 	// The pixel and Vertex data are on different sets. So both can be 0u.
 	static constexpr size_t s_modelBuffersPixelSRVRegisterSlot    = 0u;
@@ -721,19 +721,19 @@ public:
 		m_graphicsPipelines{ std::move(other.m_graphicsPipelines) },
 		m_meshBundles{ std::move(other.m_meshBundles) },
 		m_modelBundles{ std::move(other.m_modelBundles) },
-		m_tempCopyNecessary{ other.m_tempCopyNecessary }
+		m_oldBufferCopyNecessary{ other.m_oldBufferCopyNecessary }
 	{}
 	ModelManager& operator=(ModelManager&& other) noexcept
 	{
-		m_device                = other.m_device;
-		m_memoryManager         = other.m_memoryManager;
-		m_graphicsRootSignature = other.m_graphicsRootSignature;
-		m_shaderPath            = std::move(other.m_shaderPath);
-		m_modelBuffers          = std::move(other.m_modelBuffers);
-		m_graphicsPipelines     = std::move(other.m_graphicsPipelines);
-		m_meshBundles           = std::move(other.m_meshBundles);
-		m_modelBundles          = std::move(other.m_modelBundles);
-		m_tempCopyNecessary     = other.m_tempCopyNecessary;
+		m_device                 = other.m_device;
+		m_memoryManager          = other.m_memoryManager;
+		m_graphicsRootSignature  = other.m_graphicsRootSignature;
+		m_shaderPath             = std::move(other.m_shaderPath);
+		m_modelBuffers           = std::move(other.m_modelBuffers);
+		m_graphicsPipelines      = std::move(other.m_graphicsPipelines);
+		m_meshBundles            = std::move(other.m_meshBundles);
+		m_modelBundles           = std::move(other.m_modelBundles);
+		m_oldBufferCopyNecessary = other.m_oldBufferCopyNecessary;
 
 		return *this;
 	}
@@ -773,7 +773,7 @@ public:
 
 	void Draw(const D3DCommandList& graphicsList) const noexcept;
 
-	void CopyTempData(const D3DCommandList& copyList) noexcept;
+	void CopyOldBuffers(const D3DCommandList& copyList) noexcept;
 
 private:
 	void _setGraphicsConstantRootIndex(
@@ -867,7 +867,7 @@ public:
 		m_computeRootSignature = rootSignature;
 	}
 
-	void CopyTempBuffers(const D3DCommandList& copyList) noexcept;
+	void CopyOldBuffers(const D3DCommandList& copyList) noexcept;
 
 	void SetDescriptorLayoutVS(
 		std::vector<D3DDescriptorManager>& descriptorManagers, size_t vsRegisterSpace,
@@ -1066,7 +1066,7 @@ public:
 		size_t psRegisterSpace
 	) const;
 
-	void CopyTempBuffers(const D3DCommandList& copyList) noexcept;
+	void CopyOldBuffers(const D3DCommandList& copyList) noexcept;
 
 	void Draw(const D3DCommandList& graphicsList) const noexcept;
 
