@@ -137,14 +137,20 @@ MemoryManager::MemoryAllocation MemoryManager::Allocate(
 
 	{
 		// If the already available allocators were unable to allocate, then try to allocate new memory.
-		UINT64 newAllocationSize         = std::max(bufferSize, GetNewAllocationSize(heapType));
+		UINT64 newAllocationSize   = GetNewAllocationSize(heapType);
+
+		// If the newAllocationSize isn't an exponent of 2, the largest block in the
+		// buddy allocator might not be able to house it. So, we have to query the required
+		// size.
+		UINT64 minimumRequiredSize = Buddy::GetMinimumRequiredNewAllocationSizeFor(bufferSize);
+		newAllocationSize          = std::max(newAllocationSize, minimumRequiredSize);
 
 		const UINT64 availableMemorySize = GetAvailableMemory();
 
 		// If allocation is not possible, check if the buffer can be allocated on the available memory.
 		if (newAllocationSize > availableMemorySize)
 		{
-			if (availableMemorySize >= bufferSize)
+			if (availableMemorySize >= minimumRequiredSize)
 				newAllocationSize = availableMemorySize;
 			else
 				throw Exception("MemoryException", "Not Enough memory for allocation.");
