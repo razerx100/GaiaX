@@ -43,11 +43,37 @@ public:
 		std::vector<size_t> elementIndices{};
 		elementIndices.reserve(elementCount);
 
-		for (auto& element : elements)
+		for (T& element : elements)
 		{
 			const size_t elementIndex = m_elements.Add(std::move(element), extraElementCount);
 
 			elementIndices.emplace_back(elementIndex);
+		}
+
+		const size_t newCount = m_elements.GetCount();
+
+		if(newCount > oldCount)
+			static_cast<Derived*>(this)->CreateBuffer(newCount);
+
+		return elementIndices;
+	}
+
+	[[nodiscard]]
+	// Returns the indices of the elements in the ElementBuffer.
+	std::vector<std::uint32_t> AddMultipleRU32(std::vector<T>&& elements)
+	{
+		const size_t oldCount          = m_elements.GetCount();
+		const size_t extraElementCount = static_cast<Derived*>(this)->GetExtraElementAllocationCount();
+		const size_t elementCount      = std::size(elements);
+
+		std::vector<std::uint32_t> elementIndices{};
+		elementIndices.reserve(elementCount);
+
+		for (T& element : elements)
+		{
+			const size_t elementIndex = m_elements.Add(std::move(element), extraElementCount);
+
+			elementIndices.emplace_back(static_cast<std::uint32_t>(elementIndex));
 		}
 
 		const size_t newCount = m_elements.GetCount();

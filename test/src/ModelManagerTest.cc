@@ -254,7 +254,7 @@ TEST_F(ModelManagerTest, ModelManagerVSIndividualTest)
 
 	StagingBufferManager stagingBufferManager{ device, &memoryManager, &threadPool };
 
-	ModelManagerVSIndividual vsIndividual{ device, &memoryManager, Constants::frameCount };
+	ModelManagerVSIndividual vsIndividual{ device, &memoryManager };
 
 	std::vector<D3DDescriptorManager> descManagers{};
 
@@ -262,7 +262,7 @@ TEST_F(ModelManagerTest, ModelManagerVSIndividualTest)
 		descManagers.emplace_back(D3DDescriptorManager{ device, Constants::descSetLayoutCount });
 
 	vsIndividual.SetDescriptorLayout(
-		descManagers, Constants::vsRegisterSpace, Constants::psRegisterSpace
+		descManagers, Constants::vsRegisterSpace
 	);
 
 	for (auto& descManager : descManagers)
@@ -288,6 +288,8 @@ TEST_F(ModelManagerTest, ModelManagerVSIndividualTest)
 
 		rootSignature.CreateSignature(device, rootSignatureDynamic);
 	}
+
+	ModelBuffers modelBuffers{ device, &memoryManager, Constants::frameCount };
 
 	TemporaryDataBufferGPU tempDataBuffer{};
 
@@ -321,7 +323,7 @@ TEST_F(ModelManagerTest, ModelManagerVSIndividualTest)
 		modelBundle->AddModel(std::move(model));
 
 		std::uint32_t index = vsIndividual.AddModelBundle(
-			std::move(modelBundle), L"", tempDataBuffer
+			std::move(modelBundle), L"", modelBuffers, tempDataBuffer
 		);
 		EXPECT_EQ(index, 0u) << "Index isn't 0.";
 	}
@@ -332,7 +334,7 @@ TEST_F(ModelManagerTest, ModelManagerVSIndividualTest)
 		modelBundle->AddModel(std::move(model));
 
 		std::uint32_t index = vsIndividual.AddModelBundle(
-			std::move(modelBundle), L"", tempDataBuffer
+			std::move(modelBundle), L"", modelBuffers, tempDataBuffer
 		);
 		EXPECT_EQ(index, 1u) << "Index isn't 1.";
 	}
@@ -343,11 +345,11 @@ TEST_F(ModelManagerTest, ModelManagerVSIndividualTest)
 			modelBundle->AddModel(std::make_shared<ModelDummy>());
 
 		std::uint32_t index = vsIndividual.AddModelBundle(
-			std::move(modelBundle), L"H", tempDataBuffer
+			std::move(modelBundle), L"H", modelBuffers, tempDataBuffer
 		);
 		EXPECT_EQ(index, 2u) << "Index isn't 2.";
 	}
-	vsIndividual.RemoveModelBundle(1u);
+	vsIndividual.RemoveModelBundle(1u, modelBuffers);
 	{
 		auto modelBundle = std::make_shared<ModelBundleDummy>();
 
@@ -355,7 +357,7 @@ TEST_F(ModelManagerTest, ModelManagerVSIndividualTest)
 			modelBundle->AddModel(std::make_shared<ModelDummy>());
 
 		std::uint32_t index = vsIndividual.AddModelBundle(
-			std::move(modelBundle), L"H", tempDataBuffer
+			std::move(modelBundle), L"H", modelBuffers, tempDataBuffer
 		);
 		EXPECT_EQ(index, 1u) << "Index isn't 1.";
 	}
@@ -385,9 +387,7 @@ TEST_F(ModelManagerTest, ModelManagerVSIndirectTest)
 		descManagersCS.emplace_back(D3DDescriptorManager{ device, Constants::descSetLayoutCount });
 	}
 
-	vsIndirect.SetDescriptorLayoutVS(
-		descManagersVS, Constants::vsRegisterSpace, Constants::psRegisterSpace
-	);
+	vsIndirect.SetDescriptorLayoutVS(descManagersVS, Constants::vsRegisterSpace);
 	vsIndirect.SetDescriptorLayoutCS(descManagersCS, Constants::csRegisterSpace);
 
 	for (auto& descManager : descManagersVS)
@@ -437,6 +437,8 @@ TEST_F(ModelManagerTest, ModelManagerVSIndirectTest)
 		rootSignatureVS.CreateSignature(device, rootSignatureDynamic);
 	}
 
+	ModelBuffers modelBuffers{ device, &memoryManager, Constants::frameCount };
+
 	TemporaryDataBufferGPU tempDataBuffer{};
 
 	{
@@ -469,7 +471,7 @@ TEST_F(ModelManagerTest, ModelManagerVSIndirectTest)
 		modelBundle->AddModel(std::move(model));
 
 		std::uint32_t index = vsIndirect.AddModelBundle(
-			std::move(modelBundle), L"", tempDataBuffer
+			std::move(modelBundle), L"", modelBuffers, tempDataBuffer
 		);
 		EXPECT_EQ(index, 0u) << "Index isn't 0.";
 	}
@@ -480,7 +482,7 @@ TEST_F(ModelManagerTest, ModelManagerVSIndirectTest)
 		modelBundle->AddModel(std::move(model));
 
 		std::uint32_t index = vsIndirect.AddModelBundle(
-			std::move(modelBundle), L"A", tempDataBuffer
+			std::move(modelBundle), L"A", modelBuffers, tempDataBuffer
 		);
 		EXPECT_EQ(index, 1u) << "Index isn't 1.";
 	}
@@ -491,11 +493,11 @@ TEST_F(ModelManagerTest, ModelManagerVSIndirectTest)
 			modelBundle->AddModel(std::make_shared<ModelDummy>());
 
 		std::uint32_t index = vsIndirect.AddModelBundle(
-			std::move(modelBundle), L"H", tempDataBuffer
+			std::move(modelBundle), L"H", modelBuffers, tempDataBuffer
 		);
 		EXPECT_EQ(index, 2u) << "Index isn't 2.";
 	}
-	vsIndirect.RemoveModelBundle(1u);
+	vsIndirect.RemoveModelBundle(1u, modelBuffers);
 	{
 		auto modelBundle = std::make_shared<ModelBundleDummy>();
 
@@ -503,7 +505,7 @@ TEST_F(ModelManagerTest, ModelManagerVSIndirectTest)
 			modelBundle->AddModel(std::make_shared<ModelDummy>());
 
 		std::uint32_t index = vsIndirect.AddModelBundle(
-			std::move(modelBundle), L"H", tempDataBuffer
+			std::move(modelBundle), L"H", modelBuffers, tempDataBuffer
 		);
 		EXPECT_EQ(index, 1u) << "Index isn't 1.";
 
@@ -516,7 +518,7 @@ TEST_F(ModelManagerTest, ModelManagerVSIndirectTest)
 		modelBundle->AddModel(std::move(model));
 
 		std::uint32_t index = vsIndirect.AddModelBundle(
-			std::move(modelBundle), L"H", tempDataBuffer
+			std::move(modelBundle), L"H", modelBuffers, tempDataBuffer
 		);
 		EXPECT_EQ(index, 13u) << "Index isn't 13.";
 	}
@@ -527,7 +529,7 @@ TEST_F(ModelManagerTest, ModelManagerVSIndirectTest)
 		modelBundle->AddModel(std::move(model));
 
 		std::uint32_t index = vsIndirect.AddModelBundle(
-			std::move(modelBundle), L"A", tempDataBuffer
+			std::move(modelBundle), L"A", modelBuffers, tempDataBuffer
 		);
 		EXPECT_EQ(index, 14u) << "Index isn't 14.";
 	}
@@ -544,16 +546,14 @@ TEST_F(ModelManagerTest, ModelManagerMS)
 
 	StagingBufferManager stagingBufferManager{ device, &memoryManager, &threadPool };
 
-	ModelManagerMS managerMS{
-		device, &memoryManager, &stagingBufferManager, Constants::frameCount
-	};
+	ModelManagerMS managerMS{ device, &memoryManager, &stagingBufferManager };
 
 	std::vector<D3DDescriptorManager> descManagers{};
 
 	for (size_t _ = 0u; _ < Constants::frameCount; ++_)
 		descManagers.emplace_back(D3DDescriptorManager{ device, Constants::descSetLayoutCount });
 
-	managerMS.SetDescriptorLayout(descManagers, Constants::vsRegisterSpace, Constants::psRegisterSpace);
+	managerMS.SetDescriptorLayout(descManagers, Constants::vsRegisterSpace);
 
 	for (auto& descManager : descManagers)
 		descManager.CreateDescriptors();
@@ -578,6 +578,8 @@ TEST_F(ModelManagerTest, ModelManagerMS)
 
 		rootSignature.CreateSignature(device, rootSignatureDynamic);
 	}
+
+	ModelBuffers modelBuffers{ device, &memoryManager, Constants::frameCount };
 
 	TemporaryDataBufferGPU tempDataBuffer{};
 
@@ -618,7 +620,7 @@ TEST_F(ModelManagerTest, ModelManagerMS)
 		modelBundle->AddModel(std::move(model));
 
 		std::uint32_t index = managerMS.AddModelBundle(
-			std::move(modelBundle), L"", tempDataBuffer
+			std::move(modelBundle), L"", modelBuffers, tempDataBuffer
 		);
 		EXPECT_EQ(index, 0u) << "Index isn't 0.";
 	}
@@ -629,7 +631,7 @@ TEST_F(ModelManagerTest, ModelManagerMS)
 		modelBundle->AddModel(std::move(model));
 
 		std::uint32_t index = managerMS.AddModelBundle(
-			std::move(modelBundle), L"", tempDataBuffer
+			std::move(modelBundle), L"", modelBuffers, tempDataBuffer
 		);
 		EXPECT_EQ(index, 1u) << "Index isn't 1.";
 	}
@@ -640,11 +642,11 @@ TEST_F(ModelManagerTest, ModelManagerMS)
 			modelBundle->AddModel(std::make_shared<ModelDummy>());
 
 		std::uint32_t index = managerMS.AddModelBundle(
-			std::move(modelBundle), L"H", tempDataBuffer
+			std::move(modelBundle), L"H", modelBuffers, tempDataBuffer
 		);
 		EXPECT_EQ(index, 2u) << "Index isn't 2.";
 	}
-	managerMS.RemoveModelBundle(1u);
+	managerMS.RemoveModelBundle(1u, modelBuffers);
 	{
 		auto modelBundle = std::make_shared<ModelBundleDummy>();
 
@@ -652,7 +654,7 @@ TEST_F(ModelManagerTest, ModelManagerMS)
 			modelBundle->AddModel(std::make_shared<ModelDummy>());
 
 		std::uint32_t index = managerMS.AddModelBundle(
-			std::move(modelBundle), L"H", tempDataBuffer
+			std::move(modelBundle), L"H", modelBuffers, tempDataBuffer
 		);
 		EXPECT_EQ(index, 1u) << "Index isn't 1.";
 	}

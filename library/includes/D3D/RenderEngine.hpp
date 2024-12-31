@@ -19,6 +19,7 @@
 #include <Model.hpp>
 #include <Shader.hpp>
 #include <MeshBundle.hpp>
+#include <D3DModelBuffer.hpp>
 
 class RenderEngine
 {
@@ -107,6 +108,10 @@ protected:
 	static constexpr size_t s_graphicsPipelineSetLayoutCount = 2u;
 	static constexpr size_t s_vertexShaderRegisterSpace      = 0u;
 	static constexpr size_t s_pixelShaderRegisterSpace       = 1u;
+
+	// The pixel and Vertex data are on different sets. So both can be 0u.
+	static constexpr size_t s_modelBuffersPixelSRVRegisterSlot    = 0u;
+	static constexpr size_t s_modelBuffersGraphicsSRVRegisterSlot = 0u;
 
 	static constexpr size_t s_materialSRVRegisterSlot = 1u;
 	static constexpr size_t s_textureSRVRegisterSlot  = 2u;
@@ -198,9 +203,13 @@ public:
 				deviceManager, &m_memoryManager, &m_stagingManager,
 				static_cast<std::uint32_t>(frameCount)
 			)
-		}, m_pipelineStages{}
+		},
+		m_modelBuffers{
+			deviceManager.GetDevice(), &m_memoryManager, static_cast<std::uint32_t>(frameCount)
+		},
+		m_pipelineStages{}
 	{
-		for (auto& descriptorManager : m_graphicsDescriptorManagers)
+		for (D3DDescriptorManager& descriptorManager : m_graphicsDescriptorManagers)
 			m_textureManager.SetDescriptorLayout(
 				descriptorManager, s_textureSRVRegisterSlot, s_pixelShaderRegisterSpace
 			);
@@ -221,7 +230,7 @@ public:
 
 	void RemoveModelBundle(std::uint32_t bundleID) noexcept override
 	{
-		m_modelManager.RemoveModelBundle(bundleID);
+		m_modelManager.RemoveModelBundle(bundleID, m_modelBuffers);
 	}
 
 	void RemoveMeshBundle(std::uint32_t bundleIndex) noexcept override
@@ -270,6 +279,7 @@ protected:
 	{
 		RenderEngine::Update(frameIndex);
 
+		m_modelBuffers.Update(frameIndex);
 		m_modelManager.UpdatePerFrame(frameIndex);
 	}
 
@@ -279,6 +289,7 @@ protected:
 
 protected:
 	ModelManager_t                 m_modelManager;
+	ModelBuffers                   m_modelBuffers;
 	std::vector<PipelineSignature> m_pipelineStages;
 
 public:
@@ -288,12 +299,14 @@ public:
 	RenderEngineCommon(RenderEngineCommon&& other) noexcept
 		: RenderEngine{ std::move(other) },
 		m_modelManager{ std::move(other.m_modelManager) },
+		m_modelBuffers{ std::move(other.m_modelBuffers) },
 		m_pipelineStages{ std::move(other.m_pipelineStages) }
 	{}
 	RenderEngineCommon& operator=(RenderEngineCommon&& other) noexcept
 	{
 		RenderEngine::operator=(std::move(other));
 		m_modelManager        = std::move(other.m_modelManager);
+		m_modelBuffers        = std::move(other.m_modelBuffers);
 		m_pipelineStages      = std::move(other.m_pipelineStages);
 
 		return *this;

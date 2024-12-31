@@ -4,13 +4,9 @@ RenderEngineMS::RenderEngineMS(
 	const DeviceManager& deviceManager, std::shared_ptr<ThreadPool> threadPool, size_t frameCount
 ) : RenderEngineCommon{ deviceManager, std::move(threadPool), frameCount }
 {
-	// The layout shouldn't change throughout the runtime.
-	m_modelManager.SetDescriptorLayout(
-		m_graphicsDescriptorManagers, s_vertexShaderRegisterSpace, s_pixelShaderRegisterSpace
-	);
-	SetCommonGraphicsDescriptorLayout(D3D12_SHADER_VISIBILITY_ALL); // Both the AS and MS will use it.
+	SetGraphicsDescriptorBufferLayout();
 
-	for (auto& descriptorManager : m_graphicsDescriptorManagers)
+	for (D3DDescriptorManager& descriptorManager : m_graphicsDescriptorManagers)
 		descriptorManager.CreateDescriptors();
 
 	// RS
@@ -48,6 +44,24 @@ RenderEngineMS::RenderEngineMS(
 	SetupPipelineStages();
 }
 
+void RenderEngineMS::SetGraphicsDescriptorBufferLayout()
+{
+	// The layout shouldn't change throughout the runtime.
+	m_modelManager.SetDescriptorLayout(m_graphicsDescriptorManagers, s_vertexShaderRegisterSpace);
+	SetCommonGraphicsDescriptorLayout(D3D12_SHADER_VISIBILITY_ALL); // Both the AS and MS will use it.
+
+	for (D3DDescriptorManager& descriptorManager : m_graphicsDescriptorManagers)
+	{
+		descriptorManager.AddRootSRV(
+			s_modelBuffersGraphicsSRVRegisterSlot, s_vertexShaderRegisterSpace,
+			D3D12_SHADER_VISIBILITY_ALL
+		); // Both the AS and MS will use it.
+		descriptorManager.AddRootSRV(
+			s_modelBuffersPixelSRVRegisterSlot, s_pixelShaderRegisterSpace, D3D12_SHADER_VISIBILITY_PIXEL
+		);
+	}
+}
+
 void RenderEngineMS::SetupPipelineStages()
 {
 	constexpr size_t stageCount = 2u;
@@ -58,20 +72,37 @@ void RenderEngineMS::SetupPipelineStages()
 	m_pipelineStages.emplace_back(&RenderEngineMS::DrawingStage);
 }
 
+void RenderEngineMS::SetGraphicsDescriptors()
+{
+	const size_t frameCount = std::size(m_graphicsDescriptorManagers);
+
+	for (size_t index = 0u; index < frameCount; ++index)
+	{
+		D3DDescriptorManager& descriptorManager = m_graphicsDescriptorManagers[index];
+		const auto frameIndex                   = static_cast<UINT64>(index);
+
+		m_modelBuffers.SetDescriptor(
+			descriptorManager, frameIndex, s_modelBuffersGraphicsSRVRegisterSlot,
+			s_vertexShaderRegisterSpace, true
+		);
+		m_modelBuffers.SetPixelDescriptor(
+			descriptorManager, frameIndex, s_modelBuffersPixelSRVRegisterSlot, s_pixelShaderRegisterSpace
+		);
+	}
+}
+
 std::uint32_t RenderEngineMS::AddModelBundle(
 	std::shared_ptr<ModelBundle>&& modelBundle, const ShaderName& pixelShader
 ) {
 	WaitForGPUToFinish();
 
 	const std::uint32_t index = m_modelManager.AddModelBundle(
-		std::move(modelBundle), pixelShader, m_temporaryDataBuffer
+		std::move(modelBundle), pixelShader, m_modelBuffers, m_temporaryDataBuffer
 	);
 
 	// After a new model has been added, the ModelBuffer might get recreated. So, it will have
 	// a new object. So, we should set that new object as the descriptor.
-	m_modelManager.SetDescriptorsOfModels(
-		m_graphicsDescriptorManagers, s_vertexShaderRegisterSpace, s_pixelShaderRegisterSpace
-	);
+	SetGraphicsDescriptors();
 
 	m_copyNecessary = true;
 
@@ -189,9 +220,7 @@ ID3D12Fence* RenderEngineMS::DrawingStage(
 
 ModelManagerMS RenderEngineMS::GetModelManager(
 	const DeviceManager& deviceManager, MemoryManager* memoryManager,
-	StagingBufferManager* stagingBufferMan, std::uint32_t frameCount
+	StagingBufferManager* stagingBufferMan, [[maybe_unused]] std::uint32_t frameCount
 ) {
-	return ModelManagerMS{
-		deviceManager.GetDevice(), memoryManager, stagingBufferMan, frameCount
-	};
+	return ModelManagerMS{ deviceManager.GetDevice(), memoryManager, stagingBufferMan };
 }

@@ -2,9 +2,8 @@
 #include <D3DRootSignatureDynamic.hpp>
 
 // Model Manager VS Individual
-ModelManagerVSIndividual::ModelManagerVSIndividual(
-	ID3D12Device5* device, MemoryManager* memoryManager, std::uint32_t frameCount
-) : ModelManager{ device, memoryManager, frameCount }, m_constantsRootIndex{ 0u },
+ModelManagerVSIndividual::ModelManagerVSIndividual(ID3D12Device5* device, MemoryManager* memoryManager)
+	: ModelManager{ device, memoryManager }, m_constantsRootIndex{ 0u },
 	m_vertexBuffer{ device, memoryManager }, m_indexBuffer{ device, memoryManager }
 {}
 
@@ -23,14 +22,14 @@ void ModelManagerVSIndividual::ConfigureModelBundle(
 	modelBundleObj.SetModelBundle(std::move(modelBundle), std::move(modelIndices));
 }
 
-void ModelManagerVSIndividual::ConfigureModelRemove(size_t bundleIndex) noexcept
-{
-	const auto& modelBundle  = m_modelBundles[bundleIndex];
+void ModelManagerVSIndividual::ConfigureModelBundleRemove(
+	size_t bundleIndex, ModelBuffers& modelBuffers
+) noexcept {
+	const ModelBundleVSIndividual& modelBundle     = m_modelBundles.at(bundleIndex);
+	const std::vector<std::uint32_t>& modelIndices = modelBundle.GetModelIndices();
 
-	const auto& modelIndices = modelBundle.GetIndices();
-
-	for (const auto& modelIndex : modelIndices)
-		m_modelBuffers.Remove(modelIndex);
+	for (std::uint32_t modelIndex : modelIndices)
+		modelBuffers.Remove(modelIndex);
 }
 
 void ModelManagerVSIndividual::ConfigureRemoveMesh(size_t bundleIndex) noexcept
@@ -67,47 +66,15 @@ void ModelManagerVSIndividual::CopyOldBuffers(const D3DCommandList& copyList) no
 }
 
 void ModelManagerVSIndividual::SetDescriptorLayout(
-	std::vector<D3DDescriptorManager>& descriptorManagers,
-	size_t vsRegisterSpace, size_t psRegisterSpace
+	std::vector<D3DDescriptorManager>& descriptorManagers, size_t vsRegisterSpace
 ) {
-	const auto frameCount            = std::size(descriptorManagers);
 	constexpr UINT pushConstantCount = ModelBundleVSIndividual::GetConstantCount();
 
-	for (size_t index = 0u; index < frameCount; ++index)
-	{
-		D3DDescriptorManager& descriptorManager = descriptorManagers[index];
-
+	for (D3DDescriptorManager& descriptorManager : descriptorManagers)
 		descriptorManager.AddConstants(
 			s_constantDataCBVRegisterSlot, vsRegisterSpace, pushConstantCount,
 			D3D12_SHADER_VISIBILITY_VERTEX
 		);
-		descriptorManager.AddRootSRV(
-			s_modelBuffersGraphicsSRVRegisterSlot, vsRegisterSpace, D3D12_SHADER_VISIBILITY_VERTEX
-		);
-		descriptorManager.AddRootSRV(
-			s_modelBuffersPixelSRVRegisterSlot, psRegisterSpace, D3D12_SHADER_VISIBILITY_PIXEL
-		);
-	}
-}
-
-void ModelManagerVSIndividual::SetDescriptors(
-	std::vector<D3DDescriptorManager>& descriptorManagers,
-	size_t vsRegisterSpace, size_t psRegisterSpace
-) {
-	const auto frameCount = std::size(descriptorManagers);
-
-	for (size_t index = 0u; index < frameCount; ++index)
-	{
-		D3DDescriptorManager& descriptorManager = descriptorManagers[index];
-		const auto frameIndex                   = static_cast<UINT64>(index);
-
-		m_modelBuffers.SetDescriptor(
-			descriptorManager, frameIndex, s_modelBuffersGraphicsSRVRegisterSlot, vsRegisterSpace, true
-		);
-		m_modelBuffers.SetPixelDescriptor(
-			descriptorManager, frameIndex, s_modelBuffersPixelSRVRegisterSlot, psRegisterSpace
-		);
-	}
 }
 
 void ModelManagerVSIndividual::Draw(const D3DCommandList& graphicsList) const noexcept
@@ -116,7 +83,7 @@ void ModelManagerVSIndividual::Draw(const D3DCommandList& graphicsList) const no
 
 	GraphicsPipelineVertexShader::SetIATopology(graphicsList);
 
-	for (const auto& modelBundle : m_modelBundles)
+	for (const ModelBundleVSIndividual& modelBundle : m_modelBundles)
 	{
 		// Pipeline Object.
 		BindPipeline(modelBundle, graphicsList, previousPSOIndex);
@@ -137,7 +104,7 @@ void ModelManagerVSIndividual::Draw(const D3DCommandList& graphicsList) const no
 ModelManagerVSIndirect::ModelManagerVSIndirect(
 	ID3D12Device5* device, MemoryManager* memoryManager, StagingBufferManager* stagingBufferMan,
 	std::uint32_t frameCount
-) : ModelManager{ device, memoryManager, frameCount },
+) : ModelManager{ device, memoryManager },
 	m_stagingBufferMan{ stagingBufferMan }, m_argumentInputBuffers{}, m_argumentOutputBuffers{},
 	m_cullingDataBuffer{ device, memoryManager, D3D12_RESOURCE_STATE_GENERIC_READ },
 	m_counterBuffers{},
@@ -227,7 +194,7 @@ void ModelManagerVSIndirect::ConfigureModelBundle(
 
 	modelBundleObj.SetID(static_cast<std::uint32_t>(modelBundleCS.GetID()));
 
-	const auto modelBundleIndexInBuffer = modelBundleCS.GetModelBundleIndex();
+	const std::uint32_t modelBundleIndexInBuffer = modelBundleCS.GetModelBundleIndex();
 
 	m_meshBundleIndexBuffer.Add(modelBundleIndexInBuffer);
 
@@ -238,9 +205,10 @@ void ModelManagerVSIndirect::ConfigureModelBundle(
 	UpdateDispatchX();
 }
 
-void ModelManagerVSIndirect::ConfigureModelRemove(size_t bundleIndex) noexcept
-{
-	const auto& modelBundle  = m_modelBundles.at(bundleIndex);
+void ModelManagerVSIndirect::ConfigureModelBundleRemove(
+	size_t bundleIndex, ModelBuffers& modelBuffers
+) noexcept {
+	const ModelBundleVSIndirect& modelBundle  = m_modelBundles.at(bundleIndex);
 
 	{
 		const std::vector<SharedBufferData>& argumentOutputSharedData
@@ -259,7 +227,7 @@ void ModelManagerVSIndirect::ConfigureModelRemove(size_t bundleIndex) noexcept
 
 	std::erase_if(
 		m_modelBundlesCS,
-		[bundleID, this]
+		[bundleID, this, &modelBuffers]
 		(const ModelBundleCSIndirect& bundle)
 		{
 			const bool result = bundleID == bundle.GetID();
@@ -279,10 +247,11 @@ void ModelManagerVSIndirect::ConfigureModelRemove(size_t bundleIndex) noexcept
 				m_cullingDataBuffer.RelinquishMemory(bundle.GetCullingSharedData());
 				m_perModelDataBuffer.RelinquishMemory(bundle.GetPerModelDataSharedData());
 
-				const auto& modelIndices = bundle.GetModelIndices();
+				// Remove the model indices
+				const std::vector<std::uint32_t>& modelIndices = bundle.GetModelIndices();
 
-				for (const auto& modelIndex : modelIndices)
-					m_modelBuffers.Remove(modelIndex);
+				for (std::uint32_t modelIndex : modelIndices)
+					modelBuffers.Remove(modelIndex);
 			}
 
 			return result;
@@ -292,7 +261,7 @@ void ModelManagerVSIndirect::ConfigureModelRemove(size_t bundleIndex) noexcept
 
 void ModelManagerVSIndirect::ConfigureRemoveMesh(size_t bundleIndex) noexcept
 {
-	auto& meshManager = m_meshBundles.at(bundleIndex);
+	MeshManagerVertexShader& meshManager = m_meshBundles.at(bundleIndex);
 
 	{
 		const SharedBufferData& vertexSharedData = meshManager.GetVertexSharedData();
@@ -348,8 +317,7 @@ void ModelManagerVSIndirect::_updatePerFrame(UINT64 frameIndex) const noexcept
 }
 
 void ModelManagerVSIndirect::SetDescriptorLayoutVS(
-	std::vector<D3DDescriptorManager>& descriptorManagers, size_t vsRegisterSpace,
-	size_t psRegisterSpace
+	std::vector<D3DDescriptorManager>& descriptorManagers, size_t vsRegisterSpace
 ) const noexcept {
 	const auto frameCount            = std::size(descriptorManagers);
 	constexpr auto pushConstantCount = ModelBundleVSIndirect::GetConstantCount();
@@ -362,51 +330,19 @@ void ModelManagerVSIndirect::SetDescriptorLayoutVS(
 			s_constantDataVSCBVRegisterSlot, vsRegisterSpace, pushConstantCount,
 			D3D12_SHADER_VISIBILITY_VERTEX
 		);
-		descriptorManager.AddRootSRV(
-			s_modelBuffersGraphicsSRVRegisterSlot, vsRegisterSpace, D3D12_SHADER_VISIBILITY_VERTEX
-		);
-		descriptorManager.AddRootSRV(
-			s_modelBuffersPixelSRVRegisterSlot, psRegisterSpace, D3D12_SHADER_VISIBILITY_PIXEL
-		);
-	}
-}
-
-void ModelManagerVSIndirect::SetDescriptorsVS(
-	std::vector<D3DDescriptorManager>& descriptorManagers, size_t vsRegisterSpace,
-	size_t psRegisterSpace
-) const {
-	const auto frameCount = std::size(descriptorManagers);
-
-	for (size_t index = 0u; index < frameCount; ++index)
-	{
-		D3DDescriptorManager& descriptorManager = descriptorManagers[index];
-		const auto frameIndex                   = static_cast<UINT64>(index);
-
-		m_modelBuffers.SetDescriptor(
-			descriptorManager, frameIndex, s_modelBuffersGraphicsSRVRegisterSlot, vsRegisterSpace, true
-		);
-		m_modelBuffers.SetPixelDescriptor(
-			descriptorManager, frameIndex, s_modelBuffersPixelSRVRegisterSlot, psRegisterSpace
-		);
 	}
 }
 
 void ModelManagerVSIndirect::SetDescriptorLayoutCS(
 	std::vector<D3DDescriptorManager>& descriptorManagers, size_t csRegisterSpace
 ) const noexcept {
-	const auto frameCount            = std::size(descriptorManagers);
 	constexpr auto pushConstantCount = GetConstantCount();
 
-	for (size_t index = 0u; index < frameCount; ++index)
+	for (D3DDescriptorManager& descriptorManager : descriptorManagers)
 	{
-		D3DDescriptorManager& descriptorManager = descriptorManagers[index];
-
 		descriptorManager.AddConstants(
 			s_constantDataCSCBVRegisterSlot, csRegisterSpace, pushConstantCount,
 			D3D12_SHADER_VISIBILITY_ALL
-		);
-		descriptorManager.AddRootSRV(
-			s_modelBuffersCSSRVRegisterSlot, csRegisterSpace, D3D12_SHADER_VISIBILITY_ALL
 		);
 		descriptorManager.AddRootSRV(
 			s_argumentInputBufferSRVRegisterSlot, csRegisterSpace, D3D12_SHADER_VISIBILITY_ALL
@@ -438,16 +374,11 @@ void ModelManagerVSIndirect::SetDescriptorLayoutCS(
 void ModelManagerVSIndirect::SetDescriptorsCSOfModels(
 	std::vector<D3DDescriptorManager>& descriptorManagers, size_t csRegisterSpace
 ) const {
-	const auto frameCount = std::size(descriptorManagers);
+	const size_t frameCount = std::size(descriptorManagers);
 
 	for (size_t index = 0u; index < frameCount; ++index)
 	{
 		D3DDescriptorManager& descriptorManager = descriptorManagers[index];
-		const auto frameIndex                   = static_cast<UINT64>(index);
-
-		m_modelBuffers.SetDescriptor(
-			descriptorManager, frameIndex, s_modelBuffersCSSRVRegisterSlot, csRegisterSpace, false
-		);
 
 		descriptorManager.SetRootSRV(
 			s_argumentInputBufferSRVRegisterSlot, csRegisterSpace,
@@ -478,7 +409,7 @@ void ModelManagerVSIndirect::SetDescriptorsCSOfModels(
 void ModelManagerVSIndirect::SetDescriptorsCSOfMeshes(
 	std::vector<D3DDescriptorManager>& descriptorManagers, size_t csRegisterSpace
 ) const {
-	for (auto& descriptorManager : descriptorManagers)
+	for (D3DDescriptorManager& descriptorManager : descriptorManagers)
 	{
 		descriptorManager.SetRootSRV(
 			s_perMeshDataSRVRegisterSlot, csRegisterSpace, m_perMeshDataBuffer.GetGPUAddress(), false
@@ -497,7 +428,7 @@ void ModelManagerVSIndirect::Dispatch(const D3DCommandList& computeList) const n
 	m_computePipeline.Bind(computeList);
 
 	{
-		constexpr auto pushConstantCount = GetConstantCount();
+		constexpr UINT pushConstantCount = GetConstantCount();
 
 		const ConstantData constantData
 		{
@@ -519,7 +450,7 @@ void ModelManagerVSIndirect::Draw(
 
 	GraphicsPipelineVertexShader::SetIATopology(graphicsList);
 
-	for (const auto& modelBundle : m_modelBundles)
+	for (const ModelBundleVSIndirect& modelBundle : m_modelBundles)
 	{
 		// Pipeline Object.
 		BindPipeline(modelBundle, graphicsList, previousPSOIndex);
@@ -599,9 +530,8 @@ void ModelManagerVSIndirect::UpdateCounterResetValues()
 
 // Model Manager MS.
 ModelManagerMS::ModelManagerMS(
-	ID3D12Device5* device, MemoryManager* memoryManager, StagingBufferManager* stagingBufferMan,
-	std::uint32_t frameCount
-) : ModelManager{ device, memoryManager, frameCount },
+	ID3D12Device5* device, MemoryManager* memoryManager, StagingBufferManager* stagingBufferMan
+) : ModelManager{ device, memoryManager },
 	m_constantsRootIndex{ 0u },
 	m_stagingBufferMan{ stagingBufferMan },
 	m_perMeshletBuffer{ device, memoryManager },
@@ -617,14 +547,13 @@ void ModelManagerMS::ConfigureModelBundle(
 	modelBundleObj.SetModelBundle(std::move(modelBundle), std::move(modelIndices));
 }
 
-void ModelManagerMS::ConfigureModelRemove(size_t bundleIndex) noexcept
+void ModelManagerMS::ConfigureModelBundleRemove(size_t bundleIndex, ModelBuffers& modelBuffers) noexcept
 {
-	const auto& modelBundle  = m_modelBundles[bundleIndex];
-
-	const auto& modelIndices = modelBundle.GetIndices();
+	const ModelBundleMSIndividual& modelBundle     = m_modelBundles.at(bundleIndex);
+	const std::vector<std::uint32_t>& modelIndices = modelBundle.GetModelIndices();
 
 	for (std::uint32_t modelIndex : modelIndices)
-		m_modelBuffers.Remove(modelIndex);
+		modelBuffers.Remove(modelIndex);
 }
 
 void ModelManagerMS::ConfigureRemoveMesh(size_t bundleIndex) noexcept
@@ -678,27 +607,17 @@ void ModelManagerMS::CopyOldBuffers(const D3DCommandList& copyList) noexcept
 }
 
 void ModelManagerMS::SetDescriptorLayout(
-	std::vector<D3DDescriptorManager>& descriptorManagers, size_t msRegisterSpace,
-	size_t psRegisterSpace
+	std::vector<D3DDescriptorManager>& descriptorManagers, size_t msRegisterSpace
 ) const noexcept {
-	const auto frameCount             = std::size(descriptorManagers);
 	constexpr UINT meshConstantCount  = MeshManagerMeshShader::GetConstantCount();
 	constexpr UINT modelConstantCount = ModelBundleMSIndividual::GetConstantCount();
 
-	for (size_t index = 0u; index < frameCount; ++index)
+	for (D3DDescriptorManager& descriptorManager : descriptorManagers)
 	{
-		D3DDescriptorManager& descriptorManager = descriptorManagers[index];
-
 		descriptorManager.AddConstants(
 			s_constantDataCBVRegisterSlot, msRegisterSpace, meshConstantCount + modelConstantCount,
 			D3D12_SHADER_VISIBILITY_ALL
 		); // Both the AS and MS will use it.
-		descriptorManager.AddRootSRV(
-			s_modelBuffersGraphicsSRVRegisterSlot, msRegisterSpace, D3D12_SHADER_VISIBILITY_ALL
-		); // Both the AS and MS will use it.
-		descriptorManager.AddRootSRV(
-			s_modelBuffersPixelSRVRegisterSlot, psRegisterSpace, D3D12_SHADER_VISIBILITY_PIXEL
-		);
 		descriptorManager.AddRootSRV(
 			s_perMeshletBufferSRVRegisterSlot, msRegisterSpace, D3D12_SHADER_VISIBILITY_ALL
 		); // Both the AS and MS will use it.
@@ -710,26 +629,6 @@ void ModelManagerMS::SetDescriptorLayout(
 		);
 		descriptorManager.AddRootSRV(
 			s_primIndicesBufferSRVRegisterSlot, msRegisterSpace, D3D12_SHADER_VISIBILITY_MESH
-		);
-	}
-}
-
-void ModelManagerMS::SetDescriptorsOfModels(
-	std::vector<D3DDescriptorManager>& descriptorManagers, size_t msRegisterSpace,
-	size_t psRegisterSpace
-) const {
-	const auto frameCount = std::size(descriptorManagers);
-
-	for (size_t index = 0u; index < frameCount; ++index)
-	{
-		D3DDescriptorManager& descriptorManager = descriptorManagers[index];
-		const auto frameIndex                   = static_cast<UINT64>(index);
-
-		m_modelBuffers.SetDescriptor(
-			descriptorManager, frameIndex, s_modelBuffersGraphicsSRVRegisterSlot, msRegisterSpace, true
-		);
-		m_modelBuffers.SetPixelDescriptor(
-			descriptorManager, frameIndex, s_modelBuffersPixelSRVRegisterSlot, psRegisterSpace
 		);
 	}
 }
@@ -761,7 +660,7 @@ void ModelManagerMS::Draw(const D3DCommandList& graphicsList) const noexcept
 	auto previousPSOIndex              = std::numeric_limits<size_t>::max();
 	ID3D12GraphicsCommandList* cmdList = graphicsList.Get();
 
-	for (const auto& modelBundle : m_modelBundles)
+	for (const ModelBundleMSIndividual& modelBundle : m_modelBundles)
 	{
 		// Pipeline Object.
 		BindPipeline(modelBundle, graphicsList, previousPSOIndex);

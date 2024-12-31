@@ -23,11 +23,9 @@ template<
 class ModelManager
 {
 public:
-	ModelManager(
-		ID3D12Device5* device, MemoryManager* memoryManager, std::uint32_t frameCount
-	) : m_device{ device }, m_memoryManager{ memoryManager },
+	ModelManager(ID3D12Device5* device, MemoryManager* memoryManager)
+		: m_device{ device }, m_memoryManager{ memoryManager },
 		m_graphicsRootSignature{ nullptr }, m_shaderPath{},
-		m_modelBuffers{ device, memoryManager, frameCount },
 		m_graphicsPipelines{}, m_meshBundles{}, m_modelBundles{}, m_oldBufferCopyNecessary{ false }
 	{}
 
@@ -46,8 +44,6 @@ public:
 
 	void UpdatePerFrame(UINT64 frameIndex) const noexcept
 	{
-		m_modelBuffers.Update(frameIndex);
-
 		static_cast<Derived const*>(this)->_updatePerFrame(frameIndex);
 	}
 
@@ -61,40 +57,29 @@ public:
 	[[nodiscard]]
 	std::uint32_t AddModelBundle(
 		std::shared_ptr<ModelBundle>&& modelBundle, const ShaderName& pixelShader,
-		TemporaryDataBufferGPU& tempBuffer
+		ModelBuffers& modelBuffers, TemporaryDataBufferGPU& tempBuffer
 	) {
-		const auto& models      = modelBundle->GetModels();
-		const size_t modelCount = std::size(models);
+		const std::vector<std::shared_ptr<Model>>& models = modelBundle->GetModels();
 
-		if (modelCount)
+		if (!std::empty(models))
 		{
-			std::vector<std::shared_ptr<Model>> tempModelBundle{ modelCount, nullptr };
+			std::vector<std::shared_ptr<Model>> copyModels = models;
 
-			for (size_t index = 0u; index < modelCount; ++index)
-				tempModelBundle[index] = std::static_pointer_cast<Model>(models[index]);
-
-			const std::vector<size_t> modelIndices
-				= m_modelBuffers.AddMultiple(std::move(tempModelBundle));
-
-			auto dvThis = static_cast<Derived*>(this);
+			std::vector<std::uint32_t> modelIndices        = modelBuffers.AddMultipleRU32(
+				std::move(copyModels)
+			);
 
 			ModelBundleType modelBundleObj{};
 
-			{
-				std::vector<std::uint32_t> modelIndicesU32(std::size(modelIndices), 0u);
-				for (size_t index = 0u; index < std::size(modelIndices); ++index)
-					modelIndicesU32[index] = static_cast<std::uint32_t>(modelIndices[index]);
-
-				dvThis->ConfigureModelBundle(
-					modelBundleObj, std::move(modelIndicesU32), std::move(modelBundle), tempBuffer
-				);
-			}
+			static_cast<Derived*>(this)->ConfigureModelBundle(
+				modelBundleObj, std::move(modelIndices), std::move(modelBundle), tempBuffer
+			);
 
 			const std::uint32_t psoIndex = GetPSOIndex(pixelShader);
 
 			modelBundleObj.SetPSOIndex(psoIndex);
 
-			const auto bundleID = modelBundleObj.GetID();
+			const std::uint32_t bundleID = modelBundleObj.GetID();
 
 			AddModelBundle(std::move(modelBundleObj));
 
@@ -106,7 +91,7 @@ public:
 		return std::numeric_limits<std::uint32_t>::max();
 	}
 
-	void RemoveModelBundle(std::uint32_t bundleID) noexcept
+	void RemoveModelBundle(std::uint32_t bundleID, ModelBuffers& modelBuffers) noexcept
 	{
 		auto result = GetModelBundle(bundleID);
 
@@ -114,9 +99,9 @@ public:
 		{
 			const auto modelBundleIndex = static_cast<size_t>(
 				std::distance(std::begin(m_modelBundles), result)
-				);
+			);
 
-			static_cast<Derived*>(this)->ConfigureModelRemove(modelBundleIndex);
+			static_cast<Derived*>(this)->ConfigureModelBundleRemove(modelBundleIndex, modelBuffers);
 
 			m_modelBundles.erase(result);
 		}
@@ -156,7 +141,7 @@ public:
 			std::move(meshBundle), stagingBufferMan, meshManager, tempBuffer
 		);
 
-		auto meshIndex           = m_meshBundles.Add(std::move(meshManager));
+		size_t meshIndex         = m_meshBundles.Add(std::move(meshManager));
 
 		m_oldBufferCopyNecessary = true;
 
@@ -174,7 +159,7 @@ public:
 
 	void RecreateGraphicsPipelines()
 	{
-		for (auto& graphicsPipeline : m_graphicsPipelines)
+		for (Pipeline& graphicsPipeline : m_graphicsPipelines)
 			graphicsPipeline.Recreate(m_device, m_graphicsRootSignature, m_shaderPath);
 	}
 
@@ -197,12 +182,12 @@ protected:
 	// Adds a new PSO, if one can't be found.
 	std::uint32_t GetPSOIndex(const ShaderName& pixelShader)
 	{
-		std::uint32_t psoIndex = 0u;
-		auto oPSOIndex         = TryToGetPSOIndex(pixelShader);
+		std::uint32_t psoIndex                 = 0u;
+		std::optional<std::uint32_t> oPSOIndex = TryToGetPSOIndex(pixelShader);
 
 		if (!oPSOIndex)
 		{
-			psoIndex          = static_cast<std::uint32_t>(std::size(m_graphicsPipelines));
+			psoIndex = static_cast<std::uint32_t>(std::size(m_graphicsPipelines));
 
 			Pipeline pipeline{};
 
@@ -267,15 +252,10 @@ protected:
 	MemoryManager*               m_memoryManager;
 	ID3D12RootSignature*         m_graphicsRootSignature;
 	std::wstring                 m_shaderPath;
-	ModelBuffers                 m_modelBuffers;
 	std::vector<Pipeline>        m_graphicsPipelines;
 	ReusableVector<MeshManager>  m_meshBundles;
 	std::vector<ModelBundleType> m_modelBundles;
 	bool                         m_oldBufferCopyNecessary;
-
-	// The pixel and Vertex data are on different sets. So both can be 0u.
-	static constexpr size_t s_modelBuffersPixelSRVRegisterSlot    = 0u;
-	static constexpr size_t s_modelBuffersGraphicsSRVRegisterSlot = 0u;
 
 public:
 	ModelManager(const ModelManager&) = delete;
@@ -286,7 +266,6 @@ public:
 		m_memoryManager{ other.m_memoryManager },
 		m_graphicsRootSignature{ other.m_graphicsRootSignature },
 		m_shaderPath{ std::move(other.m_shaderPath) },
-		m_modelBuffers{ std::move(other.m_modelBuffers) },
 		m_graphicsPipelines{ std::move(other.m_graphicsPipelines) },
 		m_meshBundles{ std::move(other.m_meshBundles) },
 		m_modelBundles{ std::move(other.m_modelBundles) },
@@ -298,7 +277,6 @@ public:
 		m_memoryManager          = other.m_memoryManager;
 		m_graphicsRootSignature  = other.m_graphicsRootSignature;
 		m_shaderPath             = std::move(other.m_shaderPath);
-		m_modelBuffers           = std::move(other.m_modelBuffers);
 		m_graphicsPipelines      = std::move(other.m_graphicsPipelines);
 		m_meshBundles            = std::move(other.m_meshBundles);
 		m_modelBundles           = std::move(other.m_modelBundles);
@@ -327,17 +305,10 @@ class ModelManagerVSIndividual : public
 	friend class ModelManagerVSIndividualTest;
 
 public:
-	ModelManagerVSIndividual(
-		ID3D12Device5* device, MemoryManager* memoryManager, std::uint32_t frameCount
-	);
+	ModelManagerVSIndividual(ID3D12Device5* device, MemoryManager* memoryManager);
 
 	void SetDescriptorLayout(
-		std::vector<D3DDescriptorManager>& descriptorManagers,
-		size_t vsRegisterSpace, size_t psRegisterSpace
-	);
-	void SetDescriptors(
-		std::vector<D3DDescriptorManager>& descriptorManagers,
-		size_t vsRegisterSpace, size_t psRegisterSpace
+		std::vector<D3DDescriptorManager>& descriptorManagers, size_t vsRegisterSpace
 	);
 
 	void Draw(const D3DCommandList& graphicsList) const noexcept;
@@ -356,7 +327,7 @@ private:
 		TemporaryDataBufferGPU& tempBuffer
 	) const noexcept;
 
-	void ConfigureModelRemove(size_t bundleIndex) noexcept;
+	void ConfigureModelBundleRemove(size_t bundleIndex, ModelBuffers& modelBuffers) noexcept;
 	void ConfigureRemoveMesh(size_t bundleIndex) noexcept;
 	void ConfigureMeshBundle(
 		std::unique_ptr<MeshBundleTemporary> meshBundle, StagingBufferManager& stagingBufferMan,
@@ -439,13 +410,8 @@ public:
 	void CopyOldBuffers(const D3DCommandList& copyList) noexcept;
 
 	void SetDescriptorLayoutVS(
-		std::vector<D3DDescriptorManager>& descriptorManagers, size_t vsRegisterSpace,
-		size_t psRegisterSpace
+		std::vector<D3DDescriptorManager>& descriptorManagers, size_t vsRegisterSpace
 	) const noexcept;
-	void SetDescriptorsVS(
-		std::vector<D3DDescriptorManager>& descriptorManagers, size_t vsRegisterSpace,
-		size_t psRegisterSpace
-	) const;
 
 	void SetDescriptorLayoutCS(
 		std::vector<D3DDescriptorManager>& descriptorManagers, size_t csRegisterSpace
@@ -477,7 +443,7 @@ private:
 		TemporaryDataBufferGPU& tempBuffer
 	);
 
-	void ConfigureModelRemove(size_t bundleIndex) noexcept;
+	void ConfigureModelBundleRemove(size_t bundleIndex, ModelBuffers& modelBuffers) noexcept;
 	void ConfigureRemoveMesh(size_t bundleIndex) noexcept;
 	void ConfigureMeshBundle(
 		std::unique_ptr<MeshBundleTemporary> meshBundle, StagingBufferManager& stagingBufferMan,
@@ -529,7 +495,6 @@ private:
 	// CBV
 	static constexpr size_t s_constantDataCSCBVRegisterSlot      = 0u;
 	// SRV
-	static constexpr size_t s_modelBuffersCSSRVRegisterSlot      = 0u;
 	static constexpr size_t s_argumentInputBufferSRVRegisterSlot = 1u;
 	static constexpr size_t s_cullingDataBufferSRVRegisterSlot   = 2u;
 	static constexpr size_t s_perModelDataSRVRegisterSlot        = 3u;
@@ -616,23 +581,16 @@ class ModelManagerMS : public
 
 public:
 	ModelManagerMS(
-		ID3D12Device5* device, MemoryManager* memoryManager, StagingBufferManager* stagingBufferMan,
-		std::uint32_t frameCount
+		ID3D12Device5* device, MemoryManager* memoryManager, StagingBufferManager* stagingBufferMan
 	);
 
 	void SetDescriptorLayout(
-		std::vector<D3DDescriptorManager>& descriptorManagers, size_t msRegisterSpace,
-		size_t psRegisterSpace
+		std::vector<D3DDescriptorManager>& descriptorManagers, size_t msRegisterSpace
 	) const noexcept;
 
 	// Should be called after a new Mesh has been added.
 	void SetDescriptorsOfMeshes(
 		std::vector<D3DDescriptorManager>& descriptorManagers, size_t msRegisterSpace
-	) const;
-	// Should be called after a new Model has been added.
-	void SetDescriptorsOfModels(
-		std::vector<D3DDescriptorManager>& descriptorManagers, size_t msRegisterSpace,
-		size_t psRegisterSpace
 	) const;
 
 	void CopyOldBuffers(const D3DCommandList& copyList) noexcept;
@@ -648,7 +606,7 @@ private:
 		std::shared_ptr<ModelBundle>&& modelBundle, TemporaryDataBufferGPU& tempBuffer
 	);
 
-	void ConfigureModelRemove(size_t bundleIndex) noexcept;
+	void ConfigureModelBundleRemove(size_t bundleIndex, ModelBuffers& modelBuffers) noexcept;
 	void ConfigureRemoveMesh(size_t bundleIndex) noexcept;
 	void ConfigureMeshBundle(
 		std::unique_ptr<MeshBundleTemporary> meshBundle, StagingBufferManager& stagingBufferMan,

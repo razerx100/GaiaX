@@ -58,7 +58,7 @@ public:
 	[[nodiscard]]
 	std::uint32_t GetMeshBundleIndex() const noexcept { return m_modelBundle->GetMeshBundleIndex(); }
 	[[nodiscard]]
-	const std::vector<std::uint32_t>& GetIndices() const noexcept { return m_modelBufferIndices; }
+	const std::vector<std::uint32_t>& GetModelIndices() const noexcept { return m_modelBufferIndices; }
 
 	[[nodiscard]]
 	std::uint32_t GetID() const noexcept
@@ -130,7 +130,7 @@ public:
 	}
 
 	[[nodiscard]]
-	const std::vector<std::uint32_t>& GetIndices() const noexcept { return m_modelBufferIndices; }
+	const std::vector<std::uint32_t>& GetModelIndices() const noexcept { return m_modelBufferIndices; }
 	[[nodiscard]]
 	std::uint32_t GetMeshBundleIndex() const noexcept { return m_modelBundle->GetMeshBundleIndex(); }
 
@@ -344,5 +344,4 @@ public:
 		return *this;
 	}
 };
-
 #endif

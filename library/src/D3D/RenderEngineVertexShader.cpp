@@ -5,13 +5,9 @@ RenderEngineVSIndividual::RenderEngineVSIndividual(
 	const DeviceManager& deviceManager, std::shared_ptr<ThreadPool> threadPool, size_t frameCount
 ) : RenderEngineCommon{ deviceManager, std::move(threadPool), frameCount }
 {
-	// The layout shouldn't change throughout the runtime.
-	m_modelManager.SetDescriptorLayout(
-		m_graphicsDescriptorManagers, s_vertexShaderRegisterSpace, s_pixelShaderRegisterSpace
-	);
-	SetCommonGraphicsDescriptorLayout(D3D12_SHADER_VISIBILITY_VERTEX);
+	SetGraphicsDescriptorBufferLayout();
 
-	for (auto& descriptorManager : m_graphicsDescriptorManagers)
+	for (D3DDescriptorManager& descriptorManager : m_graphicsDescriptorManagers)
 		descriptorManager.CreateDescriptors();
 
 	// RS
@@ -49,6 +45,45 @@ RenderEngineVSIndividual::RenderEngineVSIndividual(
 	SetupPipelineStages();
 }
 
+void RenderEngineVSIndividual::SetGraphicsDescriptorBufferLayout()
+{
+	// The layout shouldn't change throughout the runtime.
+	m_modelManager.SetDescriptorLayout(m_graphicsDescriptorManagers, s_vertexShaderRegisterSpace);
+	SetCommonGraphicsDescriptorLayout(D3D12_SHADER_VISIBILITY_VERTEX);
+
+	for (D3DDescriptorManager& descriptorManager : m_graphicsDescriptorManagers)
+	{
+		descriptorManager.AddRootSRV(
+			s_modelBuffersGraphicsSRVRegisterSlot, s_vertexShaderRegisterSpace,
+			D3D12_SHADER_VISIBILITY_VERTEX
+		);
+		descriptorManager.AddRootSRV(
+			s_modelBuffersPixelSRVRegisterSlot, s_pixelShaderRegisterSpace,
+			D3D12_SHADER_VISIBILITY_PIXEL
+		);
+	}
+}
+
+void RenderEngineVSIndividual::SetGraphicsDescriptors()
+{
+	const size_t frameCount = std::size(m_graphicsDescriptorManagers);
+
+	for (size_t index = 0u; index < frameCount; ++index)
+	{
+		D3DDescriptorManager& descriptorManager = m_graphicsDescriptorManagers[index];
+		const auto frameIndex                   = static_cast<UINT64>(index);
+
+		m_modelBuffers.SetDescriptor(
+			descriptorManager, frameIndex, s_modelBuffersGraphicsSRVRegisterSlot,
+			s_vertexShaderRegisterSpace, true
+		);
+		m_modelBuffers.SetPixelDescriptor(
+			descriptorManager, frameIndex, s_modelBuffersPixelSRVRegisterSlot,
+			s_pixelShaderRegisterSpace
+		);
+	}
+}
+
 void RenderEngineVSIndividual::SetupPipelineStages()
 {
 	constexpr size_t stageCount = 2u;
@@ -62,9 +97,9 @@ void RenderEngineVSIndividual::SetupPipelineStages()
 ModelManagerVSIndividual RenderEngineVSIndividual::GetModelManager(
 	const DeviceManager& deviceManager, MemoryManager* memoryManager,
 	[[maybe_unused]] StagingBufferManager* stagingBufferMan,
-	std::uint32_t frameCount
+	[[maybe_unused]] std::uint32_t frameCount
 ) {
-	return ModelManagerVSIndividual{ deviceManager.GetDevice(), memoryManager, frameCount };
+	return ModelManagerVSIndividual{ deviceManager.GetDevice(), memoryManager };
 }
 
 std::uint32_t RenderEngineVSIndividual::AddModelBundle(
@@ -73,14 +108,12 @@ std::uint32_t RenderEngineVSIndividual::AddModelBundle(
 	WaitForGPUToFinish();
 
 	const std::uint32_t index = m_modelManager.AddModelBundle(
-		std::move(modelBundle), pixelShader, m_temporaryDataBuffer
+		std::move(modelBundle), pixelShader, m_modelBuffers, m_temporaryDataBuffer
 	);
 
 	// After new models have been added, the ModelBuffer might get recreated. So, it will have
 	// a new object. So, we should set that new object as the descriptor.
-	m_modelManager.SetDescriptors(
-		m_graphicsDescriptorManagers, s_vertexShaderRegisterSpace, s_pixelShaderRegisterSpace
-	);
+	SetGraphicsDescriptors();
 
 	m_copyNecessary = true;
 
@@ -200,14 +233,9 @@ RenderEngineVSIndirect::RenderEngineVSIndirect(
 {
 	ID3D12Device5* device = deviceManager.GetDevice();
 
-	// Graphics Descriptors.
-	// The layout shouldn't change throughout the runtime.
-	m_modelManager.SetDescriptorLayoutVS(
-		m_graphicsDescriptorManagers, s_vertexShaderRegisterSpace, s_pixelShaderRegisterSpace
-	);
-	SetCommonGraphicsDescriptorLayout(D3D12_SHADER_VISIBILITY_VERTEX);
+	SetGraphicsDescriptorBufferLayout();
 
-	for (auto& descriptorManager : m_graphicsDescriptorManagers)
+	for (D3DDescriptorManager& descriptorManager : m_graphicsDescriptorManagers)
 		descriptorManager.CreateDescriptors();
 
 	// RS
@@ -258,12 +286,9 @@ RenderEngineVSIndirect::RenderEngineVSIndirect(
 	m_computeQueue.Create(device, D3D12_COMMAND_LIST_TYPE_COMPUTE, frameCountU32);
 
 	// Compute Descriptors.
-	m_modelManager.SetDescriptorLayoutCS(m_computeDescriptorManagers, s_computeShaderRegisterSpace);
-	m_cameraManager.SetDescriptorLayoutCompute(
-		m_computeDescriptorManagers, s_cameraCSCBVRegisterSlot, s_computeShaderRegisterSpace
-	);
+	SetComputeDescriptorBufferLayout();
 
-	for (auto& descriptorManagers : m_computeDescriptorManagers)
+	for (D3DDescriptorManager& descriptorManagers : m_computeDescriptorManagers)
 		descriptorManagers.CreateDescriptors();
 
 	// RS
@@ -293,6 +318,43 @@ RenderEngineVSIndirect::RenderEngineVSIndirect(
 	);
 
 	SetupPipelineStages();
+}
+
+void RenderEngineVSIndirect::SetGraphicsDescriptorBufferLayout()
+{
+	// Graphics Descriptors.
+	// The layout shouldn't change throughout the runtime.
+	m_modelManager.SetDescriptorLayoutVS(m_graphicsDescriptorManagers, s_vertexShaderRegisterSpace);
+	SetCommonGraphicsDescriptorLayout(D3D12_SHADER_VISIBILITY_VERTEX);
+
+	const auto frameCount = std::size(m_graphicsDescriptorManagers);
+
+	for (size_t index = 0u; index < frameCount; ++index)
+	{
+		D3DDescriptorManager& descriptorManager = m_graphicsDescriptorManagers[index];
+
+		descriptorManager.AddRootSRV(
+			s_modelBuffersGraphicsSRVRegisterSlot, s_vertexShaderRegisterSpace,
+			D3D12_SHADER_VISIBILITY_VERTEX
+		);
+		descriptorManager.AddRootSRV(
+			s_modelBuffersPixelSRVRegisterSlot, s_pixelShaderRegisterSpace,
+			D3D12_SHADER_VISIBILITY_PIXEL
+		);
+	}
+}
+
+void RenderEngineVSIndirect::SetComputeDescriptorBufferLayout()
+{
+	m_modelManager.SetDescriptorLayoutCS(m_computeDescriptorManagers, s_computeShaderRegisterSpace);
+	m_cameraManager.SetDescriptorLayoutCompute(
+		m_computeDescriptorManagers, s_cameraCSCBVRegisterSlot, s_computeShaderRegisterSpace
+	);
+
+	for (D3DDescriptorManager& descriptorManager : m_computeDescriptorManagers)
+		descriptorManager.AddRootSRV(
+			s_modelBuffersCSSRVRegisterSlot, s_computeShaderRegisterSpace, D3D12_SHADER_VISIBILITY_ALL
+		);
 }
 
 void RenderEngineVSIndirect::SetupPipelineStages()
@@ -376,21 +438,58 @@ void RenderEngineVSIndirect::WaitForGPUToFinish()
 		counterValue = highestCounterValue;
 }
 
+
+void RenderEngineVSIndirect::SetGraphicsDescriptors()
+{
+	const size_t frameCount = std::size(m_graphicsDescriptorManagers);
+
+	for (size_t index = 0u; index < frameCount; ++index)
+	{
+		D3DDescriptorManager& descriptorManager = m_graphicsDescriptorManagers[index];
+		const auto frameIndex                   = static_cast<UINT64>(index);
+
+		m_modelBuffers.SetDescriptor(
+			descriptorManager, frameIndex, s_modelBuffersGraphicsSRVRegisterSlot,
+			s_vertexShaderRegisterSpace, true
+		);
+		m_modelBuffers.SetPixelDescriptor(
+			descriptorManager, frameIndex, s_modelBuffersPixelSRVRegisterSlot,
+			s_pixelShaderRegisterSpace
+		);
+	}
+}
+
+void RenderEngineVSIndirect::SetComputeDescriptors()
+{
+	m_modelManager.SetDescriptorsCSOfModels(m_computeDescriptorManagers, s_computeShaderRegisterSpace);
+
+	const size_t frameCount = std::size(m_computeDescriptorManagers);
+
+	for (size_t index = 0u; index < frameCount; ++index)
+	{
+		D3DDescriptorManager& descriptorManager = m_computeDescriptorManagers[index];
+		const auto frameIndex                   = static_cast<UINT64>(index);
+
+		m_modelBuffers.SetDescriptor(
+			descriptorManager, frameIndex, s_modelBuffersCSSRVRegisterSlot,
+			s_computeShaderRegisterSpace, false
+		);
+	}
+}
+
 std::uint32_t RenderEngineVSIndirect::AddModelBundle(
 	std::shared_ptr<ModelBundle>&& modelBundle, const ShaderName& pixelShader
 ) {
 	WaitForGPUToFinish();
 
 	const std::uint32_t index = m_modelManager.AddModelBundle(
-		std::move(modelBundle), pixelShader, m_temporaryDataBuffer
+		std::move(modelBundle), pixelShader, m_modelBuffers, m_temporaryDataBuffer
 	);
 
 	// After new models have been added, the ModelBuffer might get recreated. So, it will have
 	// a new object. So, we should set that new object as the descriptor.
-	m_modelManager.SetDescriptorsVS(
-		m_graphicsDescriptorManagers, s_vertexShaderRegisterSpace, s_pixelShaderRegisterSpace
-	);
-	m_modelManager.SetDescriptorsCSOfModels(m_computeDescriptorManagers, s_computeShaderRegisterSpace);
+	SetGraphicsDescriptors();
+	SetComputeDescriptors();
 
 	m_copyNecessary = true;
 

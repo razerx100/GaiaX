@@ -38,6 +38,9 @@ private:
 
 	void SetupPipelineStages();
 
+	void SetGraphicsDescriptorBufferLayout();
+	void SetGraphicsDescriptors();
+
 private:
 	// Graphics
 	// CBV

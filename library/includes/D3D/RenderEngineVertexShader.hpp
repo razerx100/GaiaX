@@ -39,6 +39,9 @@ private:
 
 	void SetupPipelineStages();
 
+	void SetGraphicsDescriptorBufferLayout();
+	void SetGraphicsDescriptors();
+
 private:
 	static constexpr size_t s_cameraCBVRegisterSlot = 1u;
 
@@ -99,6 +102,12 @@ private:
 
 	void SetupPipelineStages();
 
+	void SetGraphicsDescriptorBufferLayout();
+	void SetGraphicsDescriptors();
+
+	void SetComputeDescriptorBufferLayout();
+	void SetComputeDescriptors();
+
 	void CreateCommandSignature(ID3D12Device* device);
 
 private:
@@ -109,7 +118,8 @@ private:
 	static constexpr size_t s_computePipelineSetLayoutCount = 1u;
 	static constexpr size_t s_computeShaderRegisterSpace    = 0u;
 
-	static constexpr size_t s_cameraCSCBVRegisterSlot = 1u;
+	static constexpr size_t s_modelBuffersCSSRVRegisterSlot = 0u;
+	static constexpr size_t s_cameraCSCBVRegisterSlot       = 1u;
 
 private:
 	D3DCommandQueue                   m_computeQueue;
