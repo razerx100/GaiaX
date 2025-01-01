@@ -1,9 +1,9 @@
-#include <GraphicsPipelineVertexShader.hpp>
+#include <GraphicsPipelineVS.hpp>
 #include <D3DShader.hpp>
 #include <VertexLayout.hpp>
 
 // Vertex Shader
-std::unique_ptr<D3DPipelineObject> GraphicsPipelineVertexShader::CreateGraphicsPipelineVS(
+static std::unique_ptr<D3DPipelineObject> CreateGraphicsPipelineVS(
 	ID3D12Device2* device, ID3D12RootSignature* graphicsRootSignature, ShaderType binaryType,
 	const std::wstring& shaderPath, const ShaderName& pixelShader, const ShaderName& vertexShader
 ) {
@@ -36,7 +36,7 @@ std::unique_ptr<D3DPipelineObject> GraphicsPipelineVertexShader::CreateGraphicsP
 	return pso;
 }
 
-void GraphicsPipelineVertexShader::SetIATopology(const D3DCommandList& graphicsCmdList) noexcept
+void GraphicsPipelineVS::SetIATopology(const D3DCommandList& graphicsCmdList) noexcept
 {
 	ID3D12GraphicsCommandList* cmdList = graphicsCmdList.Get();
 
@@ -44,22 +44,22 @@ void GraphicsPipelineVertexShader::SetIATopology(const D3DCommandList& graphicsC
 }
 
 // Indirect Draw
-std::unique_ptr<D3DPipelineObject> GraphicsPipelineIndirectDraw::_createGraphicsPipeline(
+std::unique_ptr<D3DPipelineObject> GraphicsPipelineVSIndirectDraw::_createGraphicsPipeline(
 	ID3D12Device2* device, ID3D12RootSignature* graphicsRootSignature,
 	const std::wstring& shaderPath, const ShaderName& pixelShader
 ) const {
-	return GraphicsPipelineVertexShader::CreateGraphicsPipelineVS(
+	return CreateGraphicsPipelineVS(
 		device, graphicsRootSignature, s_shaderBytecodeType,shaderPath, pixelShader,
 		L"VertexShaderIndirect"
 	);
 }
 
 // Individual Draw
-std::unique_ptr<D3DPipelineObject> GraphicsPipelineIndividualDraw::_createGraphicsPipeline(
+std::unique_ptr<D3DPipelineObject> GraphicsPipelineVSIndividualDraw::_createGraphicsPipeline(
 	ID3D12Device2* device, ID3D12RootSignature* graphicsRootSignature,
 	const std::wstring& shaderPath, const ShaderName& pixelShader
 ) const {
-	return GraphicsPipelineVertexShader::CreateGraphicsPipelineVS(
+	return CreateGraphicsPipelineVS(
 		device, graphicsRootSignature, s_shaderBytecodeType, shaderPath, pixelShader,
 		L"VertexShaderIndividual"
 	);

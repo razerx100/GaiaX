@@ -81,7 +81,7 @@ void ModelManagerVSIndividual::Draw(const D3DCommandList& graphicsList) const no
 {
 	auto previousPSOIndex = std::numeric_limits<size_t>::max();
 
-	GraphicsPipelineVertexShader::SetIATopology(graphicsList);
+	GraphicsPipelineVS::SetIATopology(graphicsList);
 
 	for (const ModelBundleVSIndividual& modelBundle : m_modelBundles)
 	{
@@ -448,7 +448,7 @@ void ModelManagerVSIndirect::Draw(
 ) const noexcept {
 	auto previousPSOIndex = std::numeric_limits<size_t>::max();
 
-	GraphicsPipelineVertexShader::SetIATopology(graphicsList);
+	GraphicsPipelineVS::SetIATopology(graphicsList);
 
 	for (const ModelBundleVSIndirect& modelBundle : m_modelBundles)
 	{

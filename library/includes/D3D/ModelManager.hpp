@@ -8,8 +8,8 @@
 #include <Model.hpp>
 #include <D3DCommandQueue.hpp>
 #include <ReusableD3DBuffer.hpp>
-#include <GraphicsPipelineVertexShader.hpp>
-#include <GraphicsPipelineMeshShader.hpp>
+#include <GraphicsPipelineVS.hpp>
+#include <GraphicsPipelineMS.hpp>
 #include <ComputePipeline.hpp>
 #include <D3DModelBundle.hpp>
 #include <D3DModelBuffer.hpp>
@@ -290,7 +290,7 @@ class ModelManagerVSIndividual : public
 	ModelManager
 	<
 		ModelManagerVSIndividual,
-		GraphicsPipelineIndividualDraw,
+		GraphicsPipelineVSIndividualDraw,
 		D3DMeshBundleVS,
 		ModelBundleVSIndividual
 	>
@@ -298,7 +298,7 @@ class ModelManagerVSIndividual : public
 	friend class ModelManager
 		<
 			ModelManagerVSIndividual,
-			GraphicsPipelineIndividualDraw,
+			GraphicsPipelineVSIndividualDraw,
 			D3DMeshBundleVS,
 			ModelBundleVSIndividual
 		>;
@@ -371,7 +371,7 @@ class ModelManagerVSIndirect : public
 	ModelManager
 	<
 		ModelManagerVSIndirect,
-		GraphicsPipelineIndirectDraw,
+		GraphicsPipelineVSIndirectDraw,
 		D3DMeshBundleVS,
 		ModelBundleVSIndirect
 	>
@@ -379,7 +379,7 @@ class ModelManagerVSIndirect : public
 	friend class ModelManager
 		<
 			ModelManagerVSIndirect,
-			GraphicsPipelineIndirectDraw,
+			GraphicsPipelineVSIndirectDraw,
 			D3DMeshBundleVS,
 			ModelBundleVSIndirect
 		>;
@@ -565,7 +565,7 @@ class ModelManagerMS : public
 	ModelManager
 	<
 		ModelManagerMS,
-		GraphicsPipelineMeshShader,
+		GraphicsPipelineMS,
 		D3DMeshBundleMS,
 		ModelBundleMSIndividual
 	>
@@ -573,7 +573,7 @@ class ModelManagerMS : public
 	friend class ModelManager
 		<
 			ModelManagerMS,
-			GraphicsPipelineMeshShader,
+			GraphicsPipelineMS,
 			D3DMeshBundleMS,
 			ModelBundleMSIndividual
 		>;

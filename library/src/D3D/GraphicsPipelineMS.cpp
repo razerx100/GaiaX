@@ -1,7 +1,7 @@
-#include <GraphicsPipelineMeshShader.hpp>
+#include <GraphicsPipelineMS.hpp>
 #include <D3DShader.hpp>
 
-std::unique_ptr<D3DPipelineObject> GraphicsPipelineMeshShader::_createGraphicsPipeline(
+std::unique_ptr<D3DPipelineObject> GraphicsPipelineMS::_createGraphicsPipeline(
 	ID3D12Device2* device, ID3D12RootSignature* graphicsRootSignature,
 	const std::wstring& shaderPath, const ShaderName& pixelShader
 ) const {
@@ -14,7 +14,7 @@ std::unique_ptr<D3DPipelineObject> GraphicsPipelineMeshShader::_createGraphicsPi
 	);
 }
 
-std::unique_ptr<D3DPipelineObject> GraphicsPipelineMeshShader::CreateGraphicsPipelineMS(
+std::unique_ptr<D3DPipelineObject> GraphicsPipelineMS::CreateGraphicsPipelineMS(
 	ID3D12Device2* device, ID3D12RootSignature* graphicsRootSignature,
 	ShaderType binaryType, const std::wstring& shaderPath, const ShaderName& pixelShader,
 	const ShaderName& meshShader, const ShaderName& amplificationShader

@@ -1,13 +1,13 @@
-#ifndef GRAPHICS_PIPELINE_MESH_SHADER_HPP_
-#define GRAPHICS_PIPELINE_MESH_SHADER_HPP_
+#ifndef GRAPHICS_PIPELINE_MS_HPP_
+#define GRAPHICS_PIPELINE_MS_HPP_
 #include <GraphicsPipelineBase.hpp>
 
-class GraphicsPipelineMeshShader : public GraphicsPipelineBase<GraphicsPipelineMeshShader>
+class GraphicsPipelineMS : public GraphicsPipelineBase<GraphicsPipelineMS>
 {
-	friend class GraphicsPipelineBase<GraphicsPipelineMeshShader>;
+	friend class GraphicsPipelineBase<GraphicsPipelineMS>;
 
 public:
-	GraphicsPipelineMeshShader() : GraphicsPipelineBase{} {}
+	GraphicsPipelineMS() : GraphicsPipelineBase{} {}
 
 private:
 	[[nodiscard]]
@@ -24,13 +24,13 @@ private:
 	) const;
 
 public:
-	GraphicsPipelineMeshShader(const GraphicsPipelineMeshShader&) = delete;
-	GraphicsPipelineMeshShader& operator=(const GraphicsPipelineMeshShader&) = delete;
+	GraphicsPipelineMS(const GraphicsPipelineMS&) = delete;
+	GraphicsPipelineMS& operator=(const GraphicsPipelineMS&) = delete;
 
-	GraphicsPipelineMeshShader(GraphicsPipelineMeshShader&& other) noexcept
+	GraphicsPipelineMS(GraphicsPipelineMS&& other) noexcept
 		: GraphicsPipelineBase{ std::move(other) }
 	{}
-	GraphicsPipelineMeshShader& operator=(GraphicsPipelineMeshShader&& other) noexcept
+	GraphicsPipelineMS& operator=(GraphicsPipelineMS&& other) noexcept
 	{
 		GraphicsPipelineBase::operator=(std::move(other));
 
