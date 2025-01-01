@@ -610,7 +610,7 @@ void ModelManagerMS::SetDescriptorLayout(
 	std::vector<D3DDescriptorManager>& descriptorManagers, size_t msRegisterSpace
 ) const noexcept {
 	constexpr UINT meshConstantCount  = D3DMeshBundleMS::GetConstantCount();
-	constexpr UINT modelConstantCount = D3DMeshBundleMS::GetConstantCount();
+	constexpr UINT modelConstantCount = ModelBundleMSIndividual::GetConstantCount();
 
 	for (D3DDescriptorManager& descriptorManager : descriptorManagers)
 	{
