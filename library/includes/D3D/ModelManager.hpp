@@ -291,7 +291,7 @@ class ModelManagerVSIndividual : public
 	<
 		ModelManagerVSIndividual,
 		GraphicsPipelineIndividualDraw,
-		MeshManagerVertexShader,
+		D3DMeshBundleVS,
 		ModelBundleVSIndividual
 	>
 {
@@ -299,7 +299,7 @@ class ModelManagerVSIndividual : public
 		<
 			ModelManagerVSIndividual,
 			GraphicsPipelineIndividualDraw,
-			MeshManagerVertexShader,
+			D3DMeshBundleVS,
 			ModelBundleVSIndividual
 		>;
 	friend class ModelManagerVSIndividualTest;
@@ -331,7 +331,7 @@ private:
 	void ConfigureRemoveMesh(size_t bundleIndex) noexcept;
 	void ConfigureMeshBundle(
 		std::unique_ptr<MeshBundleTemporary> meshBundle, StagingBufferManager& stagingBufferMan,
-		MeshManagerVertexShader& meshManager, TemporaryDataBufferGPU& tempBuffer
+		D3DMeshBundleVS& d3dMeshBundle, TemporaryDataBufferGPU& tempBuffer
 	);
 
 	void _updatePerFrame([[maybe_unused]] UINT64 frameIndex) const noexcept {}
@@ -372,7 +372,7 @@ class ModelManagerVSIndirect : public
 	<
 		ModelManagerVSIndirect,
 		GraphicsPipelineIndirectDraw,
-		MeshManagerVertexShader,
+		D3DMeshBundleVS,
 		ModelBundleVSIndirect
 	>
 {
@@ -380,7 +380,7 @@ class ModelManagerVSIndirect : public
 		<
 			ModelManagerVSIndirect,
 			GraphicsPipelineIndirectDraw,
-			MeshManagerVertexShader,
+			D3DMeshBundleVS,
 			ModelBundleVSIndirect
 		>;
 	friend class ModelManagerVSIndirectTest;
@@ -447,7 +447,7 @@ private:
 	void ConfigureRemoveMesh(size_t bundleIndex) noexcept;
 	void ConfigureMeshBundle(
 		std::unique_ptr<MeshBundleTemporary> meshBundle, StagingBufferManager& stagingBufferMan,
-		MeshManagerVertexShader& meshManager, TemporaryDataBufferGPU& tempBuffer
+		D3DMeshBundleVS& d3dMeshBundle, TemporaryDataBufferGPU& tempBuffer
 	);
 
 	void _updatePerFrame(UINT64 frameIndex) const noexcept;
@@ -566,7 +566,7 @@ class ModelManagerMS : public
 	<
 		ModelManagerMS,
 		GraphicsPipelineMeshShader,
-		MeshManagerMeshShader,
+		D3DMeshBundleMS,
 		ModelBundleMSIndividual
 	>
 {
@@ -574,7 +574,7 @@ class ModelManagerMS : public
 		<
 			ModelManagerMS,
 			GraphicsPipelineMeshShader,
-			MeshManagerMeshShader,
+			D3DMeshBundleMS,
 			ModelBundleMSIndividual
 		>;
 	friend class ModelManagerMSTest;
@@ -610,7 +610,7 @@ private:
 	void ConfigureRemoveMesh(size_t bundleIndex) noexcept;
 	void ConfigureMeshBundle(
 		std::unique_ptr<MeshBundleTemporary> meshBundle, StagingBufferManager& stagingBufferMan,
-		MeshManagerMeshShader& meshManager, TemporaryDataBufferGPU& tempBuffer
+		D3DMeshBundleMS& d3dMeshBundle, TemporaryDataBufferGPU& tempBuffer
 	);
 
 	void _updatePerFrame([[maybe_unused]] UINT64 frameIndex) const noexcept {}

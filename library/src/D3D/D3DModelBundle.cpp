@@ -26,8 +26,7 @@ void ModelBundleVSIndividual::SetModelBundle(
 }
 
 void ModelBundleVSIndividual::Draw(
-	const D3DCommandList& graphicsList, UINT constantsRootIndex,
-	const MeshManagerVertexShader& meshBundle
+	const D3DCommandList& graphicsList, UINT constantsRootIndex, const D3DMeshBundleVS& meshBundle
 ) const noexcept {
 	ID3D12GraphicsCommandList* cmdList = graphicsList.Get();
 	const auto& models                 = m_modelBundle->GetModels();
@@ -62,7 +61,7 @@ void ModelBundleMSIndividual::SetModelBundle(
 }
 
 void ModelBundleMSIndividual::Draw(
-	const D3DCommandList& graphicsList, UINT constantsRootIndex, const MeshManagerMeshShader& meshBundle
+	const D3DCommandList& graphicsList, UINT constantsRootIndex, const D3DMeshBundleMS& meshBundle
 ) const noexcept {
 	ID3D12GraphicsCommandList6* cmdList = graphicsList.Get();
 	const auto& models                  = m_modelBundle->GetModels();
@@ -72,7 +71,7 @@ void ModelBundleMSIndividual::Draw(
 		const auto& model = models[index];
 
 		constexpr UINT pushConstantCount = GetConstantCount();
-		constexpr UINT constBufferOffset = MeshManagerMeshShader::GetConstantCount();
+		constexpr UINT constBufferOffset = D3DMeshBundleMS::GetConstantCount();
 
 		const MeshTemporaryDetailsMS& meshDetailsMS = meshBundle.GetMeshDetails(model->GetMeshIndex());
 
@@ -270,9 +269,8 @@ void ModelBundleCSIndirect::CreateBuffers(
 	m_modelIndices = std::move(modelIndices);
 }
 
-void ModelBundleCSIndirect::Update(
-	size_t bufferIndex, const MeshManagerVertexShader& meshBundle
-) const noexcept {
+void ModelBundleCSIndirect::Update(size_t bufferIndex, const D3DMeshBundleVS& meshBundle) const noexcept
+{
 	const SharedBufferData& argumentInputSharedData = m_argumentInputSharedData[bufferIndex];
 
 	std::uint8_t* argumentInputStart

@@ -47,9 +47,9 @@ void ModelManagerVSIndividual::ConfigureRemoveMesh(size_t bundleIndex) noexcept
 
 void ModelManagerVSIndividual::ConfigureMeshBundle(
 	std::unique_ptr<MeshBundleTemporary> meshBundle, StagingBufferManager& stagingBufferMan,
-	MeshManagerVertexShader& meshManager, TemporaryDataBufferGPU& tempBuffer
+	D3DMeshBundleVS& d3dMeshBundle, TemporaryDataBufferGPU& tempBuffer
 ) {
-	meshManager.SetMeshBundle(
+	d3dMeshBundle.SetMeshBundle(
 		std::move(meshBundle), stagingBufferMan, m_vertexBuffer, m_indexBuffer, tempBuffer
 	);
 }
@@ -89,7 +89,7 @@ void ModelManagerVSIndividual::Draw(const D3DCommandList& graphicsList) const no
 		BindPipeline(modelBundle, graphicsList, previousPSOIndex);
 
 		// Mesh
-		const MeshManagerVertexShader& meshBundle = m_meshBundles.at(
+		const D3DMeshBundleVS& meshBundle = m_meshBundles.at(
 			static_cast<size_t>(modelBundle.GetMeshBundleIndex())
 		);
 
@@ -261,28 +261,28 @@ void ModelManagerVSIndirect::ConfigureModelBundleRemove(
 
 void ModelManagerVSIndirect::ConfigureRemoveMesh(size_t bundleIndex) noexcept
 {
-	MeshManagerVertexShader& meshManager = m_meshBundles.at(bundleIndex);
+	D3DMeshBundleVS& meshBundle = m_meshBundles.at(bundleIndex);
 
 	{
-		const SharedBufferData& vertexSharedData = meshManager.GetVertexSharedData();
+		const SharedBufferData& vertexSharedData        = meshBundle.GetVertexSharedData();
 		m_vertexBuffer.RelinquishMemory(vertexSharedData);
 
-		const SharedBufferData& indexSharedData = meshManager.GetIndexSharedData();
+		const SharedBufferData& indexSharedData         = meshBundle.GetIndexSharedData();
 		m_indexBuffer.RelinquishMemory(indexSharedData);
 
-		const SharedBufferData& perMeshSharedData = meshManager.GetPerMeshSharedData();
+		const SharedBufferData& perMeshSharedData       = meshBundle.GetPerMeshSharedData();
 		m_perMeshDataBuffer.RelinquishMemory(perMeshSharedData);
 
-		const SharedBufferData& perMeshBundleSharedData = meshManager.GetPerMeshBundleSharedData();
+		const SharedBufferData& perMeshBundleSharedData = meshBundle.GetPerMeshBundleSharedData();
 		m_perMeshBundleDataBuffer.RelinquishMemory(perMeshBundleSharedData);
 	}
 }
 
 void ModelManagerVSIndirect::ConfigureMeshBundle(
 	std::unique_ptr<MeshBundleTemporary> meshBundle, StagingBufferManager& stagingBufferMan,
-	MeshManagerVertexShader& meshManager, TemporaryDataBufferGPU& tempBuffer
+	D3DMeshBundleVS& d3dMeshBundle, TemporaryDataBufferGPU& tempBuffer
 ) {
-	meshManager.SetMeshBundle(
+	d3dMeshBundle.SetMeshBundle(
 		std::move(meshBundle), stagingBufferMan, m_vertexBuffer, m_indexBuffer, m_perMeshDataBuffer,
 		m_perMeshBundleDataBuffer, tempBuffer
 	);
@@ -456,7 +456,7 @@ void ModelManagerVSIndirect::Draw(
 		BindPipeline(modelBundle, graphicsList, previousPSOIndex);
 
 		// Mesh
-		const MeshManagerVertexShader& meshBundle = m_meshBundles.at(
+		const D3DMeshBundleVS& meshBundle = m_meshBundles.at(
 			static_cast<size_t>(modelBundle.GetMeshBundleIndex())
 		);
 
@@ -577,9 +577,9 @@ void ModelManagerMS::ConfigureRemoveMesh(size_t bundleIndex) noexcept
 
 void ModelManagerMS::ConfigureMeshBundle(
 	std::unique_ptr<MeshBundleTemporary> meshBundle, StagingBufferManager& stagingBufferMan,
-	MeshManagerMeshShader& meshManager, TemporaryDataBufferGPU& tempBuffer
+	D3DMeshBundleMS& d3dMeshBundle, TemporaryDataBufferGPU& tempBuffer
 ) {
-	meshManager.SetMeshBundle(
+	d3dMeshBundle.SetMeshBundle(
 		std::move(meshBundle), stagingBufferMan, m_vertexBuffer, m_vertexIndicesBuffer,
 		m_primIndicesBuffer, m_perMeshletBuffer, tempBuffer
 	);
@@ -609,8 +609,8 @@ void ModelManagerMS::CopyOldBuffers(const D3DCommandList& copyList) noexcept
 void ModelManagerMS::SetDescriptorLayout(
 	std::vector<D3DDescriptorManager>& descriptorManagers, size_t msRegisterSpace
 ) const noexcept {
-	constexpr UINT meshConstantCount  = MeshManagerMeshShader::GetConstantCount();
-	constexpr UINT modelConstantCount = ModelBundleMSIndividual::GetConstantCount();
+	constexpr UINT meshConstantCount  = D3DMeshBundleMS::GetConstantCount();
+	constexpr UINT modelConstantCount = D3DMeshBundleMS::GetConstantCount();
 
 	for (D3DDescriptorManager& descriptorManager : descriptorManagers)
 	{
@@ -668,11 +668,11 @@ void ModelManagerMS::Draw(const D3DCommandList& graphicsList) const noexcept
 		const auto meshBundleIndex              = static_cast<size_t>(
 			modelBundle.GetMeshBundleIndex()
 		);
-		const MeshManagerMeshShader& meshBundle = m_meshBundles.at(meshBundleIndex);
+		const D3DMeshBundleMS& meshBundle = m_meshBundles.at(meshBundleIndex);
 
-		constexpr UINT constBufferCount  = MeshManagerMeshShader::GetConstantCount();
+		constexpr UINT constBufferCount   = D3DMeshBundleMS::GetConstantCount();
 
-		const MeshManagerMeshShader::MeshBundleDetailsMS meshBundleDetailsMS
+		const D3DMeshBundleMS::MeshBundleDetailsMS meshBundleDetailsMS
 			= meshBundle.GetMeshBundleDetailsMS();
 
 		cmdList->SetGraphicsRoot32BitConstants(

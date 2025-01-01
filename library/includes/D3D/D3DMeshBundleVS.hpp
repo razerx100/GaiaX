@@ -1,5 +1,5 @@
-#ifndef MESH_MANAGER_VERTEX_SHADER_HPP_
-#define MESH_MANAGER_VERTEX_SHADER_HPP_
+#ifndef D3D_MESH_BUNDLE_VS_HPP_
+#define D3D_MESH_BUNDLE_VS_HPP_
 #include <D3DHeaders.hpp>
 #include <memory>
 #include <D3DResources.hpp>
@@ -9,7 +9,7 @@
 
 #include <MeshBundle.hpp>
 
-class MeshManagerVertexShader
+class D3DMeshBundleVS
 {
 	struct PerMeshBundleData
 	{
@@ -17,7 +17,7 @@ class MeshManagerVertexShader
 	};
 
 public:
-	MeshManagerVertexShader();
+	D3DMeshBundleVS();
 
 	void SetMeshBundle(
 		std::unique_ptr<MeshBundleTemporary> meshBundle, StagingBufferManager& stagingBufferMan,
@@ -66,17 +66,17 @@ private:
 	MeshBundleTemporaryDetails m_bundleDetails;
 
 public:
-	MeshManagerVertexShader(const MeshManagerVertexShader&) = delete;
-	MeshManagerVertexShader& operator=(const MeshManagerVertexShader&) = delete;
+	D3DMeshBundleVS(const D3DMeshBundleVS&) = delete;
+	D3DMeshBundleVS& operator=(const D3DMeshBundleVS&) = delete;
 
-	MeshManagerVertexShader(MeshManagerVertexShader&& other) noexcept
+	D3DMeshBundleVS(D3DMeshBundleVS&& other) noexcept
 		: m_vertexBufferSharedData{ other.m_vertexBufferSharedData },
 		m_indexBufferSharedData{ other.m_indexBufferSharedData },
 		m_perMeshSharedData{ other.m_perMeshSharedData },
 		m_perMeshBundleSharedData{ other.m_perMeshBundleSharedData },
 		m_bundleDetails{ std::move(other.m_bundleDetails) }
 	{}
-	MeshManagerVertexShader& operator=(MeshManagerVertexShader&& other) noexcept
+	D3DMeshBundleVS& operator=(D3DMeshBundleVS&& other) noexcept
 	{
 		m_vertexBufferSharedData  = other.m_vertexBufferSharedData;
 		m_indexBufferSharedData   = other.m_indexBufferSharedData;

@@ -1,13 +1,13 @@
-#include <MeshManagerVertexShader.hpp>
+#include <D3DMeshBundleVS.hpp>
 #include <VectorToSharedPtr.hpp>
 
-MeshManagerVertexShader::MeshManagerVertexShader()
+D3DMeshBundleVS::D3DMeshBundleVS()
 	: m_vertexBufferSharedData{ nullptr, 0u, 0u }, m_indexBufferSharedData{ nullptr, 0u, 0u },
 	m_perMeshSharedData{ nullptr, 0u, 0u }, m_perMeshBundleSharedData{ nullptr, 0u, 0u },
 	m_bundleDetails {}
 {}
 
-void MeshManagerVertexShader::_setMeshBundle(
+void D3DMeshBundleVS::_setMeshBundle(
 	std::unique_ptr<MeshBundleTemporary> meshBundle, StagingBufferManager& stagingBufferMan,
 	SharedBufferGPU& vertexSharedBuffer, SharedBufferGPU& indexSharedBuffer,
 	TemporaryDataBufferGPU& tempBuffer
@@ -49,7 +49,7 @@ void MeshManagerVertexShader::_setMeshBundle(
 	m_bundleDetails = std::move(meshBundle->GetTemporaryBundleDetails());
 }
 
-void MeshManagerVertexShader::SetMeshBundle(
+void D3DMeshBundleVS::SetMeshBundle(
 	std::unique_ptr<MeshBundleTemporary> meshBundle, StagingBufferManager& stagingBufferMan,
 	SharedBufferGPU& vertexSharedBuffer, SharedBufferGPU& indexSharedBuffer,
 	TemporaryDataBufferGPU& tempBuffer
@@ -62,7 +62,7 @@ void MeshManagerVertexShader::SetMeshBundle(
 	);
 }
 
-void MeshManagerVertexShader::SetMeshBundle(
+void D3DMeshBundleVS::SetMeshBundle(
 	std::unique_ptr<MeshBundleTemporary> meshBundle, StagingBufferManager& stagingBufferMan,
 	SharedBufferGPU& vertexSharedBuffer, SharedBufferGPU& indexSharedBuffer,
 	SharedBufferGPU& perMeshSharedBuffer, SharedBufferGPU& perMeshBundleSharedBuffer,
@@ -130,7 +130,7 @@ void MeshManagerVertexShader::SetMeshBundle(
 	);
 }
 
-void MeshManagerVertexShader::Bind(const D3DCommandList& graphicsCmdList) const noexcept
+void D3DMeshBundleVS::Bind(const D3DCommandList& graphicsCmdList) const noexcept
 {
 	ID3D12GraphicsCommandList* cmdList = graphicsCmdList.Get();
 

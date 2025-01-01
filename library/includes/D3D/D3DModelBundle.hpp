@@ -3,8 +3,8 @@
 #include <memory>
 #include <vector>
 #include <Model.hpp>
-#include <MeshManagerMeshShader.hpp>
-#include <MeshManagerVertexShader.hpp>
+#include <D3DMeshBundleMS.hpp>
+#include <D3DMeshBundleVS.hpp>
 
 class ModelBundleBase
 {
@@ -48,8 +48,7 @@ public:
 		std::shared_ptr<ModelBundle> bundle, std::vector<std::uint32_t> modelBufferIndices
 	) noexcept;
 	void Draw(
-		const D3DCommandList& graphicsList, UINT constantsRootIndex,
-		const MeshManagerVertexShader& meshBundle
+		const D3DCommandList& graphicsList, UINT constantsRootIndex, const D3DMeshBundleVS& meshBundle
 	) const noexcept;
 
 	[[nodiscard]]
@@ -119,8 +118,7 @@ public:
 	) noexcept;
 
 	void Draw(
-		const D3DCommandList& graphicsList, UINT constantsRootIndex,
-		const MeshManagerMeshShader& meshBundle
+		const D3DCommandList& graphicsList, UINT constantsRootIndex, const D3DMeshBundleMS& meshBundle
 	) const noexcept;
 
 	[[nodiscard]]
@@ -201,7 +199,7 @@ public:
 		std::vector<std::uint32_t> modelIndices, TemporaryDataBufferGPU& tempBuffer
 	);
 
-	void Update(size_t bufferIndex, const MeshManagerVertexShader& meshBundle) const noexcept;
+	void Update(size_t bufferIndex, const D3DMeshBundleVS& meshBundle) const noexcept;
 
 	void ResetCullingData() const noexcept;
 

@@ -1,7 +1,7 @@
-#include <MeshManagerMeshShader.hpp>
+#include <D3DMeshBundleMS.hpp>
 #include <VectorToSharedPtr.hpp>
 
-MeshManagerMeshShader::MeshManagerMeshShader()
+D3DMeshBundleMS::D3DMeshBundleMS()
 	: m_vertexBufferSharedData{ nullptr, 0u, 0u },
 	m_vertexIndicesBufferSharedData{ nullptr, 0u, 0u }, m_primIndicesBufferSharedData{ nullptr, 0u, 0u },
 	m_perMeshletBufferSharedData{ nullptr, 0u, 0u }, m_perMeshSharedData{ nullptr, 0u, 0u },
@@ -9,7 +9,7 @@ MeshManagerMeshShader::MeshManagerMeshShader()
 	m_bundleDetails{}
 {}
 
-void MeshManagerMeshShader::_setMeshBundle(
+void D3DMeshBundleMS::_setMeshBundle(
 	std::unique_ptr<MeshBundleTemporary> meshBundle, StagingBufferManager& stagingBufferMan,
 	SharedBufferGPU& vertexSharedBuffer, SharedBufferGPU& vertexIndicesSharedBuffer,
 	SharedBufferGPU& primIndicesSharedBuffer, SharedBufferGPU& perMeshletSharedBuffer,
@@ -62,7 +62,7 @@ void MeshManagerMeshShader::_setMeshBundle(
 	m_bundleDetails = std::move(meshBundle->GetTemporaryBundleDetails());
 }
 
-void MeshManagerMeshShader::SetMeshBundle(
+void D3DMeshBundleMS::SetMeshBundle(
 	std::unique_ptr<MeshBundleTemporary> meshBundle, StagingBufferManager& stagingBufferMan,
 	SharedBufferGPU& vertexSharedBuffer, SharedBufferGPU& vertexIndicesSharedBuffer,
 	SharedBufferGPU& primIndicesSharedBuffer, SharedBufferGPU& perMeshletSharedBuffer,
@@ -78,7 +78,7 @@ void MeshManagerMeshShader::SetMeshBundle(
 	);
 }
 
-void MeshManagerMeshShader::SetMeshBundle(
+void D3DMeshBundleMS::SetMeshBundle(
 	std::unique_ptr<MeshBundleTemporary> meshBundle, StagingBufferManager& stagingBufferMan,
 	SharedBufferGPU& vertexSharedBuffer, SharedBufferGPU& vertexIndicesSharedBuffer,
 	SharedBufferGPU& primIndicesSharedBuffer, SharedBufferGPU& perMeshletSharedBuffer,

@@ -1,5 +1,5 @@
-#ifndef MESH_MANAGER_MESH_SHADER_HPP_
-#define MESH_MANAGER_MESH_SHADER_HPP_
+#ifndef D3D_MESH_BUNDLE_MS_HPP_
+#define D3D_MESH_BUNDLE_MS_HPP_
 #include <D3DHeaders.hpp>
 #include <memory>
 #include <D3DResources.hpp>
@@ -8,7 +8,7 @@
 
 #include <MeshBundle.hpp>
 
-class MeshManagerMeshShader
+class D3DMeshBundleMS
 {
 public:
 	// The offset should be enough to identify the mesh. We wouldn't really need the size
@@ -27,7 +27,7 @@ public:
 	};
 
 public:
-	MeshManagerMeshShader();
+	D3DMeshBundleMS();
 
 	void SetMeshBundle(
 		std::unique_ptr<MeshBundleTemporary> meshBundle, StagingBufferManager& stagingBufferMan,
@@ -101,10 +101,10 @@ private:
 	MeshBundleTemporaryDetails m_bundleDetails;
 
 public:
-	MeshManagerMeshShader(const MeshManagerMeshShader&) = delete;
-	MeshManagerMeshShader& operator=(const MeshManagerMeshShader&) = delete;
+	D3DMeshBundleMS(const D3DMeshBundleMS&) = delete;
+	D3DMeshBundleMS& operator=(const D3DMeshBundleMS&) = delete;
 
-	MeshManagerMeshShader(MeshManagerMeshShader&& other) noexcept
+	D3DMeshBundleMS(D3DMeshBundleMS&& other) noexcept
 		: m_vertexBufferSharedData{ other.m_vertexBufferSharedData },
 		m_vertexIndicesBufferSharedData{ other.m_vertexIndicesBufferSharedData },
 		m_primIndicesBufferSharedData{ other.m_primIndicesBufferSharedData },
@@ -115,7 +115,7 @@ public:
 		m_bundleDetails{ std::move(other.m_bundleDetails) }
 	{}
 
-	MeshManagerMeshShader& operator=(MeshManagerMeshShader&& other) noexcept
+	D3DMeshBundleMS& operator=(D3DMeshBundleMS&& other) noexcept
 	{
 		m_vertexBufferSharedData        = other.m_vertexBufferSharedData;
 		m_vertexIndicesBufferSharedData = other.m_vertexIndicesBufferSharedData;
