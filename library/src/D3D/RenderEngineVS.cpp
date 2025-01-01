@@ -1,4 +1,4 @@
-#include <RenderEngineVertexShader.hpp>
+#include <RenderEngineVS.hpp>
 
 // VS Individual
 RenderEngineVSIndividual::RenderEngineVSIndividual(

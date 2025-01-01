@@ -1,6 +1,6 @@
 #include <Gaia.hpp>
-#include <RenderEngineVertexShader.hpp>
-#include <RenderEngineMeshShader.hpp>
+#include <RenderEngineVS.hpp>
+#include <RenderEngineMS.hpp>
 
 Gaia::Gaia(
 	void* windowHandle, UINT width, UINT height, std::uint32_t bufferCount,

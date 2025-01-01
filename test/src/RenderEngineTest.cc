@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
 #include <memory>
 
-#include <RenderEngineVertexShader.hpp>
-#include <RenderEngineMeshShader.hpp>
+#include <RenderEngineVS.hpp>
+#include <RenderEngineMS.hpp>
 
 namespace Constants
 {

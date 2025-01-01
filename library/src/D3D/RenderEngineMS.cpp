@@ -1,4 +1,4 @@
-#include <RenderEngineMeshShader.hpp>
+#include <RenderEngineMS.hpp>
 
 RenderEngineMS::RenderEngineMS(
 	const DeviceManager& deviceManager, std::shared_ptr<ThreadPool> threadPool, size_t frameCount

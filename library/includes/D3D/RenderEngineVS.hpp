@@ -1,5 +1,5 @@
-#ifndef RENDER_ENGINE_VERTEX_SHADER_HPP_
-#define RENDER_ENGINE_VERTEX_SHADER_HPP_
+#ifndef RENDER_ENGINE_VS_HPP_
+#define RENDER_ENGINE_VS_HPP_
 #include <RenderEngine.hpp>
 #include <ModelManager.hpp>
 

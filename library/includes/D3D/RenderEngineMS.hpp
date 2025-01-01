@@ -1,5 +1,5 @@
-#ifndef RENDER_ENGINE_MESH_SHADER_HPP_
-#define RENDER_ENGINE_MESH_SHADER_HPP_
+#ifndef RENDER_ENGINE_MS_HPP_
+#define RENDER_ENGINE_MS_HPP_
 #include <RenderEngine.hpp>
 #include <ModelManager.hpp>
 
