@@ -3,10 +3,20 @@
 #include <RenderEngine.hpp>
 #include <ModelManager.hpp>
 
-class RenderEngineVSIndividual
-	: public RenderEngineCommon<ModelManagerVSIndividual, RenderEngineVSIndividual>
+class RenderEngineVSIndividual : public
+	RenderEngineCommon
+	<
+		ModelManagerVSIndividual,
+		MeshManagerVSIndividual,
+		RenderEngineVSIndividual
+	>
 {
-	friend class RenderEngineCommon<ModelManagerVSIndividual, RenderEngineVSIndividual>;
+	friend class RenderEngineCommon
+		<
+			ModelManagerVSIndividual,
+			MeshManagerVSIndividual,
+			RenderEngineVSIndividual
+		>;
 
 public:
 	RenderEngineVSIndividual(
@@ -24,8 +34,7 @@ public:
 private:
 	[[nodiscard]]
 	static ModelManagerVSIndividual GetModelManager(
-		const DeviceManager& deviceManager, MemoryManager* memoryManager,
-		StagingBufferManager* stagingBufferMan, std::uint32_t frameCount
+		const DeviceManager& deviceManager, MemoryManager* memoryManager, std::uint32_t frameCount
 	);
 
 	[[nodiscard]]
@@ -41,6 +50,8 @@ private:
 
 	void SetGraphicsDescriptorBufferLayout();
 	void SetGraphicsDescriptors();
+
+	void _updatePerFrame([[maybe_unused]] UINT64 frameIndex) const noexcept {}
 
 private:
 	static constexpr size_t s_cameraCBVRegisterSlot = 1u;
@@ -60,10 +71,20 @@ public:
 	}
 };
 
-class RenderEngineVSIndirect
-	: public RenderEngineCommon<ModelManagerVSIndirect, RenderEngineVSIndirect>
+class RenderEngineVSIndirect : public
+	RenderEngineCommon
+	<
+		ModelManagerVSIndirect,
+		MeshManagerVSIndirect,
+		RenderEngineVSIndirect
+	>
 {
-	friend class RenderEngineCommon<ModelManagerVSIndirect, RenderEngineVSIndirect>;
+	friend class RenderEngineCommon
+		<
+			ModelManagerVSIndirect,
+			MeshManagerVSIndirect,
+			RenderEngineVSIndirect
+		>;
 
 public:
 	RenderEngineVSIndirect(
@@ -83,8 +104,7 @@ public:
 private:
 	[[nodiscard]]
 	static ModelManagerVSIndirect GetModelManager(
-		const DeviceManager& deviceManager, MemoryManager* memoryManager,
-		StagingBufferManager* stagingBufferMan, std::uint32_t frameCount
+		const DeviceManager& deviceManager, MemoryManager* memoryManager, std::uint32_t frameCount
 	);
 
 	[[nodiscard]]
@@ -103,12 +123,14 @@ private:
 	void SetupPipelineStages();
 
 	void SetGraphicsDescriptorBufferLayout();
-	void SetGraphicsDescriptors();
+	void SetModelGraphicsDescriptors();
 
 	void SetComputeDescriptorBufferLayout();
-	void SetComputeDescriptors();
+	void SetModelComputeDescriptors();
 
 	void CreateCommandSignature(ID3D12Device* device);
+
+	void _updatePerFrame(UINT64 frameIndex) const noexcept;
 
 private:
 	// Graphics

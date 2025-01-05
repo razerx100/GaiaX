@@ -3,9 +3,20 @@
 #include <RenderEngine.hpp>
 #include <ModelManager.hpp>
 
-class RenderEngineMS : public RenderEngineCommon<ModelManagerMS, RenderEngineMS>
+class RenderEngineMS : public
+	RenderEngineCommon
+	<
+		ModelManagerMS,
+		MeshManagerMS,
+		RenderEngineMS
+	>
 {
-	friend class RenderEngineCommon<ModelManagerMS, RenderEngineMS>;
+	friend class RenderEngineCommon
+		<
+			ModelManagerMS,
+			MeshManagerMS,
+			RenderEngineMS
+		>;
 
 public:
 	RenderEngineMS(
@@ -23,8 +34,7 @@ public:
 private:
 	[[nodiscard]]
 	static ModelManagerMS GetModelManager(
-		const DeviceManager& deviceManager, MemoryManager* memoryManager,
-		StagingBufferManager* stagingBufferMan, std::uint32_t frameCount
+		const DeviceManager& deviceManager, MemoryManager* memoryManager, std::uint32_t frameCount
 	);
 
 	[[nodiscard]]
@@ -40,6 +50,8 @@ private:
 
 	void SetGraphicsDescriptorBufferLayout();
 	void SetGraphicsDescriptors();
+
+	void _updatePerFrame([[maybe_unused]] UINT64 frameIndex) const noexcept {}
 
 private:
 	// Graphics

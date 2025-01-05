@@ -96,7 +96,6 @@ void RenderEngineVSIndividual::SetupPipelineStages()
 
 ModelManagerVSIndividual RenderEngineVSIndividual::GetModelManager(
 	const DeviceManager& deviceManager, MemoryManager* memoryManager,
-	[[maybe_unused]] StagingBufferManager* stagingBufferMan,
 	[[maybe_unused]] std::uint32_t frameCount
 ) {
 	return ModelManagerVSIndividual{ deviceManager.GetDevice(), memoryManager };
@@ -108,7 +107,7 @@ std::uint32_t RenderEngineVSIndividual::AddModelBundle(
 	WaitForGPUToFinish();
 
 	const std::uint32_t index = m_modelManager.AddModelBundle(
-		std::move(modelBundle), pixelShader, m_modelBuffers, m_temporaryDataBuffer
+		std::move(modelBundle), pixelShader, m_modelBuffers, m_stagingManager, m_temporaryDataBuffer
 	);
 
 	// After new models have been added, the ModelBuffer might get recreated. So, it will have
@@ -126,9 +125,7 @@ std::uint32_t RenderEngineVSIndividual::AddMeshBundle(std::unique_ptr<MeshBundle
 
 	m_copyNecessary = true;
 
-	return m_modelManager.AddMeshBundle(
-		std::move(meshBundle), m_stagingManager, m_temporaryDataBuffer
-	);
+	return m_meshManager.AddMeshBundle(std::move(meshBundle), m_stagingManager, m_temporaryDataBuffer);
 }
 
 ID3D12Fence* RenderEngineVSIndividual::GenericCopyStage(
@@ -148,7 +145,7 @@ ID3D12Fence* RenderEngineVSIndividual::GenericCopyStage(
 
 			// Need to copy the old buffers first to avoid empty data being copied over
 			// the queued data.
-			m_modelManager.CopyOldBuffers(copyCmdListScope);
+			m_meshManager.CopyOldBuffers(copyCmdListScope);
 			m_stagingManager.CopyAndClearQueuedBuffers(copyCmdListScope);
 		}
 
@@ -201,7 +198,7 @@ ID3D12Fence* RenderEngineVSIndividual::DrawingStage(
 
 		m_graphicsDescriptorManagers[frameIndex].BindDescriptors(graphicsCmdListScope);
 
-		m_modelManager.Draw(graphicsCmdListScope);
+		m_modelManager.Draw(graphicsCmdListScope, m_meshManager);
 
 		renderTarget.ToPresentState(graphicsCmdListScope);
 	}
@@ -347,6 +344,7 @@ void RenderEngineVSIndirect::SetGraphicsDescriptorBufferLayout()
 void RenderEngineVSIndirect::SetComputeDescriptorBufferLayout()
 {
 	m_modelManager.SetDescriptorLayoutCS(m_computeDescriptorManagers, s_computeShaderRegisterSpace);
+	m_meshManager.SetDescriptorLayoutCS(m_computeDescriptorManagers, s_computeShaderRegisterSpace);
 	m_cameraManager.SetDescriptorLayoutCompute(
 		m_computeDescriptorManagers, s_cameraCSCBVRegisterSlot, s_computeShaderRegisterSpace
 	);
@@ -366,6 +364,11 @@ void RenderEngineVSIndirect::SetupPipelineStages()
 	m_pipelineStages.emplace_back(&RenderEngineVSIndirect::GenericCopyStage);
 	m_pipelineStages.emplace_back(&RenderEngineVSIndirect::FrustumCullingStage);
 	m_pipelineStages.emplace_back(&RenderEngineVSIndirect::DrawingStage);
+}
+
+void RenderEngineVSIndirect::_updatePerFrame(UINT64 frameIndex) const noexcept
+{
+	m_modelManager.UpdatePerFrame(frameIndex, m_meshManager);
 }
 
 void RenderEngineVSIndirect::CreateCommandSignature(ID3D12Device* device)
@@ -398,12 +401,9 @@ void RenderEngineVSIndirect::CreateCommandSignature(ID3D12Device* device)
 }
 
 ModelManagerVSIndirect RenderEngineVSIndirect::GetModelManager(
-	const DeviceManager& deviceManager, MemoryManager* memoryManager,
-	StagingBufferManager* stagingBufferMan, std::uint32_t frameCount
+	const DeviceManager& deviceManager, MemoryManager* memoryManager, std::uint32_t frameCount
 ) {
-	return ModelManagerVSIndirect{
-		deviceManager.GetDevice(), memoryManager, stagingBufferMan, frameCount
-	};
+	return ModelManagerVSIndirect{ deviceManager.GetDevice(), memoryManager, frameCount };
 }
 
 void RenderEngineVSIndirect::WaitForGPUToFinish()
@@ -439,7 +439,7 @@ void RenderEngineVSIndirect::WaitForGPUToFinish()
 }
 
 
-void RenderEngineVSIndirect::SetGraphicsDescriptors()
+void RenderEngineVSIndirect::SetModelGraphicsDescriptors()
 {
 	const size_t frameCount = std::size(m_graphicsDescriptorManagers);
 
@@ -459,9 +459,9 @@ void RenderEngineVSIndirect::SetGraphicsDescriptors()
 	}
 }
 
-void RenderEngineVSIndirect::SetComputeDescriptors()
+void RenderEngineVSIndirect::SetModelComputeDescriptors()
 {
-	m_modelManager.SetDescriptorsCSOfModels(m_computeDescriptorManagers, s_computeShaderRegisterSpace);
+	m_modelManager.SetDescriptors(m_computeDescriptorManagers, s_computeShaderRegisterSpace);
 
 	const size_t frameCount = std::size(m_computeDescriptorManagers);
 
@@ -483,13 +483,13 @@ std::uint32_t RenderEngineVSIndirect::AddModelBundle(
 	WaitForGPUToFinish();
 
 	const std::uint32_t index = m_modelManager.AddModelBundle(
-		std::move(modelBundle), pixelShader, m_modelBuffers, m_temporaryDataBuffer
+		std::move(modelBundle), pixelShader, m_modelBuffers, m_stagingManager, m_temporaryDataBuffer
 	);
 
 	// After new models have been added, the ModelBuffer might get recreated. So, it will have
 	// a new object. So, we should set that new object as the descriptor.
-	SetGraphicsDescriptors();
-	SetComputeDescriptors();
+	SetModelGraphicsDescriptors();
+	SetModelComputeDescriptors();
 
 	m_copyNecessary = true;
 
@@ -500,11 +500,11 @@ std::uint32_t RenderEngineVSIndirect::AddMeshBundle(std::unique_ptr<MeshBundleTe
 {
 	WaitForGPUToFinish();
 
-	const std::uint32_t index = m_modelManager.AddMeshBundle(
+	const std::uint32_t index = m_meshManager.AddMeshBundle(
 		std::move(meshBundle), m_stagingManager, m_temporaryDataBuffer
 	);
 
-	m_modelManager.SetDescriptorsCSOfMeshes(m_computeDescriptorManagers, s_computeShaderRegisterSpace);
+	m_meshManager.SetDescriptorsCS(m_computeDescriptorManagers, s_computeShaderRegisterSpace);
 
 	m_copyNecessary = true;
 
@@ -529,6 +529,7 @@ ID3D12Fence* RenderEngineVSIndirect::GenericCopyStage(
 			// Need to copy the old buffers first to avoid empty data being copied over
 			// the queued data.
 			m_modelManager.CopyOldBuffers(copyCmdListScope);
+			m_meshManager.CopyOldBuffers(copyCmdListScope);
 			m_stagingManager.CopyAndClearQueuedBuffers(copyCmdListScope);
 		}
 
@@ -620,7 +621,7 @@ ID3D12Fence* RenderEngineVSIndirect::DrawingStage(
 
 		m_graphicsDescriptorManagers[frameIndex].BindDescriptors(graphicsCmdListScope);
 
-		m_modelManager.Draw(frameIndex, graphicsCmdListScope, m_commandSignature.Get());
+		m_modelManager.Draw(frameIndex, graphicsCmdListScope, m_commandSignature.Get(), m_meshManager);
 
 		renderTarget.ToPresentState(graphicsCmdListScope);
 	}

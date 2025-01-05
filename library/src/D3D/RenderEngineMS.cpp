@@ -48,6 +48,7 @@ void RenderEngineMS::SetGraphicsDescriptorBufferLayout()
 {
 	// The layout shouldn't change throughout the runtime.
 	m_modelManager.SetDescriptorLayout(m_graphicsDescriptorManagers, s_vertexShaderRegisterSpace);
+	m_meshManager.SetDescriptorLayout(m_graphicsDescriptorManagers, s_vertexShaderRegisterSpace);
 	SetCommonGraphicsDescriptorLayout(D3D12_SHADER_VISIBILITY_ALL); // Both the AS and MS will use it.
 
 	for (D3DDescriptorManager& descriptorManager : m_graphicsDescriptorManagers)
@@ -97,7 +98,7 @@ std::uint32_t RenderEngineMS::AddModelBundle(
 	WaitForGPUToFinish();
 
 	const std::uint32_t index = m_modelManager.AddModelBundle(
-		std::move(modelBundle), pixelShader, m_modelBuffers, m_temporaryDataBuffer
+		std::move(modelBundle), pixelShader, m_modelBuffers, m_stagingManager, m_temporaryDataBuffer
 	);
 
 	// After a new model has been added, the ModelBuffer might get recreated. So, it will have
@@ -113,11 +114,11 @@ std::uint32_t RenderEngineMS::AddMeshBundle(std::unique_ptr<MeshBundleTemporary>
 {
 	WaitForGPUToFinish();
 
-	const std::uint32_t index = m_modelManager.AddMeshBundle(
+	const std::uint32_t index = m_meshManager.AddMeshBundle(
 		std::move(meshBundle), m_stagingManager, m_temporaryDataBuffer
 	);
 
-	m_modelManager.SetDescriptorsOfMeshes(m_graphicsDescriptorManagers, s_vertexShaderRegisterSpace);
+	m_meshManager.SetDescriptors(m_graphicsDescriptorManagers, s_vertexShaderRegisterSpace);
 
 	m_copyNecessary = true;
 
@@ -142,7 +143,7 @@ ID3D12Fence* RenderEngineMS::GenericCopyStage(
 
 			// Need to copy the old buffers first to avoid empty data being copied over
 			// the queued data.
-			m_modelManager.CopyOldBuffers(copyCmdListScope);
+			m_meshManager.CopyOldBuffers(copyCmdListScope);
 			m_stagingManager.CopyAndClearQueuedBuffers(copyCmdListScope);
 		}
 
@@ -195,7 +196,7 @@ ID3D12Fence* RenderEngineMS::DrawingStage(
 
 		m_graphicsDescriptorManagers[frameIndex].BindDescriptors(graphicsCmdListScope);
 
-		m_modelManager.Draw(graphicsCmdListScope);
+		m_modelManager.Draw(graphicsCmdListScope, m_meshManager);
 
 		renderTarget.ToPresentState(graphicsCmdListScope);
 	}
@@ -220,7 +221,7 @@ ID3D12Fence* RenderEngineMS::DrawingStage(
 
 ModelManagerMS RenderEngineMS::GetModelManager(
 	const DeviceManager& deviceManager, MemoryManager* memoryManager,
-	StagingBufferManager* stagingBufferMan, [[maybe_unused]] std::uint32_t frameCount
+	[[maybe_unused]] std::uint32_t frameCount
 ) {
-	return ModelManagerMS{ deviceManager.GetDevice(), memoryManager, stagingBufferMan };
+	return ModelManagerMS{ deviceManager.GetDevice(), memoryManager };
 }

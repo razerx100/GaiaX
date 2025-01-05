@@ -191,7 +191,11 @@ public:
 	}
 };
 
-template<typename ModelManager_t, typename Derived>
+template<
+	typename ModelManager_t,
+	typename MeshManager_t,
+	typename Derived
+>
 class RenderEngineCommon : public RenderEngine
 {
 public:
@@ -200,10 +204,10 @@ public:
 	) : RenderEngine{ deviceManager, std::move(threadPool), frameCount },
 		m_modelManager{
 			Derived::GetModelManager(
-				deviceManager, &m_memoryManager, &m_stagingManager,
-				static_cast<std::uint32_t>(frameCount)
+				deviceManager, &m_memoryManager, static_cast<std::uint32_t>(frameCount)
 			)
 		},
+		m_meshManager{ deviceManager.GetDevice(), &m_memoryManager },
 		m_modelBuffers{
 			deviceManager.GetDevice(), &m_memoryManager, static_cast<std::uint32_t>(frameCount)
 		},
@@ -235,7 +239,7 @@ public:
 
 	void RemoveMeshBundle(std::uint32_t bundleIndex) noexcept override
 	{
-		m_modelManager.RemoveMeshBundle(bundleIndex);
+		m_meshManager.RemoveMeshBundle(bundleIndex);
 	}
 
 	void Resize(UINT width, UINT height) override
@@ -280,7 +284,7 @@ protected:
 		RenderEngine::Update(frameIndex);
 
 		m_modelBuffers.Update(frameIndex);
-		m_modelManager.UpdatePerFrame(frameIndex);
+		static_cast<Derived const*>(this)->_updatePerFrame(frameIndex);
 	}
 
 	using PipelineSignature = ID3D12Fence*(Derived::*)(
@@ -289,6 +293,7 @@ protected:
 
 protected:
 	ModelManager_t                 m_modelManager;
+	MeshManager_t                  m_meshManager;
 	ModelBuffers                   m_modelBuffers;
 	std::vector<PipelineSignature> m_pipelineStages;
 
@@ -299,6 +304,7 @@ public:
 	RenderEngineCommon(RenderEngineCommon&& other) noexcept
 		: RenderEngine{ std::move(other) },
 		m_modelManager{ std::move(other.m_modelManager) },
+		m_meshManager{ std::move(other.m_meshManager) },
 		m_modelBuffers{ std::move(other.m_modelBuffers) },
 		m_pipelineStages{ std::move(other.m_pipelineStages) }
 	{}
@@ -306,6 +312,7 @@ public:
 	{
 		RenderEngine::operator=(std::move(other));
 		m_modelManager        = std::move(other.m_modelManager);
+		m_meshManager         = std::move(other.m_meshManager);
 		m_modelBuffers        = std::move(other.m_modelBuffers);
 		m_pipelineStages      = std::move(other.m_pipelineStages);
 
