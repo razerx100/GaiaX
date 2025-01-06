@@ -14,25 +14,16 @@
 #include <D3DModelBundle.hpp>
 #include <D3DModelBuffer.hpp>
 #include <MeshManager.hpp>
+#include <PipelineManager.hpp>
 
 template<
 	class Derived,
-	class Pipeline,
 	class ModelBundleType
 >
 class ModelManager
 {
 public:
-	ModelManager(ID3D12Device5* device, MemoryManager* memoryManager)
-		: m_device{ device }, m_memoryManager{ memoryManager },
-		m_graphicsRootSignature{ nullptr }, m_shaderPath{},
-		m_graphicsPipelines{}, m_modelBundles{}
-	{}
-
-	void SetGraphicsRootSignature(ID3D12RootSignature* rootSignature) noexcept
-	{
-		m_graphicsRootSignature = rootSignature;
-	}
+	ModelManager(MemoryManager* memoryManager) : m_memoryManager{ memoryManager }, m_modelBundles{} {}
 
 	void SetGraphicsConstantsRootIndex(
 		const D3DDescriptorManager& descriptorManager, size_t constantsRegisterSpace
@@ -42,20 +33,15 @@ public:
 		);
 	}
 
-	void SetShaderPath(std::wstring shaderPath)
-	{
-		m_shaderPath = std::move(shaderPath);
-
-		static_cast<Derived*>(this)->ShaderPathSet();
-	}
-
 	[[nodiscard]]
 	std::uint32_t AddModelBundle(
-		std::shared_ptr<ModelBundle>&& modelBundle, const ShaderName& pixelShader,
+		std::shared_ptr<ModelBundle>&& modelBundle, std::uint32_t psoIndex,
 		ModelBuffers& modelBuffers, StagingBufferManager& stagingManager,
 		TemporaryDataBufferGPU& tempBuffer
 	) {
 		const std::vector<std::shared_ptr<Model>>& models = modelBundle->GetModels();
+
+		auto bundleID = std::numeric_limits<std::uint32_t>::max();
 
 		if (!std::empty(models))
 		{
@@ -72,18 +58,14 @@ public:
 				stagingManager, tempBuffer
 			);
 
-			const std::uint32_t psoIndex = GetPSOIndex(pixelShader);
-
 			modelBundleObj.SetPSOIndex(psoIndex);
 
-			const std::uint32_t bundleID = modelBundleObj.GetID();
+			bundleID = modelBundleObj.GetID();
 
 			AddModelBundle(std::move(modelBundleObj));
-
-			return bundleID;
 		}
 
-		return std::numeric_limits<std::uint32_t>::max();
+		return bundleID;
 	}
 
 	void RemoveModelBundle(std::uint32_t bundleID, ModelBuffers& modelBuffers) noexcept
@@ -102,19 +84,12 @@ public:
 		}
 	}
 
-	void AddPSO(const ShaderName& pixelShader)
-	{
-		GetPSOIndex(pixelShader);
-	}
-
-	void ChangePSO(std::uint32_t bundleID, const ShaderName& pixelShader)
+	void ChangePSO(std::uint32_t bundleID, std::uint32_t psoIndex)
 	{
 		auto modelBundle = GetModelBundle(bundleID);
 
 		if (modelBundle != std::end(m_modelBundles))
 		{
-			const std::uint32_t psoIndex = GetPSOIndex(pixelShader);
-
 			modelBundle->SetPSOIndex(psoIndex);
 
 			ModelBundleType modelBundleObj = std::move(*modelBundle);
@@ -125,53 +100,11 @@ public:
 		}
 	}
 
-	void RecreateGraphicsPipelines()
-	{
-		for (Pipeline& graphicsPipeline : m_graphicsPipelines)
-			graphicsPipeline.Recreate(m_device, m_graphicsRootSignature, m_shaderPath);
-	}
-
 protected:
-	[[nodiscard]]
-	std::optional<std::uint32_t> TryToGetPSOIndex(const ShaderName& pixelShader) const noexcept
-	{
-		auto result = std::ranges::find_if(m_graphicsPipelines,
-			[&pixelShader](const Pipeline& pipeline)
-			{
-				return pixelShader == pipeline.GetPixelShader();
-			});
-
-		if (result != std::end(m_graphicsPipelines))
-			return static_cast<std::uint32_t>(std::distance(std::begin(m_graphicsPipelines), result));
-		else
-			return {};
-	}
-
-	// Adds a new PSO, if one can't be found.
-	std::uint32_t GetPSOIndex(const ShaderName& pixelShader)
-	{
-		std::uint32_t psoIndex                 = 0u;
-		std::optional<std::uint32_t> oPSOIndex = TryToGetPSOIndex(pixelShader);
-
-		if (!oPSOIndex)
-		{
-			psoIndex = static_cast<std::uint32_t>(std::size(m_graphicsPipelines));
-
-			Pipeline pipeline{};
-
-			pipeline.Create(m_device, m_graphicsRootSignature, m_shaderPath, pixelShader);
-
-			m_graphicsPipelines.emplace_back(std::move(pipeline));
-		}
-		else
-			psoIndex = oPSOIndex.value();
-
-		return psoIndex;
-	}
-
+	template<typename Pipeline>
 	void BindPipeline(
 		const ModelBundleType& modelBundle, const D3DCommandList& graphicsCmdList,
-		size_t& previousPSOIndex
+		const PipelineManager<Pipeline>& pipelineManager, size_t& previousPSOIndex
 	) const noexcept {
 		// PSO is more costly to bind, so the modelBundles are added in a way so they are sorted
 		// by their PSO indices. And we only bind a new PSO, if the previous one was different.
@@ -179,7 +112,7 @@ protected:
 
 		if (modelPSOIndex != previousPSOIndex)
 		{
-			m_graphicsPipelines[modelPSOIndex].Bind(graphicsCmdList);
+			pipelineManager.BindPipeline(modelPSOIndex, graphicsCmdList);
 
 			previousPSOIndex = modelPSOIndex;
 		}
@@ -216,11 +149,7 @@ private:
 	}
 
 protected:
-	ID3D12Device5*               m_device;
 	MemoryManager*               m_memoryManager;
-	ID3D12RootSignature*         m_graphicsRootSignature;
-	std::wstring                 m_shaderPath;
-	std::vector<Pipeline>        m_graphicsPipelines;
 	std::vector<ModelBundleType> m_modelBundles;
 
 public:
@@ -228,51 +157,34 @@ public:
 	ModelManager& operator=(const ModelManager&) = delete;
 
 	ModelManager(ModelManager&& other) noexcept
-		: m_device{ other.m_device },
-		m_memoryManager{ other.m_memoryManager },
-		m_graphicsRootSignature{ other.m_graphicsRootSignature },
-		m_shaderPath{ std::move(other.m_shaderPath) },
-		m_graphicsPipelines{ std::move(other.m_graphicsPipelines) },
+		: m_memoryManager{ other.m_memoryManager },
 		m_modelBundles{ std::move(other.m_modelBundles) }
 	{}
 	ModelManager& operator=(ModelManager&& other) noexcept
 	{
-		m_device                 = other.m_device;
-		m_memoryManager          = other.m_memoryManager;
-		m_graphicsRootSignature  = other.m_graphicsRootSignature;
-		m_shaderPath             = std::move(other.m_shaderPath);
-		m_graphicsPipelines      = std::move(other.m_graphicsPipelines);
-		m_modelBundles           = std::move(other.m_modelBundles);
+		m_memoryManager = other.m_memoryManager;
+		m_modelBundles  = std::move(other.m_modelBundles);
 
 		return *this;
 	}
 };
 
-class ModelManagerVSIndividual : public
-	ModelManager
-	<
-		ModelManagerVSIndividual,
-		GraphicsPipelineVSIndividualDraw,
-		ModelBundleVSIndividual
-	>
+class ModelManagerVSIndividual : public ModelManager<ModelManagerVSIndividual, ModelBundleVSIndividual>
 {
-	friend class ModelManager
-		<
-			ModelManagerVSIndividual,
-			GraphicsPipelineVSIndividualDraw,
-			ModelBundleVSIndividual
-		>;
-	friend class ModelManagerVSIndividualTest;
+	friend class ModelManager<ModelManagerVSIndividual, ModelBundleVSIndividual>;
+
+	using Pipeline_t = GraphicsPipelineVSIndividualDraw;
 
 public:
-	ModelManagerVSIndividual(ID3D12Device5* device, MemoryManager* memoryManager);
+	ModelManagerVSIndividual(MemoryManager* memoryManager);
 
 	void SetDescriptorLayout(
 		std::vector<D3DDescriptorManager>& descriptorManagers, size_t vsRegisterSpace
 	);
 
 	void Draw(
-		const D3DCommandList& graphicsList, const MeshManagerVSIndividual& meshManager
+		const D3DCommandList& graphicsList, const MeshManagerVSIndividual& meshManager,
+		const PipelineManager<Pipeline_t>& pipelineManager
 	) const noexcept;
 
 private:
@@ -289,9 +201,6 @@ private:
 	) const noexcept;
 
 	void ConfigureModelBundleRemove(size_t bundleIndex, ModelBuffers& modelBuffers) noexcept;
-
-	// To create compute shader pipelines.
-	void ShaderPathSet() {}
 
 private:
 	UINT m_constantsRootIndex;
@@ -316,25 +225,16 @@ public:
 	}
 };
 
-class ModelManagerVSIndirect : public
-	ModelManager
-	<
-		ModelManagerVSIndirect,
-		GraphicsPipelineVSIndirectDraw,
-		ModelBundleVSIndirect
-	>
+class ModelManagerVSIndirect : public ModelManager<ModelManagerVSIndirect, ModelBundleVSIndirect>
 {
-	friend class ModelManager
-		<
-			ModelManagerVSIndirect,
-			GraphicsPipelineVSIndirectDraw,
-			ModelBundleVSIndirect
-		>;
-	friend class ModelManagerVSIndirectTest;
+	friend class ModelManager<ModelManagerVSIndirect, ModelBundleVSIndirect>;
+
+	using GraphicsPipeline_t = GraphicsPipelineVSIndirectDraw;
+	using ComputePipeline_t  = ComputePipeline;
 
 	struct ConstantData
 	{
-		std::uint32_t modelCount;
+		UINT modelCount;
 	};
 
 public:
@@ -347,11 +247,6 @@ public:
 	void SetComputeConstantRootIndex(
 		const D3DDescriptorManager& descriptorManager, size_t constantsRegisterSpace
 	) noexcept;
-
-	void SetComputeRootSignature(ID3D12RootSignature* rootSignature) noexcept
-	{
-		m_computeRootSignature = rootSignature;
-	}
 
 	void CopyOldBuffers(const D3DCommandList& copyList) noexcept;
 
@@ -369,9 +264,12 @@ public:
 
 	void Draw(
 		size_t frameIndex, const D3DCommandList& graphicsList, ID3D12CommandSignature* commandSignature,
-		const MeshManagerVSIndirect& meshManager
+		const MeshManagerVSIndirect& meshManager,
+		const PipelineManager<GraphicsPipeline_t>& pipelineManager
 	) const noexcept;
-	void Dispatch(const D3DCommandList& computeList) const noexcept;
+	void Dispatch(
+		const D3DCommandList& computeList, const PipelineManager<ComputePipeline_t>& pipelineManager
+	) const noexcept;
 
 	[[nodiscard]]
 	UINT GetConstantsVSRootIndex() const noexcept { return m_constantsVSRootIndex; }
@@ -391,9 +289,6 @@ private:
 
 	void ConfigureModelBundleRemove(size_t bundleIndex, ModelBuffers& modelBuffers) noexcept;
 
-	// To create compute shader pipelines.
-	void ShaderPathSet();
-
 	void UpdateDispatchX() noexcept;
 	void UpdateCounterResetValues();
 
@@ -411,10 +306,8 @@ private:
 	Buffer                                m_counterResetBuffer;
 	MultiInstanceCPUBuffer<std::uint32_t> m_meshBundleIndexBuffer;
 	SharedBufferGPU                       m_perModelDataBuffer;
-	ID3D12RootSignature*                  m_computeRootSignature;
-	ComputePipeline                       m_computePipeline;
 	UINT                                  m_dispatchXCount;
-	std::uint32_t                         m_argumentCount;
+	UINT                                  m_argumentCount;
 	UINT                                  m_constantsVSRootIndex;
 	UINT                                  m_constantsCSRootIndex;
 
@@ -454,8 +347,6 @@ public:
 		m_counterResetBuffer{ std::move(other.m_counterResetBuffer) },
 		m_meshBundleIndexBuffer{ std::move(other.m_meshBundleIndexBuffer) },
 		m_perModelDataBuffer{ std::move(other.m_perModelDataBuffer) },
-		m_computeRootSignature{ other.m_computeRootSignature },
-		m_computePipeline{ std::move(other.m_computePipeline) },
 		m_dispatchXCount{ other.m_dispatchXCount },
 		m_argumentCount{ other.m_argumentCount },
 		m_constantsVSRootIndex{ other.m_constantsVSRootIndex },
@@ -466,50 +357,41 @@ public:
 	ModelManagerVSIndirect& operator=(ModelManagerVSIndirect&& other) noexcept
 	{
 		ModelManager::operator=(std::move(other));
-		m_argumentInputBuffers    = std::move(other.m_argumentInputBuffers);
-		m_argumentOutputBuffers   = std::move(other.m_argumentOutputBuffers);
-		m_cullingDataBuffer       = std::move(other.m_cullingDataBuffer);
-		m_counterBuffers          = std::move(other.m_counterBuffers);
-		m_counterResetBuffer      = std::move(other.m_counterResetBuffer);
-		m_meshBundleIndexBuffer   = std::move(other.m_meshBundleIndexBuffer);
-		m_perModelDataBuffer      = std::move(other.m_perModelDataBuffer);
-		m_computeRootSignature    = other.m_computeRootSignature;
-		m_computePipeline         = std::move(other.m_computePipeline);
-		m_dispatchXCount          = other.m_dispatchXCount;
-		m_argumentCount           = other.m_argumentCount;
-		m_constantsVSRootIndex    = other.m_constantsVSRootIndex;
-		m_constantsCSRootIndex    = other.m_constantsCSRootIndex;
-		m_modelBundlesCS          = std::move(other.m_modelBundlesCS);
-		m_oldBufferCopyNecessary  = other.m_oldBufferCopyNecessary;
+		m_argumentInputBuffers   = std::move(other.m_argumentInputBuffers);
+		m_argumentOutputBuffers  = std::move(other.m_argumentOutputBuffers);
+		m_cullingDataBuffer      = std::move(other.m_cullingDataBuffer);
+		m_counterBuffers         = std::move(other.m_counterBuffers);
+		m_counterResetBuffer     = std::move(other.m_counterResetBuffer);
+		m_meshBundleIndexBuffer  = std::move(other.m_meshBundleIndexBuffer);
+		m_perModelDataBuffer     = std::move(other.m_perModelDataBuffer);
+		m_dispatchXCount         = other.m_dispatchXCount;
+		m_argumentCount          = other.m_argumentCount;
+		m_constantsVSRootIndex   = other.m_constantsVSRootIndex;
+		m_constantsCSRootIndex   = other.m_constantsCSRootIndex;
+		m_modelBundlesCS         = std::move(other.m_modelBundlesCS);
+		m_oldBufferCopyNecessary = other.m_oldBufferCopyNecessary;
 
 		return *this;
 	}
 };
 
-class ModelManagerMS : public
-	ModelManager
-	<
-		ModelManagerMS,
-		GraphicsPipelineMS,
-		ModelBundleMSIndividual
-	>
+class ModelManagerMS : public ModelManager<ModelManagerMS, ModelBundleMSIndividual>
 {
-	friend class ModelManager
-		<
-			ModelManagerMS,
-			GraphicsPipelineMS,
-			ModelBundleMSIndividual
-		>;
-	friend class ModelManagerMSTest;
+	friend class ModelManager<ModelManagerMS, ModelBundleMSIndividual>;
+
+	using Pipeline_t = GraphicsPipelineMS;
 
 public:
-	ModelManagerMS(ID3D12Device5* device, MemoryManager* memoryManager);
+	ModelManagerMS(MemoryManager* memoryManager);
 
 	void SetDescriptorLayout(
 		std::vector<D3DDescriptorManager>& descriptorManagers, size_t msRegisterSpace
 	) const noexcept;
 
-	void Draw(const D3DCommandList& graphicsList, const MeshManagerMS& meshManager) const noexcept;
+	void Draw(
+		const D3DCommandList& graphicsList, const MeshManagerMS& meshManager,
+		const PipelineManager<Pipeline_t>& pipelineManager
+	) const noexcept;
 
 private:
 	void _setGraphicsConstantRootIndex(
@@ -524,8 +406,6 @@ private:
 	void ConfigureModelBundleRemove(size_t bundleIndex, ModelBuffers& modelBuffers) noexcept;
 
 	void _updatePerFrame([[maybe_unused]] UINT64 frameIndex) const noexcept {}
-	// To create compute shader pipelines.
-	void ShaderPathSet() {}
 
 private:
 	UINT m_constantsRootIndex;

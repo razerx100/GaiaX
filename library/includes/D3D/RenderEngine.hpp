@@ -20,6 +20,7 @@
 #include <Shader.hpp>
 #include <MeshBundle.hpp>
 #include <D3DModelBuffer.hpp>
+#include <PipelineManager.hpp>
 
 class RenderEngine
 {
@@ -194,6 +195,7 @@ public:
 template<
 	typename ModelManager_t,
 	typename MeshManager_t,
+	typename GraphicsPipeline_t,
 	typename Derived
 >
 class RenderEngineCommon : public RenderEngine
@@ -208,6 +210,7 @@ public:
 			)
 		},
 		m_meshManager{ deviceManager.GetDevice(), &m_memoryManager },
+		m_graphicsPipelineManager{ deviceManager.GetDevice() },
 		m_modelBuffers{
 			deviceManager.GetDevice(), &m_memoryManager, static_cast<std::uint32_t>(frameCount)
 		},
@@ -221,15 +224,17 @@ public:
 
 	void SetShaderPath(const std::wstring& shaderPath) override
 	{
-		m_modelManager.SetShaderPath(shaderPath);
+		m_graphicsPipelineManager.SetShaderPath(shaderPath);
 	}
 	void AddPixelShader(const ShaderName& pixelShader) override
 	{
-		m_modelManager.AddPSO(pixelShader);
+		m_graphicsPipelineManager.AddPipeline(pixelShader);
 	}
 	void ChangePixelShader(std::uint32_t modelBundleID, const ShaderName& pixelShader) override
 	{
-		m_modelManager.ChangePSO(modelBundleID, pixelShader);
+		const std::uint32_t psoIndex = GetGraphicsPSOIndex(pixelShader);
+
+		m_modelManager.ChangePSO(modelBundleID, psoIndex);
 	}
 
 	void RemoveModelBundle(std::uint32_t bundleID) noexcept override
@@ -287,15 +292,33 @@ protected:
 		static_cast<Derived const*>(this)->_updatePerFrame(frameIndex);
 	}
 
+	[[nodiscard]]
+	std::uint32_t GetGraphicsPSOIndex(const ShaderName& pixelShader)
+	{
+		std::optional<std::uint32_t> oPSOIndex = m_graphicsPipelineManager.TryToGetPSOIndex(
+			pixelShader
+		);
+
+		auto psoIndex = std::numeric_limits<std::uint32_t>::max();
+
+		if (!oPSOIndex)
+			psoIndex = m_graphicsPipelineManager.AddPipeline(pixelShader);
+		else
+			psoIndex = oPSOIndex.value();
+
+		return psoIndex;
+	}
+
 	using PipelineSignature = ID3D12Fence*(Derived::*)(
 			size_t, const RenderTarget&, UINT64&, ID3D12Fence*
 		);
 
 protected:
-	ModelManager_t                 m_modelManager;
-	MeshManager_t                  m_meshManager;
-	ModelBuffers                   m_modelBuffers;
-	std::vector<PipelineSignature> m_pipelineStages;
+	ModelManager_t                      m_modelManager;
+	MeshManager_t                       m_meshManager;
+	PipelineManager<GraphicsPipeline_t> m_graphicsPipelineManager;
+	ModelBuffers                        m_modelBuffers;
+	std::vector<PipelineSignature>      m_pipelineStages;
 
 public:
 	RenderEngineCommon(const RenderEngineCommon&) = delete;
@@ -305,16 +328,18 @@ public:
 		: RenderEngine{ std::move(other) },
 		m_modelManager{ std::move(other.m_modelManager) },
 		m_meshManager{ std::move(other.m_meshManager) },
+		m_graphicsPipelineManager{ std::move(other.m_graphicsPipelineManager) },
 		m_modelBuffers{ std::move(other.m_modelBuffers) },
 		m_pipelineStages{ std::move(other.m_pipelineStages) }
 	{}
 	RenderEngineCommon& operator=(RenderEngineCommon&& other) noexcept
 	{
 		RenderEngine::operator=(std::move(other));
-		m_modelManager        = std::move(other.m_modelManager);
-		m_meshManager         = std::move(other.m_meshManager);
-		m_modelBuffers        = std::move(other.m_modelBuffers);
-		m_pipelineStages      = std::move(other.m_pipelineStages);
+		m_modelManager            = std::move(other.m_modelManager);
+		m_meshManager             = std::move(other.m_meshManager);
+		m_graphicsPipelineManager = std::move(other.m_graphicsPipelineManager);
+		m_modelBuffers            = std::move(other.m_modelBuffers);
+		m_pipelineStages          = std::move(other.m_pipelineStages);
 
 		return *this;
 	}

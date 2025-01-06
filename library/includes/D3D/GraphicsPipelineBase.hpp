@@ -56,7 +56,7 @@ public:
 	}
 
 	[[nodiscard]]
-	ShaderName GetPixelShader() const noexcept { return m_pixelShader; }
+	ShaderName GetShaderName() const noexcept { return m_pixelShader; }
 
 protected:
 	std::unique_ptr<D3DPipelineObject> m_graphicsPipeline;

@@ -28,7 +28,7 @@ RenderEngineMS::RenderEngineMS(
 
 		m_graphicsRootSignature.CreateSignature(deviceManager.GetDevice(), rootSignatureDynamic);
 
-		m_modelManager.SetGraphicsRootSignature(m_graphicsRootSignature.Get());
+		m_graphicsPipelineManager.SetRootSignature(m_graphicsRootSignature.Get());
 	}
 
 	m_cameraManager.CreateBuffer(static_cast<std::uint32_t>(frameCount));
@@ -97,8 +97,10 @@ std::uint32_t RenderEngineMS::AddModelBundle(
 ) {
 	WaitForGPUToFinish();
 
-	const std::uint32_t index = m_modelManager.AddModelBundle(
-		std::move(modelBundle), pixelShader, m_modelBuffers, m_stagingManager, m_temporaryDataBuffer
+	const std::uint32_t psoIndex = GetGraphicsPSOIndex(pixelShader);
+
+	const std::uint32_t index    = m_modelManager.AddModelBundle(
+		std::move(modelBundle), psoIndex, m_modelBuffers, m_stagingManager, m_temporaryDataBuffer
 	);
 
 	// After a new model has been added, the ModelBuffer might get recreated. So, it will have
@@ -196,7 +198,7 @@ ID3D12Fence* RenderEngineMS::DrawingStage(
 
 		m_graphicsDescriptorManagers[frameIndex].BindDescriptors(graphicsCmdListScope);
 
-		m_modelManager.Draw(graphicsCmdListScope, m_meshManager);
+		m_modelManager.Draw(graphicsCmdListScope, m_meshManager, m_graphicsPipelineManager);
 
 		renderTarget.ToPresentState(graphicsCmdListScope);
 	}
@@ -220,8 +222,9 @@ ID3D12Fence* RenderEngineMS::DrawingStage(
 }
 
 ModelManagerMS RenderEngineMS::GetModelManager(
-	const DeviceManager& deviceManager, MemoryManager* memoryManager,
+	[[maybe_unused]] const DeviceManager& deviceManager,
+	MemoryManager* memoryManager,
 	[[maybe_unused]] std::uint32_t frameCount
 ) {
-	return ModelManagerMS{ deviceManager.GetDevice(), memoryManager };
+	return ModelManagerMS{ memoryManager };
 }

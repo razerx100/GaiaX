@@ -8,6 +8,7 @@ class RenderEngineVSIndividual : public
 	<
 		ModelManagerVSIndividual,
 		MeshManagerVSIndividual,
+		GraphicsPipelineVSIndividualDraw,
 		RenderEngineVSIndividual
 	>
 {
@@ -15,6 +16,7 @@ class RenderEngineVSIndividual : public
 		<
 			ModelManagerVSIndividual,
 			MeshManagerVSIndividual,
+			GraphicsPipelineVSIndividualDraw,
 			RenderEngineVSIndividual
 		>;
 
@@ -76,6 +78,7 @@ class RenderEngineVSIndirect : public
 	<
 		ModelManagerVSIndirect,
 		MeshManagerVSIndirect,
+		GraphicsPipelineVSIndirectDraw,
 		RenderEngineVSIndirect
 	>
 {
@@ -83,8 +86,11 @@ class RenderEngineVSIndirect : public
 		<
 			ModelManagerVSIndirect,
 			MeshManagerVSIndirect,
+			GraphicsPipelineVSIndirectDraw,
 			RenderEngineVSIndirect
 		>;
+
+	using ComputePipeline_t = ComputePipeline;
 
 public:
 	RenderEngineVSIndirect(
@@ -100,6 +106,8 @@ public:
 	std::uint32_t AddMeshBundle(std::unique_ptr<MeshBundleTemporary> meshBundle) override;
 
 	void WaitForGPUToFinish() override;
+
+	void SetShaderPath(const std::wstring& shaderPath) override;
 
 private:
 	[[nodiscard]]
@@ -144,11 +152,12 @@ private:
 	static constexpr size_t s_cameraCSCBVRegisterSlot       = 1u;
 
 private:
-	D3DCommandQueue                   m_computeQueue;
-	std::vector<D3DFence>             m_computeWait;
-	std::vector<D3DDescriptorManager> m_computeDescriptorManagers;
-	D3DRootSignature                  m_computeRootSignature;
-	ComPtr<ID3D12CommandSignature>    m_commandSignature;
+	D3DCommandQueue                    m_computeQueue;
+	std::vector<D3DFence>              m_computeWait;
+	std::vector<D3DDescriptorManager>  m_computeDescriptorManagers;
+	PipelineManager<ComputePipeline_t> m_computePipelineManager;
+	D3DRootSignature                   m_computeRootSignature;
+	ComPtr<ID3D12CommandSignature>     m_commandSignature;
 
 public:
 	RenderEngineVSIndirect(const RenderEngineVSIndirect&) = delete;
@@ -159,6 +168,7 @@ public:
 		m_computeQueue{ std::move(other.m_computeQueue) },
 		m_computeWait{ std::move(other.m_computeWait) },
 		m_computeDescriptorManagers{ std::move(other.m_computeDescriptorManagers) },
+		m_computePipelineManager{ std::move(other.m_computePipelineManager) },
 		m_computeRootSignature{ std::move(other.m_computeRootSignature) },
 		m_commandSignature{ std::move(other.m_commandSignature) }
 	{}
@@ -168,6 +178,7 @@ public:
 		m_computeQueue              = std::move(other.m_computeQueue);
 		m_computeWait               = std::move(other.m_computeWait);
 		m_computeDescriptorManagers = std::move(other.m_computeDescriptorManagers);
+		m_computePipelineManager    = std::move(other.m_computePipelineManager);
 		m_computeRootSignature      = std::move(other.m_computeRootSignature);
 		m_commandSignature          = std::move(other.m_commandSignature);
 

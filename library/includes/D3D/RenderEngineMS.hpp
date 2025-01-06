@@ -8,6 +8,7 @@ class RenderEngineMS : public
 	<
 		ModelManagerMS,
 		MeshManagerMS,
+		GraphicsPipelineMS,
 		RenderEngineMS
 	>
 {
@@ -15,6 +16,7 @@ class RenderEngineMS : public
 		<
 			ModelManagerMS,
 			MeshManagerMS,
+			GraphicsPipelineMS,
 			RenderEngineMS
 		>;
 

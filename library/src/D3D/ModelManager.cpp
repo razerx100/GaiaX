@@ -2,8 +2,8 @@
 #include <D3DRootSignatureDynamic.hpp>
 
 // Model Manager VS Individual
-ModelManagerVSIndividual::ModelManagerVSIndividual(ID3D12Device5* device, MemoryManager* memoryManager)
-	: ModelManager{ device, memoryManager }, m_constantsRootIndex{ 0u }
+ModelManagerVSIndividual::ModelManagerVSIndividual(MemoryManager* memoryManager)
+	: ModelManager{ memoryManager }, m_constantsRootIndex{ 0u }
 {}
 
 void ModelManagerVSIndividual::_setGraphicsConstantRootIndex(
@@ -46,7 +46,8 @@ void ModelManagerVSIndividual::SetDescriptorLayout(
 }
 
 void ModelManagerVSIndividual::Draw(
-	const D3DCommandList& graphicsList, const MeshManagerVSIndividual& meshManager
+	const D3DCommandList& graphicsList, const MeshManagerVSIndividual& meshManager,
+	const PipelineManager<Pipeline_t>& pipelineManager
 ) const noexcept {
 	auto previousPSOIndex = std::numeric_limits<size_t>::max();
 
@@ -55,7 +56,7 @@ void ModelManagerVSIndividual::Draw(
 	for (const ModelBundleVSIndividual& modelBundle : m_modelBundles)
 	{
 		// Pipeline Object.
-		BindPipeline(modelBundle, graphicsList, previousPSOIndex);
+		BindPipeline(modelBundle, graphicsList, pipelineManager, previousPSOIndex);
 
 		// Mesh
 		const D3DMeshBundleVS& meshBundle = meshManager.GetBundle(
@@ -72,32 +73,31 @@ void ModelManagerVSIndividual::Draw(
 // Model Manager VS Indirect.
 ModelManagerVSIndirect::ModelManagerVSIndirect(
 	ID3D12Device5* device, MemoryManager* memoryManager, std::uint32_t frameCount
-) : ModelManager{ device, memoryManager },
+) : ModelManager{ memoryManager },
 	m_argumentInputBuffers{}, m_argumentOutputBuffers{},
 	m_cullingDataBuffer{ device, memoryManager, D3D12_RESOURCE_STATE_GENERIC_READ },
 	m_counterBuffers{},
 	m_counterResetBuffer{ device, memoryManager, D3D12_HEAP_TYPE_UPLOAD },
 	m_meshBundleIndexBuffer{ device, memoryManager, frameCount },
 	m_perModelDataBuffer{ device, memoryManager },
-	m_computeRootSignature{ nullptr }, m_computePipeline{},
 	m_dispatchXCount{ 0u }, m_argumentCount{ 0u }, m_constantsVSRootIndex{ 0u },
 	m_constantsCSRootIndex{ 0u }, m_modelBundlesCS{}, m_oldBufferCopyNecessary{ false }
 {
 	for (size_t _ = 0u; _ < frameCount; ++_)
 	{
 		m_argumentInputBuffers.emplace_back(
-			SharedBufferCPU{ m_device, m_memoryManager, D3D12_RESOURCE_STATE_GENERIC_READ }
+			SharedBufferCPU{ device, m_memoryManager, D3D12_RESOURCE_STATE_GENERIC_READ }
 		);
 		m_argumentOutputBuffers.emplace_back(
 			SharedBufferGPUWriteOnly{
-				m_device, m_memoryManager, D3D12_RESOURCE_STATE_COMMON,
+				device, m_memoryManager, D3D12_RESOURCE_STATE_COMMON,
 				D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS
 			}
 		);
 		// Doing the resetting on the Compute queue, so CG should be fine.
 		m_counterBuffers.emplace_back(
 			SharedBufferGPUWriteOnly{
-				m_device, m_memoryManager, D3D12_RESOURCE_STATE_COMMON,
+				device, m_memoryManager, D3D12_RESOURCE_STATE_COMMON,
 				D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS
 			}
 		);
@@ -117,14 +117,6 @@ void ModelManagerVSIndirect::SetComputeConstantRootIndex(
 ) noexcept {
 	m_constantsVSRootIndex = descriptorManager.GetRootIndexCBV(
 		s_constantDataCSCBVRegisterSlot, constantsRegisterSpace
-	);
-}
-
-void ModelManagerVSIndirect::ShaderPathSet()
-{
-	// Must create the pipeline object after the shader path has been set.
-	m_computePipeline.Create(
-		m_device, m_computeRootSignature, L"VertexShaderCSIndirect", m_shaderPath
 	);
 }
 
@@ -334,11 +326,15 @@ void ModelManagerVSIndirect::SetDescriptors(
 	}
 }
 
-void ModelManagerVSIndirect::Dispatch(const D3DCommandList& computeList) const noexcept
-{
-	ID3D12GraphicsCommandList* cmdList = computeList.Get();
+void ModelManagerVSIndirect::Dispatch(
+	const D3DCommandList& computeList, const PipelineManager<ComputePipeline_t>& pipelineManager
+) const noexcept {
+	ID3D12GraphicsCommandList* cmdList      = computeList.Get();
 
-	m_computePipeline.Bind(computeList);
+	// There should be a single one for now.
+	static constexpr size_t computePSOIndex = 0u;
+
+	pipelineManager.BindPipeline(computePSOIndex, computeList);
 
 	{
 		constexpr UINT pushConstantCount = GetConstantCount();
@@ -358,7 +354,7 @@ void ModelManagerVSIndirect::Dispatch(const D3DCommandList& computeList) const n
 
 void ModelManagerVSIndirect::Draw(
 	size_t frameIndex, const D3DCommandList& graphicsList, ID3D12CommandSignature* commandSignature,
-	const MeshManagerVSIndirect& meshManager
+	const MeshManagerVSIndirect& meshManager, const PipelineManager<GraphicsPipeline_t>& pipelineManager
 ) const noexcept {
 	auto previousPSOIndex = std::numeric_limits<size_t>::max();
 
@@ -367,7 +363,7 @@ void ModelManagerVSIndirect::Draw(
 	for (const ModelBundleVSIndirect& modelBundle : m_modelBundles)
 	{
 		// Pipeline Object.
-		BindPipeline(modelBundle, graphicsList, previousPSOIndex);
+		BindPipeline(modelBundle, graphicsList, pipelineManager, previousPSOIndex);
 
 		// Mesh
 		const D3DMeshBundleVS& meshBundle = meshManager.GetBundle(
@@ -439,8 +435,8 @@ void ModelManagerVSIndirect::UpdateCounterResetValues()
 }
 
 // Model Manager MS.
-ModelManagerMS::ModelManagerMS(ID3D12Device5* device, MemoryManager* memoryManager)
-	: ModelManager{ device, memoryManager }, m_constantsRootIndex{ 0u }
+ModelManagerMS::ModelManagerMS(MemoryManager* memoryManager)
+	: ModelManager{ memoryManager }, m_constantsRootIndex{ 0u }
 {}
 
 void ModelManagerMS::ConfigureModelBundle(
@@ -483,7 +479,8 @@ void ModelManagerMS::SetDescriptorLayout(
 }
 
 void ModelManagerMS::Draw(
-	const D3DCommandList& graphicsList, const MeshManagerMS& meshManager
+	const D3DCommandList& graphicsList, const MeshManagerMS& meshManager,
+	const PipelineManager<Pipeline_t>& pipelineManager
 ) const noexcept {
 	auto previousPSOIndex              = std::numeric_limits<size_t>::max();
 	ID3D12GraphicsCommandList* cmdList = graphicsList.Get();
@@ -491,7 +488,7 @@ void ModelManagerMS::Draw(
 	for (const ModelBundleMSIndividual& modelBundle : m_modelBundles)
 	{
 		// Pipeline Object.
-		BindPipeline(modelBundle, graphicsList, previousPSOIndex);
+		BindPipeline(modelBundle, graphicsList, pipelineManager, previousPSOIndex);
 
 		const auto meshBundleIndex        = static_cast<size_t>(
 			modelBundle.GetMeshBundleIndex()

@@ -29,7 +29,7 @@ RenderEngineVSIndividual::RenderEngineVSIndividual(
 
 		m_graphicsRootSignature.CreateSignature(deviceManager.GetDevice(), rootSignatureDynamic);
 
-		m_modelManager.SetGraphicsRootSignature(m_graphicsRootSignature.Get());
+		m_graphicsPipelineManager.SetRootSignature(m_graphicsRootSignature.Get());
 	}
 
 	m_cameraManager.CreateBuffer(static_cast<std::uint32_t>(frameCount));
@@ -95,10 +95,11 @@ void RenderEngineVSIndividual::SetupPipelineStages()
 }
 
 ModelManagerVSIndividual RenderEngineVSIndividual::GetModelManager(
-	const DeviceManager& deviceManager, MemoryManager* memoryManager,
+	[[maybe_unused]] const DeviceManager& deviceManager,
+	MemoryManager* memoryManager,
 	[[maybe_unused]] std::uint32_t frameCount
 ) {
-	return ModelManagerVSIndividual{ deviceManager.GetDevice(), memoryManager };
+	return ModelManagerVSIndividual{ memoryManager };
 }
 
 std::uint32_t RenderEngineVSIndividual::AddModelBundle(
@@ -106,8 +107,10 @@ std::uint32_t RenderEngineVSIndividual::AddModelBundle(
 ) {
 	WaitForGPUToFinish();
 
-	const std::uint32_t index = m_modelManager.AddModelBundle(
-		std::move(modelBundle), pixelShader, m_modelBuffers, m_stagingManager, m_temporaryDataBuffer
+	const std::uint32_t psoIndex = GetGraphicsPSOIndex(pixelShader);
+
+	const std::uint32_t index    = m_modelManager.AddModelBundle(
+		std::move(modelBundle), psoIndex, m_modelBuffers, m_stagingManager, m_temporaryDataBuffer
 	);
 
 	// After new models have been added, the ModelBuffer might get recreated. So, it will have
@@ -198,7 +201,7 @@ ID3D12Fence* RenderEngineVSIndividual::DrawingStage(
 
 		m_graphicsDescriptorManagers[frameIndex].BindDescriptors(graphicsCmdListScope);
 
-		m_modelManager.Draw(graphicsCmdListScope, m_meshManager);
+		m_modelManager.Draw(graphicsCmdListScope, m_meshManager, m_graphicsPipelineManager);
 
 		renderTarget.ToPresentState(graphicsCmdListScope);
 	}
@@ -225,8 +228,8 @@ ID3D12Fence* RenderEngineVSIndividual::DrawingStage(
 RenderEngineVSIndirect::RenderEngineVSIndirect(
 	const DeviceManager& deviceManager, std::shared_ptr<ThreadPool> threadPool, size_t frameCount
 ) : RenderEngineCommon{ deviceManager, std::move(threadPool), frameCount },
-	m_computeQueue{}, m_computeWait{}, m_computeDescriptorManagers{}, m_computeRootSignature{},
-	m_commandSignature{}
+	m_computeQueue{}, m_computeWait{}, m_computeDescriptorManagers{},
+	m_computePipelineManager{ deviceManager.GetDevice() }, m_computeRootSignature{}, m_commandSignature{}
 {
 	ID3D12Device5* device = deviceManager.GetDevice();
 
@@ -254,7 +257,7 @@ RenderEngineVSIndirect::RenderEngineVSIndirect(
 
 		m_graphicsRootSignature.CreateSignature(device, rootSignatureDynamic);
 
-		m_modelManager.SetGraphicsRootSignature(m_graphicsRootSignature.Get());
+		m_graphicsPipelineManager.SetRootSignature(m_graphicsRootSignature.Get());
 	}
 
 	CreateCommandSignature(device);
@@ -307,7 +310,7 @@ RenderEngineVSIndirect::RenderEngineVSIndirect(
 
 		m_computeRootSignature.CreateSignature(device, rootSignatureDynamic);
 
-		m_modelManager.SetComputeRootSignature(m_computeRootSignature.Get());
+		m_computePipelineManager.SetRootSignature(m_computeRootSignature.Get());
 	}
 
 	m_cameraManager.SetDescriptorCompute(
@@ -364,6 +367,16 @@ void RenderEngineVSIndirect::SetupPipelineStages()
 	m_pipelineStages.emplace_back(&RenderEngineVSIndirect::GenericCopyStage);
 	m_pipelineStages.emplace_back(&RenderEngineVSIndirect::FrustumCullingStage);
 	m_pipelineStages.emplace_back(&RenderEngineVSIndirect::DrawingStage);
+}
+
+void RenderEngineVSIndirect::SetShaderPath(const std::wstring& shaderPath)
+{
+	RenderEngineCommon::SetShaderPath(shaderPath);
+
+	m_computePipelineManager.SetShaderPath(shaderPath);
+
+	// Also add the single PSO.
+	m_computePipelineManager.AddPipeline(L"VertexShaderCSIndirect");
 }
 
 void RenderEngineVSIndirect::_updatePerFrame(UINT64 frameIndex) const noexcept
@@ -482,8 +495,10 @@ std::uint32_t RenderEngineVSIndirect::AddModelBundle(
 ) {
 	WaitForGPUToFinish();
 
-	const std::uint32_t index = m_modelManager.AddModelBundle(
-		std::move(modelBundle), pixelShader, m_modelBuffers, m_stagingManager, m_temporaryDataBuffer
+	const std::uint32_t psoIndex = GetGraphicsPSOIndex(pixelShader);
+
+	const std::uint32_t index    = m_modelManager.AddModelBundle(
+		std::move(modelBundle), psoIndex, m_modelBuffers, m_stagingManager, m_temporaryDataBuffer
 	);
 
 	// After new models have been added, the ModelBuffer might get recreated. So, it will have
@@ -575,7 +590,7 @@ ID3D12Fence* RenderEngineVSIndirect::FrustumCullingStage(
 
 		m_computeDescriptorManagers[frameIndex].BindDescriptors(computeCmdListScope);
 
-		m_modelManager.Dispatch(computeCmdListScope);
+		m_modelManager.Dispatch(computeCmdListScope, m_computePipelineManager);
 	}
 
 	const D3DFence& computeWaitFence = m_computeWait[frameIndex];
@@ -621,7 +636,10 @@ ID3D12Fence* RenderEngineVSIndirect::DrawingStage(
 
 		m_graphicsDescriptorManagers[frameIndex].BindDescriptors(graphicsCmdListScope);
 
-		m_modelManager.Draw(frameIndex, graphicsCmdListScope, m_commandSignature.Get(), m_meshManager);
+		m_modelManager.Draw(
+			frameIndex, graphicsCmdListScope, m_commandSignature.Get(), m_meshManager,
+			m_graphicsPipelineManager
+		);
 
 		renderTarget.ToPresentState(graphicsCmdListScope);
 	}

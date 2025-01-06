@@ -3,9 +3,17 @@
 
 void ComputePipeline::Create(
 	ID3D12Device2* device, ID3D12RootSignature* computeRootSignature,
-	const ShaderName& computeShader, const std::wstring& shaderPath
+	const std::wstring& shaderPath, const ShaderName& computeShader
 ) {
+	m_computeShader   = computeShader;
+
 	m_computePipeline = _createComputePipeline(device, computeRootSignature, computeShader, shaderPath);
+}
+
+void ComputePipeline::Recreate(
+	ID3D12Device2* device, ID3D12RootSignature* computeRootSignature, const std::wstring& shaderPath
+) {
+	m_computePipeline = _createComputePipeline(device, computeRootSignature, m_computeShader, shaderPath);
 }
 
 std::unique_ptr<D3DPipelineObject> ComputePipeline::_createComputePipeline(
