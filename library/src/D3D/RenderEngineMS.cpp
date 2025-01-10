@@ -40,8 +40,6 @@ RenderEngineMS::RenderEngineMS(
 	m_textureManager.SetDescriptorTable(
 		m_graphicsDescriptorManagers, s_textureSRVRegisterSlot, s_pixelShaderRegisterSpace
 	);
-
-	SetupPipelineStages();
 }
 
 void RenderEngineMS::SetGraphicsDescriptorBufferLayout()
@@ -63,14 +61,13 @@ void RenderEngineMS::SetGraphicsDescriptorBufferLayout()
 	}
 }
 
-void RenderEngineMS::SetupPipelineStages()
-{
-	constexpr size_t stageCount = 2u;
+void RenderEngineMS::ExecutePipelineStages(
+	size_t frameIndex, const RenderTarget& renderTarget, UINT64& counterValue,
+	ID3D12Fence* waitFence
+) {
+	waitFence = GenericCopyStage(frameIndex, counterValue, waitFence);
 
-	m_pipelineStages.reserve(stageCount);
-
-	m_pipelineStages.emplace_back(&RenderEngineMS::GenericCopyStage);
-	m_pipelineStages.emplace_back(&RenderEngineMS::DrawingStage);
+	DrawingStage(frameIndex, renderTarget, counterValue, waitFence);
 }
 
 void RenderEngineMS::SetGraphicsDescriptors()
@@ -128,8 +125,7 @@ std::uint32_t RenderEngineMS::AddMeshBundle(std::unique_ptr<MeshBundleTemporary>
 }
 
 ID3D12Fence* RenderEngineMS::GenericCopyStage(
-	size_t frameIndex,
-	[[maybe_unused]] const RenderTarget& renderTarget, UINT64& counterValue, ID3D12Fence* waitFence
+	size_t frameIndex, UINT64& counterValue, ID3D12Fence* waitFence
 ) {
 	// Copy Phase
 	// If the Copy stage isn't executed, pass the waitFence on.
@@ -173,7 +169,7 @@ ID3D12Fence* RenderEngineMS::GenericCopyStage(
 	return signalledFence;
 }
 
-ID3D12Fence* RenderEngineMS::DrawingStage(
+void RenderEngineMS::DrawingStage(
 	size_t frameIndex, const RenderTarget& renderTarget, UINT64& counterValue, ID3D12Fence* waitFence
 ) {
 	// Graphics Phase
@@ -203,9 +199,9 @@ ID3D12Fence* RenderEngineMS::DrawingStage(
 		renderTarget.ToPresentState(graphicsCmdListScope);
 	}
 
-	const D3DFence& graphicsWaitFence = m_graphicsWait[frameIndex];
-
 	{
+		const D3DFence& graphicsWaitFence = m_graphicsWait[frameIndex];
+
 		const UINT64 oldCounterValue = counterValue;
 		++counterValue;
 
@@ -217,8 +213,6 @@ ID3D12Fence* RenderEngineMS::DrawingStage(
 
 		m_graphicsQueue.SubmitCommandLists(graphicsSubmitBuilder);
 	}
-
-	return graphicsWaitFence.Get();
 }
 
 ModelManagerMS RenderEngineMS::GetModelManager(

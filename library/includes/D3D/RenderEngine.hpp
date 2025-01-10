@@ -213,8 +213,7 @@ public:
 		m_graphicsPipelineManager{ deviceManager.GetDevice() },
 		m_modelBuffers{
 			deviceManager.GetDevice(), &m_memoryManager, static_cast<std::uint32_t>(frameCount)
-		},
-		m_pipelineStages{}
+		}
 	{
 		for (D3DDescriptorManager& descriptorManager : m_graphicsDescriptorManagers)
 			m_textureManager.SetDescriptorLayout(
@@ -277,10 +276,9 @@ public:
 		// as it should immedietly return.
 		ID3D12Fence* waitFence = m_graphicsWait[frameIndex].Get();
 
-		for (auto pipelineStage : m_pipelineStages)
-			waitFence = (static_cast<Derived*>(this)->*pipelineStage)(
-				frameIndex, renderTarget, counterValue, waitFence
-			);
+		static_cast<Derived*>(this)->ExecutePipelineStages(
+			frameIndex, renderTarget, counterValue, waitFence
+		);
 	}
 
 protected:
@@ -309,16 +307,11 @@ protected:
 		return psoIndex;
 	}
 
-	using PipelineSignature = ID3D12Fence*(Derived::*)(
-			size_t, const RenderTarget&, UINT64&, ID3D12Fence*
-		);
-
 protected:
 	ModelManager_t                      m_modelManager;
 	MeshManager_t                       m_meshManager;
 	PipelineManager<GraphicsPipeline_t> m_graphicsPipelineManager;
 	ModelBuffers                        m_modelBuffers;
-	std::vector<PipelineSignature>      m_pipelineStages;
 
 public:
 	RenderEngineCommon(const RenderEngineCommon&) = delete;
@@ -329,8 +322,7 @@ public:
 		m_modelManager{ std::move(other.m_modelManager) },
 		m_meshManager{ std::move(other.m_meshManager) },
 		m_graphicsPipelineManager{ std::move(other.m_graphicsPipelineManager) },
-		m_modelBuffers{ std::move(other.m_modelBuffers) },
-		m_pipelineStages{ std::move(other.m_pipelineStages) }
+		m_modelBuffers{ std::move(other.m_modelBuffers) }
 	{}
 	RenderEngineCommon& operator=(RenderEngineCommon&& other) noexcept
 	{
@@ -339,7 +331,6 @@ public:
 		m_meshManager             = std::move(other.m_meshManager);
 		m_graphicsPipelineManager = std::move(other.m_graphicsPipelineManager);
 		m_modelBuffers            = std::move(other.m_modelBuffers);
-		m_pipelineStages          = std::move(other.m_pipelineStages);
 
 		return *this;
 	}

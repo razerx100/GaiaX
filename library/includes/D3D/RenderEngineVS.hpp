@@ -39,16 +39,18 @@ private:
 		const DeviceManager& deviceManager, MemoryManager* memoryManager, std::uint32_t frameCount
 	);
 
-	[[nodiscard]]
-	ID3D12Fence* GenericCopyStage(
-		size_t frameIndex, const RenderTarget& renderTarget, UINT64& counterValue, ID3D12Fence* waitFence
-	);
-	[[nodiscard]]
-	ID3D12Fence* DrawingStage(
-		size_t frameIndex, const RenderTarget& renderTarget, UINT64& counterValue, ID3D12Fence* waitFence
+	void ExecutePipelineStages(
+		size_t frameIndex, const RenderTarget& renderTarget, UINT64& counterValue,
+		ID3D12Fence* waitFence
 	);
 
-	void SetupPipelineStages();
+	[[nodiscard]]
+	ID3D12Fence* GenericCopyStage(
+		size_t frameIndex, UINT64& counterValue, ID3D12Fence* waitFence
+	);
+	void DrawingStage(
+		size_t frameIndex, const RenderTarget& renderTarget, UINT64& counterValue, ID3D12Fence* waitFence
+	);
 
 	void SetGraphicsDescriptorBufferLayout();
 	void SetGraphicsDescriptors();
@@ -115,20 +117,22 @@ private:
 		const DeviceManager& deviceManager, MemoryManager* memoryManager, std::uint32_t frameCount
 	);
 
+	void ExecutePipelineStages(
+		size_t frameIndex, const RenderTarget& renderTarget, UINT64& counterValue,
+		ID3D12Fence* waitFence
+	);
+
 	[[nodiscard]]
 	ID3D12Fence* GenericCopyStage(
-		size_t frameIndex, const RenderTarget& renderTarget, UINT64& counterValue, ID3D12Fence* waitFence
+		size_t frameIndex, UINT64& counterValue, ID3D12Fence* waitFence
 	);
 	[[nodiscard]]
 	ID3D12Fence* FrustumCullingStage(
+		size_t frameIndex, UINT64& counterValue, ID3D12Fence* waitFence
+	);
+	void DrawingStage(
 		size_t frameIndex, const RenderTarget& renderTarget, UINT64& counterValue, ID3D12Fence* waitFence
 	);
-	[[nodiscard]]
-	ID3D12Fence* DrawingStage(
-		size_t frameIndex, const RenderTarget& renderTarget, UINT64& counterValue, ID3D12Fence* waitFence
-	);
-
-	void SetupPipelineStages();
 
 	void SetGraphicsDescriptorBufferLayout();
 	void SetModelGraphicsDescriptors();

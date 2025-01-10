@@ -41,8 +41,6 @@ RenderEngineVSIndividual::RenderEngineVSIndividual(
 	m_textureManager.SetDescriptorTable(
 		m_graphicsDescriptorManagers, s_textureSRVRegisterSlot, s_pixelShaderRegisterSpace
 	);
-
-	SetupPipelineStages();
 }
 
 void RenderEngineVSIndividual::SetGraphicsDescriptorBufferLayout()
@@ -84,14 +82,13 @@ void RenderEngineVSIndividual::SetGraphicsDescriptors()
 	}
 }
 
-void RenderEngineVSIndividual::SetupPipelineStages()
-{
-	constexpr size_t stageCount = 2u;
+void RenderEngineVSIndividual::ExecutePipelineStages(
+	size_t frameIndex, const RenderTarget& renderTarget, UINT64& counterValue,
+	ID3D12Fence* waitFence
+) {
+	waitFence = GenericCopyStage(frameIndex, counterValue, waitFence);
 
-	m_pipelineStages.reserve(stageCount);
-
-	m_pipelineStages.emplace_back(&RenderEngineVSIndividual::GenericCopyStage);
-	m_pipelineStages.emplace_back(&RenderEngineVSIndividual::DrawingStage);
+	DrawingStage(frameIndex, renderTarget, counterValue, waitFence);
 }
 
 ModelManagerVSIndividual RenderEngineVSIndividual::GetModelManager(
@@ -132,8 +129,7 @@ std::uint32_t RenderEngineVSIndividual::AddMeshBundle(std::unique_ptr<MeshBundle
 }
 
 ID3D12Fence* RenderEngineVSIndividual::GenericCopyStage(
-	size_t frameIndex,
-	[[maybe_unused]] const RenderTarget& renderTarget, UINT64& counterValue, ID3D12Fence* waitFence
+	size_t frameIndex, UINT64& counterValue, ID3D12Fence* waitFence
 ) {
 	// Copy Phase
 	// If the Copy stage isn't executed, pass the waitFence on.
@@ -176,7 +172,7 @@ ID3D12Fence* RenderEngineVSIndividual::GenericCopyStage(
 	return signalledFence;
 }
 
-ID3D12Fence* RenderEngineVSIndividual::DrawingStage(
+void RenderEngineVSIndividual::DrawingStage(
 	size_t frameIndex, const RenderTarget& renderTarget, UINT64& counterValue, ID3D12Fence* waitFence
 ) {
 	// Graphics Phase
@@ -206,9 +202,9 @@ ID3D12Fence* RenderEngineVSIndividual::DrawingStage(
 		renderTarget.ToPresentState(graphicsCmdListScope);
 	}
 
-	const D3DFence& graphicsWaitFence = m_graphicsWait[frameIndex];
-
 	{
+		const D3DFence& graphicsWaitFence = m_graphicsWait[frameIndex];
+
 		const UINT64 oldCounterValue = counterValue;
 		++counterValue;
 
@@ -220,8 +216,6 @@ ID3D12Fence* RenderEngineVSIndividual::DrawingStage(
 
 		m_graphicsQueue.SubmitCommandLists(graphicsSubmitBuilder);
 	}
-
-	return graphicsWaitFence.Get();
 }
 
 // VS Indirect
@@ -316,8 +310,6 @@ RenderEngineVSIndirect::RenderEngineVSIndirect(
 	m_cameraManager.SetDescriptorCompute(
 		m_computeDescriptorManagers, s_cameraCSCBVRegisterSlot, s_computeShaderRegisterSpace
 	);
-
-	SetupPipelineStages();
 }
 
 void RenderEngineVSIndirect::SetGraphicsDescriptorBufferLayout()
@@ -358,15 +350,15 @@ void RenderEngineVSIndirect::SetComputeDescriptorBufferLayout()
 		);
 }
 
-void RenderEngineVSIndirect::SetupPipelineStages()
-{
-	constexpr size_t stageCount = 3u;
+void RenderEngineVSIndirect::ExecutePipelineStages(
+	size_t frameIndex, const RenderTarget& renderTarget, UINT64& counterValue,
+	ID3D12Fence* waitFence
+) {
+	waitFence = GenericCopyStage(frameIndex, counterValue, waitFence);
 
-	m_pipelineStages.reserve(stageCount);
+	waitFence = FrustumCullingStage(frameIndex, counterValue, waitFence);
 
-	m_pipelineStages.emplace_back(&RenderEngineVSIndirect::GenericCopyStage);
-	m_pipelineStages.emplace_back(&RenderEngineVSIndirect::FrustumCullingStage);
-	m_pipelineStages.emplace_back(&RenderEngineVSIndirect::DrawingStage);
+	DrawingStage(frameIndex, renderTarget, counterValue, waitFence);
 }
 
 void RenderEngineVSIndirect::SetShaderPath(const std::wstring& shaderPath)
@@ -527,8 +519,7 @@ std::uint32_t RenderEngineVSIndirect::AddMeshBundle(std::unique_ptr<MeshBundleTe
 }
 
 ID3D12Fence* RenderEngineVSIndirect::GenericCopyStage(
-	size_t frameIndex,
-	[[maybe_unused]] const RenderTarget& renderTarget, UINT64& counterValue, ID3D12Fence* waitFence
+	size_t frameIndex, UINT64& counterValue, ID3D12Fence* waitFence
 ) {
 	// Copy Phase
 	// If the Copy stage isn't executed, pass the waitFence on.
@@ -573,8 +564,7 @@ ID3D12Fence* RenderEngineVSIndirect::GenericCopyStage(
 }
 
 ID3D12Fence* RenderEngineVSIndirect::FrustumCullingStage(
-	size_t frameIndex,
-	[[maybe_unused]] const RenderTarget& renderTarget, UINT64& counterValue, ID3D12Fence* waitFence
+	size_t frameIndex, UINT64& counterValue, ID3D12Fence* waitFence
 ) {
 	// Compute Phase
 	const D3DCommandList& computeCmdList = m_computeQueue.GetCommandList(frameIndex);
@@ -611,7 +601,7 @@ ID3D12Fence* RenderEngineVSIndirect::FrustumCullingStage(
 	return computeWaitFence.Get();
 }
 
-ID3D12Fence* RenderEngineVSIndirect::DrawingStage(
+void RenderEngineVSIndirect::DrawingStage(
 	size_t frameIndex, const RenderTarget& renderTarget, UINT64& counterValue, ID3D12Fence* waitFence
 ) {
 	// Graphics Phase
@@ -644,9 +634,9 @@ ID3D12Fence* RenderEngineVSIndirect::DrawingStage(
 		renderTarget.ToPresentState(graphicsCmdListScope);
 	}
 
-	const D3DFence& graphicsWaitFence = m_graphicsWait[frameIndex];
-
 	{
+		const D3DFence& graphicsWaitFence = m_graphicsWait[frameIndex];
+
 		const UINT64 oldCounterValue = counterValue;
 		++counterValue;
 
@@ -658,6 +648,4 @@ ID3D12Fence* RenderEngineVSIndirect::DrawingStage(
 
 		m_graphicsQueue.SubmitCommandLists(graphicsSubmitBuilder);
 	}
-
-	return graphicsWaitFence.Get();
 }
