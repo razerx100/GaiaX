@@ -4,6 +4,7 @@
 #include <cassert>
 #include <concepts>
 #include <d3dx12.h>
+#include <VertexLayout.hpp>
 
 class StencilOpStateBuilder
 {
@@ -126,15 +127,16 @@ public:
 			.DSVFormat             = DXGI_FORMAT_UNKNOWN,
 			.SampleDesc            = DXGI_SAMPLE_DESC{ .Count = 1u, .Quality = 0u },
 			.Flags                 = D3D12_PIPELINE_STATE_FLAG_NONE
-		}
+		}, m_vertexLayout{}
 	{}
 
-	// Can only be set on a Vertex Shader based Pipeline. And also the pointers inside should be alive
-	// till the pipeline is created.
+	// Can only be set on a Vertex Shader based Pipeline.
 	GraphicsPipelineBuilder& SetInputAssembler(
-		const D3D12_INPUT_LAYOUT_DESC& inputLayout
+		const VertexLayout& vertexLayout
 	) noexcept requires std::is_same_v<PipelineStateType, D3D12_GRAPHICS_PIPELINE_STATE_DESC> {
-		m_pipelineState.InputLayout = inputLayout;
+		m_vertexLayout              = vertexLayout;
+
+		m_pipelineState.InputLayout = m_vertexLayout.GetLayoutDesc();
 
 		return *this;
 	}
@@ -223,24 +225,41 @@ private:
 
 private:
 	PipelineStateType m_pipelineState;
+	VertexLayout      m_vertexLayout;
 
 public:
 	GraphicsPipelineBuilder(const GraphicsPipelineBuilder& other) noexcept
-		: m_pipelineState{ other.m_pipelineState }
-	{}
+		: m_pipelineState{ other.m_pipelineState },
+		m_vertexLayout{ other.m_vertexLayout }
+	{
+		// GetLayoutDesc gets a new object with the updated pointers.
+		m_pipelineState.InputLayout = m_vertexLayout.GetLayoutDesc();
+	}
 	GraphicsPipelineBuilder& operator=(const GraphicsPipelineBuilder& other) noexcept
 	{
 		m_pipelineState = other.m_pipelineState;
+		m_vertexLayout  = other.m_vertexLayout;
+
+		// GetLayoutDesc gets a new object with the updated pointers.
+		m_pipelineState.InputLayout = m_vertexLayout.GetLayoutDesc();
 
 		return *this;
 	}
 
 	GraphicsPipelineBuilder(GraphicsPipelineBuilder&& other) noexcept
-		: m_pipelineState{ other.m_pipelineState }
-	{}
+		: m_pipelineState{ other.m_pipelineState },
+		m_vertexLayout{ std::move(other.m_vertexLayout) }
+	{
+		// GetLayoutDesc gets a new object with the updated pointers.
+		m_pipelineState.InputLayout = m_vertexLayout.GetLayoutDesc();
+	}
 	GraphicsPipelineBuilder& operator=(GraphicsPipelineBuilder&& other) noexcept
 	{
 		m_pipelineState = other.m_pipelineState;
+		m_vertexLayout  = std::move(other.m_vertexLayout);
+
+		// GetLayoutDesc gets a new object with the updated pointers.
+		m_pipelineState.InputLayout = m_vertexLayout.GetLayoutDesc();
 
 		return *this;
 	}

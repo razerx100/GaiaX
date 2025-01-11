@@ -20,15 +20,12 @@ static std::unique_ptr<D3DPipelineObject> CreateGraphicsPipelineVS(
 
 	GraphicsPipelineBuilderVS builder{ graphicsRootSignature };
 
-	// The vertexLayout object must be alive till the pipeline is created, to preserve the
-	// pointers.
-	VertexLayout<3u> vertexLayout{};
-
-	vertexLayout.AddInputElement("Position", DXGI_FORMAT_R32G32B32_FLOAT, 12u)
+	builder.SetInputAssembler(
+		VertexLayout{}
+		.AddInputElement("Position", DXGI_FORMAT_R32G32B32_FLOAT, 12u)
 		.AddInputElement("Normal", DXGI_FORMAT_R32G32B32_FLOAT, 12u)
-		.AddInputElement("UV", DXGI_FORMAT_R32G32_FLOAT, 8u);
-
-	builder.SetInputAssembler(vertexLayout.GetLayoutDesc());
+		.AddInputElement("UV", DXGI_FORMAT_R32G32_FLOAT, 8u)
+	);
 
 	builder.AddRenderTarget(rtvFormat).SetCullMode(D3D12_CULL_MODE_BACK);
 
