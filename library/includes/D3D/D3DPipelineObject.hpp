@@ -129,7 +129,8 @@ public:
 		}
 	{}
 
-	// Can only be set on a Vertex Shader based Pipeline.
+	// Can only be set on a Vertex Shader based Pipeline. And also the pointers inside should be alive
+	// till the pipeline is created.
 	GraphicsPipelineBuilder& SetInputAssembler(
 		const D3D12_INPUT_LAYOUT_DESC& inputLayout
 	) noexcept requires std::is_same_v<PipelineStateType, D3D12_GRAPHICS_PIPELINE_STATE_DESC> {
@@ -155,8 +156,11 @@ public:
 
 	GraphicsPipelineBuilder& AddRenderTarget(DXGI_FORMAT rtvFormat)
 	{
+		const size_t maxNumRenderTargets = std::size(m_pipelineState.RTVFormats);
+
 		assert(
-			m_pipelineState.NumRenderTargets <= 8u && "Can't have more than 8 RTVs attached to a pipeline."
+			m_pipelineState.NumRenderTargets <= maxNumRenderTargets
+			&& "Can't have more than 8 RTVs attached to a pipeline."
 		);
 
 		const size_t currentRTVIndex = m_pipelineState.NumRenderTargets;
