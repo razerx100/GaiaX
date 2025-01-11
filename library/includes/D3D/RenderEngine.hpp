@@ -11,7 +11,6 @@
 #include <D3DCommandQueue.hpp>
 #include <CommonBuffers.hpp>
 #include <TextureManager.hpp>
-#include <DepthBuffer.hpp>
 #include <CameraManager.hpp>
 #include <ViewportAndScissorManager.hpp>
 #include <D3DRootSignature.hpp>
@@ -20,7 +19,7 @@
 #include <Shader.hpp>
 #include <MeshBundle.hpp>
 #include <D3DModelBuffer.hpp>
-#include <PipelineManager.hpp>
+#include <D3DRenderPassManager.hpp>
 
 class RenderEngine
 {
@@ -91,8 +90,6 @@ public:
 	virtual void WaitForGPUToFinish();
 
 	[[nodiscard]]
-	const DepthBuffer& GetDepthBuffer() const noexcept { return m_depthBuffer; }
-	[[nodiscard]]
 	const D3DCommandQueue& GetPresentQueue() const noexcept { return m_graphicsQueue; }
 
 protected:
@@ -133,7 +130,6 @@ protected:
 	MaterialBuffers                   m_materialBuffers;
 	CameraManager                     m_cameraManager;
 	D3DReusableDescriptorHeap         m_dsvHeap;
-	DepthBuffer                       m_depthBuffer;
 	std::array<float, 4u>             m_backgroundColour;
 	ViewportAndScissorManager         m_viewportAndScissors;
 	TemporaryDataBufferGPU            m_temporaryDataBuffer;
@@ -159,7 +155,6 @@ public:
 		m_materialBuffers{ std::move(other.m_materialBuffers) },
 		m_cameraManager{ std::move(other.m_cameraManager) },
 		m_dsvHeap{ std::move(other.m_dsvHeap) },
-		m_depthBuffer{ std::move(other.m_depthBuffer) },
 		m_backgroundColour{ other.m_backgroundColour },
 		m_viewportAndScissors{ other.m_viewportAndScissors },
 		m_temporaryDataBuffer{ std::move(other.m_temporaryDataBuffer) },
@@ -182,7 +177,6 @@ public:
 		m_materialBuffers            = std::move(other.m_materialBuffers);
 		m_cameraManager              = std::move(other.m_cameraManager);
 		m_dsvHeap                    = std::move(other.m_dsvHeap);
-		m_depthBuffer                = std::move(other.m_depthBuffer);
 		m_backgroundColour           = other.m_backgroundColour;
 		m_viewportAndScissors        = other.m_viewportAndScissors;
 		m_temporaryDataBuffer        = std::move(other.m_temporaryDataBuffer);
@@ -210,11 +204,13 @@ public:
 			)
 		},
 		m_meshManager{ deviceManager.GetDevice(), &m_memoryManager },
-		m_graphicsPipelineManager{ deviceManager.GetDevice() },
+		m_renderPassManager{ deviceManager.GetDevice() },
 		m_modelBuffers{
 			deviceManager.GetDevice(), &m_memoryManager, static_cast<std::uint32_t>(frameCount)
 		}
 	{
+		m_renderPassManager.SetDepthTesting(deviceManager.GetDevice(), &m_memoryManager, &m_dsvHeap);
+
 		for (D3DDescriptorManager& descriptorManager : m_graphicsDescriptorManagers)
 			m_textureManager.SetDescriptorLayout(
 				descriptorManager, s_textureSRVRegisterSlot, s_pixelShaderRegisterSpace
@@ -223,15 +219,15 @@ public:
 
 	void SetShaderPath(const std::wstring& shaderPath) override
 	{
-		m_graphicsPipelineManager.SetShaderPath(shaderPath);
+		m_renderPassManager.SetShaderPath(shaderPath);
 	}
 	void AddPixelShader(const ShaderName& pixelShader) override
 	{
-		m_graphicsPipelineManager.AddPipeline(pixelShader);
+		m_renderPassManager.AddOrGetGraphicsPipeline(pixelShader);
 	}
 	void ChangePixelShader(std::uint32_t modelBundleID, const ShaderName& pixelShader) override
 	{
-		const std::uint32_t psoIndex = GetGraphicsPSOIndex(pixelShader);
+		const std::uint32_t psoIndex = m_renderPassManager.AddOrGetGraphicsPipeline(pixelShader);
 
 		m_modelManager.ChangePSO(modelBundleID, psoIndex);
 	}
@@ -248,7 +244,7 @@ public:
 
 	void Resize(UINT width, UINT height) override
 	{
-		m_depthBuffer.Create(width, height);
+		m_renderPassManager.ResizeDepthBuffer(width, height);
 
 		m_viewportAndScissors.Resize(width, height);
 	}
@@ -290,28 +286,11 @@ protected:
 		static_cast<Derived const*>(this)->_updatePerFrame(frameIndex);
 	}
 
-	[[nodiscard]]
-	std::uint32_t GetGraphicsPSOIndex(const ShaderName& pixelShader)
-	{
-		std::optional<std::uint32_t> oPSOIndex = m_graphicsPipelineManager.TryToGetPSOIndex(
-			pixelShader
-		);
-
-		auto psoIndex = std::numeric_limits<std::uint32_t>::max();
-
-		if (!oPSOIndex)
-			psoIndex = m_graphicsPipelineManager.AddPipeline(pixelShader);
-		else
-			psoIndex = oPSOIndex.value();
-
-		return psoIndex;
-	}
-
 protected:
-	ModelManager_t                      m_modelManager;
-	MeshManager_t                       m_meshManager;
-	PipelineManager<GraphicsPipeline_t> m_graphicsPipelineManager;
-	ModelBuffers                        m_modelBuffers;
+	ModelManager_t                           m_modelManager;
+	MeshManager_t                            m_meshManager;
+	D3DRenderPassManager<GraphicsPipeline_t> m_renderPassManager;
+	ModelBuffers                             m_modelBuffers;
 
 public:
 	RenderEngineCommon(const RenderEngineCommon&) = delete;
@@ -321,7 +300,7 @@ public:
 		: RenderEngine{ std::move(other) },
 		m_modelManager{ std::move(other.m_modelManager) },
 		m_meshManager{ std::move(other.m_meshManager) },
-		m_graphicsPipelineManager{ std::move(other.m_graphicsPipelineManager) },
+		m_renderPassManager{ std::move(other.m_renderPassManager) },
 		m_modelBuffers{ std::move(other.m_modelBuffers) }
 	{}
 	RenderEngineCommon& operator=(RenderEngineCommon&& other) noexcept
@@ -329,7 +308,7 @@ public:
 		RenderEngine::operator=(std::move(other));
 		m_modelManager            = std::move(other.m_modelManager);
 		m_meshManager             = std::move(other.m_meshManager);
-		m_graphicsPipelineManager = std::move(other.m_graphicsPipelineManager);
+		m_renderPassManager       = std::move(other.m_renderPassManager);
 		m_modelBuffers            = std::move(other.m_modelBuffers);
 
 		return *this;

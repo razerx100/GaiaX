@@ -16,36 +16,38 @@ public:
 
 	void Create(
 		ID3D12Device2* device, ID3D12RootSignature* graphicsRootSignature,
+		DXGI_FORMAT rtvFormat, DXGI_FORMAT dsvFormat,
 		const std::wstring& shaderPath, const ShaderName& pixelShader
 	) {
 		m_pixelShader      = pixelShader;
 
 		m_graphicsPipeline = static_cast<Derived*>(this)->_createGraphicsPipeline(
-			device, graphicsRootSignature, shaderPath, m_pixelShader
+			device, graphicsRootSignature, rtvFormat, dsvFormat, shaderPath, m_pixelShader
 		);
 	}
 
 	void Create(
 		ID3D12Device2* device, const D3DRootSignature& graphicsRootSignature,
+		DXGI_FORMAT rtvFormat, DXGI_FORMAT dsvFormat,
 		const std::wstring& shaderPath, const ShaderName& pixelShader
 	) {
-		Create(device, graphicsRootSignature.Get(), shaderPath, pixelShader);
+		Create(device, graphicsRootSignature.Get(), rtvFormat, dsvFormat, shaderPath, pixelShader);
 	}
 
 	void Recreate(
 		ID3D12Device2* device, ID3D12RootSignature* graphicsRootSignature,
-		const std::wstring& shaderPath
+		DXGI_FORMAT rtvFormat, DXGI_FORMAT dsvFormat, const std::wstring& shaderPath
 	) {
 		m_graphicsPipeline = static_cast<Derived*>(this)->_createGraphicsPipeline(
-			device, graphicsRootSignature, shaderPath, m_pixelShader
+			device, graphicsRootSignature, rtvFormat, dsvFormat, shaderPath, m_pixelShader
 		);
 	}
 
 	void Recreate(
 		ID3D12Device2* device, const D3DRootSignature& graphicsRootSignature,
-		const std::wstring& shaderPath
+		DXGI_FORMAT rtvFormat, DXGI_FORMAT dsvFormat, const std::wstring& shaderPath
 	) {
-		Recreate(device, graphicsRootSignature.Get(), shaderPath);
+		Recreate(device, graphicsRootSignature.Get(), rtvFormat, dsvFormat, shaderPath);
 	}
 
 	void Bind(const D3DCommandList& graphicsCmdList) const noexcept

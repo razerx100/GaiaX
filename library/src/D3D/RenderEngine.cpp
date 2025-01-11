@@ -23,7 +23,6 @@ RenderEngine::RenderEngine(
 	m_materialBuffers{ device, &m_memoryManager },
 	m_cameraManager{ device, &m_memoryManager },
 	m_dsvHeap{ device, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE },
-	m_depthBuffer{ device, &m_memoryManager, &m_dsvHeap },
 	m_backgroundColour{ 0.0001f, 0.0001f, 0.0001f, 0.0001f },
 	m_viewportAndScissors{}, m_temporaryDataBuffer{}, m_copyNecessary{ false }
 {

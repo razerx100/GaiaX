@@ -1,6 +1,7 @@
 #ifndef D3D_PIPELINE_OBJECT_HPP_
 #define D3D_PIPELINE_OBJECT_HPP_
 #include <D3DHeaders.hpp>
+#include <cassert>
 #include <concepts>
 #include <d3dx12.h>
 
@@ -46,8 +47,8 @@ class DepthStencilStateBuilder
 public:
 	DepthStencilStateBuilder()
 		: m_depthStencilStateDesc{
-			.DepthEnable      = TRUE,
-			.DepthWriteMask   = D3D12_DEPTH_WRITE_MASK_ALL,
+			.DepthEnable      = FALSE,
+			.DepthWriteMask   = D3D12_DEPTH_WRITE_MASK_ZERO,
 			.DepthFunc        = D3D12_COMPARISON_FUNC_LESS,
 			.StencilEnable    = FALSE,
 			.StencilReadMask  = D3D12_DEFAULT_STENCIL_READ_MASK,
@@ -58,14 +59,11 @@ public:
 	{}
 
 	DepthStencilStateBuilder& Enable(
-		BOOL depthTest, D3D12_DEPTH_WRITE_MASK depthWrite,
-		BOOL stencilTest, UINT8 stencilReadMask, UINT8 stencilWriteMask
+		BOOL depthTest, D3D12_DEPTH_WRITE_MASK depthWrite, BOOL stencilTest
 	) noexcept {
 		m_depthStencilStateDesc.DepthEnable      = depthTest;
 		m_depthStencilStateDesc.DepthWriteMask   = depthWrite;
 		m_depthStencilStateDesc.StencilEnable    = stencilTest;
-		m_depthStencilStateDesc.StencilReadMask  = stencilReadMask;
-		m_depthStencilStateDesc.StencilWriteMask = stencilWriteMask;
 
 		return *this;
 	}
@@ -104,27 +102,13 @@ public:
 			{
 				.AlphaToCoverageEnable  = FALSE,
 				.IndependentBlendEnable = FALSE,
-				.RenderTarget           = {
-					D3D12_RENDER_TARGET_BLEND_DESC
-					{
-						.BlendEnable           = FALSE,
-						.LogicOpEnable         = FALSE,
-						.SrcBlend              = D3D12_BLEND_ONE,
-						.DestBlend             = D3D12_BLEND_ZERO,
-						.BlendOp               = D3D12_BLEND_OP_ADD,
-						.SrcBlendAlpha         = D3D12_BLEND_ONE,
-						.DestBlendAlpha        = D3D12_BLEND_ZERO,
-						.BlendOpAlpha          = D3D12_BLEND_OP_ADD,
-						.LogicOp               = D3D12_LOGIC_OP_NOOP,
-						.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL
-					}
-				}
+				.RenderTarget           = { GetBlendDesc() }
 			},
 			.SampleMask            = UINT_MAX,
 			.RasterizerState       = D3D12_RASTERIZER_DESC
 			{
 				.FillMode              = D3D12_FILL_MODE_SOLID,
-				.CullMode              = D3D12_CULL_MODE_BACK,
+				.CullMode              = D3D12_CULL_MODE_NONE,
 				.FrontCounterClockwise = FALSE,
 				.DepthBias             = D3D12_DEFAULT_DEPTH_BIAS,
 				.DepthBiasClamp        = D3D12_DEFAULT_DEPTH_BIAS_CLAMP,
@@ -135,11 +119,11 @@ public:
 				.ForcedSampleCount     = 0,
 				.ConservativeRaster    = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF
 			},
-			.DepthStencilState     = { DepthStencilStateBuilder{}.Get() },
+			.DepthStencilState     = DepthStencilStateBuilder{}.Get(),
 			.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
-			.NumRenderTargets      = 1u,
-			.RTVFormats            = { DXGI_FORMAT_B8G8R8A8_UNORM_SRGB },
-			.DSVFormat             = DXGI_FORMAT_D32_FLOAT,
+			.NumRenderTargets      = 0u,
+			.RTVFormats            = { DXGI_FORMAT_UNKNOWN },
+			.DSVFormat             = DXGI_FORMAT_UNKNOWN,
 			.SampleDesc            = DXGI_SAMPLE_DESC{ .Count = 1u, .Quality = 0u },
 			.Flags                 = D3D12_PIPELINE_STATE_FLAG_NONE
 		}
@@ -162,10 +146,34 @@ public:
 		return *this;
 	}
 
+	GraphicsPipelineBuilder& SetCullMode(D3D12_CULL_MODE cullMode) noexcept
+	{
+		m_pipelineState.RasterizerState.CullMode = cullMode;
+
+		return *this;
+	}
+
+	GraphicsPipelineBuilder& AddRenderTarget(DXGI_FORMAT rtvFormat)
+	{
+		assert(
+			m_pipelineState.NumRenderTargets <= 8u && "Can't have more than 8 RTVs attached to a pipeline."
+		);
+
+		const size_t currentRTVIndex = m_pipelineState.NumRenderTargets;
+
+		m_pipelineState.BlendState.RenderTarget[currentRTVIndex] = GetBlendDesc();
+		m_pipelineState.RTVFormats[currentRTVIndex]              = rtvFormat;
+
+		++m_pipelineState.NumRenderTargets;
+
+		return *this;
+	}
+
 	GraphicsPipelineBuilder& SetDepthStencilState(
-		const DepthStencilStateBuilder& depthStencilBuilder
+		const DepthStencilStateBuilder& depthStencilBuilder, DXGI_FORMAT dsvFormat
 	) noexcept {
 		m_pipelineState.DepthStencilState = depthStencilBuilder.Get();
+		m_pipelineState.DSVFormat         = dsvFormat;
 
 		return *this;
 	}
@@ -189,6 +197,25 @@ public:
 
 	[[nodiscard]]
 	PipelineStateType Get() const noexcept { return m_pipelineState; }
+
+private:
+	[[nodiscard]]
+	static D3D12_RENDER_TARGET_BLEND_DESC GetBlendDesc() noexcept
+	{
+		return D3D12_RENDER_TARGET_BLEND_DESC
+		{
+			.BlendEnable           = FALSE,
+			.LogicOpEnable         = FALSE,
+			.SrcBlend              = D3D12_BLEND_ONE,
+			.DestBlend             = D3D12_BLEND_ZERO,
+			.BlendOp               = D3D12_BLEND_OP_ADD,
+			.SrcBlendAlpha         = D3D12_BLEND_ONE,
+			.DestBlendAlpha        = D3D12_BLEND_ZERO,
+			.BlendOpAlpha          = D3D12_BLEND_OP_ADD,
+			.LogicOp               = D3D12_LOGIC_OP_NOOP,
+			.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL
+		};
+	}
 
 private:
 	PipelineStateType m_pipelineState;

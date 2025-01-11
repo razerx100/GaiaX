@@ -8,7 +8,7 @@ DepthBuffer::~DepthBuffer() noexcept
 
 void DepthBuffer::Create(UINT width, UINT height)
 {
-	const DXGI_FORMAT depthFormat = DXGI_FORMAT_D32_FLOAT;
+	const DXGI_FORMAT depthFormat = GetFormat();
 
 	D3D12_CLEAR_VALUE depthClearValue
 	{

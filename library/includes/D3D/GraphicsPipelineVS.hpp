@@ -18,6 +18,7 @@ private:
 	[[nodiscard]]
 	std::unique_ptr<D3DPipelineObject> _createGraphicsPipeline(
 		ID3D12Device2* device, ID3D12RootSignature* graphicsRootSignature,
+		DXGI_FORMAT rtvFormat, DXGI_FORMAT dsvFormat,
 		const std::wstring& shaderPath, const ShaderName& pixelShader
 	) const;
 
@@ -47,6 +48,7 @@ private:
 	[[nodiscard]]
 	std::unique_ptr<D3DPipelineObject> _createGraphicsPipeline(
 		ID3D12Device2* device, ID3D12RootSignature* graphicsRootSignature,
+		DXGI_FORMAT rtvFormat, DXGI_FORMAT dsvFormat,
 		const std::wstring& shaderPath, const ShaderName& pixelShader
 	) const;
 

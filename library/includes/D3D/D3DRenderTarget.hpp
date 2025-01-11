@@ -15,7 +15,7 @@ public:
 	{}
 	~RenderTarget() noexcept;
 
-	void Create(ComPtr<ID3D12Resource>&& renderTarget);
+	void Create(ComPtr<ID3D12Resource>&& renderTarget, DXGI_FORMAT rtvFormat);
 
 	void Set(
 		const D3DCommandList& commandList, const std::array<float, 4u>& clearColour,

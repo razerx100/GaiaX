@@ -8,13 +8,13 @@ RenderTarget::~RenderTarget() noexcept
 		m_rtvHeap->FreeDescriptor(m_descriptorIndex);
 }
 
-void RenderTarget::Create(ComPtr<ID3D12Resource>&& renderTarget)
+void RenderTarget::Create(ComPtr<ID3D12Resource>&& renderTarget, DXGI_FORMAT rtvFormat)
 {
 	m_renderTarget = std::move(renderTarget);
 
 	D3D12_RENDER_TARGET_VIEW_DESC rtvDesc
 	{
-		.Format        = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,
+		.Format        = rtvFormat,
 		.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D,
 		.Texture2D     = D3D12_TEX2D_RTV
 		{

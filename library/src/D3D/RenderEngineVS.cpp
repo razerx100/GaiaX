@@ -29,7 +29,7 @@ RenderEngineVSIndividual::RenderEngineVSIndividual(
 
 		m_graphicsRootSignature.CreateSignature(deviceManager.GetDevice(), rootSignatureDynamic);
 
-		m_graphicsPipelineManager.SetRootSignature(m_graphicsRootSignature.Get());
+		m_renderPassManager.SetRootSignature(m_graphicsRootSignature.Get());
 	}
 
 	m_cameraManager.CreateBuffer(static_cast<std::uint32_t>(frameCount));
@@ -104,7 +104,7 @@ std::uint32_t RenderEngineVSIndividual::AddModelBundle(
 ) {
 	WaitForGPUToFinish();
 
-	const std::uint32_t psoIndex = GetGraphicsPSOIndex(pixelShader);
+	const std::uint32_t psoIndex = m_renderPassManager.AddOrGetGraphicsPipeline(pixelShader);
 
 	const std::uint32_t index    = m_modelManager.AddModelBundle(
 		std::move(modelBundle), psoIndex, m_modelBuffers, m_stagingManager, m_temporaryDataBuffer
@@ -181,25 +181,25 @@ void RenderEngineVSIndividual::DrawingStage(
 	{
 		const CommandListScope graphicsCmdListScope{ graphicsCmdList };
 
-		renderTarget.ToRenderState(graphicsCmdListScope);
-
 		m_textureStorage.TransitionQueuedTextures(graphicsCmdListScope);
 
 		m_viewportAndScissors.Bind(graphicsCmdListScope);
 
 		m_graphicsDescriptorManagers[frameIndex].BindDescriptorHeap(graphicsCmdListScope);
 
-		const D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = m_depthBuffer.ClearDSV(graphicsCmdListScope);
-
-		renderTarget.Set(graphicsCmdListScope, m_backgroundColour, &dsvHandle);
-
 		m_graphicsRootSignature.BindToGraphics(graphicsCmdListScope);
 
 		m_graphicsDescriptorManagers[frameIndex].BindDescriptors(graphicsCmdListScope);
 
-		m_modelManager.Draw(graphicsCmdListScope, m_meshManager, m_graphicsPipelineManager);
+		m_renderPassManager.BeginRenderingWithDepth(
+			graphicsCmdListScope, renderTarget, m_backgroundColour
+		);
 
-		renderTarget.ToPresentState(graphicsCmdListScope);
+		m_modelManager.Draw(
+			graphicsCmdListScope, m_meshManager, m_renderPassManager.GetGraphicsPipelineManager()
+		);
+
+		m_renderPassManager.EndRendering(graphicsCmdListScope, renderTarget);
 	}
 
 	{
@@ -251,7 +251,7 @@ RenderEngineVSIndirect::RenderEngineVSIndirect(
 
 		m_graphicsRootSignature.CreateSignature(device, rootSignatureDynamic);
 
-		m_graphicsPipelineManager.SetRootSignature(m_graphicsRootSignature.Get());
+		m_renderPassManager.SetRootSignature(m_graphicsRootSignature.Get());
 	}
 
 	CreateCommandSignature(device);
@@ -368,7 +368,7 @@ void RenderEngineVSIndirect::SetShaderPath(const std::wstring& shaderPath)
 	m_computePipelineManager.SetShaderPath(shaderPath);
 
 	// Also add the single PSO.
-	m_computePipelineManager.AddPipeline(L"VertexShaderCSIndirect");
+	m_computePipelineManager.AddComputePipeline(L"VertexShaderCSIndirect");
 }
 
 void RenderEngineVSIndirect::_updatePerFrame(UINT64 frameIndex) const noexcept
@@ -487,7 +487,7 @@ std::uint32_t RenderEngineVSIndirect::AddModelBundle(
 ) {
 	WaitForGPUToFinish();
 
-	const std::uint32_t psoIndex = GetGraphicsPSOIndex(pixelShader);
+	const std::uint32_t psoIndex = m_renderPassManager.AddOrGetGraphicsPipeline(pixelShader);
 
 	const std::uint32_t index    = m_modelManager.AddModelBundle(
 		std::move(modelBundle), psoIndex, m_modelBuffers, m_stagingManager, m_temporaryDataBuffer
@@ -610,28 +610,26 @@ void RenderEngineVSIndirect::DrawingStage(
 	{
 		const CommandListScope graphicsCmdListScope{ graphicsCmdList };
 
-		renderTarget.ToRenderState(graphicsCmdListScope);
-
 		m_textureStorage.TransitionQueuedTextures(graphicsCmdListScope);
 
 		m_viewportAndScissors.Bind(graphicsCmdListScope);
 
 		m_graphicsDescriptorManagers[frameIndex].BindDescriptorHeap(graphicsCmdListScope);
 
-		const D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = m_depthBuffer.ClearDSV(graphicsCmdListScope);
-
-		renderTarget.Set(graphicsCmdListScope, m_backgroundColour, &dsvHandle);
-
 		m_graphicsRootSignature.BindToGraphics(graphicsCmdListScope);
 
 		m_graphicsDescriptorManagers[frameIndex].BindDescriptors(graphicsCmdListScope);
 
-		m_modelManager.Draw(
-			frameIndex, graphicsCmdListScope, m_commandSignature.Get(), m_meshManager,
-			m_graphicsPipelineManager
+		m_renderPassManager.BeginRenderingWithDepth(
+			graphicsCmdListScope, renderTarget, m_backgroundColour
 		);
 
-		renderTarget.ToPresentState(graphicsCmdListScope);
+		m_modelManager.Draw(
+			frameIndex, graphicsCmdListScope, m_commandSignature.Get(), m_meshManager,
+			m_renderPassManager.GetGraphicsPipelineManager()
+		);
+
+		m_renderPassManager.EndRendering(graphicsCmdListScope, renderTarget);
 	}
 
 	{

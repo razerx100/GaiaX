@@ -48,7 +48,23 @@ public:
 		return oPSOIndex;
 	}
 
-	std::uint32_t AddPipeline(const ShaderName& shaderName)
+	std::uint32_t AddGraphicsPipeline(
+		const ShaderName& shaderName, DXGI_FORMAT rtvFormat, DXGI_FORMAT dsvFormat
+	) {
+		const auto psoIndex = static_cast<std::uint32_t>(std::size(m_pipelines));
+
+		Pipeline pipeline{};
+
+		pipeline.Create(
+			m_device, m_rootSignature, rtvFormat, dsvFormat, m_shaderPath, shaderName
+		);
+
+		m_pipelines.emplace_back(std::move(pipeline));
+
+		return psoIndex;
+	}
+
+	std::uint32_t AddComputePipeline(const ShaderName& shaderName)
 	{
 		const auto psoIndex = static_cast<std::uint32_t>(std::size(m_pipelines));
 
@@ -61,7 +77,12 @@ public:
 		return psoIndex;
 	}
 
-	void RecreateAllPipelines()
+	void RecreateAllGraphicsPipelines(DXGI_FORMAT rtvFormat, DXGI_FORMAT dsvFormat)
+	{
+		for (Pipeline& pipeline : m_pipelines)
+			pipeline.Recreate(m_device, m_rootSignature, rtvFormat, dsvFormat, m_shaderPath);
+	}
+	void RecreateAllComputePipelines()
 	{
 		for (Pipeline& pipeline : m_pipelines)
 			pipeline.Recreate(m_device, m_rootSignature, m_shaderPath);

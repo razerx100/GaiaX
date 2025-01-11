@@ -5,6 +5,7 @@
 // Vertex Shader
 static std::unique_ptr<D3DPipelineObject> CreateGraphicsPipelineVS(
 	ID3D12Device2* device, ID3D12RootSignature* graphicsRootSignature, ShaderType binaryType,
+	DXGI_FORMAT rtvFormat, DXGI_FORMAT dsvFormat,
 	const std::wstring& shaderPath, const ShaderName& pixelShader, const ShaderName& vertexShader
 ) {
 	auto vs              = std::make_unique<D3DShader>();
@@ -17,21 +18,32 @@ static std::unique_ptr<D3DPipelineObject> CreateGraphicsPipelineVS(
 		shaderPath + pixelShader.GetNameWithExtension(binaryType)
 	);
 
+	GraphicsPipelineBuilderVS builder{ graphicsRootSignature };
+
+	builder.SetInputAssembler(
+		VertexLayout{}
+		.AddInputElement("Position", DXGI_FORMAT_R32G32B32_FLOAT, 12u)
+		.AddInputElement("Normal", DXGI_FORMAT_R32G32B32_FLOAT, 12u)
+		.AddInputElement("UV", DXGI_FORMAT_R32G32_FLOAT, 8u)
+		.GetLayoutDesc()
+	);
+
+	builder.AddRenderTarget(rtvFormat).SetCullMode(D3D12_CULL_MODE_BACK);
+
+	if (dsvFormat != DXGI_FORMAT_UNKNOWN)
+		builder.SetDepthStencilState(
+			DepthStencilStateBuilder{}.Enable(TRUE, D3D12_DEPTH_WRITE_MASK_ALL, FALSE),
+			dsvFormat
+		);
+
 	auto pso = std::make_unique<D3DPipelineObject>();
 
 	if (vsSuccess && fsSuccess)
-		pso->CreateGraphicsPipeline(
-			device,
-			GraphicsPipelineBuilderVS{ graphicsRootSignature }
-			.SetInputAssembler(
-				VertexLayout{}
-				.AddInputElement("Position", DXGI_FORMAT_R32G32B32_FLOAT, 12u)
-				.AddInputElement("Normal",   DXGI_FORMAT_R32G32B32_FLOAT, 12u)
-				.AddInputElement("UV",       DXGI_FORMAT_R32G32_FLOAT,    8u)
-				.GetLayoutDesc()
-			)
-			.SetVertexStage(vs->GetByteCode(), ps->GetByteCode())
-		);
+	{
+		builder.SetVertexStage(vs->GetByteCode(), ps->GetByteCode());
+
+		pso->CreateGraphicsPipeline(device, builder);
+	}
 
 	return pso;
 }
@@ -46,10 +58,11 @@ void GraphicsPipelineVS::SetIATopology(const D3DCommandList& graphicsCmdList) no
 // Indirect Draw
 std::unique_ptr<D3DPipelineObject> GraphicsPipelineVSIndirectDraw::_createGraphicsPipeline(
 	ID3D12Device2* device, ID3D12RootSignature* graphicsRootSignature,
+	DXGI_FORMAT rtvFormat, DXGI_FORMAT dsvFormat,
 	const std::wstring& shaderPath, const ShaderName& pixelShader
 ) const {
 	return CreateGraphicsPipelineVS(
-		device, graphicsRootSignature, s_shaderBytecodeType,shaderPath, pixelShader,
+		device, graphicsRootSignature, s_shaderBytecodeType, rtvFormat, dsvFormat,shaderPath, pixelShader,
 		L"VertexShaderIndirect"
 	);
 }
@@ -57,10 +70,11 @@ std::unique_ptr<D3DPipelineObject> GraphicsPipelineVSIndirectDraw::_createGraphi
 // Individual Draw
 std::unique_ptr<D3DPipelineObject> GraphicsPipelineVSIndividualDraw::_createGraphicsPipeline(
 	ID3D12Device2* device, ID3D12RootSignature* graphicsRootSignature,
+	DXGI_FORMAT rtvFormat, DXGI_FORMAT dsvFormat,
 	const std::wstring& shaderPath, const ShaderName& pixelShader
 ) const {
 	return CreateGraphicsPipelineVS(
-		device, graphicsRootSignature, s_shaderBytecodeType, shaderPath, pixelShader,
+		device, graphicsRootSignature, s_shaderBytecodeType, rtvFormat, dsvFormat, shaderPath, pixelShader,
 		L"VertexShaderIndividual"
 	);
 }

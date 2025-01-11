@@ -26,6 +26,9 @@ public:
 	[[nodiscard]]
 	const Texture& GetDepthTexture() const noexcept { return m_depthTexture; }
 
+	[[nodiscard]]
+	static constexpr DXGI_FORMAT GetFormat() noexcept { return DXGI_FORMAT_D32_FLOAT; }
+
 private:
 	ID3D12Device*              m_device;
 	D3DReusableDescriptorHeap* m_dsvHeap;

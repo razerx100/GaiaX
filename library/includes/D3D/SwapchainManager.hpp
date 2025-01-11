@@ -32,6 +32,9 @@ public:
 		return m_renderTargets[frameIndex];
 	}
 
+	[[nodiscard]]
+	static constexpr DXGI_FORMAT GetFormat() noexcept { return DXGI_FORMAT_B8G8R8A8_UNORM_SRGB; }
+
 private:
 	void CreateRTVs();
 
