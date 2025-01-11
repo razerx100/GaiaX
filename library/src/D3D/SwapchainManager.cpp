@@ -23,7 +23,8 @@ void SwapchainManager::Create(
 	{
 		.Width       = 0u,
 		.Height      = 0u,
-		.Format      = GetFormat(),
+		// This format must be the non-SRGB version here.
+		.Format      = DXGI_FORMAT_B8G8R8A8_UNORM,
 		.SampleDesc  = DXGI_SAMPLE_DESC{ .Count = 1u, .Quality = 0u },
 		.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT,
 		.BufferCount = static_cast<UINT>(std::size(m_renderTargets)),

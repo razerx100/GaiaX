@@ -63,6 +63,7 @@ public:
 	void SetCamera(std::uint32_t index) noexcept { m_cameraManager.SetCamera(index); }
 	void RemoveCamera(std::uint32_t index) noexcept { m_cameraManager.RemoveCamera(index); }
 
+	virtual void SetSwapchainRTVFormat(DXGI_FORMAT rtvFormat) = 0;
 	virtual void SetShaderPath(const std::wstring& shaderPath) = 0;
 	virtual void AddPixelShader(const ShaderName& pixelShader) = 0;
 	virtual void ChangePixelShader(
@@ -220,6 +221,10 @@ public:
 	void SetShaderPath(const std::wstring& shaderPath) override
 	{
 		m_renderPassManager.SetShaderPath(shaderPath);
+	}
+	void SetSwapchainRTVFormat(DXGI_FORMAT rtvFormat) override
+	{
+		m_renderPassManager.SetRTVFormat(rtvFormat);
 	}
 	void AddPixelShader(const ShaderName& pixelShader) override
 	{

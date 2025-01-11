@@ -15,6 +15,8 @@ Gaia::Gaia(
 	CreateSwapchain(bufferCount, windowHandle);
 
 	// Need to create the render targets and stuffs.
+	m_renderEngine->SetSwapchainRTVFormat(SwapchainManager::GetFormat());
+
 	Resize(width, height);
 }
 
