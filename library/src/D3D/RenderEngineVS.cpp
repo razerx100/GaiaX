@@ -318,6 +318,14 @@ void RenderEngineVSIndirect::FinaliseInitialisation(const DeviceManager& deviceM
 	m_cameraManager.SetDescriptorCompute(
 		m_computeDescriptorManagers, s_cameraCSCBVRegisterSlot, s_computeShaderRegisterSpace
 	);
+
+	assert(
+		!std::empty(m_computePipelineManager.GetShaderPath())
+		&& "The shader path should be set before calling this function."
+	);
+
+	// Add the Frustum Culling shader.
+	m_computePipelineManager.AddComputePipeline(L"VertexShaderCSIndirect");
 }
 
 void RenderEngineVSIndirect::SetGraphicsDescriptorBufferLayout()
@@ -374,9 +382,6 @@ void RenderEngineVSIndirect::SetShaderPath(const std::wstring& shaderPath)
 	RenderEngineCommon::SetShaderPath(shaderPath);
 
 	m_computePipelineManager.SetShaderPath(shaderPath);
-
-	// Also add the single PSO.
-	m_computePipelineManager.AddComputePipeline(L"VertexShaderCSIndirect");
 }
 
 void RenderEngineVSIndirect::_updatePerFrame(UINT64 frameIndex) const noexcept

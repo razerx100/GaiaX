@@ -91,6 +91,9 @@ public:
 	[[nodiscard]]
 	ID3D12RootSignature* GetRootSignature() const noexcept { return m_rootSignature; }
 
+	[[nodiscard]]
+	const std::wstring& GetShaderPath() const noexcept { return m_shaderPath; }
+
 private:
 	ID3D12Device5*        m_device;
 	ID3D12RootSignature*  m_rootSignature;
