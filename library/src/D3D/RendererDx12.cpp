@@ -9,6 +9,11 @@ RendererDx12::RendererDx12(
 	}
 {}
 
+void RendererDx12::FinaliseInitialisation()
+{
+	m_gaia.FinaliseInitialisation();
+}
+
 void RendererDx12::Render()
 {
 	m_gaia.Render();

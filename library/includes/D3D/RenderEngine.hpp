@@ -36,6 +36,8 @@ public:
 	);
 	virtual ~RenderEngine() = default;
 
+	virtual void FinaliseInitialisation(const DeviceManager& deviceManager) = 0;
+
 	[[nodiscard]]
 	size_t AddMaterial(std::shared_ptr<Material> material);
 	[[nodiscard]]

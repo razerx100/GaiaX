@@ -20,6 +20,11 @@ Gaia::Gaia(
 	Resize(width, height);
 }
 
+void Gaia::FinaliseInitialisation()
+{
+	m_renderEngine->FinaliseInitialisation(m_deviceManager);
+}
+
 void Gaia::CreateDevice()
 {
 #if _DEBUG

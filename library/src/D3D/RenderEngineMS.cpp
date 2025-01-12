@@ -6,6 +6,11 @@ RenderEngineMS::RenderEngineMS(
 {
 	SetGraphicsDescriptorBufferLayout();
 
+	m_cameraManager.CreateBuffer(static_cast<std::uint32_t>(frameCount));
+}
+
+void RenderEngineMS::FinaliseInitialisation(const DeviceManager& deviceManager)
+{
 	for (D3DDescriptorManager& descriptorManager : m_graphicsDescriptorManagers)
 		descriptorManager.CreateDescriptors();
 
@@ -31,9 +36,6 @@ RenderEngineMS::RenderEngineMS(
 		m_renderPassManager.SetRootSignature(m_graphicsRootSignature.Get());
 	}
 
-	m_cameraManager.CreateBuffer(static_cast<std::uint32_t>(frameCount));
-
-	// This descriptor shouldn't change, so it should be fine to set it here.
 	m_cameraManager.SetDescriptorGraphics(
 		m_graphicsDescriptorManagers, s_cameraCBVRegisterSlot, s_vertexShaderRegisterSpace
 	);

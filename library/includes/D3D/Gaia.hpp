@@ -13,6 +13,8 @@ public:
 		std::shared_ptr<ThreadPool> threadPool, RenderEngineType engineType
 	);
 
+	void FinaliseInitialisation();
+
 	void Resize(UINT width, UINT height);
 	void Render();
 

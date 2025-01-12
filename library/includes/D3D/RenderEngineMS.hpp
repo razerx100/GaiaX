@@ -25,6 +25,8 @@ public:
 		const DeviceManager& deviceManager, std::shared_ptr<ThreadPool> threadPool, size_t frameCount
 	);
 
+	void FinaliseInitialisation(const DeviceManager& deviceManager) override;
+
 	[[nodiscard]]
 	std::uint32_t AddModelBundle(
 		std::shared_ptr<ModelBundle>&& modelBundle, const ShaderName& pixelShader

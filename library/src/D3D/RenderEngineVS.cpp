@@ -7,6 +7,11 @@ RenderEngineVSIndividual::RenderEngineVSIndividual(
 {
 	SetGraphicsDescriptorBufferLayout();
 
+	m_cameraManager.CreateBuffer(static_cast<std::uint32_t>(frameCount));
+}
+
+void RenderEngineVSIndividual::FinaliseInitialisation(const DeviceManager& deviceManager)
+{
 	for (D3DDescriptorManager& descriptorManager : m_graphicsDescriptorManagers)
 		descriptorManager.CreateDescriptors();
 
@@ -32,9 +37,6 @@ RenderEngineVSIndividual::RenderEngineVSIndividual(
 		m_renderPassManager.SetRootSignature(m_graphicsRootSignature.Get());
 	}
 
-	m_cameraManager.CreateBuffer(static_cast<std::uint32_t>(frameCount));
-
-	// This descriptor shouldn't change, so it should be fine to set it here.
 	m_cameraManager.SetDescriptorGraphics(
 		m_graphicsDescriptorManagers, s_cameraCBVRegisterSlot, s_vertexShaderRegisterSpace
 	);
@@ -229,6 +231,32 @@ RenderEngineVSIndirect::RenderEngineVSIndirect(
 
 	SetGraphicsDescriptorBufferLayout();
 
+	CreateCommandSignature(device);
+
+	m_cameraManager.CreateBuffer(static_cast<std::uint32_t>(frameCount));
+
+	// Compute stuffs.
+	for (size_t _ = 0u; _ < frameCount; ++_)
+	{
+		m_computeDescriptorManagers.emplace_back(device, s_computePipelineSetLayoutCount);
+
+		// Let's make all of the non graphics fences.
+		m_computeWait.emplace_back().Create(device);
+	}
+
+	const auto frameCountU32 = static_cast<std::uint32_t>(frameCount);
+
+	m_computeQueue.Create(device, D3D12_COMMAND_LIST_TYPE_COMPUTE, frameCountU32);
+
+	// Compute Descriptors.
+	SetComputeDescriptorBufferLayout();
+}
+
+void RenderEngineVSIndirect::FinaliseInitialisation(const DeviceManager& deviceManager)
+{
+	ID3D12Device5* device = deviceManager.GetDevice();
+
+	// Graphics
 	for (D3DDescriptorManager& descriptorManager : m_graphicsDescriptorManagers)
 		descriptorManager.CreateDescriptors();
 
@@ -254,11 +282,6 @@ RenderEngineVSIndirect::RenderEngineVSIndirect(
 		m_renderPassManager.SetRootSignature(m_graphicsRootSignature.Get());
 	}
 
-	CreateCommandSignature(device);
-
-	m_cameraManager.CreateBuffer(static_cast<std::uint32_t>(frameCount));
-
-	// This descriptor shouldn't change, so it should be fine to set it here.
 	m_cameraManager.SetDescriptorGraphics(
 		m_graphicsDescriptorManagers, s_cameraCBVRegisterSlot, s_vertexShaderRegisterSpace
 	);
@@ -266,22 +289,7 @@ RenderEngineVSIndirect::RenderEngineVSIndirect(
 		m_graphicsDescriptorManagers, s_textureSRVRegisterSlot, s_pixelShaderRegisterSpace
 	);
 
-	// Compute stuffs.
-	for (size_t _ = 0u; _ < frameCount; ++_)
-	{
-		m_computeDescriptorManagers.emplace_back(device, s_computePipelineSetLayoutCount);
-
-		// Let's make all of the non graphics fences.
-		m_computeWait.emplace_back().Create(device);
-	}
-
-	const auto frameCountU32 = static_cast<std::uint32_t>(frameCount);
-
-	m_computeQueue.Create(device, D3D12_COMMAND_LIST_TYPE_COMPUTE, frameCountU32);
-
-	// Compute Descriptors.
-	SetComputeDescriptorBufferLayout();
-
+	// Compute
 	for (D3DDescriptorManager& descriptorManagers : m_computeDescriptorManagers)
 		descriptorManagers.CreateDescriptors();
 

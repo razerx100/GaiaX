@@ -25,6 +25,8 @@ public:
 
 	virtual ~Renderer() = default;
 
+	virtual void FinaliseInitialisation() = 0;
+
 	virtual void Resize(std::uint32_t width, std::uint32_t height) = 0;
 
 	[[nodiscard]]
