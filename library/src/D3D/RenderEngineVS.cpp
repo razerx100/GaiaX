@@ -231,8 +231,6 @@ RenderEngineVSIndirect::RenderEngineVSIndirect(
 
 	SetGraphicsDescriptorBufferLayout();
 
-	CreateCommandSignature(device);
-
 	m_cameraManager.CreateBuffer(static_cast<std::uint32_t>(frameCount));
 
 	// Compute stuffs.
@@ -281,6 +279,8 @@ void RenderEngineVSIndirect::FinaliseInitialisation(const DeviceManager& deviceM
 
 		m_renderPassManager.SetRootSignature(m_graphicsRootSignature.Get());
 	}
+
+	CreateCommandSignature(device);
 
 	m_cameraManager.SetDescriptorGraphics(
 		m_graphicsDescriptorManagers, s_cameraCBVRegisterSlot, s_vertexShaderRegisterSpace
