@@ -13,6 +13,7 @@
 #include <Material.hpp>
 #include <MeshBundle.hpp>
 #include <Camera.hpp>
+#include <ExternalResourceFactory.hpp>
 
 class Renderer
 {
@@ -68,6 +69,8 @@ public:
 	virtual std::uint32_t AddCamera(std::shared_ptr<Camera>&& camera) noexcept = 0;
 	virtual void SetCamera(std::uint32_t index) noexcept = 0;
 	virtual void RemoveCamera(std::uint32_t index) noexcept = 0;
+	[[nodiscard]]
+	virtual ExternalResourceFactory const* GetExternalResourceFactory() const noexcept = 0;
 
 	virtual void Render() = 0;
 	virtual void WaitForGPUToFinish() = 0;

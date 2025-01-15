@@ -17,6 +17,7 @@ RenderEngine::RenderEngine(
 	m_graphicsQueue{}, m_graphicsWait{},
 	m_copyQueue{}, m_copyWait{},
 	m_stagingManager{ device, &m_memoryManager, m_threadPool.get() },
+	m_externalResourceManager{ device, &m_memoryManager },
 	m_graphicsDescriptorManagers{}, m_graphicsRootSignature{},
 	m_textureStorage{ device, &m_memoryManager },
 	m_textureManager{ device },

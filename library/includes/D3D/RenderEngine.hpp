@@ -20,6 +20,7 @@
 #include <MeshBundle.hpp>
 #include <D3DModelBuffer.hpp>
 #include <D3DRenderPassManager.hpp>
+#include <D3DExternalResourceManager.hpp>
 
 class RenderEngine
 {
@@ -84,6 +85,12 @@ public:
 	virtual void RemoveModelBundle(std::uint32_t bundleID) noexcept = 0;
 
 	[[nodiscard]]
+	ExternalResourceFactory const* GetExternalResourceFactory() const noexcept
+	{
+		return m_externalResourceManager.GetResourceFactory();
+	}
+
+	[[nodiscard]]
 	virtual std::uint32_t AddMeshBundle(std::unique_ptr<MeshBundleTemporary> meshBundle) = 0;
 
 	virtual void RemoveMeshBundle(std::uint32_t bundleIndex) noexcept = 0;
@@ -126,6 +133,7 @@ protected:
 	D3DCommandQueue                   m_copyQueue;
 	std::vector<D3DFence>             m_copyWait;
 	StagingBufferManager              m_stagingManager;
+	D3DExternalResourceManager        m_externalResourceManager;
 	std::vector<D3DDescriptorManager> m_graphicsDescriptorManagers;
 	D3DRootSignature                  m_graphicsRootSignature;
 	TextureStorage                    m_textureStorage;
@@ -151,6 +159,7 @@ public:
 		m_copyQueue{ std::move(other.m_copyQueue) },
 		m_copyWait{ std::move(other.m_copyWait) },
 		m_stagingManager{ std::move(other.m_stagingManager) },
+		m_externalResourceManager{ std::move(other.m_externalResourceManager) },
 		m_graphicsDescriptorManagers{ std::move(other.m_graphicsDescriptorManagers) },
 		m_graphicsRootSignature{ std::move(other.m_graphicsRootSignature) },
 		m_textureStorage{ std::move(other.m_textureStorage) },
@@ -173,6 +182,7 @@ public:
 		m_copyQueue                  = std::move(other.m_copyQueue);
 		m_copyWait                   = std::move(other.m_copyWait);
 		m_stagingManager             = std::move(other.m_stagingManager);
+		m_externalResourceManager    = std::move(other.m_externalResourceManager);
 		m_graphicsDescriptorManagers = std::move(other.m_graphicsDescriptorManagers);
 		m_graphicsRootSignature      = std::move(other.m_graphicsRootSignature);
 		m_textureStorage             = std::move(other.m_textureStorage);
