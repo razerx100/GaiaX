@@ -10,6 +10,6 @@ public:
 	virtual ~ExternalResourceFactory() = default;
 
 	[[nodiscard]]
-	virtual std::unique_ptr<ExternalBuffer> CreateBufferExp(ExternalBufferType type) const = 0;
+	virtual std::unique_ptr<ExternalBuffer> CreateExternalBuffer(ExternalBufferType type) const = 0;
 };
 #endif

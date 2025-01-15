@@ -12,7 +12,7 @@ public:
 	{}
 
 	[[nodiscard]]
-	std::unique_ptr<ExternalBuffer> CreateBufferExp(ExternalBufferType type) const override;
+	std::unique_ptr<ExternalBuffer> CreateExternalBuffer(ExternalBufferType type) const override;
 
 private:
 	ID3D12Device*  m_device;
