@@ -70,7 +70,7 @@ public:
 	virtual void SetCamera(std::uint32_t index) noexcept = 0;
 	virtual void RemoveCamera(std::uint32_t index) noexcept = 0;
 	[[nodiscard]]
-	virtual ExternalResourceFactory const* GetExternalResourceFactory() const noexcept = 0;
+	virtual ExternalResourceFactory* GetExternalResourceFactory() noexcept = 0;
 
 	virtual void Render() = 0;
 	virtual void WaitForGPUToFinish() = 0;

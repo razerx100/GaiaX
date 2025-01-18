@@ -85,7 +85,7 @@ public:
 	virtual void RemoveModelBundle(std::uint32_t bundleID) noexcept = 0;
 
 	[[nodiscard]]
-	ExternalResourceFactory const* GetExternalResourceFactory() const noexcept
+	ExternalResourceFactory* GetExternalResourceFactory() noexcept
 	{
 		return m_externalResourceManager.GetResourceFactory();
 	}

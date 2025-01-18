@@ -8,7 +8,7 @@ public:
 	D3DExternalResourceManager(ID3D12Device* device, MemoryManager* memoryManager);
 
 	[[nodiscard]]
-	ExternalResourceFactory const* GetResourceFactory() const noexcept { return &m_resourceFactory; }
+	ExternalResourceFactory* GetResourceFactory() noexcept { return &m_resourceFactory; }
 
 private:
 	D3DExternalResourceFactory m_resourceFactory;
