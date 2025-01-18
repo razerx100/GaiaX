@@ -10,6 +10,15 @@ public:
 	virtual ~ExternalResourceFactory() = default;
 
 	[[nodiscard]]
-	virtual std::unique_ptr<ExternalBuffer> CreateExternalBuffer(ExternalBufferType type) const = 0;
+	// Return the index of the created buffer.
+	virtual size_t CreateExternalBuffer(ExternalBufferType type) = 0;
+	[[nodiscard]]
+	virtual ExternalBuffer* GetExternalBufferRP(size_t index) const noexcept = 0;
+	[[nodiscard]]
+	virtual std::shared_ptr<ExternalBuffer> GetExternalBufferSP(size_t index) const noexcept = 0;
+
+	// Thought about creating a Ring Buffer, but we won't be allocating new memory, so just
+	// recreating the buffer objects wouldn't be that bad.
+	virtual void RemoveExternalBuffer(size_t index) noexcept = 0;
 };
 #endif

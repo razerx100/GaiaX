@@ -19,6 +19,9 @@ public:
 	[[nodiscard]]
 	std::uint8_t* CPUHandle() const override { return m_buffer.CPUHandle(); }
 
+	[[nodiscard]]
+	const Buffer& GetBuffer() const noexcept { return m_buffer; }
+
 private:
 	Buffer                m_buffer;
 	D3D12_RESOURCE_STATES m_resourceState;

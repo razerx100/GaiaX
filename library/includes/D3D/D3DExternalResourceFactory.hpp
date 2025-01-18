@@ -1,42 +1,52 @@
 #ifndef D3D_EXTERNAL_RESOURCE_FACTORY_HPP_
 #define D3D_EXTERNAL_RESOURCE_FACTORY_HPP_
 #include <utility>
+#include <vector>
 #include <ExternalResourceFactory.hpp>
 #include <D3DAllocator.hpp>
+#include <D3DExternalBuffer.hpp>
 
 class D3DExternalResourceFactory : public ExternalResourceFactory
 {
+	using ExternalBuffers_t = std::vector<std::shared_ptr<D3DExternalBuffer>>;
 public:
 	D3DExternalResourceFactory(ID3D12Device* device, MemoryManager* memoryManager)
-		: m_device{ device }, m_memoryManager{ memoryManager }
+		: m_device{ device }, m_memoryManager{ memoryManager }, m_externalBuffers{}
 	{}
 
 	[[nodiscard]]
-	std::unique_ptr<ExternalBuffer> CreateExternalBuffer(ExternalBufferType type) const override;
-
-private:
-	ID3D12Device*  m_device;
-	MemoryManager* m_memoryManager;
-
-public:
-	D3DExternalResourceFactory(const D3DExternalResourceFactory& other) noexcept
-		: m_device{ other.m_device }, m_memoryManager{ other.m_memoryManager }
-	{}
-	D3DExternalResourceFactory& operator=(const D3DExternalResourceFactory& other) noexcept
+	size_t CreateExternalBuffer(ExternalBufferType type) override;
+	[[nodiscard]]
+	ExternalBuffer* GetExternalBufferRP(size_t index) const noexcept override
 	{
-		m_device        = other.m_device;
-		m_memoryManager = other.m_memoryManager;
-
-		return *this;
+		return m_externalBuffers[index].get();
+	}
+	[[nodiscard]]
+	std::shared_ptr<ExternalBuffer> GetExternalBufferSP(size_t index) const noexcept override
+	{
+		return std::static_pointer_cast<ExternalBuffer>(m_externalBuffers[index]);
 	}
 
+	void RemoveExternalBuffer(size_t index) noexcept override;
+
+private:
+	ID3D12Device*     m_device;
+	MemoryManager*    m_memoryManager;
+	ExternalBuffers_t m_externalBuffers;
+
+public:
+	D3DExternalResourceFactory(const D3DExternalResourceFactory&) = delete;
+	D3DExternalResourceFactory& operator=(const D3DExternalResourceFactory&) = delete;
+
 	D3DExternalResourceFactory(D3DExternalResourceFactory&& other) noexcept
-		: m_device{ other.m_device }, m_memoryManager{ std::exchange(other.m_memoryManager, nullptr) }
+		: m_device{ other.m_device }, m_memoryManager{ std::exchange(other.m_memoryManager, nullptr) },
+		m_externalBuffers{ std::move(other.m_externalBuffers) }
 	{}
 	D3DExternalResourceFactory& operator=(D3DExternalResourceFactory&& other) noexcept
 	{
-		m_device        = other.m_device;
-		m_memoryManager = std::exchange(other.m_memoryManager, nullptr);
+		m_device          = other.m_device;
+		m_memoryManager   = std::exchange(other.m_memoryManager, nullptr);
+		m_externalBuffers = std::move(other.m_externalBuffers);
 
 		return *this;
 	}
