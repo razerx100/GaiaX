@@ -27,6 +27,17 @@ public:
 		return std::static_pointer_cast<ExternalBuffer>(m_externalBuffers[index]);
 	}
 
+	[[nodiscard]]
+	D3DExternalBuffer& GetD3DExternalBuffer(size_t index) noexcept
+	{
+		return *m_externalBuffers[index];
+	}
+	[[nodiscard]]
+	const D3DExternalBuffer& GetD3DExternalBuffer(size_t index) const noexcept
+	{
+		return *m_externalBuffers[index];
+	}
+
 	void RemoveExternalBuffer(size_t index) noexcept override;
 
 private:

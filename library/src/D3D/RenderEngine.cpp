@@ -232,7 +232,15 @@ void RenderEngine::SetCommonGraphicsDescriptorLayout(
 		m_graphicsDescriptorManagers, GetCameraRegisterSlot(), s_vertexShaderRegisterSpace,
 		cameraShaderVisibility
 	);
+
 	m_materialBuffers.SetDescriptorLayout(
 		m_graphicsDescriptorManagers, s_materialSRVRegisterSlot, s_pixelShaderRegisterSpace
 	);
+
+	m_externalResourceManager.SetGraphicsDescriptorLayout(m_graphicsDescriptorManagers);
+}
+
+void RenderEngine::UpdateExternalBufferDescriptor(const ExternalBufferBindingDetails& bindingDetails)
+{
+	m_externalResourceManager.UpdateDescriptor(m_graphicsDescriptorManagers, bindingDetails);
 }

@@ -85,10 +85,12 @@ public:
 	virtual void RemoveModelBundle(std::uint32_t bundleID) noexcept = 0;
 
 	[[nodiscard]]
-	ExternalResourceFactory* GetExternalResourceFactory() noexcept
+	ExternalResourceManager* GetExternalResourceManager() noexcept
 	{
-		return m_externalResourceManager.GetResourceFactory();
+		return &m_externalResourceManager;
 	}
+
+	void UpdateExternalBufferDescriptor(const ExternalBufferBindingDetails& bindingDetails);
 
 	[[nodiscard]]
 	virtual std::uint32_t AddMeshBundle(std::unique_ptr<MeshBundleTemporary> meshBundle) = 0;
@@ -113,7 +115,7 @@ protected:
 protected:
 	// These descriptors are bound to the pixel shader. So, they should be the same across
 	// all of the pipeline types. That's why we are going to bind them to their own RegisterSpace.
-	static constexpr size_t s_graphicsPipelineSetLayoutCount = 2u;
+	static constexpr size_t s_graphicsPipelineSetLayoutCount = 3u;
 	static constexpr size_t s_vertexShaderRegisterSpace      = 0u;
 	static constexpr size_t s_pixelShaderRegisterSpace       = 1u;
 
@@ -300,7 +302,10 @@ protected:
 		RenderEngine::Update(frameIndex);
 
 		m_modelBuffers.Update(frameIndex);
+
 		static_cast<Derived const*>(this)->_updatePerFrame(frameIndex);
+
+		m_externalResourceManager.UpdateExtensionData(static_cast<size_t>(frameIndex));
 	}
 
 protected:

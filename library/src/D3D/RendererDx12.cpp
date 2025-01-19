@@ -132,7 +132,12 @@ void RendererDx12::RemoveCamera(std::uint32_t index) noexcept
 	m_gaia.GetRenderEngine().RemoveCamera(index);
 }
 
-ExternalResourceFactory* RendererDx12::GetExternalResourceFactory() noexcept
+ExternalResourceManager* RendererDx12::GetExternalResourceManager() noexcept
 {
-	return m_gaia.GetRenderEngine().GetExternalResourceFactory();
+	return m_gaia.GetRenderEngine().GetExternalResourceManager();
+}
+
+void RendererDx12::UpdateExternalBufferDescriptor(const ExternalBufferBindingDetails& bindingDetails)
+{
+	m_gaia.GetRenderEngine().UpdateExternalBufferDescriptor(bindingDetails);
 }

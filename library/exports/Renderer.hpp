@@ -13,7 +13,7 @@
 #include <Material.hpp>
 #include <MeshBundle.hpp>
 #include <Camera.hpp>
-#include <ExternalResourceFactory.hpp>
+#include <ExternalResourceManager.hpp>
 
 class Renderer
 {
@@ -69,8 +69,13 @@ public:
 	virtual std::uint32_t AddCamera(std::shared_ptr<Camera>&& camera) noexcept = 0;
 	virtual void SetCamera(std::uint32_t index) noexcept = 0;
 	virtual void RemoveCamera(std::uint32_t index) noexcept = 0;
+
 	[[nodiscard]]
-	virtual ExternalResourceFactory* GetExternalResourceFactory() noexcept = 0;
+	virtual ExternalResourceManager* GetExternalResourceManager() noexcept = 0;
+
+	// This function needs to be here since the External Resource manager doesn't store the
+	// descriptor managers.
+	virtual void UpdateExternalBufferDescriptor(const ExternalBufferBindingDetails& bindingDetails) = 0;
 
 	virtual void Render() = 0;
 	virtual void WaitForGPUToFinish() = 0;
