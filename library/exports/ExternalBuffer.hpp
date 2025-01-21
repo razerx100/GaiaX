@@ -2,10 +2,12 @@
 #define EXTERNAL_BUFFER_HPP_
 #include <cstdint>
 
+// Uniform buffers need to be 16bytes aligned.
 enum class ExternalBufferType
 {
 	GPUOnly,
-	CPUVisible
+	CPUVisibleUniform,
+	CPUVisibleSSBO
 };
 
 class ExternalBuffer

@@ -92,6 +92,11 @@ public:
 
 	void UpdateExternalBufferDescriptor(const ExternalBufferBindingDetails& bindingDetails);
 
+	void UploadExternalBufferGPUOnlyData(
+		std::uint32_t externalBufferIndex, std::shared_ptr<void> cpuData, size_t srcDataSizeInBytes,
+		size_t dstBufferOffset
+	);
+
 	[[nodiscard]]
 	virtual std::uint32_t AddMeshBundle(std::unique_ptr<MeshBundleTemporary> meshBundle) = 0;
 

@@ -141,3 +141,12 @@ void RendererDx12::UpdateExternalBufferDescriptor(const ExternalBufferBindingDet
 {
 	m_gaia.GetRenderEngine().UpdateExternalBufferDescriptor(bindingDetails);
 }
+
+void RendererDx12::UploadExternalBufferGPUOnlyData(
+	std::uint32_t externalBufferIndex, std::shared_ptr<void> cpuData,
+	size_t srcDataSizeInBytes, size_t dstBufferOffset
+) {
+	m_gaia.GetRenderEngine().UploadExternalBufferGPUOnlyData(
+		externalBufferIndex, std::move(cpuData), srcDataSizeInBytes, dstBufferOffset
+	);
+}

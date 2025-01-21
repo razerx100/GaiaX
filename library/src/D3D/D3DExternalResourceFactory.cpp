@@ -6,7 +6,7 @@ size_t D3DExternalResourceFactory::CreateExternalBuffer(ExternalBufferType type)
 	D3D12_RESOURCE_STATES resourceState   = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 	const D3D12_RESOURCE_FLAGS usageFlags = D3D12_RESOURCE_FLAG_NONE;
 
-	if (type == ExternalBufferType::CPUVisible)
+	if (type != ExternalBufferType::GPUOnly)
 	{
 		memoryType    = D3D12_HEAP_TYPE_UPLOAD;
 		resourceState = D3D12_RESOURCE_STATE_GENERIC_READ;

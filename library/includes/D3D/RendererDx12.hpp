@@ -64,6 +64,11 @@ public:
 
 	void UpdateExternalBufferDescriptor(const ExternalBufferBindingDetails& bindingDetails) override;
 
+	void UploadExternalBufferGPUOnlyData(
+		std::uint32_t externalBufferIndex, std::shared_ptr<void> cpuData, size_t srcDataSizeInBytes,
+		size_t dstBufferOffset
+	) override;
+
 	void Render() override;
 	void WaitForGPUToFinish() override;
 

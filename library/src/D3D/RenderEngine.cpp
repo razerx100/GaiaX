@@ -244,3 +244,13 @@ void RenderEngine::UpdateExternalBufferDescriptor(const ExternalBufferBindingDet
 {
 	m_externalResourceManager.UpdateDescriptor(m_graphicsDescriptorManagers, bindingDetails);
 }
+
+void RenderEngine::UploadExternalBufferGPUOnlyData(
+	std::uint32_t externalBufferIndex, std::shared_ptr<void> cpuData, size_t srcDataSizeInBytes,
+	size_t dstBufferOffset
+) {
+	m_externalResourceManager.UploadExternalBufferGPUOnlyData(
+		m_stagingManager, m_temporaryDataBuffer,
+		externalBufferIndex, std::move(cpuData), srcDataSizeInBytes, dstBufferOffset
+	);
+}

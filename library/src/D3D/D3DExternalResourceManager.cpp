@@ -49,10 +49,16 @@ void D3DExternalResourceManager::SetGraphicsDescriptorLayout(
 			{
 				D3DDescriptorManager& descriptorManager = descriptorManagers[index];
 
-				descriptorManager.AddRootSRV(
-					static_cast<size_t>(details.bindingIndex), s_externalBufferRegisterSpace,
-					D3D12_SHADER_VISIBILITY_PIXEL
-				);
+				if (details.type == ExternalBufferType::CPUVisibleUniform)
+					descriptorManager.AddRootCBV(
+						static_cast<size_t>(details.bindingIndex), s_externalBufferRegisterSpace,
+						D3D12_SHADER_VISIBILITY_PIXEL
+					);
+				else
+					descriptorManager.AddRootSRV(
+						static_cast<size_t>(details.bindingIndex), s_externalBufferRegisterSpace,
+						D3D12_SHADER_VISIBILITY_PIXEL
+					);
 			}
 		}
 	}
@@ -86,9 +92,32 @@ void D3DExternalResourceManager::UpdateDescriptor(
 		bindingDetails.externalBufferIndex
 	);
 
-	descriptorManager.SetRootSRV(
-		static_cast<size_t>(bindingDetails.bindingIndex), s_externalBufferRegisterSpace,
-		d3dBuffer.GetBuffer().GetGPUAddress() + bindingDetails.bufferOffset,
-		true
+	if (bindingDetails.type == ExternalBufferType::CPUVisibleUniform)
+		descriptorManager.SetRootCBV(
+			static_cast<size_t>(bindingDetails.bindingIndex), s_externalBufferRegisterSpace,
+			d3dBuffer.GetBuffer().GetGPUAddress() + bindingDetails.bufferOffset,
+			true
+		);
+	else
+		descriptorManager.SetRootSRV(
+			static_cast<size_t>(bindingDetails.bindingIndex), s_externalBufferRegisterSpace,
+			d3dBuffer.GetBuffer().GetGPUAddress() + bindingDetails.bufferOffset,
+			true
+		);
+}
+
+void D3DExternalResourceManager::UploadExternalBufferGPUOnlyData(
+	StagingBufferManager& stagingBufferManager, TemporaryDataBufferGPU& tempGPUBuffer,
+	std::uint32_t externalBufferIndex, std::shared_ptr<void> cpuData, size_t srcDataSizeInBytes,
+	size_t dstBufferOffset
+) const {
+	stagingBufferManager.AddBuffer(
+		std::move(cpuData),
+		static_cast<UINT64>(srcDataSizeInBytes),
+		&m_resourceFactory.GetD3DExternalBuffer(
+			static_cast<size_t>(externalBufferIndex)
+		).GetBuffer(),
+		static_cast<UINT64>(dstBufferOffset),
+		tempGPUBuffer
 	);
 }

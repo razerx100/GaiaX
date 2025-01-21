@@ -4,6 +4,7 @@
 #include <ExternalResourceManager.hpp>
 #include <D3DExternalResourceFactory.hpp>
 #include <D3DDescriptorHeapManager.hpp>
+#include <StagingBufferManager.hpp>
 
 class D3DExternalResourceManager : public ExternalResourceManager
 {
@@ -17,6 +18,12 @@ public:
 	void UpdateDescriptor(
 		std::vector<D3DDescriptorManager>& descriptorManagers,
 		const ExternalBufferBindingDetails& bindingDetails
+	) const;
+
+	void UploadExternalBufferGPUOnlyData(
+		StagingBufferManager& stagingBufferManager, TemporaryDataBufferGPU& tempGPUBuffer,
+		std::uint32_t externalBufferIndex, std::shared_ptr<void> cpuData, size_t srcDataSizeInBytes,
+		size_t dstBufferOffset
 	) const;
 
 	void UpdateExtensionData(size_t frameIndex) const noexcept;

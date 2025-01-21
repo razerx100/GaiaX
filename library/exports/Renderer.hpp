@@ -77,6 +77,11 @@ public:
 	// descriptor managers.
 	virtual void UpdateExternalBufferDescriptor(const ExternalBufferBindingDetails& bindingDetails) = 0;
 
+	virtual void UploadExternalBufferGPUOnlyData(
+		std::uint32_t externalBufferIndex, std::shared_ptr<void> cpuData, size_t srcDataSizeInBytes,
+		size_t dstBufferOffset
+	) = 0;
+
 	virtual void Render() = 0;
 	virtual void WaitForGPUToFinish() = 0;
 };
