@@ -115,8 +115,6 @@ protected:
 
 	void SetCommonGraphicsDescriptorLayout(D3D12_SHADER_VISIBILITY cameraShaderVisibility) noexcept;
 
-	virtual void Update(UINT64 frameIndex) const noexcept;
-
 protected:
 	// These descriptors are bound to the pixel shader. So, they should be the same across
 	// all of the pipeline types. That's why we are going to bind them to their own RegisterSpace.
@@ -302,9 +300,9 @@ public:
 	}
 
 protected:
-	void Update(UINT64 frameIndex) const noexcept override
+	void Update(UINT64 frameIndex) const noexcept
 	{
-		RenderEngine::Update(frameIndex);
+		m_cameraManager.Update(frameIndex);
 
 		m_modelBuffers.Update(frameIndex);
 

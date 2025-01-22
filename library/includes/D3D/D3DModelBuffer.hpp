@@ -34,6 +34,7 @@ private:
 	struct ModelVertexData
 	{
 		DirectX::XMMATRIX modelMatrix;
+		DirectX::XMMATRIX normalMatrix;
 		DirectX::XMFLOAT3 modelOffset;
 		// The materialIndex must be grabbed from the z component.
 		std::uint32_t     materialIndex;

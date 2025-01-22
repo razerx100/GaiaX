@@ -70,13 +70,20 @@ void ModelBuffers::Update(UINT64 bufferIndex) const noexcept
 		// temporarily hide models later.
 		if (m_elements.IsInUse(index))
 		{
-			const auto& model = m_elements.at(index);
+			const std::shared_ptr<Model>& model = m_elements.at(index);
 
 			// Vertex Data
 			{
+				using namespace DirectX;
+
+				const XMMATRIX modelMat = model->GetModelMatrix();
+
 				const ModelVertexData modelVertexData
 				{
-					.modelMatrix   = model->GetModelMatrix(),
+					.modelMatrix   = modelMat,
+					// The normal matrix is the transpose of the inversed model matrix. Not doing this
+					// to flip to Column major.
+					.normalMatrix  = XMMatrixTranspose(XMMatrixInverse(nullptr, modelMat)),
 					.modelOffset   = model->GetModelOffset(),
 					.materialIndex = model->GetMaterialIndex(),
 					.meshIndex     = model->GetMeshIndex(),

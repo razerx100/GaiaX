@@ -130,7 +130,7 @@ std::uint32_t RenderEngine::BindTexture(size_t textureIndex)
 	{
 		m_textureManager.IncreaseAvailableIndices<DescType>();
 
-		for (auto& descriptorManager : m_graphicsDescriptorManagers)
+		for (D3DDescriptorManager& descriptorManager : m_graphicsDescriptorManagers)
 		{
 			const std::vector<D3DDescriptorLayout> oldLayouts = descriptorManager.GetLayouts();
 
@@ -157,14 +157,14 @@ std::uint32_t RenderEngine::BindTexture(size_t textureIndex)
 	{
 		D3D12_CPU_DESCRIPTOR_HANDLE localDescriptor = localDesc.value();
 
-		for (auto& descriptorManager : m_graphicsDescriptorManagers)
+		for (D3DDescriptorManager& descriptorManager : m_graphicsDescriptorManagers)
 			descriptorManager.SetDescriptorSRV(
 				localDescriptor, s_textureSRVRegisterSlot, s_pixelShaderRegisterSpace,
 				freeGlobalDescIndex
 			);
 	}
 	else
-		for (auto& descriptorManager : m_graphicsDescriptorManagers)
+		for (D3DDescriptorManager& descriptorManager : m_graphicsDescriptorManagers)
 			descriptorManager.CreateSRV(
 				s_textureSRVRegisterSlot, s_pixelShaderRegisterSpace, freeGlobalDescIndex,
 				texture.Get(), texture.GetSRVDesc()
@@ -188,11 +188,6 @@ void RenderEngine::RemoveTexture(size_t index)
 	);
 
 	m_textureStorage.RemoveTexture(index);
-}
-
-void RenderEngine::Update(UINT64 frameIndex) const noexcept
-{
-	m_cameraManager.Update(frameIndex);
 }
 
 void RenderEngine::WaitForGPUToFinish()
