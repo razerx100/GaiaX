@@ -51,6 +51,11 @@ void RendererDx12::ChangePixelShader(std::uint32_t modelBundleID, const ShaderNa
 	m_gaia.GetRenderEngine().ChangePixelShader(modelBundleID, pixelShader);
 }
 
+void RendererDx12::MakePixelShaderRemovable(const ShaderName& pixelShader) noexcept
+{
+	m_gaia.GetRenderEngine().MakePixelShaderRemovable(pixelShader);
+}
+
 size_t RendererDx12::AddTexture(STexture&& texture)
 {
 	return m_gaia.GetRenderEngine().AddTexture(std::move(texture));

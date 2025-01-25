@@ -34,6 +34,11 @@ public:
 		m_depthBuffer = std::make_unique<DepthBuffer>(device, memoryManager, dsvHeap);
 	}
 
+	void SetPSOOverwritable(const ShaderName& pixelShader) noexcept
+	{
+		m_graphicsPipelineManager.SetOverwritable(pixelShader);
+	}
+
 	void ResizeDepthBuffer(UINT width, UINT height)
 	{
 		if (m_depthBuffer)
@@ -68,7 +73,9 @@ public:
 
 	std::uint32_t AddOrGetGraphicsPipeline(const ShaderName& pixelShader)
 	{
-		return GetGraphicsPSOIndex(pixelShader);
+		return m_graphicsPipelineManager.AddOrGetGraphicsPipeline(
+			pixelShader, m_rtvFormat, GetDSVFormat()
+		);
 	}
 
 	void RecreatePipelines()
@@ -92,27 +99,6 @@ private:
 			dsvFormat = m_depthBuffer->GetFormat();
 
 		return dsvFormat;
-	}
-
-	[[nodiscard]]
-	std::uint32_t GetGraphicsPSOIndex(const ShaderName& pixelShader)
-	{
-		std::optional<std::uint32_t> oPSOIndex = m_graphicsPipelineManager.TryToGetPSOIndex(
-			pixelShader
-		);
-
-		auto psoIndex = std::numeric_limits<std::uint32_t>::max();
-
-		if (!oPSOIndex)
-		{
-			const DXGI_FORMAT dsvFormat = GetDSVFormat();
-
-			psoIndex = m_graphicsPipelineManager.AddGraphicsPipeline(pixelShader, m_rtvFormat, dsvFormat);
-		}
-		else
-			psoIndex = oPSOIndex.value();
-
-		return psoIndex;
 	}
 
 private:

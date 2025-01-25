@@ -325,7 +325,7 @@ void RenderEngineVSIndirect::FinaliseInitialisation(const DeviceManager& deviceM
 	);
 
 	// Add the Frustum Culling shader.
-	m_computePipelineManager.AddComputePipeline(L"VertexShaderCSIndirect");
+	m_computePipelineManager.AddOrGetComputePipeline(L"VertexShaderCSIndirect");
 }
 
 void RenderEngineVSIndirect::SetGraphicsDescriptorBufferLayout()

@@ -72,6 +72,7 @@ public:
 	virtual void ChangePixelShader(
 		std::uint32_t modelBundleID, const ShaderName& pixelShader
 	) = 0;
+	virtual void MakePixelShaderRemovable(const ShaderName& pixelShader) noexcept = 0;
 
 	[[nodiscard]]
 	virtual void Render(size_t frameIndex, const RenderTarget& renderTarget) = 0;
@@ -252,6 +253,11 @@ public:
 		const std::uint32_t psoIndex = m_renderPassManager.AddOrGetGraphicsPipeline(pixelShader);
 
 		m_modelManager.ChangePSO(modelBundleID, psoIndex);
+	}
+
+	void MakePixelShaderRemovable(const ShaderName& pixelShader) noexcept override
+	{
+		m_renderPassManager.SetPSOOverwritable(pixelShader);
 	}
 
 	void RemoveModelBundle(std::uint32_t bundleID) noexcept override
