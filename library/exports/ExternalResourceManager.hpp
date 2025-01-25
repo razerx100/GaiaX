@@ -10,9 +10,12 @@ public:
 	virtual ~ExternalResourceManager() = default;
 
 	// The extensions must be freed before the renderer is destroyed to free the resources.
-	virtual void AddGraphicsTechniqueExtension(
+	[[nodiscard]]
+	virtual std::uint32_t AddGraphicsTechniqueExtension(
 		std::shared_ptr<GraphicsTechniqueExtension> extension
 	) = 0;
+
+	virtual void RemoveGraphicsTechniqueExtension(std::uint32_t index) noexcept = 0;
 
 	[[nodiscard]]
 	virtual ExternalResourceFactory* GetResourceFactory() noexcept = 0;

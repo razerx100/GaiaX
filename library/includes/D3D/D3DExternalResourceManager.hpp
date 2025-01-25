@@ -13,7 +13,12 @@ class D3DExternalResourceManager : public ExternalResourceManager
 public:
 	D3DExternalResourceManager(ID3D12Device* device, MemoryManager* memoryManager);
 
-	void AddGraphicsTechniqueExtension(std::shared_ptr<GraphicsTechniqueExtension> extension) override;
+	[[nodiscard]]
+	std::uint32_t AddGraphicsTechniqueExtension(
+		std::shared_ptr<GraphicsTechniqueExtension> extension
+	) override;
+
+	void RemoveGraphicsTechniqueExtension(std::uint32_t index) noexcept override;
 
 	void UpdateDescriptor(
 		std::vector<D3DDescriptorManager>& descriptorManagers,
@@ -44,6 +49,8 @@ public:
 
 private:
 	void OnGfxExtensionAddition(GraphicsTechniqueExtension& gfxExtension);
+	void OnGfxExtensionDeletion(const GraphicsTechniqueExtension& gfxExtension);
+
 	void UpdateDescriptor(
 		D3DDescriptorManager& descriptorManager, const ExternalBufferBindingDetails& bindingDetails
 	) const;

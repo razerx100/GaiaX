@@ -3,7 +3,6 @@
 #include <cstdint>
 #include <vector>
 #include <memory>
-#include <Shader.hpp>
 #include <ExternalBuffer.hpp>
 
 struct ExternalBufferDetails
@@ -41,8 +40,5 @@ public:
 	virtual const std::vector<ExternalBufferDetails>& GetBufferDetails() const noexcept = 0;
 	[[nodiscard]]
 	virtual const std::vector<ExternalBufferBindingDetails>& GetBindingDetails() const noexcept = 0;
-
-	[[nodiscard]]
-	virtual const ShaderName& GetShaderName() const noexcept = 0;
 };
 #endif

@@ -20,12 +20,32 @@ void D3DExternalResourceManager::OnGfxExtensionAddition(GraphicsTechniqueExtensi
 	}
 }
 
-void D3DExternalResourceManager::AddGraphicsTechniqueExtension(
+void D3DExternalResourceManager::OnGfxExtensionDeletion(const GraphicsTechniqueExtension& gfxExtension)
+{
+	const std::vector<ExternalBufferBindingDetails>& bufferBindingDetails
+		= gfxExtension.GetBindingDetails();
+
+	for (const ExternalBufferBindingDetails& bindingDetails : bufferBindingDetails)
+		m_resourceFactory.RemoveExternalBuffer(bindingDetails.externalBufferIndex);
+}
+
+std::uint32_t D3DExternalResourceManager::AddGraphicsTechniqueExtension(
 	std::shared_ptr<GraphicsTechniqueExtension> extension
 ) {
 	OnGfxExtensionAddition(*extension);
 
+	const auto extensionIndex = static_cast<std::uint32_t>(std::size(m_gfxExtensions));
+
 	m_gfxExtensions.emplace_back(std::move(extension));
+
+	return extensionIndex;
+}
+
+void D3DExternalResourceManager::RemoveGraphicsTechniqueExtension(std::uint32_t index) noexcept
+{
+	OnGfxExtensionDeletion(*m_gfxExtensions[index]);
+
+	m_gfxExtensions.erase(std::next(std::begin(m_gfxExtensions), index));
 }
 
 void D3DExternalResourceManager::UpdateExtensionData(size_t frameIndex) const noexcept
