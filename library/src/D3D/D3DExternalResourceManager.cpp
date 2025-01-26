@@ -22,11 +22,10 @@ void D3DExternalResourceManager::OnGfxExtensionAddition(GraphicsTechniqueExtensi
 
 void D3DExternalResourceManager::OnGfxExtensionDeletion(const GraphicsTechniqueExtension& gfxExtension)
 {
-	const std::vector<ExternalBufferBindingDetails>& bufferBindingDetails
-		= gfxExtension.GetBindingDetails();
+	const std::vector<ExternalBufferDetails>& bufferDetails = gfxExtension.GetBufferDetails();
 
-	for (const ExternalBufferBindingDetails& bindingDetails : bufferBindingDetails)
-		m_resourceFactory.RemoveExternalBuffer(bindingDetails.externalBufferIndex);
+	for (const ExternalBufferDetails& details : bufferDetails)
+		m_resourceFactory.RemoveExternalBuffer(details.externalBufferIndex);
 }
 
 std::uint32_t D3DExternalResourceManager::AddGraphicsTechniqueExtension(
@@ -69,15 +68,15 @@ void D3DExternalResourceManager::SetGraphicsDescriptorLayout(
 			{
 				D3DDescriptorManager& descriptorManager = descriptorManagers[index];
 
-				if (details.type == ExternalBufferType::CPUVisibleUniform)
+				if (details.layoutInfo.type == ExternalBufferType::CPUVisibleUniform)
 					descriptorManager.AddRootCBV(
-						static_cast<size_t>(details.bindingIndex), s_externalBufferRegisterSpace,
-						D3D12_SHADER_VISIBILITY_PIXEL
+						static_cast<size_t>(details.layoutInfo.bindingIndex),
+						s_externalBufferRegisterSpace, D3D12_SHADER_VISIBILITY_PIXEL
 					);
 				else
 					descriptorManager.AddRootSRV(
-						static_cast<size_t>(details.bindingIndex), s_externalBufferRegisterSpace,
-						D3D12_SHADER_VISIBILITY_PIXEL
+						static_cast<size_t>(details.layoutInfo.bindingIndex),
+						s_externalBufferRegisterSpace, D3D12_SHADER_VISIBILITY_PIXEL
 					);
 			}
 		}
@@ -95,8 +94,8 @@ void D3DExternalResourceManager::UpdateDescriptor(
 		D3DDescriptorManager& descriptorManager = descriptorManagers[index];
 		// If there is no frameIndex. Then we add the buffer to all the frames.
 		const bool isSeparateFrameDescriptor
-			= bindingDetails.frameIndex != std::numeric_limits<std::uint32_t>::max()
-			&& bindingDetails.frameIndex != index;
+			= bindingDetails.descriptorInfo.frameIndex != std::numeric_limits<std::uint32_t>::max()
+			&& bindingDetails.descriptorInfo.frameIndex != index;
 
 		if (isSeparateFrameDescriptor)
 			continue;
@@ -109,19 +108,19 @@ void D3DExternalResourceManager::UpdateDescriptor(
 	D3DDescriptorManager& descriptorManager, const ExternalBufferBindingDetails& bindingDetails
 ) const {
 	const D3DExternalBuffer& d3dBuffer = m_resourceFactory.GetD3DExternalBuffer(
-		bindingDetails.externalBufferIndex
+		bindingDetails.descriptorInfo.externalBufferIndex
 	);
 
-	if (bindingDetails.type == ExternalBufferType::CPUVisibleUniform)
+	if (bindingDetails.layoutInfo.type == ExternalBufferType::CPUVisibleUniform)
 		descriptorManager.SetRootCBV(
-			static_cast<size_t>(bindingDetails.bindingIndex), s_externalBufferRegisterSpace,
-			d3dBuffer.GetBuffer().GetGPUAddress() + bindingDetails.bufferOffset,
+			static_cast<size_t>(bindingDetails.layoutInfo.bindingIndex), s_externalBufferRegisterSpace,
+			d3dBuffer.GetBuffer().GetGPUAddress() + bindingDetails.descriptorInfo.bufferOffset,
 			true
 		);
 	else
 		descriptorManager.SetRootSRV(
-			static_cast<size_t>(bindingDetails.bindingIndex), s_externalBufferRegisterSpace,
-			d3dBuffer.GetBuffer().GetGPUAddress() + bindingDetails.bufferOffset,
+			static_cast<size_t>(bindingDetails.layoutInfo.bindingIndex), s_externalBufferRegisterSpace,
+			d3dBuffer.GetBuffer().GetGPUAddress() + bindingDetails.descriptorInfo.bufferOffset,
 			true
 		);
 }
