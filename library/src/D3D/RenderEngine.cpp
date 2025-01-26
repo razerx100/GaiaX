@@ -231,8 +231,6 @@ void RenderEngine::SetCommonGraphicsDescriptorLayout(
 	m_materialBuffers.SetDescriptorLayout(
 		m_graphicsDescriptorManagers, s_materialSRVRegisterSlot, s_pixelShaderRegisterSpace
 	);
-
-	m_externalResourceManager.SetGraphicsDescriptorLayout(m_graphicsDescriptorManagers);
 }
 
 void RenderEngine::UpdateExternalBufferDescriptor(const ExternalBufferBindingDetails& bindingDetails)

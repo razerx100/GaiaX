@@ -11,6 +11,8 @@ RenderEngineMS::RenderEngineMS(
 
 void RenderEngineMS::FinaliseInitialisation(const DeviceManager& deviceManager)
 {
+	m_externalResourceManager.SetGraphicsDescriptorLayout(m_graphicsDescriptorManagers);
+
 	for (D3DDescriptorManager& descriptorManager : m_graphicsDescriptorManagers)
 		descriptorManager.CreateDescriptors();
 

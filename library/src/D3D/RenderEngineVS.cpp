@@ -12,6 +12,8 @@ RenderEngineVSIndividual::RenderEngineVSIndividual(
 
 void RenderEngineVSIndividual::FinaliseInitialisation(const DeviceManager& deviceManager)
 {
+	m_externalResourceManager.SetGraphicsDescriptorLayout(m_graphicsDescriptorManagers);
+
 	for (D3DDescriptorManager& descriptorManager : m_graphicsDescriptorManagers)
 		descriptorManager.CreateDescriptors();
 
@@ -253,6 +255,8 @@ RenderEngineVSIndirect::RenderEngineVSIndirect(
 void RenderEngineVSIndirect::FinaliseInitialisation(const DeviceManager& deviceManager)
 {
 	ID3D12Device5* device = deviceManager.GetDevice();
+
+	m_externalResourceManager.SetGraphicsDescriptorLayout(m_graphicsDescriptorManagers);
 
 	// Graphics
 	for (D3DDescriptorManager& descriptorManager : m_graphicsDescriptorManagers)
