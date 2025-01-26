@@ -17,6 +17,8 @@ public:
 
 	virtual void Create(size_t bufferSize) = 0;
 
+	virtual void Destroy() noexcept = 0;
+
 	[[nodiscard]]
 	virtual size_t BufferSize() const noexcept = 0;
 

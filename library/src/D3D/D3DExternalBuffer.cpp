@@ -9,6 +9,5 @@ D3DExternalBuffer::D3DExternalBuffer(
 
 void D3DExternalBuffer::Create(size_t bufferSize)
 {
-	// For now, let's assume these buffers would only be used in the Graphics queue.
 	m_buffer.Create(static_cast<UINT64>(bufferSize), m_resourceState, m_bufferFlag);
 }

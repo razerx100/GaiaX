@@ -13,6 +13,8 @@ public:
 
 	void Create(size_t bufferSize) override;
 
+	void Destroy() noexcept override { m_buffer.Destroy(); }
+
 	[[nodiscard]]
 	size_t BufferSize() const noexcept override { return m_buffer.BufferSize(); }
 
