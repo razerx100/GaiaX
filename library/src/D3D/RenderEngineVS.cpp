@@ -148,6 +148,7 @@ ID3D12Fence* RenderEngineVSIndividual::GenericCopyStage(
 
 			// Need to copy the old buffers first to avoid empty data being copied over
 			// the queued data.
+			m_externalResourceManager.CopyQueuedBuffers(copyCmdListScope);
 			m_meshManager.CopyOldBuffers(copyCmdListScope);
 			m_stagingManager.CopyAndClearQueuedBuffers(copyCmdListScope);
 		}
@@ -551,6 +552,7 @@ ID3D12Fence* RenderEngineVSIndirect::GenericCopyStage(
 
 			// Need to copy the old buffers first to avoid empty data being copied over
 			// the queued data.
+			m_externalResourceManager.CopyQueuedBuffers(copyCmdListScope);
 			m_modelManager.CopyOldBuffers(copyCmdListScope);
 			m_meshManager.CopyOldBuffers(copyCmdListScope);
 			m_stagingManager.CopyAndClearQueuedBuffers(copyCmdListScope);

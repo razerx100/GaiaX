@@ -29,14 +29,9 @@ public:
 	}
 
 	[[nodiscard]]
-	D3DExternalBuffer& GetD3DExternalBuffer(size_t index) noexcept
+	const Buffer& GetD3DBuffer(size_t index) const noexcept
 	{
-		return *m_externalBuffers[index];
-	}
-	[[nodiscard]]
-	const D3DExternalBuffer& GetD3DExternalBuffer(size_t index) const noexcept
-	{
-		return *m_externalBuffers[index];
+		return m_externalBuffers[index]->GetBuffer();
 	}
 
 	void RemoveExternalBuffer(size_t index) noexcept override;

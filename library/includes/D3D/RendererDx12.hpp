@@ -69,6 +69,10 @@ public:
 		std::uint32_t externalBufferIndex, std::shared_ptr<void> cpuData, size_t srcDataSizeInBytes,
 		size_t dstBufferOffset
 	) override;
+	void QueueExternalBufferGPUCopy(
+		std::uint32_t externalBufferSrcIndex, std::uint32_t externalBufferDstIndex,
+		size_t dstBufferOffset, size_t srcBufferOffset = 0, size_t srcDataSizeInBytes = 0
+	) override;
 
 	void Render() override;
 	void WaitForGPUToFinish() override;

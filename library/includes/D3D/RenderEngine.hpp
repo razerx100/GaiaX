@@ -97,6 +97,10 @@ public:
 		std::uint32_t externalBufferIndex, std::shared_ptr<void> cpuData, size_t srcDataSizeInBytes,
 		size_t dstBufferOffset
 	);
+	void QueueExternalBufferGPUCopy(
+		std::uint32_t externalBufferSrcIndex, std::uint32_t externalBufferDstIndex,
+		size_t dstBufferOffset, size_t srcBufferOffset, size_t srcDataSizeInBytes
+	);
 
 	[[nodiscard]]
 	virtual std::uint32_t AddMeshBundle(std::unique_ptr<MeshBundleTemporary> meshBundle) = 0;

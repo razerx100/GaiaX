@@ -226,7 +226,7 @@ private:
 	{
 		constexpr size_t strideSize = GetStride();
 		m_instanceSize              = static_cast<UINT64>(strideSize * elementCount);
-		const auto buffersSize      = m_instanceSize * m_instanceCount;
+		const UINT64 buffersSize    = m_instanceSize * m_instanceCount;
 
 		m_buffer.Create(buffersSize, D3D12_RESOURCE_STATE_GENERIC_READ);
 	}

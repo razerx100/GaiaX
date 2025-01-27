@@ -78,9 +78,14 @@ public:
 	// descriptor managers.
 	virtual void UpdateExternalBufferDescriptor(const ExternalBufferBindingDetails& bindingDetails) = 0;
 
+	// Must wait for the GPU to finish before uploading/copying something on the GPU.
 	virtual void UploadExternalBufferGPUOnlyData(
 		std::uint32_t externalBufferIndex, std::shared_ptr<void> cpuData, size_t srcDataSizeInBytes,
 		size_t dstBufferOffset
+	) = 0;
+	virtual void QueueExternalBufferGPUCopy(
+		std::uint32_t externalBufferSrcIndex, std::uint32_t externalBufferDstIndex,
+		size_t dstBufferOffset, size_t srcBufferOffset = 0, size_t srcDataSizeInBytes = 0
 	) = 0;
 
 	virtual void Render() = 0;

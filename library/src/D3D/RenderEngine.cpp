@@ -247,3 +247,15 @@ void RenderEngine::UploadExternalBufferGPUOnlyData(
 		externalBufferIndex, std::move(cpuData), srcDataSizeInBytes, dstBufferOffset
 	);
 }
+
+void RenderEngine::QueueExternalBufferGPUCopy(
+	std::uint32_t externalBufferSrcIndex, std::uint32_t externalBufferDstIndex,
+	size_t dstBufferOffset, size_t srcBufferOffset, size_t srcDataSizeInBytes
+) {
+	m_externalResourceManager.QueueExternalBufferGPUCopy(
+		externalBufferSrcIndex, externalBufferDstIndex, dstBufferOffset, srcBufferOffset,
+		srcDataSizeInBytes, m_temporaryDataBuffer
+	);
+
+	m_copyNecessary = true;
+}
