@@ -155,3 +155,13 @@ void RendererDx12::UploadExternalBufferGPUOnlyData(
 		externalBufferIndex, std::move(cpuData), srcDataSizeInBytes, dstBufferOffset
 	);
 }
+
+void RendererDx12::QueueExternalBufferGPUCopy(
+	std::uint32_t externalBufferSrcIndex, std::uint32_t externalBufferDstIndex,
+	size_t dstBufferOffset, size_t srcBufferOffset, size_t srcDataSizeInBytes
+) {
+	m_gaia.GetRenderEngine().QueueExternalBufferGPUCopy(
+		externalBufferSrcIndex, externalBufferDstIndex, dstBufferOffset, srcBufferOffset,
+		srcDataSizeInBytes
+	);
+}
