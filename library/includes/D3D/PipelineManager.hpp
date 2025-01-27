@@ -7,14 +7,14 @@
 #include <GraphicsPipelineVS.hpp>
 #include <GraphicsPipelineMS.hpp>
 #include <ComputePipeline.hpp>
+#include <ReusableVector.hpp>
 
 template<typename Pipeline>
 class PipelineManager
 {
 public:
 	PipelineManager(ID3D12Device5* device)
-		: m_device{ device }, m_rootSignature{ nullptr }, m_shaderPath{}, m_pipelines{},
-		m_overwritablePSOs{}
+		: m_device{ device }, m_rootSignature{ nullptr }, m_shaderPath{}, m_pipelines{}
 	{}
 
 	void SetRootSignature(ID3D12RootSignature* rootSignature) noexcept
@@ -29,7 +29,7 @@ public:
 
 	void BindPipeline(size_t index, const D3DCommandList& commandList) const noexcept
 	{
-		m_pipelines[index].Bind(commandList);
+		m_pipelines.at(index).Bind(commandList);
 	}
 
 	void SetOverwritable(const ShaderName& shaderName) noexcept
@@ -37,7 +37,7 @@ public:
 		std::optional<std::uint32_t> oPsoIndex = TryToGetPSOIndex(shaderName);
 
 		if (oPsoIndex)
-			m_overwritablePSOs[oPsoIndex.value()] = true;
+			m_pipelines.MakeUnavailable(oPsoIndex.value());
 	}
 
 	std::uint32_t AddOrGetGraphicsPipeline(
@@ -56,10 +56,8 @@ public:
 				m_device, m_rootSignature, rtvFormat, dsvFormat, m_shaderPath, pixelShader
 			);
 
-			psoIndex = AddPipeline(std::move(pipeline));
+			psoIndex = static_cast<std::uint32_t>(m_pipelines.Add(std::move(pipeline)));
 		}
-
-		m_overwritablePSOs[psoIndex] = false;
 
 		return psoIndex;
 	}
@@ -77,22 +75,24 @@ public:
 
 			pipeline.Create(m_device, m_rootSignature, m_shaderPath, computeShader);
 
-			psoIndex = AddPipeline(std::move(pipeline));
+			psoIndex = static_cast<std::uint32_t>(m_pipelines.Add(std::move(pipeline)));
 		}
-
-		m_overwritablePSOs[psoIndex] = false;
 
 		return psoIndex;
 	}
 
 	void RecreateAllGraphicsPipelines(DXGI_FORMAT rtvFormat, DXGI_FORMAT dsvFormat)
 	{
-		for (Pipeline& pipeline : m_pipelines)
+		std::vector<Pipeline>& pipelines = m_pipelines.Get();
+
+		for (Pipeline& pipeline : pipelines)
 			pipeline.Recreate(m_device, m_rootSignature, rtvFormat, dsvFormat, m_shaderPath);
 	}
 	void RecreateAllComputePipelines()
 	{
-		for (Pipeline& pipeline : m_pipelines)
+		std::vector<Pipeline>& pipelines = m_pipelines.Get();
+
+		for (Pipeline& pipeline : pipelines)
 			pipeline.Recreate(m_device, m_rootSignature, m_shaderPath);
 	}
 
@@ -108,60 +108,25 @@ private:
 	{
 		std::optional<std::uint32_t> oPSOIndex{};
 
-		auto result = std::ranges::find_if(m_pipelines,
+		const std::vector<Pipeline>& pipelines = m_pipelines.Get();
+
+		auto result = std::ranges::find_if(pipelines,
 			[&shaderName](const Pipeline& pipeline)
 			{
 				return shaderName == pipeline.GetShaderName();
 			});
 
-		if (result != std::end(m_pipelines))
-			oPSOIndex = static_cast<std::uint32_t>(std::distance(std::begin(m_pipelines), result));
+		if (result != std::end(pipelines))
+			oPSOIndex = static_cast<std::uint32_t>(std::distance(std::begin(pipelines), result));
 
 		return oPSOIndex;
 	}
 
-	[[nodiscard]]
-	std::optional<std::uint32_t> FindFirstOverwritableIndex() const noexcept
-	{
-		auto result = std::ranges::find(m_overwritablePSOs, true);
-
-		std::optional<std::uint32_t> foundIndex{};;
-
-		if (result != std::end(m_overwritablePSOs))
-			foundIndex = static_cast<std::uint32_t>(
-				std::distance(std::begin(m_overwritablePSOs), result)
-			);
-
-		return foundIndex;
-	}
-
-	[[nodiscard]]
-	std::uint32_t AddPipeline(Pipeline&& pipeline) noexcept
-	{
-		auto psoIndex                                   = std::numeric_limits<std::uint32_t>::max();
-		std::optional<std::uint32_t> oOverwritableIndex = FindFirstOverwritableIndex();
-
-		if (oOverwritableIndex)
-		{
-			psoIndex              = oOverwritableIndex.value();
-			m_pipelines[psoIndex] = std::move(pipeline);
-		}
-		else
-		{
-			psoIndex = static_cast<std::uint32_t>(std::size(m_pipelines));
-
-			m_pipelines.emplace_back(std::move(pipeline));
-		}
-
-		return psoIndex;
-	}
-
 private:
-	ID3D12Device5*        m_device;
-	ID3D12RootSignature*  m_rootSignature;
-	std::wstring          m_shaderPath;
-	std::vector<Pipeline> m_pipelines;
-	std::vector<bool>     m_overwritablePSOs;
+	ID3D12Device5*           m_device;
+	ID3D12RootSignature*     m_rootSignature;
+	std::wstring             m_shaderPath;
+	ReusableVector<Pipeline> m_pipelines;
 
 public:
 	PipelineManager(const PipelineManager&) = delete;
@@ -171,16 +136,14 @@ public:
 		: m_device{ other.m_device },
 		m_rootSignature{ other.m_rootSignature },
 		m_shaderPath{ std::move(other.m_shaderPath) },
-		m_pipelines{ std::move(other.m_pipelines) },
-		m_overwritablePSOs{ std::move(other.m_overwritablePSOs) }
+		m_pipelines{ std::move(other.m_pipelines) }
 	{}
 	PipelineManager& operator=(PipelineManager&& other) noexcept
 	{
-		m_device           = other.m_device;
-		m_rootSignature    = other.m_rootSignature;
-		m_shaderPath       = std::move(other.m_shaderPath);
-		m_pipelines        = std::move(other.m_pipelines);
-		m_overwritablePSOs = std::move(other.m_overwritablePSOs);
+		m_device        = other.m_device;
+		m_rootSignature = other.m_rootSignature;
+		m_shaderPath    = std::move(other.m_shaderPath);
+		m_pipelines     = std::move(other.m_pipelines);
 
 		return *this;
 	}

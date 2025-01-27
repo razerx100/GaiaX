@@ -22,9 +22,8 @@ public:
 	[[nodiscard]]
 	size_t GetNextFreeIndex(size_t extraAllocCount = 0) noexcept
 	{
-		size_t elementIndex = std::numeric_limits<size_t>::max();
-
-		auto oElementIndex  = m_indicesManager.GetFirstAvailableIndex();
+		size_t elementIndex                 = std::numeric_limits<size_t>::max();
+		std::optional<size_t> oElementIndex = m_indicesManager.GetFirstAvailableIndex();
 
 		if (oElementIndex)
 			elementIndex = oElementIndex.value();
@@ -32,7 +31,7 @@ public:
 		{
 			// This part should only be executed when both the availableIndices and elements
 			// containers have the same size. So, getting the size should be fine.
-			elementIndex                 = GetCount();
+			elementIndex = GetCount();
 
 			// ElementIndex is the previous size, we have the new item, and then the extraAllocations.
 			const size_t newElementCount = elementIndex + 1u + extraAllocCount;
@@ -64,6 +63,11 @@ public:
 	void RemoveElement(size_t index) noexcept
 	{
 		m_elements[index] = T{};
+		MakeUnavailable(index);
+	}
+
+	void MakeUnavailable(size_t index) noexcept
+	{
 		m_indicesManager.ToggleAvailability(index, true);
 	}
 
