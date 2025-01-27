@@ -5,51 +5,30 @@ D3DExternalResourceManager::D3DExternalResourceManager(ID3D12Device* device, Mem
 	: m_resourceFactory{ device, memoryManager }, m_gfxExtensions{}
 {}
 
-void D3DExternalResourceManager::OnGfxExtensionAddition(GraphicsTechniqueExtension& gfxExtension)
-{
-	const std::vector<ExternalBufferDetails>& bufferDetails = gfxExtension.GetBufferDetails();
-
-	for (const ExternalBufferDetails& details : bufferDetails)
-	{
-		const size_t bufferIndex = m_resourceFactory.CreateExternalBuffer(details.type);
-
-		gfxExtension.SetBuffer(
-			m_resourceFactory.GetExternalBufferSP(bufferIndex), details.bufferId,
-			static_cast<std::uint32_t>(bufferIndex)
-		);
-	}
-}
-
 void D3DExternalResourceManager::OnGfxExtensionDeletion(const GraphicsTechniqueExtension& gfxExtension)
 {
-	const std::vector<ExternalBufferDetails>& bufferDetails = gfxExtension.GetBufferDetails();
+	const std::vector<std::uint32_t>& externalIndices = gfxExtension.GetExternalBufferIndices();
 
-	for (const ExternalBufferDetails& details : bufferDetails)
-		m_resourceFactory.RemoveExternalBuffer(details.externalBufferIndex);
+	for (std::uint32_t externalIndex : externalIndices)
+		m_resourceFactory.RemoveExternalBuffer(externalIndex);
 }
 
 std::uint32_t D3DExternalResourceManager::AddGraphicsTechniqueExtension(
 	std::shared_ptr<GraphicsTechniqueExtension> extension
 ) {
-	OnGfxExtensionAddition(*extension);
-
-	const auto extensionIndex = static_cast<std::uint32_t>(std::size(m_gfxExtensions));
-
-	m_gfxExtensions.emplace_back(std::move(extension));
-
-	return extensionIndex;
+	return static_cast<std::uint32_t>(m_gfxExtensions.Add(std::move(extension)));
 }
 
 void D3DExternalResourceManager::RemoveGraphicsTechniqueExtension(std::uint32_t index) noexcept
 {
 	OnGfxExtensionDeletion(*m_gfxExtensions[index]);
 
-	m_gfxExtensions.erase(std::next(std::begin(m_gfxExtensions), index));
+	m_gfxExtensions.RemoveElement(index);
 }
 
 void D3DExternalResourceManager::UpdateExtensionData(size_t frameIndex) const noexcept
 {
-	for (const GfxExtension& extension : m_gfxExtensions)
+	for (const GfxExtension_t& extension : m_gfxExtensions)
 		extension->UpdateCPUData(frameIndex);
 }
 
@@ -58,7 +37,7 @@ void D3DExternalResourceManager::SetGraphicsDescriptorLayout(
 ) {
 	const size_t descriptorManagerCount = std::size(descriptorManagers);
 
-	for (const GfxExtension& extension : m_gfxExtensions)
+	for (const GfxExtension_t& extension : m_gfxExtensions)
 	{
 		const std::vector<ExternalBufferBindingDetails>& bindingDetails = extension->GetBindingDetails();
 

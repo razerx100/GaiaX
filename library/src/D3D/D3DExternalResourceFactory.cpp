@@ -12,18 +12,14 @@ size_t D3DExternalResourceFactory::CreateExternalBuffer(ExternalBufferType type)
 		resourceState = D3D12_RESOURCE_STATE_GENERIC_READ;
 	}
 
-	const size_t bufferIndex = std::size(m_externalBuffers);
-
-	m_externalBuffers.emplace_back(
-		std::make_unique<D3DExternalBuffer>(
+	return m_externalBuffers.Add(
+		std::make_shared<D3DExternalBuffer>(
 			m_device, m_memoryManager, memoryType, resourceState, usageFlags
 		)
 	);
-
-	return bufferIndex;
 }
 
 void D3DExternalResourceFactory::RemoveExternalBuffer(size_t index) noexcept
 {
-	m_externalBuffers.erase(std::next(std::begin(m_externalBuffers), index));
+	m_externalBuffers.RemoveElement(index);
 }

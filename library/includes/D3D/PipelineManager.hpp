@@ -3,6 +3,7 @@
 #include <optional>
 #include <ranges>
 #include <algorithm>
+#include <concepts>
 #include <D3DRootSignature.hpp>
 #include <GraphicsPipelineVS.hpp>
 #include <GraphicsPipelineMS.hpp>
@@ -42,7 +43,8 @@ public:
 
 	std::uint32_t AddOrGetGraphicsPipeline(
 		const ShaderName& pixelShader, DXGI_FORMAT rtvFormat, DXGI_FORMAT dsvFormat
-	) {
+	) requires !std::is_same_v<Pipeline, ComputePipeline>
+	{
 		auto psoIndex                          = std::numeric_limits<std::uint32_t>::max();
 		std::optional<std::uint32_t> oPSOIndex = TryToGetPSOIndex(pixelShader);
 
@@ -63,6 +65,7 @@ public:
 	}
 
 	std::uint32_t AddOrGetComputePipeline(const ShaderName& computeShader)
+		requires std::is_same_v<Pipeline, ComputePipeline>
 	{
 		auto psoIndex                          = std::numeric_limits<std::uint32_t>::max();
 		std::optional<std::uint32_t> oPSOIndex = TryToGetPSOIndex(computeShader);
@@ -82,17 +85,14 @@ public:
 	}
 
 	void RecreateAllGraphicsPipelines(DXGI_FORMAT rtvFormat, DXGI_FORMAT dsvFormat)
+		requires !std::is_same_v<Pipeline, ComputePipeline>
 	{
-		std::vector<Pipeline>& pipelines = m_pipelines.Get();
-
-		for (Pipeline& pipeline : pipelines)
+		for (Pipeline& pipeline : m_pipelines)
 			pipeline.Recreate(m_device, m_rootSignature, rtvFormat, dsvFormat, m_shaderPath);
 	}
-	void RecreateAllComputePipelines()
+	void RecreateAllComputePipelines() requires std::is_same_v<Pipeline, ComputePipeline>
 	{
-		std::vector<Pipeline>& pipelines = m_pipelines.Get();
-
-		for (Pipeline& pipeline : pipelines)
+		for (Pipeline& pipeline : m_pipelines)
 			pipeline.Recreate(m_device, m_rootSignature, m_shaderPath);
 	}
 

@@ -77,6 +77,15 @@ public:
 	T& at(size_t index) noexcept { return m_elements[index]; }
 	const T& at(size_t index) const noexcept { return m_elements[index]; }
 
+	T& operator[](size_t index) noexcept { return m_elements[index]; }
+	const T& operator[](size_t index) const noexcept { return m_elements[index]; }
+
+	std::vector<T>::iterator begin() { return std::begin(m_elements); }
+	std::vector<T>::const_iterator begin() const { return std::begin(m_elements); }
+
+	std::vector<T>::iterator end() { return std::end(m_elements); }
+	std::vector<T>::const_iterator end() const { return std::end(m_elements); }
+
 	[[nodiscard]]
 	const std::vector<T>& Get() const noexcept { return m_elements; }
 	[[nodiscard]]

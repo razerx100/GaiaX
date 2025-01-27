@@ -5,10 +5,11 @@
 #include <D3DExternalResourceFactory.hpp>
 #include <D3DDescriptorHeapManager.hpp>
 #include <StagingBufferManager.hpp>
+#include <ReusableVector.hpp>
 
 class D3DExternalResourceManager : public ExternalResourceManager
 {
-	using GfxExtension = std::shared_ptr<GraphicsTechniqueExtension>;
+	using GfxExtension_t = std::shared_ptr<GraphicsTechniqueExtension>;
 
 public:
 	D3DExternalResourceManager(ID3D12Device* device, MemoryManager* memoryManager);
@@ -48,7 +49,6 @@ public:
 	}
 
 private:
-	void OnGfxExtensionAddition(GraphicsTechniqueExtension& gfxExtension);
 	void OnGfxExtensionDeletion(const GraphicsTechniqueExtension& gfxExtension);
 
 	void UpdateDescriptor(
@@ -56,8 +56,8 @@ private:
 	) const;
 
 private:
-	D3DExternalResourceFactory m_resourceFactory;
-	std::vector<GfxExtension>  m_gfxExtensions;
+	D3DExternalResourceFactory     m_resourceFactory;
+	ReusableVector<GfxExtension_t> m_gfxExtensions;
 
 	static constexpr size_t s_externalBufferRegisterSpace = 2u;
 

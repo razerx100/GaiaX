@@ -5,10 +5,11 @@
 #include <ExternalResourceFactory.hpp>
 #include <D3DAllocator.hpp>
 #include <D3DExternalBuffer.hpp>
+#include <ReusableVector.hpp>
 
 class D3DExternalResourceFactory : public ExternalResourceFactory
 {
-	using ExternalBuffers_t = std::vector<std::shared_ptr<D3DExternalBuffer>>;
+	using ExternalBuffer_t = std::shared_ptr<D3DExternalBuffer>;
 public:
 	D3DExternalResourceFactory(ID3D12Device* device, MemoryManager* memoryManager)
 		: m_device{ device }, m_memoryManager{ memoryManager }, m_externalBuffers{}
@@ -41,9 +42,9 @@ public:
 	void RemoveExternalBuffer(size_t index) noexcept override;
 
 private:
-	ID3D12Device*     m_device;
-	MemoryManager*    m_memoryManager;
-	ExternalBuffers_t m_externalBuffers;
+	ID3D12Device*                    m_device;
+	MemoryManager*                   m_memoryManager;
+	ReusableVector<ExternalBuffer_t> m_externalBuffers;
 
 public:
 	D3DExternalResourceFactory(const D3DExternalResourceFactory&) = delete;
