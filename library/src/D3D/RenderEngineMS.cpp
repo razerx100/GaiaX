@@ -51,7 +51,8 @@ void RenderEngineMS::SetGraphicsDescriptorBufferLayout()
 	// The layout shouldn't change throughout the runtime.
 	m_modelManager.SetDescriptorLayout(m_graphicsDescriptorManagers, s_vertexShaderRegisterSpace);
 	m_meshManager.SetDescriptorLayout(m_graphicsDescriptorManagers, s_vertexShaderRegisterSpace);
-	SetCommonGraphicsDescriptorLayout(D3D12_SHADER_VISIBILITY_ALL); // Both the AS and MS will use it.
+
+	SetCommonGraphicsDescriptorLayout(D3D12_SHADER_VISIBILITY_ALL); // AS, MS and PS all of them will use it.
 
 	for (D3DDescriptorManager& descriptorManager : m_graphicsDescriptorManagers)
 	{

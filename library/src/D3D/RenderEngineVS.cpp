@@ -51,7 +51,7 @@ void RenderEngineVSIndividual::SetGraphicsDescriptorBufferLayout()
 {
 	// The layout shouldn't change throughout the runtime.
 	m_modelManager.SetDescriptorLayout(m_graphicsDescriptorManagers, s_vertexShaderRegisterSpace);
-	SetCommonGraphicsDescriptorLayout(D3D12_SHADER_VISIBILITY_VERTEX);
+	SetCommonGraphicsDescriptorLayout(D3D12_SHADER_VISIBILITY_ALL);
 
 	for (D3DDescriptorManager& descriptorManager : m_graphicsDescriptorManagers)
 	{
@@ -338,7 +338,7 @@ void RenderEngineVSIndirect::SetGraphicsDescriptorBufferLayout()
 	// Graphics Descriptors.
 	// The layout shouldn't change throughout the runtime.
 	m_modelManager.SetDescriptorLayoutVS(m_graphicsDescriptorManagers, s_vertexShaderRegisterSpace);
-	SetCommonGraphicsDescriptorLayout(D3D12_SHADER_VISIBILITY_VERTEX);
+	SetCommonGraphicsDescriptorLayout(D3D12_SHADER_VISIBILITY_ALL);
 
 	const auto frameCount = std::size(m_graphicsDescriptorManagers);
 
