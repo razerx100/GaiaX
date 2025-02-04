@@ -59,11 +59,6 @@ private:
 
 	void _updatePerFrame([[maybe_unused]] UINT64 frameIndex) const noexcept {}
 
-private:
-	// Graphics
-	// CBV
-	static constexpr size_t s_cameraCBVRegisterSlot = 1u;
-
 public:
 	RenderEngineMS(const RenderEngineMS&) = delete;
 	RenderEngineMS& operator=(const RenderEngineMS&) = delete;

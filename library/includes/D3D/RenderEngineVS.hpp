@@ -59,9 +59,6 @@ private:
 
 	void _updatePerFrame([[maybe_unused]] UINT64 frameIndex) const noexcept {}
 
-private:
-	static constexpr size_t s_cameraCBVRegisterSlot = 1u;
-
 public:
 	RenderEngineVSIndividual(const RenderEngineVSIndividual&) = delete;
 	RenderEngineVSIndividual& operator=(const RenderEngineVSIndividual&) = delete;
@@ -149,9 +146,6 @@ private:
 	void _updatePerFrame(UINT64 frameIndex) const noexcept;
 
 private:
-	// Graphics
-	static constexpr size_t s_cameraCBVRegisterSlot = 1u;
-
 	// Compute
 	static constexpr size_t s_computePipelineSetLayoutCount = 1u;
 	static constexpr size_t s_computeShaderRegisterSpace    = 0u;

@@ -127,9 +127,12 @@ protected:
 	static constexpr size_t s_vertexShaderRegisterSpace      = 0u;
 	static constexpr size_t s_pixelShaderRegisterSpace       = 1u;
 
-	// The pixel and Vertex data are on different sets. So both can be 0u.
-	static constexpr size_t s_modelBuffersPixelSRVRegisterSlot    = 0u;
+	// Space 0
 	static constexpr size_t s_modelBuffersGraphicsSRVRegisterSlot = 0u;
+	static constexpr size_t s_cameraCBVRegisterSlot               = 1u;
+
+	// Space 1
+	static constexpr size_t s_modelBuffersPixelSRVRegisterSlot    = 0u;
 
 	static constexpr size_t s_materialSRVRegisterSlot = 1u;
 	static constexpr size_t s_textureSRVRegisterSlot  = 2u;
