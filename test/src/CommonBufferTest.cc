@@ -157,22 +157,3 @@ TEST_F(CommonBufferTest, SharedBufferTest)
 		EXPECT_EQ(size, 100_KB + midOffset) << "Size isn't 100KB.";
 	}
 }
-
-class MaterialDummy : public Material
-{
-public:
-	MaterialData Get() const noexcept override { return {}; }
-};
-
-TEST_F(CommonBufferTest, MaterialBufferTest)
-{
-	ID3D12Device5* device  = s_deviceManager->GetDevice();
-	IDXGIAdapter3* adapter = s_deviceManager->GetAdapter();
-
-	MemoryManager memoryManager{ adapter, device, 20_MB, 200_KB };
-
-	MaterialBuffers materialBuffers{ device, &memoryManager };
-
-	size_t index = materialBuffers.Add(std::make_shared<MaterialDummy>());
-	materialBuffers.Update(index);
-}

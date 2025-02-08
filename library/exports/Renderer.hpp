@@ -10,7 +10,6 @@
 #include <Texture.hpp>
 
 #include <Model.hpp>
-#include <Material.hpp>
 #include <MeshBundle.hpp>
 #include <Camera.hpp>
 #include <ExternalResourceManager.hpp>
@@ -58,13 +57,6 @@ public:
 	[[nodiscard]]
 	virtual std::uint32_t AddMeshBundle(std::unique_ptr<MeshBundleTemporary> meshBundle) = 0;
 	virtual void RemoveMeshBundle(std::uint32_t bundleIndex) noexcept = 0;
-
-	[[nodiscard]]
-	virtual size_t AddMaterial(std::shared_ptr<Material> material) = 0;
-	[[nodiscard]]
-	virtual std::vector<size_t> AddMaterials(std::vector<std::shared_ptr<Material>>&& materials) = 0;
-	virtual void UpdateMaterial(size_t index) const noexcept = 0;
-	virtual void RemoveMaterial(size_t index) noexcept = 0;
 
 	[[nodiscard]]
 	virtual std::uint32_t AddCamera(std::shared_ptr<Camera>&& camera) noexcept = 0;

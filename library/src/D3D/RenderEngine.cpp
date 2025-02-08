@@ -21,7 +21,6 @@ RenderEngine::RenderEngine(
 	m_graphicsDescriptorManagers{}, m_graphicsRootSignature{},
 	m_textureStorage{ device, &m_memoryManager },
 	m_textureManager{ device },
-	m_materialBuffers{ device, &m_memoryManager },
 	m_cameraManager{ device, &m_memoryManager },
 	m_dsvHeap{ device, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE },
 	m_backgroundColour{ 0.0001f, 0.0001f, 0.0001f, 0.0001f },
@@ -41,40 +40,6 @@ RenderEngine::RenderEngine(
 
 	m_graphicsQueue.Create(device, D3D12_COMMAND_LIST_TYPE_DIRECT, frameCount);
 	m_copyQueue.Create(device, D3D12_COMMAND_LIST_TYPE_COPY, frameCount);
-}
-
-size_t RenderEngine::AddMaterial(std::shared_ptr<Material> material)
-{
-	WaitForGPUToFinish();
-
-	const size_t index = m_materialBuffers.Add(std::move(material));
-
-	m_materialBuffers.Update(index);
-
-	m_materialBuffers.SetDescriptor(
-		m_graphicsDescriptorManagers, s_materialSRVRegisterSlot, s_pixelShaderRegisterSpace
-	);
-
-	m_copyNecessary = true;
-
-	return index;
-}
-
-std::vector<size_t> RenderEngine::AddMaterials(std::vector<std::shared_ptr<Material>>&& materials)
-{
-	WaitForGPUToFinish();
-
-	std::vector<size_t> indices = m_materialBuffers.AddMultiple(std::move(materials));
-
-	m_materialBuffers.Update(indices);
-
-	m_materialBuffers.SetDescriptor(
-		m_graphicsDescriptorManagers, s_materialSRVRegisterSlot, s_pixelShaderRegisterSpace
-	);
-
-	m_copyNecessary = true;
-
-	return indices;
 }
 
 void RenderEngine::SetBackgroundColour(const std::array<float, 4>& colourVector) noexcept
@@ -226,10 +191,6 @@ void RenderEngine::SetCommonGraphicsDescriptorLayout(
 	m_cameraManager.SetDescriptorLayoutGraphics(
 		m_graphicsDescriptorManagers, GetCameraRegisterSlot(), s_vertexShaderRegisterSpace,
 		cameraShaderVisibility
-	);
-
-	m_materialBuffers.SetDescriptorLayout(
-		m_graphicsDescriptorManagers, s_materialSRVRegisterSlot, s_pixelShaderRegisterSpace
 	);
 }
 

@@ -102,26 +102,6 @@ void RendererDx12::RemoveMeshBundle(std::uint32_t bundleIndex) noexcept
 	m_gaia.GetRenderEngine().RemoveMeshBundle(bundleIndex);
 }
 
-size_t RendererDx12::AddMaterial(std::shared_ptr<Material> material)
-{
-	return m_gaia.GetRenderEngine().AddMaterial(std::move(material));
-}
-
-std::vector<size_t> RendererDx12::AddMaterials(std::vector<std::shared_ptr<Material>>&& materials)
-{
-	return m_gaia.GetRenderEngine().AddMaterials(std::move(materials));
-}
-
-void RendererDx12::UpdateMaterial(size_t index) const noexcept
-{
-	m_gaia.GetRenderEngine().UpdateMaterial(index);
-}
-
-void RendererDx12::RemoveMaterial(size_t index) noexcept
-{
-	m_gaia.GetRenderEngine().RemoveMaterial(index);
-}
-
 std::uint32_t RendererDx12::AddCamera(std::shared_ptr<Camera>&& camera) noexcept
 {
 	return m_gaia.GetRenderEngine().AddCamera(std::move(camera));

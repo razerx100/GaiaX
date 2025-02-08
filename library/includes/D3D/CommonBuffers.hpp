@@ -7,62 +7,7 @@
 #include <queue>
 #include <TemporaryDataBuffer.hpp>
 
-#include <Material.hpp>
 #include <MeshBundle.hpp>
-
-class MaterialBuffers : public ReusableD3DBuffer<MaterialBuffers, std::shared_ptr<Material>>
-{
-	friend class ReusableD3DBuffer<MaterialBuffers, std::shared_ptr<Material>>;
-public:
-	MaterialBuffers(ID3D12Device* device, MemoryManager* memoryManager)
-		: ReusableD3DBuffer{ device, memoryManager, D3D12_HEAP_TYPE_UPLOAD },
-		m_device{ device }, m_memoryManager{ memoryManager }
-	{}
-
-	void SetDescriptorLayout(
-		std::vector<D3DDescriptorManager>& descriptorManagers, size_t registerSlot,
-		size_t registerSpace
-	) const noexcept;
-	void SetDescriptor(
-		std::vector<D3DDescriptorManager>& descriptorBuffers, size_t registerSlot,
-		size_t registerSpace
-	) const;
-
-	// Shouldn't be called on every frame. Only updates the index specified.
-	void Update(size_t index) const noexcept;
-	// Shouldn't be called on every frame. Only updates the indices specified.
-	void Update(const std::vector<size_t>& indices) const noexcept;
-
-private:
-	[[nodiscard]]
-	static consteval size_t GetStride() noexcept { return sizeof(MaterialData); }
-	[[nodiscard]]
-	// Chose 4 for not particular reason.
-	static consteval size_t GetExtraElementAllocationCount() noexcept { return 4u; }
-
-	void CreateBuffer(size_t materialCount);
-
-private:
-	ID3D12Device*  m_device;
-	MemoryManager* m_memoryManager;
-
-public:
-	MaterialBuffers(const MaterialBuffers&) = delete;
-	MaterialBuffers& operator=(const MaterialBuffers&) = delete;
-
-	MaterialBuffers(MaterialBuffers&& other) noexcept
-		: ReusableD3DBuffer{ std::move(other) },
-		m_device{ other.m_device }, m_memoryManager{ other.m_memoryManager }
-	{}
-	MaterialBuffers& operator=(MaterialBuffers&& other) noexcept
-	{
-		ReusableD3DBuffer::operator=(std::move(other));
-		m_device                   = other.m_device;
-		m_memoryManager            = other.m_memoryManager;
-
-		return *this;
-	}
-};
 
 struct SharedBufferData
 {

@@ -39,14 +39,6 @@ public:
 
 	virtual void FinaliseInitialisation(const DeviceManager& deviceManager) = 0;
 
-	[[nodiscard]]
-	size_t AddMaterial(std::shared_ptr<Material> material);
-	[[nodiscard]]
-	std::vector<size_t> AddMaterials(std::vector<std::shared_ptr<Material>>&& materials);
-
-	void UpdateMaterial(size_t index) const noexcept { m_materialBuffers.Update(index); }
-	void RemoveMaterial(size_t index) noexcept { m_materialBuffers.Remove(index); }
-
 	void SetBackgroundColour(const std::array<float, 4>& colourVector) noexcept;
 
 	[[nodiscard]]
@@ -134,8 +126,7 @@ protected:
 	// Space 1
 	static constexpr size_t s_modelBuffersPixelSRVRegisterSlot    = 0u;
 
-	static constexpr size_t s_materialSRVRegisterSlot = 1u;
-	static constexpr size_t s_textureSRVRegisterSlot  = 2u;
+	static constexpr size_t s_textureSRVRegisterSlot  = 1u;
 
 protected:
 	std::shared_ptr<ThreadPool>       m_threadPool;
@@ -151,7 +142,6 @@ protected:
 	D3DRootSignature                  m_graphicsRootSignature;
 	TextureStorage                    m_textureStorage;
 	TextureManager                    m_textureManager;
-	MaterialBuffers                   m_materialBuffers;
 	CameraManager                     m_cameraManager;
 	D3DReusableDescriptorHeap         m_dsvHeap;
 	std::array<float, 4u>             m_backgroundColour;
@@ -177,7 +167,6 @@ public:
 		m_graphicsRootSignature{ std::move(other.m_graphicsRootSignature) },
 		m_textureStorage{ std::move(other.m_textureStorage) },
 		m_textureManager{ std::move(other.m_textureManager) },
-		m_materialBuffers{ std::move(other.m_materialBuffers) },
 		m_cameraManager{ std::move(other.m_cameraManager) },
 		m_dsvHeap{ std::move(other.m_dsvHeap) },
 		m_backgroundColour{ other.m_backgroundColour },
@@ -200,7 +189,6 @@ public:
 		m_graphicsRootSignature      = std::move(other.m_graphicsRootSignature);
 		m_textureStorage             = std::move(other.m_textureStorage);
 		m_textureManager             = std::move(other.m_textureManager);
-		m_materialBuffers            = std::move(other.m_materialBuffers);
 		m_cameraManager              = std::move(other.m_cameraManager);
 		m_dsvHeap                    = std::move(other.m_dsvHeap);
 		m_backgroundColour           = other.m_backgroundColour;

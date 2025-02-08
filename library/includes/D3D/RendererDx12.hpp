@@ -49,13 +49,6 @@ public:
 	void RemoveMeshBundle(std::uint32_t bundleIndex) noexcept override;
 
 	[[nodiscard]]
-	size_t AddMaterial(std::shared_ptr<Material> material) override;
-	[[nodiscard]]
-	std::vector<size_t> AddMaterials(std::vector<std::shared_ptr<Material>>&& materials) override;
-	void UpdateMaterial(size_t index) const noexcept override;
-	void RemoveMaterial(size_t index) noexcept override;
-
-	[[nodiscard]]
 	std::uint32_t AddCamera(std::shared_ptr<Camera>&& camera) noexcept override;
 	void SetCamera(std::uint32_t index) noexcept override;
 	void RemoveCamera(std::uint32_t index) noexcept override;
