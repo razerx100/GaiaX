@@ -203,6 +203,8 @@ void ModelManagerVSIndirect::ConfigureModelBundleRemove(
 		for (std::uint32_t modelIndex : modelIndices)
 			modelBuffers.Remove(modelIndex);
 	}
+
+	m_modelBundlesCS.erase(std::next(std::begin(m_modelBundlesCS), bundleIndex));
 }
 
 void ModelManagerVSIndirect::UpdatePerFrame(
