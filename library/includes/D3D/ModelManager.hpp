@@ -62,7 +62,7 @@ public:
 
 			bundleID = modelBundleObj.GetID();
 
-			AddModelBundle(std::move(modelBundleObj));
+			m_modelBundles.emplace_back(std::move(modelBundleObj));
 		}
 
 		return bundleID;
@@ -89,15 +89,7 @@ public:
 		auto modelBundle = GetModelBundle(bundleID);
 
 		if (modelBundle != std::end(m_modelBundles))
-		{
 			modelBundle->SetPSOIndex(psoIndex);
-
-			ModelBundleType modelBundleObj = std::move(*modelBundle);
-
-			m_modelBundles.erase(modelBundle);
-
-			AddModelBundle(std::move(modelBundleObj));
-		}
 	}
 
 protected:
@@ -125,27 +117,6 @@ protected:
 			m_modelBundles,
 			[bundleID](const ModelBundleType& bundle) { return bundle.GetID() == bundleID; }
 		);
-	}
-
-private:
-	void AddModelBundle(ModelBundleType&& modelBundle) noexcept
-	{
-		const std::uint32_t psoIndex = modelBundle.GetPSOIndex();
-
-		// These will be sorted by their PSO indices.
-		// Upper_bound returns the next bigger element.
-		auto result = std::ranges::upper_bound(
-			m_modelBundles, psoIndex, {},
-			[](const ModelBundleType& modelBundle)
-			{
-				return modelBundle.GetPSOIndex();
-			}
-		);
-
-		// If the result is the end it, that means there is no bigger index. So, then
-		// insert at the back. Otherwise, insert at the end of the range of the same indices.
-		// Insert works for the end iterator, so no need to emplace_back.
-		m_modelBundles.insert(result, std::move(modelBundle));
 	}
 
 protected:

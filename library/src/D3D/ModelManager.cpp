@@ -167,55 +167,42 @@ void ModelManagerVSIndirect::ConfigureModelBundle(
 void ModelManagerVSIndirect::ConfigureModelBundleRemove(
 	size_t bundleIndex, ModelBuffers& modelBuffers
 ) noexcept {
-	const ModelBundleVSIndirect& modelBundle  = m_modelBundles.at(bundleIndex);
+	const ModelBundleVSIndirect& modelBundleVS = m_modelBundles[bundleIndex];
 
 	{
 		const std::vector<SharedBufferData>& argumentOutputSharedData
-			= modelBundle.GetArgumentOutputSharedData();
+			= modelBundleVS.GetArgumentOutputSharedData();
 
 		for (size_t index = 0u; index < std::size(m_argumentOutputBuffers); ++index)
 			m_argumentOutputBuffers[index].RelinquishMemory(argumentOutputSharedData[index]);
 
-		const std::vector<SharedBufferData>& counterSharedData = modelBundle.GetCounterSharedData();
+		const std::vector<SharedBufferData>& counterSharedData = modelBundleVS.GetCounterSharedData();
 
 		for (size_t index = 0u; index < std::size(m_counterBuffers); ++index)
 			m_counterBuffers[index].RelinquishMemory(counterSharedData[index]);
 	}
 
-	const auto bundleID = static_cast<std::uint32_t>(modelBundle.GetID());
+	// The index should be the same as the VS one.
+	const ModelBundleCSIndirect& modelBundleCS = m_modelBundlesCS[bundleIndex];
 
-	std::erase_if(
-		m_modelBundlesCS,
-		[bundleID, this, &modelBuffers]
-		(const ModelBundleCSIndirect& bundle)
-		{
-			const bool result = bundleID == bundle.GetID();
+	{
+		const std::vector<SharedBufferData>& argumentInputSharedData
+			= modelBundleCS.GetArgumentInputSharedData();
 
-			if (result)
-			{
-				{
-					const std::vector<SharedBufferData>& argumentInputSharedData
-						= bundle.GetArgumentInputSharedData();
+		for (size_t index = 0u; index < std::size(m_argumentInputBuffers); ++index)
+			m_argumentInputBuffers[index].RelinquishMemory(argumentInputSharedData[index]);
 
-					for (size_t index = 0u; index < std::size(m_argumentInputBuffers); ++index)
-						m_argumentInputBuffers[index].RelinquishMemory(argumentInputSharedData[index]);
-				}
+		modelBundleCS.ResetCullingData();
 
-				bundle.ResetCullingData();
+		m_cullingDataBuffer.RelinquishMemory(modelBundleCS.GetCullingSharedData());
+		m_perModelDataBuffer.RelinquishMemory(modelBundleCS.GetPerModelDataSharedData());
 
-				m_cullingDataBuffer.RelinquishMemory(bundle.GetCullingSharedData());
-				m_perModelDataBuffer.RelinquishMemory(bundle.GetPerModelDataSharedData());
+		// Remove the model indices
+		const std::vector<std::uint32_t>& modelIndices = modelBundleCS.GetModelIndices();
 
-				// Remove the model indices
-				const std::vector<std::uint32_t>& modelIndices = bundle.GetModelIndices();
-
-				for (std::uint32_t modelIndex : modelIndices)
-					modelBuffers.Remove(modelIndex);
-			}
-
-			return result;
-		}
-	);
+		for (std::uint32_t modelIndex : modelIndices)
+			modelBuffers.Remove(modelIndex);
+	}
 }
 
 void ModelManagerVSIndirect::UpdatePerFrame(
