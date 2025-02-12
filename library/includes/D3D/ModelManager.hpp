@@ -35,9 +35,7 @@ public:
 
 	[[nodiscard]]
 	std::uint32_t AddModelBundle(
-		std::shared_ptr<ModelBundle>&& modelBundle, std::uint32_t psoIndex,
-		ModelBuffers& modelBuffers, StagingBufferManager& stagingManager,
-		TemporaryDataBufferGPU& tempBuffer
+		std::shared_ptr<ModelBundle>&& modelBundle, std::uint32_t psoIndex, ModelBuffers& modelBuffers
 	) {
 		const std::vector<std::shared_ptr<Model>>& models = modelBundle->GetModels();
 
@@ -54,8 +52,7 @@ public:
 			ModelBundleType modelBundleObj{};
 
 			static_cast<Derived*>(this)->ConfigureModelBundle(
-				modelBundleObj, std::move(modelIndices), std::move(modelBundle),
-				stagingManager, tempBuffer
+				modelBundleObj, std::move(modelIndices), std::move(modelBundle)
 			);
 
 			modelBundleObj.SetPSOIndex(psoIndex);
@@ -166,9 +163,7 @@ private:
 	void ConfigureModelBundle(
 		ModelBundleVSIndividual& modelBundleObj,
 		std::vector<std::uint32_t>&& modelIndices,
-		std::shared_ptr<ModelBundle>&& modelBundle,
-		StagingBufferManager& stagingManager,
-		TemporaryDataBufferGPU& tempBuffer
+		std::shared_ptr<ModelBundle>&& modelBundle
 	) const noexcept;
 
 	void ConfigureModelBundleRemove(size_t bundleIndex, ModelBuffers& modelBuffers) noexcept;
@@ -219,8 +214,6 @@ public:
 		const D3DDescriptorManager& descriptorManager, size_t constantsRegisterSpace
 	) noexcept;
 
-	void CopyOldBuffers(const D3DCommandList& copyList) noexcept;
-
 	void SetDescriptorLayoutVS(
 		std::vector<D3DDescriptorManager>& descriptorManagers, size_t vsRegisterSpace
 	) const noexcept;
@@ -254,8 +247,7 @@ private:
 
 	void ConfigureModelBundle(
 		ModelBundleVSIndirect& modelBundleObj, std::vector<std::uint32_t>&& modelIndices,
-		std::shared_ptr<ModelBundle>&& modelBundle, StagingBufferManager& stagingManager,
-		TemporaryDataBufferGPU& tempBuffer
+		std::shared_ptr<ModelBundle>&& modelBundle
 	);
 
 	void ConfigureModelBundleRemove(size_t bundleIndex, ModelBuffers& modelBuffers) noexcept;
@@ -276,7 +268,7 @@ private:
 	std::vector<SharedBufferGPUWriteOnly> m_counterBuffers;
 	Buffer                                m_counterResetBuffer;
 	MultiInstanceCPUBuffer<std::uint32_t> m_meshBundleIndexBuffer;
-	SharedBufferGPU                       m_perModelDataBuffer;
+	SharedBufferCPU                       m_perModelDataBuffer;
 	UINT                                  m_dispatchXCount;
 	UINT                                  m_argumentCount;
 	UINT                                  m_constantsVSRootIndex;
@@ -284,7 +276,6 @@ private:
 
 	// These CS models will have the data to be uploaded and the dispatching will be done on the Manager.
 	std::vector<ModelBundleCSIndirect>    m_modelBundlesCS;
-	bool                                  m_oldBufferCopyNecessary;
 
 	// Vertex Shader ones
 	// CBV
@@ -322,8 +313,7 @@ public:
 		m_argumentCount{ other.m_argumentCount },
 		m_constantsVSRootIndex{ other.m_constantsVSRootIndex },
 		m_constantsCSRootIndex{ other.m_constantsCSRootIndex },
-		m_modelBundlesCS{ std::move(other.m_modelBundlesCS) },
-		m_oldBufferCopyNecessary{ other.m_oldBufferCopyNecessary }
+		m_modelBundlesCS{ std::move(other.m_modelBundlesCS) }
 	{}
 	ModelManagerVSIndirect& operator=(ModelManagerVSIndirect&& other) noexcept
 	{
@@ -340,7 +330,6 @@ public:
 		m_constantsVSRootIndex   = other.m_constantsVSRootIndex;
 		m_constantsCSRootIndex   = other.m_constantsCSRootIndex;
 		m_modelBundlesCS         = std::move(other.m_modelBundlesCS);
-		m_oldBufferCopyNecessary = other.m_oldBufferCopyNecessary;
 
 		return *this;
 	}
@@ -370,8 +359,7 @@ private:
 	) noexcept;
 	void ConfigureModelBundle(
 		ModelBundleMSIndividual& modelBundleObj, std::vector<std::uint32_t>&& modelIndices,
-		std::shared_ptr<ModelBundle>&& modelBundle, StagingBufferManager& stagingManager,
-		TemporaryDataBufferGPU& tempBuffer
+		std::shared_ptr<ModelBundle>&& modelBundle
 	);
 
 	void ConfigureModelBundleRemove(size_t bundleIndex, ModelBuffers& modelBuffers) noexcept;

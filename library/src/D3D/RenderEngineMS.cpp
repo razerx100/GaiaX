@@ -102,7 +102,7 @@ std::uint32_t RenderEngineMS::AddModelBundle(
 	const std::uint32_t psoIndex = m_renderPassManager.AddOrGetGraphicsPipeline(pixelShader);
 
 	const std::uint32_t index    = m_modelManager.AddModelBundle(
-		std::move(modelBundle), psoIndex, m_modelBuffers, m_stagingManager, m_temporaryDataBuffer
+		std::move(modelBundle), psoIndex, m_modelBuffers
 	);
 
 	// After a new model has been added, the ModelBuffer might get recreated. So, it will have

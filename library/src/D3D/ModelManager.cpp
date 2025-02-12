@@ -16,9 +16,7 @@ void ModelManagerVSIndividual::_setGraphicsConstantRootIndex(
 
 void ModelManagerVSIndividual::ConfigureModelBundle(
 	ModelBundleVSIndividual& modelBundleObj, std::vector<std::uint32_t>&& modelIndices,
-	std::shared_ptr<ModelBundle>&& modelBundle,
-	[[maybe_unused]] StagingBufferManager& stagingManager,
-	[[maybe_unused]] TemporaryDataBufferGPU& tempBuffer
+	std::shared_ptr<ModelBundle>&& modelBundle
 ) const noexcept {
 	modelBundleObj.SetModelBundle(std::move(modelBundle), std::move(modelIndices));
 }
@@ -79,9 +77,9 @@ ModelManagerVSIndirect::ModelManagerVSIndirect(
 	m_counterBuffers{},
 	m_counterResetBuffer{ device, memoryManager, D3D12_HEAP_TYPE_UPLOAD },
 	m_meshBundleIndexBuffer{ device, memoryManager, frameCount },
-	m_perModelDataBuffer{ device, memoryManager },
+	m_perModelDataBuffer{ device, memoryManager, D3D12_RESOURCE_STATE_GENERIC_READ },
 	m_dispatchXCount{ 0u }, m_argumentCount{ 0u }, m_constantsVSRootIndex{ 0u },
-	m_constantsCSRootIndex{ 0u }, m_modelBundlesCS{}, m_oldBufferCopyNecessary{ false }
+	m_constantsCSRootIndex{ 0u }, m_modelBundlesCS{}
 {
 	for (size_t _ = 0u; _ < frameCount; ++_)
 	{
@@ -130,18 +128,14 @@ void ModelManagerVSIndirect::UpdateDispatchX() noexcept
 
 void ModelManagerVSIndirect::ConfigureModelBundle(
 	ModelBundleVSIndirect& modelBundleObj, std::vector<std::uint32_t>&& modelIndices,
-	std::shared_ptr<ModelBundle>&& modelBundle, StagingBufferManager& stagingManager,
-	TemporaryDataBufferGPU& tempBuffer
+	std::shared_ptr<ModelBundle>&& modelBundle
 ) {
 	ModelBundleCSIndirect modelBundleCS{};
 
-	modelBundleCS.SetModelBundle(modelBundle);
+	modelBundleCS.SetModelBundle(modelBundle, std::move(modelIndices));
 	modelBundleObj.SetModelBundle(std::move(modelBundle));
 
-	modelBundleCS.CreateBuffers(
-		stagingManager, m_argumentInputBuffers, m_cullingDataBuffer, m_perModelDataBuffer,
-		std::move(modelIndices), tempBuffer
-	);
+	modelBundleCS.CreateBuffers(m_argumentInputBuffers, m_cullingDataBuffer, m_perModelDataBuffer);
 
 	modelBundleObj.CreateBuffers(
 		m_argumentOutputBuffers, m_counterBuffers, modelBundleCS.GetModelCount()
@@ -158,8 +152,6 @@ void ModelManagerVSIndirect::ConfigureModelBundle(
 	m_argumentCount += modelBundleCS.GetModelCount();
 
 	m_modelBundlesCS.emplace_back(std::move(modelBundleCS));
-
-	m_oldBufferCopyNecessary = true;
 
 	UpdateDispatchX();
 }
@@ -366,20 +358,6 @@ void ModelManagerVSIndirect::Draw(
 	}
 }
 
-void ModelManagerVSIndirect::CopyOldBuffers(const D3DCommandList& copyList) noexcept
-{
-	if (m_oldBufferCopyNecessary)
-	{
-		m_perModelDataBuffer.CopyOldBuffer(copyList);
-
-		// I don't think copying is needed for the Output Argument
-		// and the counter buffers. As their data will be only
-		// needed on the same frame and not afterwards.
-
-		m_oldBufferCopyNecessary = false;
-	}
-}
-
 void ModelManagerVSIndirect::ResetCounterBuffer(
 	const D3DCommandList& computeList, size_t frameIndex
 ) const noexcept {
@@ -430,9 +408,7 @@ ModelManagerMS::ModelManagerMS(MemoryManager* memoryManager)
 
 void ModelManagerMS::ConfigureModelBundle(
 	ModelBundleMSIndividual& modelBundleObj, std::vector<std::uint32_t>&& modelIndices,
-	std::shared_ptr<ModelBundle>&& modelBundle,
-	[[maybe_unused]] StagingBufferManager& stagingBufferMan,
-	[[maybe_unused]] TemporaryDataBufferGPU& tempBuffer
+	std::shared_ptr<ModelBundle>&& modelBundle
 ) {
 	modelBundleObj.SetModelBundle(std::move(modelBundle), std::move(modelIndices));
 }

@@ -188,15 +188,21 @@ public:
 		D3D12_DRAW_INDEXED_ARGUMENTS drawArguments;
 	};
 
+	struct PerModelData
+	{
+		std::uint32_t bundleIndex;
+		std::uint32_t isVisible;
+	};
+
 public:
 	ModelBundleCSIndirect();
 
-	void SetModelBundle(std::shared_ptr<ModelBundle> bundle) noexcept;
+	void SetModelBundle(
+		std::shared_ptr<ModelBundle> bundle, std::vector<std::uint32_t> modelIndices
+	) noexcept;
 	void CreateBuffers(
-		StagingBufferManager& stagingBufferMan,
 		std::vector<SharedBufferCPU>& argumentInputSharedBuffer,
-		SharedBufferCPU& cullingSharedBuffer, SharedBufferGPU& perModelDataSharedBuffer,
-		std::vector<std::uint32_t> modelIndices, TemporaryDataBufferGPU& tempBuffer
+		SharedBufferCPU& cullingSharedBuffer, SharedBufferCPU& perModelDataSharedBuffer
 	);
 
 	void Update(size_t bufferIndex, const D3DMeshBundleVS& meshBundle) const noexcept;

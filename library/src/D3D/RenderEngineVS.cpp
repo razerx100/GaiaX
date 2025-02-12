@@ -111,7 +111,7 @@ std::uint32_t RenderEngineVSIndividual::AddModelBundle(
 	const std::uint32_t psoIndex = m_renderPassManager.AddOrGetGraphicsPipeline(pixelShader);
 
 	const std::uint32_t index    = m_modelManager.AddModelBundle(
-		std::move(modelBundle), psoIndex, m_modelBuffers, m_stagingManager, m_temporaryDataBuffer
+		std::move(modelBundle), psoIndex, m_modelBuffers
 	);
 
 	// After new models have been added, the ModelBuffer might get recreated. So, it will have
@@ -508,7 +508,7 @@ std::uint32_t RenderEngineVSIndirect::AddModelBundle(
 	const std::uint32_t psoIndex = m_renderPassManager.AddOrGetGraphicsPipeline(pixelShader);
 
 	const std::uint32_t index    = m_modelManager.AddModelBundle(
-		std::move(modelBundle), psoIndex, m_modelBuffers, m_stagingManager, m_temporaryDataBuffer
+		std::move(modelBundle), psoIndex, m_modelBuffers
 	);
 
 	// After new models have been added, the ModelBuffer might get recreated. So, it will have
@@ -553,7 +553,6 @@ ID3D12Fence* RenderEngineVSIndirect::GenericCopyStage(
 			// Need to copy the old buffers first to avoid empty data being copied over
 			// the queued data.
 			m_externalResourceManager.CopyQueuedBuffers(copyCmdListScope);
-			m_modelManager.CopyOldBuffers(copyCmdListScope);
 			m_meshManager.CopyOldBuffers(copyCmdListScope);
 			m_stagingManager.CopyAndClearQueuedBuffers(copyCmdListScope);
 		}

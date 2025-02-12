@@ -60,6 +60,10 @@ public:
 	UVInfo GetSpecularUVInfo() const noexcept override { return UVInfo{}; }
 	[[nodiscard]]
 	float GetModelScale() const noexcept override { return 1.f; }
+	[[nodiscard]]
+	std::uint32_t GetPipelineIndex() const noexcept override { return 0u; }
+	[[nodiscard]]
+	bool IsVisible() const noexcept override { return true; }
 };
 
 class ModelBundleDummy : public ModelBundle
@@ -323,9 +327,7 @@ TEST_F(ModelManagerTest, ModelManagerVSIndividualTest)
 
 		modelBundle->AddModel(std::move(model));
 
-		std::uint32_t index = vsIndividual.AddModelBundle(
-			std::move(modelBundle), 0u, modelBuffers, stagingBufferManager, tempDataBuffer
-		);
+		std::uint32_t index = vsIndividual.AddModelBundle(std::move(modelBundle), 0u, modelBuffers);
 		EXPECT_EQ(index, 0u) << "Index isn't 0.";
 	}
 	{
@@ -335,7 +337,7 @@ TEST_F(ModelManagerTest, ModelManagerVSIndividualTest)
 		modelBundle->AddModel(std::move(model));
 
 		std::uint32_t index = vsIndividual.AddModelBundle(
-			std::move(modelBundle), 0u, modelBuffers, stagingBufferManager, tempDataBuffer
+			std::move(modelBundle), 0u, modelBuffers
 		);
 		EXPECT_EQ(index, 1u) << "Index isn't 1.";
 	}
@@ -345,9 +347,7 @@ TEST_F(ModelManagerTest, ModelManagerVSIndividualTest)
 		for (size_t index = 0u; index < 5u; ++index)
 			modelBundle->AddModel(std::make_shared<ModelDummy>());
 
-		std::uint32_t index = vsIndividual.AddModelBundle(
-			std::move(modelBundle), 0u, modelBuffers, stagingBufferManager, tempDataBuffer
-		);
+		std::uint32_t index = vsIndividual.AddModelBundle(std::move(modelBundle), 0u, modelBuffers);
 		EXPECT_EQ(index, 2u) << "Index isn't 2.";
 	}
 	vsIndividual.RemoveModelBundle(1u, modelBuffers);
@@ -357,9 +357,7 @@ TEST_F(ModelManagerTest, ModelManagerVSIndividualTest)
 		for (size_t index = 0u; index < 7u; ++index)
 			modelBundle->AddModel(std::make_shared<ModelDummy>());
 
-		std::uint32_t index = vsIndividual.AddModelBundle(
-			std::move(modelBundle), 0u, modelBuffers, stagingBufferManager, tempDataBuffer
-		);
+		std::uint32_t index = vsIndividual.AddModelBundle(std::move(modelBundle), 0u, modelBuffers);
 		EXPECT_EQ(index, 1u) << "Index isn't 1.";
 	}
 }
@@ -471,9 +469,7 @@ TEST_F(ModelManagerTest, ModelManagerVSIndirectTest)
 
 		modelBundle->AddModel(std::move(model));
 
-		std::uint32_t index = vsIndirect.AddModelBundle(
-			std::move(modelBundle), 0u, modelBuffers, stagingBufferManager, tempDataBuffer
-		);
+		std::uint32_t index = vsIndirect.AddModelBundle(std::move(modelBundle), 0u, modelBuffers);
 		EXPECT_EQ(index, 0u) << "Index isn't 0.";
 	}
 	{
@@ -483,7 +479,7 @@ TEST_F(ModelManagerTest, ModelManagerVSIndirectTest)
 		modelBundle->AddModel(std::move(model));
 
 		std::uint32_t index = vsIndirect.AddModelBundle(
-			std::move(modelBundle), 0u, modelBuffers, stagingBufferManager, tempDataBuffer
+			std::move(modelBundle), 0u, modelBuffers
 		);
 		EXPECT_EQ(index, 1u) << "Index isn't 1.";
 	}
@@ -493,9 +489,7 @@ TEST_F(ModelManagerTest, ModelManagerVSIndirectTest)
 		for (size_t index = 0u; index < 5u; ++index)
 			modelBundle->AddModel(std::make_shared<ModelDummy>());
 
-		std::uint32_t index = vsIndirect.AddModelBundle(
-			std::move(modelBundle), 0u, modelBuffers, stagingBufferManager, tempDataBuffer
-		);
+		std::uint32_t index = vsIndirect.AddModelBundle(std::move(modelBundle), 0u, modelBuffers);
 		EXPECT_EQ(index, 2u) << "Index isn't 2.";
 	}
 	vsIndirect.RemoveModelBundle(1u, modelBuffers);
@@ -505,9 +499,7 @@ TEST_F(ModelManagerTest, ModelManagerVSIndirectTest)
 		for (size_t index = 0u; index < 7u; ++index)
 			modelBundle->AddModel(std::make_shared<ModelDummy>());
 
-		std::uint32_t index = vsIndirect.AddModelBundle(
-			std::move(modelBundle), 0u, modelBuffers, stagingBufferManager, tempDataBuffer
-		);
+		std::uint32_t index = vsIndirect.AddModelBundle(std::move(modelBundle), 0u, modelBuffers);
 		EXPECT_EQ(index, 1u) << "Index isn't 1.";
 
 		vsIndirect.ChangePSO(index, 0u);
@@ -518,9 +510,7 @@ TEST_F(ModelManagerTest, ModelManagerVSIndirectTest)
 
 		modelBundle->AddModel(std::move(model));
 
-		std::uint32_t index = vsIndirect.AddModelBundle(
-			std::move(modelBundle), 0u, modelBuffers, stagingBufferManager, tempDataBuffer
-		);
+		std::uint32_t index = vsIndirect.AddModelBundle(std::move(modelBundle), 0u, modelBuffers);
 		EXPECT_EQ(index, 13u) << "Index isn't 13.";
 	}
 	{
@@ -529,9 +519,7 @@ TEST_F(ModelManagerTest, ModelManagerVSIndirectTest)
 
 		modelBundle->AddModel(std::move(model));
 
-		std::uint32_t index = vsIndirect.AddModelBundle(
-			std::move(modelBundle), 0u, modelBuffers, stagingBufferManager, tempDataBuffer
-		);
+		std::uint32_t index = vsIndirect.AddModelBundle(std::move(modelBundle), 0u, modelBuffers);
 		EXPECT_EQ(index, 14u) << "Index isn't 14.";
 	}
 }
@@ -622,9 +610,7 @@ TEST_F(ModelManagerTest, ModelManagerMS)
 
 		modelBundle->AddModel(std::move(model));
 
-		std::uint32_t index = managerMS.AddModelBundle(
-			std::move(modelBundle), 0u, modelBuffers, stagingBufferManager, tempDataBuffer
-		);
+		std::uint32_t index = managerMS.AddModelBundle(std::move(modelBundle), 0u, modelBuffers);
 		EXPECT_EQ(index, 0u) << "Index isn't 0.";
 	}
 	{
@@ -633,9 +619,7 @@ TEST_F(ModelManagerTest, ModelManagerMS)
 
 		modelBundle->AddModel(std::move(model));
 
-		std::uint32_t index = managerMS.AddModelBundle(
-			std::move(modelBundle), 0u, modelBuffers, stagingBufferManager, tempDataBuffer
-		);
+		std::uint32_t index = managerMS.AddModelBundle(std::move(modelBundle), 0u, modelBuffers);
 		EXPECT_EQ(index, 1u) << "Index isn't 1.";
 	}
 	{
@@ -644,9 +628,7 @@ TEST_F(ModelManagerTest, ModelManagerMS)
 		for (size_t index = 0u; index < 5u; ++index)
 			modelBundle->AddModel(std::make_shared<ModelDummy>());
 
-		std::uint32_t index = managerMS.AddModelBundle(
-			std::move(modelBundle), 0u, modelBuffers, stagingBufferManager, tempDataBuffer
-		);
+		std::uint32_t index = managerMS.AddModelBundle(std::move(modelBundle), 0u, modelBuffers);
 		EXPECT_EQ(index, 2u) << "Index isn't 2.";
 	}
 	managerMS.RemoveModelBundle(1u, modelBuffers);
@@ -656,9 +638,7 @@ TEST_F(ModelManagerTest, ModelManagerMS)
 		for (size_t index = 0u; index < 7u; ++index)
 			modelBundle->AddModel(std::make_shared<ModelDummy>());
 
-		std::uint32_t index = managerMS.AddModelBundle(
-			std::move(modelBundle), 0u, modelBuffers, stagingBufferManager, tempDataBuffer
-		);
+		std::uint32_t index = managerMS.AddModelBundle(std::move(modelBundle), 0u, modelBuffers);
 		EXPECT_EQ(index, 1u) << "Index isn't 1.";
 	}
 }

@@ -33,13 +33,16 @@ void ModelBundleVSIndividual::Draw(
 
 	for (size_t index = 0; index < std::size(models); ++index)
 	{
+		const std::shared_ptr<Model>& model = models[index];
+
+		if (!model->IsVisible())
+			continue;
+
 		constexpr UINT pushConstantCount = GetConstantCount();
 
 		cmdList->SetGraphicsRoot32BitConstants(
 			constantsRootIndex, pushConstantCount, &m_modelBufferIndices[index], 0u
 		);
-
-		const std::shared_ptr<Model>& model = models[index];
 
 		const D3D12_DRAW_INDEXED_ARGUMENTS meshArgs = GetDrawIndexedIndirectCommand(
 			meshBundle.GetMeshDetails(model->GetMeshIndex())
@@ -68,7 +71,10 @@ void ModelBundleMSIndividual::Draw(
 
 	for (size_t index = 0u; index < std::size(models); ++index)
 	{
-		const auto& model = models[index];
+		const std::shared_ptr<Model>& model = models[index];
+
+		if (!model->IsVisible())
+			continue;
 
 		constexpr UINT pushConstantCount = GetConstantCount();
 		constexpr UINT constBufferOffset = D3DMeshBundleMS::GetConstantCount();
@@ -77,7 +83,7 @@ void ModelBundleMSIndividual::Draw(
 
 		const ModelDetailsMS constants
 		{
-			.meshDetails      = MeshDetails
+			.meshDetails = MeshDetails
 				{
 					.meshletCount  = meshDetailsMS.meshletCount,
 					.meshletOffset = meshDetailsMS.meshletOffset,
@@ -172,9 +178,11 @@ ModelBundleCSIndirect::ModelBundleCSIndirect()
 	m_argumentInputSharedData{}, m_modelBundle{}, m_modelIndices{}
 {}
 
-void ModelBundleCSIndirect::SetModelBundle(std::shared_ptr<ModelBundle> bundle) noexcept
-{
-	m_modelBundle = std::move(bundle);
+void ModelBundleCSIndirect::SetModelBundle(
+	std::shared_ptr<ModelBundle> bundle, std::vector<std::uint32_t> modelIndices
+) noexcept {
+	m_modelBundle  = std::move(bundle);
+	m_modelIndices = std::move(modelIndices);
 }
 
 void ModelBundleCSIndirect::ResetCullingData() const noexcept
@@ -192,17 +200,16 @@ void ModelBundleCSIndirect::ResetCullingData() const noexcept
 }
 
 void ModelBundleCSIndirect::CreateBuffers(
-	StagingBufferManager& stagingBufferMan,
 	std::vector<SharedBufferCPU>& argumentInputSharedBuffer,
-	SharedBufferCPU& cullingSharedBuffer, SharedBufferGPU& perModelDataSharedBuffer,
-	std::vector<std::uint32_t> modelIndices, TemporaryDataBufferGPU& tempBuffer
+	SharedBufferCPU& cullingSharedBuffer, SharedBufferCPU& perModelDataSharedBuffer
 ) {
 	constexpr size_t argumentStrideSize = sizeof(IndirectArgument);
+	constexpr size_t perModelStride     = sizeof(PerModelData);
 
 	const auto argumentCount      = static_cast<std::uint32_t>(std::size(m_modelBundle->GetModels()));
 	const auto argumentBufferSize = static_cast<UINT64>(argumentStrideSize * argumentCount);
 	const auto cullingDataSize    = static_cast<UINT64>(sizeof(CullingData));
-	const auto perModelDataSize   = static_cast<UINT64>(sizeof(std::uint32_t) * argumentCount);
+	const auto perModelDataSize   = static_cast<UINT64>(perModelStride * argumentCount);
 
 	{
 		const size_t argumentInputBufferCount = std::size(argumentInputSharedBuffer);
@@ -244,42 +251,52 @@ void ModelBundleCSIndirect::CreateBuffers(
 		);
 	}
 
-	m_perModelSharedData = perModelDataSharedBuffer.AllocateAndGetSharedData(
-		perModelDataSize, tempBuffer
-	);
+	{
+		const auto modelBundleIndex = GetModelBundleIndex();
 
-	const auto modelBundleIndex = GetModelBundleIndex();
+		// Each thread will process a single model independently. And since we are trying to
+		// cull all of the models across all of the bundles with a single call to dispatch, we can't
+		// set the index as constantData per bundle. So, we will be giving each model the index
+		// of its bundle so each thread can work independently.
+		m_perModelSharedData = perModelDataSharedBuffer.AllocateAndGetSharedData(
+			perModelDataSize, true
+		);
 
-	// Each thread will process a single model independently. And since we are trying to
-	// cull all of the models across all of the bundles with a single call to dispatch, we can't
-	// set the index as constantData per bundle. So, we will be giving each model the index
-	// of its bundle so each thread can work independently.
-	auto modelBundleIndicesInModels = std::vector<std::uint32_t>(argumentCount, modelBundleIndex);
+		std::uint8_t* bufferStart = m_perModelSharedData.bufferData->CPUHandle();
+		auto offset               = static_cast<size_t>(m_perModelSharedData.offset);
 
-	std::shared_ptr<std::uint8_t[]> perModelTempData = CopyVectorToSharedPtr(
-		modelBundleIndicesInModels
-	);
+		const size_t modelCount   = std::size(m_modelIndices);
 
-	stagingBufferMan.AddBuffer(
-		std::move(perModelTempData), perModelDataSize,
-		m_perModelSharedData.bufferData, m_perModelSharedData.offset,
-		tempBuffer
-	);
+		for (size_t index = 0u; index < modelCount; ++index)
+		{
+			PerModelData perModelData
+			{
+				.bundleIndex = modelBundleIndex,
+				.isVisible   = 1u
+			};
 
-	m_modelIndices = std::move(modelIndices);
+			memcpy(bufferStart + offset, &perModelData, perModelStride);
+
+			offset += perModelStride;
+		}
+	}
 }
 
 void ModelBundleCSIndirect::Update(size_t bufferIndex, const D3DMeshBundleVS& meshBundle) const noexcept
 {
 	const SharedBufferData& argumentInputSharedData = m_argumentInputSharedData[bufferIndex];
 
-	std::uint8_t* argumentInputStart
-		= argumentInputSharedData.bufferData->CPUHandle() + argumentInputSharedData.offset;
+	std::uint8_t* argumentInputStart = argumentInputSharedData.bufferData->CPUHandle();
+	std::uint8_t* perModelStart      = m_perModelSharedData.bufferData->CPUHandle();
 
 	constexpr size_t argumentStride = sizeof(IndirectArgument);
-	size_t modelOffset              = 0u;
-	const auto& models              = m_modelBundle->GetModels();
+	auto argumentOffset             = static_cast<size_t>(argumentInputSharedData.offset);
 
+	constexpr size_t perModelStride = sizeof(PerModelData);
+	auto perModelOffset             = static_cast<size_t>(m_perModelSharedData.offset);
+	constexpr auto isVisibleOffset  = offsetof(PerModelData, isVisible);
+
+	const auto& models              = m_modelBundle->GetModels();
 	const size_t modelCount         = std::size(models);
 
 	for (size_t index = 0u; index < modelCount; ++index)
@@ -295,8 +312,15 @@ void ModelBundleCSIndirect::Update(size_t bufferIndex, const D3DMeshBundleVS& me
 			)
 		};
 
-		memcpy(argumentInputStart + modelOffset, &arguments, argumentStride);
+		memcpy(argumentInputStart + argumentOffset, &arguments, argumentStride);
 
-		modelOffset += argumentStride;
+		argumentOffset += argumentStride;
+
+		// Model Visiblity
+		const auto visiblity = static_cast<std::uint32_t>(model->IsVisible());
+
+		memcpy(perModelStart + perModelOffset + isVisibleOffset, &visiblity, sizeof(std::uint32_t));
+
+		perModelOffset += perModelStride;
 	}
 }
