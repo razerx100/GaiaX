@@ -4,7 +4,7 @@
 #include <memory>
 #include <D3DResources.hpp>
 #include <StagingBufferManager.hpp>
-#include <CommonBuffers.hpp>
+#include <D3DSharedBuffer.hpp>
 
 #include <MeshBundle.hpp>
 

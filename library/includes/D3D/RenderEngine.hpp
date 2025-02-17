@@ -9,7 +9,7 @@
 #include <D3DFence.hpp>
 #include <TemporaryDataBuffer.hpp>
 #include <D3DCommandQueue.hpp>
-#include <CommonBuffers.hpp>
+#include <D3DSharedBuffer.hpp>
 #include <TextureManager.hpp>
 #include <CameraManager.hpp>
 #include <ViewportAndScissorManager.hpp>

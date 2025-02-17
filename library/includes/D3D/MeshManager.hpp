@@ -3,7 +3,7 @@
 #include <D3DMeshBundleMS.hpp>
 #include <D3DMeshBundleVS.hpp>
 #include <ReusableVector.hpp>
-#include <CommonBuffers.hpp>
+#include <D3DSharedBuffer.hpp>
 #include <StagingBufferManager.hpp>
 
 template<

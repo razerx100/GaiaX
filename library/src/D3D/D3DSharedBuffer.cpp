@@ -1,51 +1,7 @@
 #include <ranges>
 #include <algorithm>
 
-#include <CommonBuffers.hpp>
-
-// Shared Buffer Allocator
-void SharedBufferAllocator::AddAllocInfo(UINT64 offset, UINT64 size) noexcept
-{
-	auto result = std::ranges::upper_bound(
-		m_availableMemory, size, {},
-		[](const AllocInfo& info) { return info.size; }
-	);
-
-	m_availableMemory.insert(result, AllocInfo{ offset, size });
-}
-
-std::optional<size_t> SharedBufferAllocator::GetAvailableAllocInfo(UINT64 size) const noexcept
-{
-	auto result = std::ranges::lower_bound(
-		m_availableMemory, size, {},
-		[](const AllocInfo& info) { return info.size; }
-	);
-
-	if (result != std::end(m_availableMemory))
-		return std::distance(std::begin(m_availableMemory), result);
-	else
-		return {};
-}
-
-SharedBufferAllocator::AllocInfo SharedBufferAllocator::GetAndRemoveAllocInfo(size_t index) noexcept
-{
-	AllocInfo allocInfo = m_availableMemory[index];
-
-	m_availableMemory.erase(std::next(std::begin(m_availableMemory), index));
-
-	return allocInfo;
-}
-
-UINT64 SharedBufferAllocator::AllocateMemory(const AllocInfo& allocInfo, UINT64 size) noexcept
-{
-	const UINT64 offset     = allocInfo.offset;
-	const UINT64 freeMemory = allocInfo.size - size;
-
-	if (freeMemory)
-		AddAllocInfo(offset + size, freeMemory);
-
-	return offset;
-}
+#include <D3DSharedBuffer.hpp>
 
 // Shared Buffer GPU
 void SharedBufferGPU::CreateBuffer(UINT64 size, TemporaryDataBufferGPU& tempBuffer)

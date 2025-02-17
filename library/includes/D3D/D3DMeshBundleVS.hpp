@@ -5,7 +5,7 @@
 #include <D3DResources.hpp>
 #include <StagingBufferManager.hpp>
 #include <D3DCommandQueue.hpp>
-#include <CommonBuffers.hpp>
+#include <D3DSharedBuffer.hpp>
 
 #include <MeshBundle.hpp>
 

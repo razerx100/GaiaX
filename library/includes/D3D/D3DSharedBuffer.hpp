@@ -1,11 +1,12 @@
-#ifndef COMMON_BUFFERS_HPP_
-#define COMMON_BUFFERS_HPP_
+#ifndef D3D_SHARED_BUFFER_HPP_
+#define D3D_SHARED_BUFFER_HPP_
 #include <D3DResources.hpp>
 #include <D3DDescriptorHeapManager.hpp>
 #include <ReusableD3DBuffer.hpp>
 #include <D3DCommandQueue.hpp>
 #include <queue>
 #include <TemporaryDataBuffer.hpp>
+#include <SharedBufferAllocator.hpp>
 
 #include <MeshBundle.hpp>
 
@@ -14,58 +15,6 @@ struct SharedBufferData
 	Buffer const* bufferData;
 	UINT64        offset;
 	UINT64        size;
-};
-
-class SharedBufferAllocator
-{
-public:
-	struct AllocInfo
-	{
-		UINT64 offset;
-		UINT64 size;
-	};
-
-public:
-	SharedBufferAllocator() : m_availableMemory{} {}
-
-	[[nodiscard]]
-	// The offset from the start of the buffer will be returned. Should make sure
-	// there is enough memory before calling this.
-	UINT64 AllocateMemory(const AllocInfo& allocInfo, UINT64 size) noexcept;
-
-	void AddAllocInfo(UINT64 offset, UINT64 size) noexcept;
-	void RelinquishMemory(UINT64 offset, UINT64 size) noexcept
-	{
-		AddAllocInfo(offset, size);
-	}
-
-	[[nodiscard]]
-	std::optional<size_t> GetAvailableAllocInfo(UINT64 size) const noexcept;
-	[[nodiscard]]
-	AllocInfo GetAndRemoveAllocInfo(size_t index) noexcept;
-
-private:
-	std::vector<AllocInfo> m_availableMemory;
-
-public:
-	SharedBufferAllocator(const SharedBufferAllocator& other) noexcept
-		: m_availableMemory{ other.m_availableMemory }
-	{}
-	SharedBufferAllocator& operator=(const SharedBufferAllocator& other) noexcept
-	{
-		m_availableMemory = other.m_availableMemory;
-
-		return *this;
-	}
-	SharedBufferAllocator(SharedBufferAllocator&& other) noexcept
-		: m_availableMemory{ std::move(other.m_availableMemory) }
-	{}
-	SharedBufferAllocator& operator=(SharedBufferAllocator&& other) noexcept
-	{
-		m_availableMemory = std::move(other.m_availableMemory);
-
-		return *this;
-	}
 };
 
 class SharedBufferBase

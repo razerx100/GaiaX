@@ -1,7 +1,7 @@
 #ifndef D3D_MODEL_BUFFER_HPP_
 #define D3D_MODEL_BUFFER_HPP_
 #include <Model.hpp>
-#include <CommonBuffers.hpp>
+#include <D3DSharedBuffer.hpp>
 
 class ModelBuffers : public ReusableD3DBuffer<ModelBuffers, std::shared_ptr<Model>>
 {
