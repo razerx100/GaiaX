@@ -60,7 +60,10 @@ public:
 
 	virtual void SetSwapchainRTVFormat(DXGI_FORMAT rtvFormat) = 0;
 	virtual void SetShaderPath(const std::wstring& shaderPath) = 0;
-	virtual void AddPixelShader(const ShaderName& pixelShader) = 0;
+
+	[[nodiscard]]
+	virtual std::uint32_t AddGraphicsPipeline(const ShaderName& pixelShader) = 0;
+
 	virtual void ChangePixelShader(
 		std::uint32_t modelBundleID, const ShaderName& pixelShader
 	) = 0;
@@ -239,9 +242,10 @@ public:
 	{
 		m_renderPassManager.SetRTVFormat(rtvFormat);
 	}
-	void AddPixelShader(const ShaderName& pixelShader) override
+	[[nodiscard]]
+	std::uint32_t AddGraphicsPipeline(const ShaderName& pixelShader) override
 	{
-		m_renderPassManager.AddOrGetGraphicsPipeline(pixelShader);
+		return m_renderPassManager.AddOrGetGraphicsPipeline(pixelShader);
 	}
 	void ChangePixelShader(std::uint32_t modelBundleID, const ShaderName& pixelShader) override
 	{

@@ -34,7 +34,10 @@ public:
 
 	virtual void SetBackgroundColour(const std::array<float, 4>& colour) noexcept = 0;
 	virtual void SetShaderPath(const wchar_t* path) = 0;
-	virtual void AddPixelShader(const ShaderName& pixelShader) = 0;
+
+	[[nodiscard]]
+	virtual std::uint32_t AddGraphicsPipeline(const ShaderName& pixelShader) = 0;
+
 	virtual void ChangePixelShader(std::uint32_t modelBundleID, const ShaderName& pixelShader) = 0;
 	virtual void MakePixelShaderRemovable(const ShaderName& pixelShader) noexcept = 0;
 

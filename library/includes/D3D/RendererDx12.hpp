@@ -23,7 +23,10 @@ public:
 
 	void SetBackgroundColour(const std::array<float, 4>& colour) noexcept override;
 	void SetShaderPath(const wchar_t* path) override;
-	void AddPixelShader(const ShaderName& pixelShader) override;
+
+	[[nodiscard]]
+	std::uint32_t AddGraphicsPipeline(const ShaderName& pixelShader) override;
+
 	void ChangePixelShader(std::uint32_t modelBundleID, const ShaderName& pixelShader) override;
 	void MakePixelShaderRemovable(const ShaderName& pixelShader) noexcept override;
 

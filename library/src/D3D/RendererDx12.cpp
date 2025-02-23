@@ -41,9 +41,9 @@ void RendererDx12::SetShaderPath(const wchar_t* path)
 	m_gaia.GetRenderEngine().SetShaderPath(path);
 }
 
-void RendererDx12::AddPixelShader(const ShaderName& pixelShader)
+std::uint32_t RendererDx12::AddGraphicsPipeline(const ShaderName& pixelShader)
 {
-	m_gaia.GetRenderEngine().AddPixelShader(pixelShader);
+	return m_gaia.GetRenderEngine().AddGraphicsPipeline(pixelShader);
 }
 
 void RendererDx12::ChangePixelShader(std::uint32_t modelBundleID, const ShaderName& pixelShader)
