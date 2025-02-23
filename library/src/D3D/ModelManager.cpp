@@ -78,7 +78,7 @@ ModelManagerVSIndirect::ModelManagerVSIndirect(
 	m_counterResetBuffer{ device, memoryManager, D3D12_HEAP_TYPE_UPLOAD },
 	m_meshBundleIndexBuffer{ device, memoryManager, frameCount },
 	m_perModelDataBuffer{ device, memoryManager, D3D12_RESOURCE_STATE_GENERIC_READ },
-	m_dispatchXCount{ 0u }, m_argumentCount{ 0u }, m_constantsVSRootIndex{ 0u },
+	m_dispatchXCount{ 0u }, m_allocatedModelCount{ 0u }, m_constantsVSRootIndex{ 0u },
 	m_constantsCSRootIndex{ 0u }, m_modelBundlesCS{}
 {
 	for (size_t _ = 0u; _ < frameCount; ++_)
@@ -118,12 +118,22 @@ void ModelManagerVSIndirect::SetComputeConstantRootIndex(
 	);
 }
 
-void ModelManagerVSIndirect::UpdateDispatchX() noexcept
+void ModelManagerVSIndirect::UpdateAllocatedModelCount() noexcept
 {
-	// ThreadBlockSize is the number of threads in a thread group. If the argumentCount/ModelCount
+	// We can't reduce the amount of allocated model count, as we don't deallocate. We only
+	// make the memory available for something else. So, if a bundle from the middle is freed
+	// and we decrease the model count, then the last ones will be the ones which won't be rendered.
+	// Then again we can't also keep adding the newly added model count, as they might be allocated
+	// in some freed memory. We should set the model count to the total allocated model count, that
+	// way it won't skip the last ones and also not unnecessarily add extra ones.
+	m_allocatedModelCount = static_cast<UINT>(
+		m_perModelDataBuffer.Size() / ModelBundleCSIndirect::GetPerModelStride()
+	);
+
+	// ThreadBlockSize is the number of threads in a thread group. If the allocated model count
 	// is more than the BlockSize then dispatch more groups. Ex: Threads 64, Model 60 = Group 1
 	// Threads 64, Model 65 = Group 2.
-	m_dispatchXCount = static_cast<UINT>(std::ceil(m_argumentCount / THREADBLOCKSIZE));
+	m_dispatchXCount = static_cast<UINT>(std::ceil(m_allocatedModelCount / THREADBLOCKSIZE));
 }
 
 void ModelManagerVSIndirect::ConfigureModelBundle(
@@ -149,11 +159,9 @@ void ModelManagerVSIndirect::ConfigureModelBundle(
 
 	m_meshBundleIndexBuffer.Add(modelBundleIndexInBuffer);
 
-	m_argumentCount += modelBundleCS.GetModelCount();
-
 	m_modelBundlesCS.emplace_back(std::move(modelBundleCS));
 
-	UpdateDispatchX();
+	UpdateAllocatedModelCount();
 }
 
 void ModelManagerVSIndirect::ConfigureModelBundleRemove(
@@ -322,7 +330,7 @@ void ModelManagerVSIndirect::Dispatch(
 
 		const ConstantData constantData
 		{
-			.modelCount = m_argumentCount
+			.allocatedModelCount = m_allocatedModelCount
 		};
 
 		cmdList->SetComputeRoot32BitConstants(

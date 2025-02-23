@@ -200,7 +200,7 @@ class ModelManagerVSIndirect : public ModelManager<ModelManagerVSIndirect, Model
 
 	struct ConstantData
 	{
-		UINT modelCount;
+		UINT allocatedModelCount;
 	};
 
 public:
@@ -252,7 +252,7 @@ private:
 
 	void ConfigureModelBundleRemove(size_t bundleIndex, ModelBuffers& modelBuffers) noexcept;
 
-	void UpdateDispatchX() noexcept;
+	void UpdateAllocatedModelCount() noexcept;
 	void UpdateCounterResetValues();
 
 	[[nodiscard]]
@@ -270,7 +270,7 @@ private:
 	MultiInstanceCPUBuffer<std::uint32_t> m_meshBundleIndexBuffer;
 	SharedBufferCPU                       m_perModelDataBuffer;
 	UINT                                  m_dispatchXCount;
-	UINT                                  m_argumentCount;
+	UINT                                  m_allocatedModelCount;
 	UINT                                  m_constantsVSRootIndex;
 	UINT                                  m_constantsCSRootIndex;
 
@@ -310,7 +310,7 @@ public:
 		m_meshBundleIndexBuffer{ std::move(other.m_meshBundleIndexBuffer) },
 		m_perModelDataBuffer{ std::move(other.m_perModelDataBuffer) },
 		m_dispatchXCount{ other.m_dispatchXCount },
-		m_argumentCount{ other.m_argumentCount },
+		m_allocatedModelCount{ other.m_allocatedModelCount },
 		m_constantsVSRootIndex{ other.m_constantsVSRootIndex },
 		m_constantsCSRootIndex{ other.m_constantsCSRootIndex },
 		m_modelBundlesCS{ std::move(other.m_modelBundlesCS) }
@@ -326,7 +326,7 @@ public:
 		m_meshBundleIndexBuffer  = std::move(other.m_meshBundleIndexBuffer);
 		m_perModelDataBuffer     = std::move(other.m_perModelDataBuffer);
 		m_dispatchXCount         = other.m_dispatchXCount;
-		m_argumentCount          = other.m_argumentCount;
+		m_allocatedModelCount    = other.m_allocatedModelCount;
 		m_constantsVSRootIndex   = other.m_constantsVSRootIndex;
 		m_constantsCSRootIndex   = other.m_constantsCSRootIndex;
 		m_modelBundlesCS         = std::move(other.m_modelBundlesCS);

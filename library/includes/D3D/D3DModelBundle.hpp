@@ -247,6 +247,12 @@ public:
 		return m_perModelSharedData;
 	}
 
+	[[nodiscard]]
+	static consteval size_t GetPerModelStride() noexcept
+	{
+		return sizeof(PerModelData);
+	}
+
 private:
 	SharedBufferData              m_perModelSharedData;
 	SharedBufferData              m_cullingSharedData;
