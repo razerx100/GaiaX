@@ -65,8 +65,9 @@ public:
 	virtual std::uint32_t AddGraphicsPipeline(const ShaderName& pixelShader) = 0;
 
 	virtual void ChangePixelShader(
-		std::uint32_t modelBundleID, const ShaderName& pixelShader
-	) = 0;
+		[[maybe_unused]] std::uint32_t modelBundleID,
+		[[maybe_unused]] const ShaderName& pixelShader
+	) {}
 	virtual void MakePixelShaderRemovable(const ShaderName& pixelShader) noexcept = 0;
 
 	[[nodiscard]]
@@ -112,6 +113,11 @@ public:
 protected:
 	[[nodiscard]]
 	virtual size_t GetCameraRegisterSlot() const noexcept = 0;
+
+	[[nodiscard]]
+	static std::vector<std::uint32_t> AddModelsToBuffer(
+		const ModelBundle& modelBundle, ModelBuffers& modelBuffers
+	) noexcept;
 
 	void SetCommonGraphicsDescriptorLayout(D3D12_SHADER_VISIBILITY cameraShaderVisibility) noexcept;
 
@@ -204,7 +210,6 @@ public:
 };
 
 template<
-	typename ModelManager_t,
 	typename MeshManager_t,
 	typename GraphicsPipeline_t,
 	typename Derived
@@ -215,16 +220,8 @@ public:
 	RenderEngineCommon(
 		const DeviceManager& deviceManager, std::shared_ptr<ThreadPool> threadPool, size_t frameCount
 	) : RenderEngine{ deviceManager, std::move(threadPool), frameCount },
-		m_modelManager{
-			Derived::GetModelManager(
-				deviceManager, &m_memoryManager, static_cast<std::uint32_t>(frameCount)
-			)
-		},
 		m_meshManager{ deviceManager.GetDevice(), &m_memoryManager },
-		m_renderPassManager{ deviceManager.GetDevice() },
-		m_modelBuffers{
-			deviceManager.GetDevice(), &m_memoryManager, static_cast<std::uint32_t>(frameCount)
-		}
+		m_renderPassManager{ deviceManager.GetDevice() }
 	{
 		m_renderPassManager.SetDepthTesting(deviceManager.GetDevice(), &m_memoryManager, &m_dsvHeap);
 
@@ -247,21 +244,10 @@ public:
 	{
 		return m_renderPassManager.AddOrGetGraphicsPipeline(pixelShader);
 	}
-	void ChangePixelShader(std::uint32_t modelBundleID, const ShaderName& pixelShader) override
-	{
-		const std::uint32_t psoIndex = m_renderPassManager.AddOrGetGraphicsPipeline(pixelShader);
-
-		m_modelManager.ChangePSO(modelBundleID, psoIndex);
-	}
 
 	void MakePixelShaderRemovable(const ShaderName& pixelShader) noexcept override
 	{
 		m_renderPassManager.SetPSOOverwritable(pixelShader);
-	}
-
-	void RemoveModelBundle(std::uint32_t bundleID) noexcept override
-	{
-		m_modelManager.RemoveModelBundle(bundleID, m_modelBuffers);
 	}
 
 	void RemoveMeshBundle(std::uint32_t bundleIndex) noexcept override
@@ -309,18 +295,14 @@ protected:
 	{
 		m_cameraManager.Update(frameIndex);
 
-		m_modelBuffers.Update(frameIndex);
-
 		static_cast<Derived const*>(this)->_updatePerFrame(frameIndex);
 
 		m_externalResourceManager.UpdateExtensionData(static_cast<size_t>(frameIndex));
 	}
 
 protected:
-	ModelManager_t                           m_modelManager;
 	MeshManager_t                            m_meshManager;
 	D3DRenderPassManager<GraphicsPipeline_t> m_renderPassManager;
-	ModelBuffers                             m_modelBuffers;
 
 public:
 	RenderEngineCommon(const RenderEngineCommon&) = delete;
@@ -328,18 +310,14 @@ public:
 
 	RenderEngineCommon(RenderEngineCommon&& other) noexcept
 		: RenderEngine{ std::move(other) },
-		m_modelManager{ std::move(other.m_modelManager) },
 		m_meshManager{ std::move(other.m_meshManager) },
-		m_renderPassManager{ std::move(other.m_renderPassManager) },
-		m_modelBuffers{ std::move(other.m_modelBuffers) }
+		m_renderPassManager{ std::move(other.m_renderPassManager) }
 	{}
 	RenderEngineCommon& operator=(RenderEngineCommon&& other) noexcept
 	{
 		RenderEngine::operator=(std::move(other));
-		m_modelManager            = std::move(other.m_modelManager);
-		m_meshManager             = std::move(other.m_meshManager);
-		m_renderPassManager       = std::move(other.m_renderPassManager);
-		m_modelBuffers            = std::move(other.m_modelBuffers);
+		m_meshManager       = std::move(other.m_meshManager);
+		m_renderPassManager = std::move(other.m_renderPassManager);
 
 		return *this;
 	}

@@ -12,139 +12,133 @@
 #include <GraphicsPipelineMS.hpp>
 #include <ComputePipeline.hpp>
 #include <D3DModelBundle.hpp>
-#include <D3DModelBuffer.hpp>
 #include <MeshManager.hpp>
 #include <PipelineManager.hpp>
 
-template<
-	class Derived,
-	class ModelBundleType
->
+template<class ModelBundleType>
 class ModelManager
 {
 public:
-	ModelManager(MemoryManager* memoryManager) : m_memoryManager{ memoryManager }, m_modelBundles{} {}
+	ModelManager() : m_modelBundles{} {}
 
-	void SetGraphicsConstantsRootIndex(
-		const D3DDescriptorManager& descriptorManager, size_t constantsRegisterSpace
+	[[nodiscard]]
+	std::uint32_t AddPipelineToModelBundle(
+		std::uint32_t bundleIndex, std::uint32_t pipelineIndex
 	) noexcept {
-		static_cast<Derived*>(this)->_setGraphicsConstantRootIndex(
-			descriptorManager, constantsRegisterSpace
-		);
-	}
-
-	[[nodiscard]]
-	std::uint32_t AddModelBundle(
-		std::shared_ptr<ModelBundle>&& modelBundle, std::uint32_t psoIndex, ModelBuffers& modelBuffers
-	) {
-		const std::vector<std::shared_ptr<Model>>& models = modelBundle->GetModels();
-
-		auto bundleID = std::numeric_limits<std::uint32_t>::max();
-
-		if (!std::empty(models))
-		{
-			std::vector<std::shared_ptr<Model>> copyModels = models;
-
-			std::vector<std::uint32_t> modelIndices        = modelBuffers.AddMultipleRU32(
-				std::move(copyModels)
-			);
-
-			ModelBundleType modelBundleObj{};
-
-			static_cast<Derived*>(this)->ConfigureModelBundle(
-				modelBundleObj, std::move(modelIndices), std::move(modelBundle)
-			);
-
-			modelBundleObj.SetPSOIndex(psoIndex);
-
-			bundleID = modelBundleObj.GetID();
-
-			m_modelBundles.emplace_back(std::move(modelBundleObj));
-		}
-
-		return bundleID;
-	}
-
-	void RemoveModelBundle(std::uint32_t bundleID, ModelBuffers& modelBuffers) noexcept
-	{
-		auto result = GetModelBundle(bundleID);
-
-		if (result != std::end(m_modelBundles))
-		{
-			const auto modelBundleIndex = static_cast<size_t>(
-				std::distance(std::begin(m_modelBundles), result)
-			);
-
-			static_cast<Derived*>(this)->ConfigureModelBundleRemove(modelBundleIndex, modelBuffers);
-
-			m_modelBundles.erase(result);
-		}
-	}
-
-	void ChangePSO(std::uint32_t bundleID, std::uint32_t psoIndex)
-	{
-		auto modelBundle = GetModelBundle(bundleID);
-
-		if (modelBundle != std::end(m_modelBundles))
-			modelBundle->SetPSOIndex(psoIndex);
+		return m_modelBundles[bundleIndex].AddPipeline(pipelineIndex);
 	}
 
 protected:
-	template<typename Pipeline>
-	void BindPipeline(
-		const ModelBundleType& modelBundle, const D3DCommandList& graphicsCmdList,
-		const PipelineManager<Pipeline>& pipelineManager, size_t& previousPSOIndex
-	) const noexcept {
-		// PSO is more costly to bind, so the modelBundles are added in a way so they are sorted
-		// by their PSO indices. And we only bind a new PSO, if the previous one was different.
-		const size_t modelPSOIndex = modelBundle.GetPSOIndex();
-
-		if (modelPSOIndex != previousPSOIndex)
-		{
-			pipelineManager.BindPipeline(modelPSOIndex, graphicsCmdList);
-
-			previousPSOIndex = modelPSOIndex;
-		}
-	}
-
-	[[nodiscard]]
-	std::vector<ModelBundleType>::iterator GetModelBundle(std::uint32_t bundleID) noexcept
-	{
-		return std::ranges::find_if(
-			m_modelBundles,
-			[bundleID](const ModelBundleType& bundle) { return bundle.GetID() == bundleID; }
-		);
-	}
-
-protected:
-	MemoryManager*               m_memoryManager;
-	std::vector<ModelBundleType> m_modelBundles;
+	ReusableVector<ModelBundleType> m_modelBundles;
 
 public:
 	ModelManager(const ModelManager&) = delete;
 	ModelManager& operator=(const ModelManager&) = delete;
 
 	ModelManager(ModelManager&& other) noexcept
-		: m_memoryManager{ other.m_memoryManager },
-		m_modelBundles{ std::move(other.m_modelBundles) }
+		: m_modelBundles{ std::move(other.m_modelBundles) }
 	{}
 	ModelManager& operator=(ModelManager&& other) noexcept
 	{
-		m_memoryManager = other.m_memoryManager;
-		m_modelBundles  = std::move(other.m_modelBundles);
+		m_modelBundles = std::move(other.m_modelBundles);
 
 		return *this;
 	}
 };
 
-class ModelManagerVSIndividual : public ModelManager<ModelManagerVSIndividual, ModelBundleVSIndividual>
+template<class ModelBundleType>
+class ModelManagerCommon : public ModelManager<ModelBundleType>
 {
-	friend class ModelManager<ModelManagerVSIndividual, ModelBundleVSIndividual>;
+	friend class ModelManager<ModelBundleType>;
 
+public:
+	ModelManagerCommon() : ModelManager<ModelBundleType>{} {}
+
+	void ChangeModelPipeline(
+		std::uint32_t bundleIndex, std::uint32_t modelIndexInBundle, std::uint32_t oldPipelineIndex,
+		std::uint32_t newPipelineIndex
+	) {
+		this->m_modelBundles[bundleIndex].MoveModel(
+			modelIndexInBundle, oldPipelineIndex, newPipelineIndex
+		);
+	}
+
+	// Will think about Adding a new model later.
+	[[nodiscard]]
+	std::uint32_t AddModelBundle(
+		std::shared_ptr<ModelBundle>&& modelBundle, std::vector<std::uint32_t>&& modelBufferIndices
+	) {
+		const size_t bundleIndex          = this->m_modelBundles.Add(ModelBundleType{});
+
+		ModelBundleType& localModelBundle = this->m_modelBundles[bundleIndex];
+
+		localModelBundle.SetModelIndices(std::move(modelBufferIndices));
+
+		_addModelsFromBundle(localModelBundle, *modelBundle);
+
+		localModelBundle.SetModelBundle(std::move(modelBundle));
+
+		return static_cast<std::uint32_t>(bundleIndex);
+	}
+
+	// Returns the stored model indices of the Model Buffers
+	[[nodiscard]]
+	std::vector<std::uint32_t> RemoveModelBundle(std::uint32_t bundleIndex) noexcept
+	{
+		const size_t bundleIndexST        = bundleIndex;
+
+		ModelBundleType& localModelBundle = this->m_modelBundles[bundleIndexST];
+
+		std::vector<std::uint32_t> modelBufferIndices = localModelBundle.TakeModelBufferIndices();
+
+		localModelBundle.CleanupData();
+
+		this->m_modelBundles.RemoveElement(bundleIndexST);
+
+		return modelBufferIndices;
+	}
+
+private:
+	void _addModelsFromBundle(
+		ModelBundleType& localModelBundle, const ModelBundle& modelBundle
+	) {
+		const std::vector<std::shared_ptr<Model>>& models = modelBundle.GetModels();
+
+		const size_t modelCount = std::size(models);
+
+		for (size_t index = 0u; index < modelCount; ++index)
+		{
+			const std::shared_ptr<Model>& model = models[index];
+
+			localModelBundle.AddModel(model->GetPipelineIndex(), static_cast<std::uint32_t>(index));
+		}
+	}
+
+public:
+	ModelManagerCommon(const ModelManagerCommon&) = delete;
+	ModelManagerCommon& operator=(const ModelManagerCommon&) = delete;
+
+	ModelManagerCommon(ModelManagerCommon&& other) noexcept
+		: ModelManager<ModelBundleType>{ std::move(other) }
+	{}
+	ModelManagerCommon& operator=(ModelManagerCommon&& other) noexcept
+	{
+		ModelManager<ModelBundleType>::operator=(std::move(other));
+
+		return *this;
+	}
+};
+
+class ModelManagerVSIndividual : public ModelManagerCommon<ModelBundleVSIndividual>
+{
 	using Pipeline_t = GraphicsPipelineVSIndividualDraw;
 
 public:
-	ModelManagerVSIndividual(MemoryManager* memoryManager);
+	ModelManagerVSIndividual() : m_constantsRootIndex{ 0u }, ModelManagerCommon {} {}
+
+	void SetGraphicsConstantsRootIndex(
+		const D3DDescriptorManager& descriptorManager, size_t constantsRegisterSpace
+	) noexcept;
 
 	void SetDescriptorLayout(
 		std::vector<D3DDescriptorManager>& descriptorManagers, size_t vsRegisterSpace
@@ -154,19 +148,18 @@ public:
 		const D3DCommandList& graphicsList, const MeshManagerVSIndividual& meshManager,
 		const PipelineManager<Pipeline_t>& pipelineManager
 	) const noexcept;
-
-private:
-	void _setGraphicsConstantRootIndex(
-		const D3DDescriptorManager& descriptorManager, size_t constantsRegisterSpace
+	void DrawSorted(
+		const D3DCommandList& graphicsList, const MeshManagerVSIndividual& meshManager,
+		const PipelineManager<Pipeline_t>& pipelineManager
 	) noexcept;
-
-	void ConfigureModelBundle(
-		ModelBundleVSIndividual& modelBundleObj,
-		std::vector<std::uint32_t>&& modelIndices,
-		std::shared_ptr<ModelBundle>&& modelBundle
+	void DrawPipeline(
+		size_t modelBundleIndex, size_t pipelineLocalIndex, const D3DCommandList& graphicsList,
+		const MeshManagerVSIndividual& meshManager
 	) const noexcept;
-
-	void ConfigureModelBundleRemove(size_t bundleIndex, ModelBuffers& modelBuffers) noexcept;
+	void DrawPipelineSorted(
+		size_t modelBundleIndex, size_t pipelineLocalIndex, const D3DCommandList& graphicsList,
+		const MeshManagerVSIndividual& meshManager
+	) noexcept;
 
 private:
 	UINT m_constantsRootIndex;
@@ -179,28 +172,31 @@ public:
 	ModelManagerVSIndividual& operator=(const ModelManagerVSIndividual&) = delete;
 
 	ModelManagerVSIndividual(ModelManagerVSIndividual&& other) noexcept
-		: ModelManager{ std::move(other) },
+		: ModelManagerCommon{ std::move(other) },
 		m_constantsRootIndex{ other.m_constantsRootIndex }
 	{}
 	ModelManagerVSIndividual& operator=(ModelManagerVSIndividual&& other) noexcept
 	{
-		ModelManager::operator=(std::move(other));
-		m_constantsRootIndex  = other.m_constantsRootIndex;
+		ModelManagerCommon::operator=(std::move(other));
+		m_constantsRootIndex        = other.m_constantsRootIndex;
 
 		return *this;
 	}
 };
 
-class ModelManagerVSIndirect : public ModelManager<ModelManagerVSIndirect, ModelBundleVSIndirect>
+class ModelManagerVSIndirect : public ModelManager<ModelBundleVSIndirect>
 {
-	friend class ModelManager<ModelManagerVSIndirect, ModelBundleVSIndirect>;
-
 	using GraphicsPipeline_t = GraphicsPipelineVSIndirectDraw;
 	using ComputePipeline_t  = ComputePipeline;
 
 	struct ConstantData
 	{
 		UINT allocatedModelCount;
+	};
+
+	struct PerModelBundleData
+	{
+		std::uint32_t meshBundleIndex;
 	};
 
 public:
@@ -210,9 +206,24 @@ public:
 
 	void ResetCounterBuffer(const D3DCommandList& computeList, size_t frameIndex) const noexcept;
 
-	void SetComputeConstantRootIndex(
+	void SetCSPSOIndex(std::uint32_t psoIndex) noexcept { m_csPSOIndex = psoIndex; }
+
+	void SetComputeConstantsRootIndex(
 		const D3DDescriptorManager& descriptorManager, size_t constantsRegisterSpace
 	) noexcept;
+	void SetGraphicsConstantsRootIndex(
+		const D3DDescriptorManager& descriptorManager, size_t constantsRegisterSpace
+	) noexcept;
+
+	// Will think about Adding a new model later.
+	[[nodiscard]]
+	std::uint32_t AddModelBundle(
+		std::shared_ptr<ModelBundle>&& modelBundle, std::vector<std::uint32_t>&& modelBufferIndices
+	);
+
+	// Returns the stored model indices of the Model Buffers
+	[[nodiscard]]
+	std::vector<std::uint32_t> RemoveModelBundle(std::uint32_t bundleIndex) noexcept;
 
 	void SetDescriptorLayoutVS(
 		std::vector<D3DDescriptorManager>& descriptorManagers, size_t vsRegisterSpace
@@ -226,11 +237,22 @@ public:
 		std::vector<D3DDescriptorManager>& descriptorManagers, size_t csRegisterSpace
 	) const;
 
+	void ChangeModelPipeline(
+		std::uint32_t bundleIndex, std::uint32_t modelIndexInBundle, std::uint32_t oldPipelineIndex,
+		std::uint32_t newPipelineIndex
+	);
+
 	void Draw(
 		size_t frameIndex, const D3DCommandList& graphicsList, ID3D12CommandSignature* commandSignature,
 		const MeshManagerVSIndirect& meshManager,
 		const PipelineManager<GraphicsPipeline_t>& pipelineManager
 	) const noexcept;
+	void DrawPipeline(
+		size_t frameIndex, size_t modelBundleIndex, size_t pipelineLocalIndex,
+		const D3DCommandList& graphicsList, ID3D12CommandSignature* commandSignature,
+		const MeshManagerVSIndirect& meshManager
+	) const noexcept;
+
 	void Dispatch(
 		const D3DCommandList& computeList, const PipelineManager<ComputePipeline_t>& pipelineManager
 	) const noexcept;
@@ -239,18 +261,13 @@ public:
 	UINT GetConstantsVSRootIndex() const noexcept { return m_constantsVSRootIndex; }
 
 	void UpdatePerFrame(UINT64 frameIndex, const MeshManagerVSIndirect& meshManager) const noexcept;
+	void UpdatePerFrameSorted(UINT64 frameIndex, const MeshManagerVSIndirect& meshManager) noexcept;
 
 private:
-	void _setGraphicsConstantRootIndex(
-		const D3DDescriptorManager& descriptorManager, size_t constantsRegisterSpace
-	) noexcept;
-
-	void ConfigureModelBundle(
-		ModelBundleVSIndirect& modelBundleObj, std::vector<std::uint32_t>&& modelIndices,
-		std::shared_ptr<ModelBundle>&& modelBundle
+	void _addModelsFromBundle(
+		ModelBundleVSIndirect& localModelBundle, const ModelBundle& modelBundle,
+		std::uint32_t modelBundleIndex
 	);
-
-	void ConfigureModelBundleRemove(size_t bundleIndex, ModelBuffers& modelBuffers) noexcept;
 
 	void UpdateAllocatedModelCount() noexcept;
 	void UpdateCounterResetValues();
@@ -262,20 +279,18 @@ private:
 	}
 
 private:
-	std::vector<SharedBufferCPU>          m_argumentInputBuffers;
-	std::vector<SharedBufferGPUWriteOnly> m_argumentOutputBuffers;
-	SharedBufferCPU                       m_cullingDataBuffer;
-	std::vector<SharedBufferGPUWriteOnly> m_counterBuffers;
-	Buffer                                m_counterResetBuffer;
-	MultiInstanceCPUBuffer<std::uint32_t> m_meshBundleIndexBuffer;
-	SharedBufferCPU                       m_perModelDataBuffer;
-	UINT                                  m_dispatchXCount;
-	UINT                                  m_allocatedModelCount;
-	UINT                                  m_constantsVSRootIndex;
-	UINT                                  m_constantsCSRootIndex;
-
-	// These CS models will have the data to be uploaded and the dispatching will be done on the Manager.
-	std::vector<ModelBundleCSIndirect>    m_modelBundlesCS;
+	std::vector<SharedBufferCPU>               m_argumentInputBuffers;
+	std::vector<SharedBufferGPUWriteOnly>      m_argumentOutputBuffers;
+	SharedBufferCPU                            m_perPipelineBuffer;
+	std::vector<SharedBufferGPUWriteOnly>      m_counterBuffers;
+	Buffer                                     m_counterResetBuffer;
+	MultiInstanceCPUBuffer<PerModelBundleData> m_perModelBundleBuffer;
+	SharedBufferCPU                            m_perModelBuffer;
+	UINT                                       m_dispatchXCount;
+	UINT                                       m_allocatedModelCount;
+	std::uint32_t                              m_csPSOIndex;
+	UINT                                       m_constantsVSRootIndex;
+	UINT                                       m_constantsCSRootIndex;
 
 	// Vertex Shader ones
 	// CBV
@@ -283,15 +298,15 @@ private:
 
 	// Compute Shader ones
 	// CBV
-	static constexpr size_t s_constantDataCSCBVRegisterSlot      = 0u;
+	static constexpr size_t s_constantDataCSCBVRegisterSlot = 0u;
 	// SRV
-	static constexpr size_t s_argumentInputBufferSRVRegisterSlot = 1u;
-	static constexpr size_t s_cullingDataBufferSRVRegisterSlot   = 2u;
-	static constexpr size_t s_perModelDataSRVRegisterSlot        = 3u;
-	static constexpr size_t s_meshBundleIndexSRVRegisterSlot     = 6u;
+	static constexpr size_t s_argumentInputSRVRegisterSlot  = 1u;
+	static constexpr size_t s_perPipelineSRVRegisterSlot    = 2u;
+	static constexpr size_t s_perModelSRVRegisterSlot       = 3u;
+	static constexpr size_t s_perModelBundleSRVRegisterSlot = 6u;
 	// UAV
-	static constexpr size_t s_argumenOutputUAVRegisterSlot       = 0u;
-	static constexpr size_t s_counterUAVRegisterSlot             = 1u;
+	static constexpr size_t s_argumenOutputUAVRegisterSlot  = 0u;
+	static constexpr size_t s_counterUAVRegisterSlot        = 1u;
 
 	// Each Compute Thread Group should have 64 threads.
 	static constexpr float THREADBLOCKSIZE = 64.f;
@@ -304,45 +319,47 @@ public:
 		: ModelManager{ std::move(other) },
 		m_argumentInputBuffers{ std::move(other.m_argumentInputBuffers) },
 		m_argumentOutputBuffers{ std::move(other.m_argumentOutputBuffers) },
-		m_cullingDataBuffer{ std::move(other.m_cullingDataBuffer) },
+		m_perPipelineBuffer{ std::move(other.m_perPipelineBuffer) },
 		m_counterBuffers{ std::move(other.m_counterBuffers) },
 		m_counterResetBuffer{ std::move(other.m_counterResetBuffer) },
-		m_meshBundleIndexBuffer{ std::move(other.m_meshBundleIndexBuffer) },
-		m_perModelDataBuffer{ std::move(other.m_perModelDataBuffer) },
+		m_perModelBundleBuffer{ std::move(other.m_perModelBundleBuffer) },
+		m_perModelBuffer{ std::move(other.m_perModelBuffer) },
 		m_dispatchXCount{ other.m_dispatchXCount },
 		m_allocatedModelCount{ other.m_allocatedModelCount },
+		m_csPSOIndex{ other.m_csPSOIndex },
 		m_constantsVSRootIndex{ other.m_constantsVSRootIndex },
-		m_constantsCSRootIndex{ other.m_constantsCSRootIndex },
-		m_modelBundlesCS{ std::move(other.m_modelBundlesCS) }
+		m_constantsCSRootIndex{ other.m_constantsCSRootIndex }
 	{}
 	ModelManagerVSIndirect& operator=(ModelManagerVSIndirect&& other) noexcept
 	{
 		ModelManager::operator=(std::move(other));
 		m_argumentInputBuffers   = std::move(other.m_argumentInputBuffers);
 		m_argumentOutputBuffers  = std::move(other.m_argumentOutputBuffers);
-		m_cullingDataBuffer      = std::move(other.m_cullingDataBuffer);
+		m_perPipelineBuffer      = std::move(other.m_perPipelineBuffer);
 		m_counterBuffers         = std::move(other.m_counterBuffers);
 		m_counterResetBuffer     = std::move(other.m_counterResetBuffer);
-		m_meshBundleIndexBuffer  = std::move(other.m_meshBundleIndexBuffer);
-		m_perModelDataBuffer     = std::move(other.m_perModelDataBuffer);
+		m_perModelBundleBuffer   = std::move(other.m_perModelBundleBuffer);
+		m_perModelBuffer         = std::move(other.m_perModelBuffer);
 		m_dispatchXCount         = other.m_dispatchXCount;
 		m_allocatedModelCount    = other.m_allocatedModelCount;
+		m_csPSOIndex             = other.m_csPSOIndex;
 		m_constantsVSRootIndex   = other.m_constantsVSRootIndex;
 		m_constantsCSRootIndex   = other.m_constantsCSRootIndex;
-		m_modelBundlesCS         = std::move(other.m_modelBundlesCS);
 
 		return *this;
 	}
 };
 
-class ModelManagerMS : public ModelManager<ModelManagerMS, ModelBundleMSIndividual>
+class ModelManagerMS : public ModelManagerCommon<ModelBundleMSIndividual>
 {
-	friend class ModelManager<ModelManagerMS, ModelBundleMSIndividual>;
-
 	using Pipeline_t = GraphicsPipelineMS;
 
 public:
-	ModelManagerMS(MemoryManager* memoryManager);
+	ModelManagerMS() : ModelManagerCommon{}, m_constantsRootIndex{ 0u } {}
+
+	void SetGraphicsConstantsRootIndex(
+		const D3DDescriptorManager& descriptorManager, size_t constantsRegisterSpace
+	) noexcept;
 
 	void SetDescriptorLayout(
 		std::vector<D3DDescriptorManager>& descriptorManagers, size_t msRegisterSpace
@@ -352,19 +369,18 @@ public:
 		const D3DCommandList& graphicsList, const MeshManagerMS& meshManager,
 		const PipelineManager<Pipeline_t>& pipelineManager
 	) const noexcept;
-
-private:
-	void _setGraphicsConstantRootIndex(
-		const D3DDescriptorManager& descriptorManager, size_t constantsRegisterSpace
+	void DrawSorted(
+		const D3DCommandList& graphicsList, const MeshManagerMS& meshManager,
+		const PipelineManager<Pipeline_t>& pipelineManager
 	) noexcept;
-	void ConfigureModelBundle(
-		ModelBundleMSIndividual& modelBundleObj, std::vector<std::uint32_t>&& modelIndices,
-		std::shared_ptr<ModelBundle>&& modelBundle
-	);
-
-	void ConfigureModelBundleRemove(size_t bundleIndex, ModelBuffers& modelBuffers) noexcept;
-
-	void _updatePerFrame([[maybe_unused]] UINT64 frameIndex) const noexcept {}
+	void DrawPipeline(
+		size_t modelBundleIndex, size_t pipelineLocalIndex, const D3DCommandList& graphicsList,
+		const MeshManagerMS& meshManager
+	) const noexcept;
+	void DrawPipelineSorted(
+		size_t modelBundleIndex, size_t pipelineLocalIndex, const D3DCommandList& graphicsList,
+		const MeshManagerMS& meshManager
+	) noexcept;
 
 private:
 	UINT m_constantsRootIndex;
@@ -377,13 +393,13 @@ public:
 	ModelManagerMS& operator=(const ModelManagerMS&) = delete;
 
 	ModelManagerMS(ModelManagerMS&& other) noexcept
-		: ModelManager{ std::move(other) },
+		: ModelManagerCommon{ std::move(other) },
 		m_constantsRootIndex{ other.m_constantsRootIndex }
 	{}
 	ModelManagerMS& operator=(ModelManagerMS&& other) noexcept
 	{
-		ModelManager::operator=(std::move(other));
-		m_constantsRootIndex  = other.m_constantsRootIndex;
+		ModelManagerCommon::operator=(std::move(other));
+		m_constantsRootIndex        = other.m_constantsRootIndex;
 
 		return *this;
 	}

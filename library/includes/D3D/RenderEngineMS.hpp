@@ -6,7 +6,6 @@
 class RenderEngineMS : public
 	RenderEngineCommon
 	<
-		ModelManagerMS,
 		MeshManagerMS,
 		GraphicsPipelineMS,
 		RenderEngineMS
@@ -14,7 +13,6 @@ class RenderEngineMS : public
 {
 	friend class RenderEngineCommon
 		<
-			ModelManagerMS,
 			MeshManagerMS,
 			GraphicsPipelineMS,
 			RenderEngineMS
@@ -32,15 +30,12 @@ public:
 		std::shared_ptr<ModelBundle>&& modelBundle, const ShaderName& pixelShader
 	) override;
 
+	void RemoveModelBundle(std::uint32_t bundleIndex) noexcept override;
+
 	[[nodiscard]]
 	std::uint32_t AddMeshBundle(std::unique_ptr<MeshBundleTemporary> meshBundle) override;
 
 private:
-	[[nodiscard]]
-	static ModelManagerMS GetModelManager(
-		const DeviceManager& deviceManager, MemoryManager* memoryManager, std::uint32_t frameCount
-	);
-
 	void ExecutePipelineStages(
 		size_t frameIndex, const RenderTarget& renderTarget, UINT64& counterValue,
 		ID3D12Fence* waitFence
@@ -57,18 +52,29 @@ private:
 	void SetGraphicsDescriptorBufferLayout();
 	void SetGraphicsDescriptors();
 
-	void _updatePerFrame([[maybe_unused]] UINT64 frameIndex) const noexcept {}
+	void _updatePerFrame(UINT64 frameIndex) const noexcept
+	{
+		m_modelBuffers.Update(frameIndex);
+	}
+
+private:
+	ModelManagerMS m_modelManager;
+	ModelBuffers   m_modelBuffers;
 
 public:
 	RenderEngineMS(const RenderEngineMS&) = delete;
 	RenderEngineMS& operator=(const RenderEngineMS&) = delete;
 
 	RenderEngineMS(RenderEngineMS&& other) noexcept
-		: RenderEngineCommon{ std::move(other) }
+		: RenderEngineCommon{ std::move(other) },
+		m_modelManager{ std::move(other.m_modelManager) },
+		m_modelBuffers{ std::move(other.m_modelBuffers) }
 	{}
 	RenderEngineMS& operator=(RenderEngineMS&& other) noexcept
 	{
 		RenderEngineCommon::operator=(std::move(other));
+		m_modelManager = std::move(other.m_modelManager);
+		m_modelBuffers = std::move(other.m_modelBuffers);
 
 		return *this;
 	}

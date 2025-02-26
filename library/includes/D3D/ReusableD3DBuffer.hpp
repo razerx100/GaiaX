@@ -231,17 +231,6 @@ private:
 		m_buffer.Create(buffersSize, D3D12_RESOURCE_STATE_GENERIC_READ);
 	}
 
-	void CreateBufferIfNecessary(size_t index)
-	{
-		const UINT64 currentSize    = m_buffer.BufferSize();
-		constexpr size_t strideSize = GetStride();
-
-		const auto minimumSpaceRequirement = static_cast<UINT64>(index * strideSize + strideSize);
-
-		if (currentSize < minimumSpaceRequirement)
-			CreateBuffer(index + 1u + GetExtraElementAllocationCount());
-	}
-
 public:
 	MultiInstanceCPUBuffer(
 		ID3D12Device* device, MemoryManager* memoryManager, std::uint32_t instanceCount
@@ -276,9 +265,15 @@ public:
 		return m_buffer.CPUHandle() + (m_instanceSize * instanceIndex);
 	}
 
-	void Add(size_t index)
+	void ExtendBufferIfNecessaryFor(size_t index)
 	{
-		CreateBufferIfNecessary(index);
+		const UINT64 currentSize    = m_buffer.BufferSize();
+		constexpr size_t strideSize = GetStride();
+
+		const auto minimumSpaceRequirement = static_cast<UINT64>(index * strideSize + strideSize);
+
+		if (currentSize < minimumSpaceRequirement)
+			CreateBuffer(index + 1u + GetExtraElementAllocationCount());
 	}
 
 private:

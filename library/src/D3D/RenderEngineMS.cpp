@@ -2,7 +2,11 @@
 
 RenderEngineMS::RenderEngineMS(
 	const DeviceManager& deviceManager, std::shared_ptr<ThreadPool> threadPool, size_t frameCount
-) : RenderEngineCommon{ deviceManager, std::move(threadPool), frameCount }
+) : RenderEngineCommon{ deviceManager, std::move(threadPool), frameCount },
+	m_modelManager{},
+	m_modelBuffers{
+		deviceManager.GetDevice(),& m_memoryManager, static_cast<std::uint32_t>(frameCount)
+	}
 {
 	SetGraphicsDescriptorBufferLayout();
 
@@ -99,10 +103,12 @@ std::uint32_t RenderEngineMS::AddModelBundle(
 ) {
 	WaitForGPUToFinish();
 
-	const std::uint32_t psoIndex = m_renderPassManager.AddOrGetGraphicsPipeline(pixelShader);
+	m_renderPassManager.AddOrGetGraphicsPipeline(pixelShader);
 
-	const std::uint32_t index    = m_modelManager.AddModelBundle(
-		std::move(modelBundle), psoIndex, m_modelBuffers
+	std::vector<std::uint32_t> modelBufferIndices = AddModelsToBuffer(*modelBundle, m_modelBuffers);
+
+	const std::uint32_t index = m_modelManager.AddModelBundle(
+		std::move(modelBundle), std::move(modelBufferIndices)
 	);
 
 	// After a new model has been added, the ModelBuffer might get recreated. So, it will have
@@ -112,6 +118,13 @@ std::uint32_t RenderEngineMS::AddModelBundle(
 	m_copyNecessary = true;
 
 	return index;
+}
+
+void RenderEngineMS::RemoveModelBundle(std::uint32_t bundleIndex) noexcept
+{
+	std::vector<std::uint32_t> modelBufferIndices = m_modelManager.RemoveModelBundle(bundleIndex);
+
+	m_modelBuffers.Remove(modelBufferIndices);
 }
 
 std::uint32_t RenderEngineMS::AddMeshBundle(std::unique_ptr<MeshBundleTemporary> meshBundle)
@@ -219,12 +232,4 @@ void RenderEngineMS::DrawingStage(
 
 		m_graphicsQueue.SubmitCommandLists(graphicsSubmitBuilder);
 	}
-}
-
-ModelManagerMS RenderEngineMS::GetModelManager(
-	[[maybe_unused]] const DeviceManager& deviceManager,
-	MemoryManager* memoryManager,
-	[[maybe_unused]] std::uint32_t frameCount
-) {
-	return ModelManagerMS{ memoryManager };
 }

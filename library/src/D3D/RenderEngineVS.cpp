@@ -3,7 +3,11 @@
 // VS Individual
 RenderEngineVSIndividual::RenderEngineVSIndividual(
 	const DeviceManager& deviceManager, std::shared_ptr<ThreadPool> threadPool, size_t frameCount
-) : RenderEngineCommon{ deviceManager, std::move(threadPool), frameCount }
+) : RenderEngineCommon{ deviceManager, std::move(threadPool), frameCount },
+	m_modelManager{},
+	m_modelBuffers{
+		deviceManager.GetDevice(), &m_memoryManager, static_cast<std::uint32_t>(frameCount)
+	}
 {
 	SetGraphicsDescriptorBufferLayout();
 
@@ -95,23 +99,17 @@ void RenderEngineVSIndividual::ExecutePipelineStages(
 	DrawingStage(frameIndex, renderTarget, counterValue, waitFence);
 }
 
-ModelManagerVSIndividual RenderEngineVSIndividual::GetModelManager(
-	[[maybe_unused]] const DeviceManager& deviceManager,
-	MemoryManager* memoryManager,
-	[[maybe_unused]] std::uint32_t frameCount
-) {
-	return ModelManagerVSIndividual{ memoryManager };
-}
-
 std::uint32_t RenderEngineVSIndividual::AddModelBundle(
 	std::shared_ptr<ModelBundle>&& modelBundle, const ShaderName& pixelShader
 ) {
 	WaitForGPUToFinish();
 
-	const std::uint32_t psoIndex = m_renderPassManager.AddOrGetGraphicsPipeline(pixelShader);
+	m_renderPassManager.AddOrGetGraphicsPipeline(pixelShader);
 
-	const std::uint32_t index    = m_modelManager.AddModelBundle(
-		std::move(modelBundle), psoIndex, m_modelBuffers
+	std::vector<std::uint32_t> modelBufferIndices = AddModelsToBuffer(*modelBundle, m_modelBuffers);
+
+	const std::uint32_t index = m_modelManager.AddModelBundle(
+		std::move(modelBundle), std::move(modelBufferIndices)
 	);
 
 	// After new models have been added, the ModelBuffer might get recreated. So, it will have
@@ -130,6 +128,13 @@ std::uint32_t RenderEngineVSIndividual::AddMeshBundle(std::unique_ptr<MeshBundle
 	m_copyNecessary = true;
 
 	return m_meshManager.AddMeshBundle(std::move(meshBundle), m_stagingManager, m_temporaryDataBuffer);
+}
+
+void RenderEngineVSIndividual::RemoveModelBundle(std::uint32_t bundleIndex) noexcept
+{
+	std::vector<std::uint32_t> modelBufferIndices = m_modelManager.RemoveModelBundle(bundleIndex);
+
+	m_modelBuffers.Remove(modelBufferIndices);
 }
 
 ID3D12Fence* RenderEngineVSIndividual::GenericCopyStage(
@@ -227,7 +232,10 @@ void RenderEngineVSIndividual::DrawingStage(
 RenderEngineVSIndirect::RenderEngineVSIndirect(
 	const DeviceManager& deviceManager, std::shared_ptr<ThreadPool> threadPool, size_t frameCount
 ) : RenderEngineCommon{ deviceManager, std::move(threadPool), frameCount },
-	m_computeQueue{}, m_computeWait{}, m_computeDescriptorManagers{},
+	m_modelManager{ deviceManager.GetDevice(), &m_memoryManager, static_cast<std::uint32_t>(frameCount) },
+	m_modelBuffers{
+		deviceManager.GetDevice(), &m_memoryManager, static_cast<std::uint32_t>(frameCount)
+	}, m_computeQueue{}, m_computeWait{}, m_computeDescriptorManagers{},
 	m_computePipelineManager{ deviceManager.GetDevice() }, m_computeRootSignature{}, m_commandSignature{}
 {
 	ID3D12Device5* device = deviceManager.GetDevice();
@@ -303,7 +311,7 @@ void RenderEngineVSIndirect::FinaliseInitialisation(const DeviceManager& deviceM
 	{
 		D3DDescriptorManager& computeDescriptorManager = m_computeDescriptorManagers.front();
 
-		m_modelManager.SetComputeConstantRootIndex(
+		m_modelManager.SetComputeConstantsRootIndex(
 			computeDescriptorManager, s_computeShaderRegisterSpace
 		);
 
@@ -330,7 +338,11 @@ void RenderEngineVSIndirect::FinaliseInitialisation(const DeviceManager& deviceM
 	);
 
 	// Add the Frustum Culling shader.
-	m_computePipelineManager.AddOrGetComputePipeline(L"VertexShaderCSIndirect");
+	const std::uint32_t frustumCSOIndex = m_computePipelineManager.AddOrGetComputePipeline(
+		L"VertexShaderCSIndirect"
+	);
+
+	m_modelManager.SetCSPSOIndex(frustumCSOIndex);
 }
 
 void RenderEngineVSIndirect::SetGraphicsDescriptorBufferLayout()
@@ -391,6 +403,7 @@ void RenderEngineVSIndirect::SetShaderPath(const std::wstring& shaderPath)
 
 void RenderEngineVSIndirect::_updatePerFrame(UINT64 frameIndex) const noexcept
 {
+	m_modelBuffers.Update(frameIndex);
 	m_modelManager.UpdatePerFrame(frameIndex, m_meshManager);
 }
 
@@ -404,7 +417,7 @@ void RenderEngineVSIndirect::CreateCommandSignature(ID3D12Device* device)
 			.Constant = {
 				.RootParameterIndex      = m_modelManager.GetConstantsVSRootIndex(),
 				.DestOffsetIn32BitValues = 0u,
-				.Num32BitValuesToSet     = ModelBundleVSIndirect::GetConstantCount()
+				.Num32BitValuesToSet     = PipelineModelsVSIndirect::GetConstantCount()
 			}
 		},
 		D3D12_INDIRECT_ARGUMENT_DESC{ .Type = D3D12_INDIRECT_ARGUMENT_TYPE_DRAW_INDEXED }
@@ -412,7 +425,7 @@ void RenderEngineVSIndirect::CreateCommandSignature(ID3D12Device* device)
 
 	D3D12_COMMAND_SIGNATURE_DESC signatureDesc
 	{
-		.ByteStride       = static_cast<UINT>(sizeof(ModelBundleCSIndirect::IndirectArgument)),
+		.ByteStride       = static_cast<UINT>(sizeof(PipelineModelsCSIndirect::IndirectArgument)),
 		.NumArgumentDescs = static_cast<UINT>(std::size(argumentDescs)),
 		.pArgumentDescs   = std::data(argumentDescs)
 	};
@@ -421,12 +434,6 @@ void RenderEngineVSIndirect::CreateCommandSignature(ID3D12Device* device)
 	device->CreateCommandSignature(
 		&signatureDesc, m_graphicsRootSignature.Get(), IID_PPV_ARGS(&m_commandSignature)
 	);
-}
-
-ModelManagerVSIndirect RenderEngineVSIndirect::GetModelManager(
-	const DeviceManager& deviceManager, MemoryManager* memoryManager, std::uint32_t frameCount
-) {
-	return ModelManagerVSIndirect{ deviceManager.GetDevice(), memoryManager, frameCount };
 }
 
 void RenderEngineVSIndirect::WaitForGPUToFinish()
@@ -505,10 +512,12 @@ std::uint32_t RenderEngineVSIndirect::AddModelBundle(
 ) {
 	WaitForGPUToFinish();
 
-	const std::uint32_t psoIndex = m_renderPassManager.AddOrGetGraphicsPipeline(pixelShader);
+	m_renderPassManager.AddOrGetGraphicsPipeline(pixelShader);
 
-	const std::uint32_t index    = m_modelManager.AddModelBundle(
-		std::move(modelBundle), psoIndex, m_modelBuffers
+	std::vector<std::uint32_t> modelBufferIndices = AddModelsToBuffer(*modelBundle, m_modelBuffers);
+
+	const std::uint32_t index = m_modelManager.AddModelBundle(
+		std::move(modelBundle), std::move(modelBufferIndices)
 	);
 
 	// After new models have been added, the ModelBuffer might get recreated. So, it will have
@@ -519,6 +528,13 @@ std::uint32_t RenderEngineVSIndirect::AddModelBundle(
 	m_copyNecessary = true;
 
 	return index;
+}
+
+void RenderEngineVSIndirect::RemoveModelBundle(std::uint32_t bundleIndex) noexcept
+{
+	std::vector<std::uint32_t> modelBufferIndices = m_modelManager.RemoveModelBundle(bundleIndex);
+
+	m_modelBuffers.Remove(modelBufferIndices);
 }
 
 std::uint32_t RenderEngineVSIndirect::AddMeshBundle(std::unique_ptr<MeshBundleTemporary> meshBundle)

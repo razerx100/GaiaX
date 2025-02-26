@@ -111,3 +111,15 @@ void ModelBuffers::Update(UINT64 bufferIndex) const noexcept
 		pixelModelOffset  += pixelStrideSize;
 	}
 }
+
+void ModelBuffers::Remove(const std::vector<std::uint32_t>& indices) noexcept
+{
+	for (std::uint32_t index : indices)
+		Remove(index);
+}
+
+void ModelBuffers::Remove(const std::vector<size_t>& indices) noexcept
+{
+	for (size_t index : indices)
+		Remove(index);
+}

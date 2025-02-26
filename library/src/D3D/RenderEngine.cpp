@@ -185,6 +185,14 @@ void RenderEngine::WaitForGPUToFinish()
 		counterValue = highestCounterValue;
 }
 
+std::vector<std::uint32_t> RenderEngine::AddModelsToBuffer(
+	const ModelBundle& modelBundle, ModelBuffers& modelBuffers
+) noexcept {
+	std::vector<std::shared_ptr<Model>> models = modelBundle.GetModels();
+
+	return modelBuffers.AddMultipleRU32(std::move(models));
+}
+
 void RenderEngine::SetCommonGraphicsDescriptorLayout(
 	D3D12_SHADER_VISIBILITY cameraShaderVisibility
 ) noexcept {

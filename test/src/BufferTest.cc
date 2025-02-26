@@ -149,5 +149,5 @@ TEST_F(BufferTest, ReusableBufferTest)
 	reusableCpuBuffer.Update(1u, 99u);
 
 	MultiInstanceCPUBuffer<size_t> reusableCpuMBuffer{ device, &memoryManager, Constants::bufferCount };
-	reusableCpuMBuffer.Add(1u);
+	reusableCpuMBuffer.ExtendBufferIfNecessaryFor(1u);
 }

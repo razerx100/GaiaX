@@ -2,14 +2,14 @@
 #include <gtest/gtest.h>
 #include <memory>
 
-#include <CommonBuffers.hpp>
+#include <D3DSharedBuffer.hpp>
 
 namespace Constants
 {
 	constexpr size_t bufferCount = 2u;
 }
 
-class CommonBufferTest : public ::testing::Test
+class D3DSharedBufferTest : public ::testing::Test
 {
 protected:
 	static void SetUpTestSuite();
@@ -19,7 +19,7 @@ protected:
 	inline static std::unique_ptr<DeviceManager> s_deviceManager;
 };
 
-void CommonBufferTest::SetUpTestSuite()
+void D3DSharedBufferTest::SetUpTestSuite()
 {
 	s_deviceManager = std::make_unique<DeviceManager>();
 
@@ -27,12 +27,12 @@ void CommonBufferTest::SetUpTestSuite()
 	s_deviceManager->Create(D3D_FEATURE_LEVEL_12_0);
 }
 
-void CommonBufferTest::TearDownTestSuite()
+void D3DSharedBufferTest::TearDownTestSuite()
 {
 	s_deviceManager.reset();
 }
 
-TEST_F(CommonBufferTest, SharedBufferTest)
+TEST_F(D3DSharedBufferTest, SharedBufferTest)
 {
 	ID3D12Device5* device  = s_deviceManager->GetDevice();
 	IDXGIAdapter3* adapter = s_deviceManager->GetAdapter();

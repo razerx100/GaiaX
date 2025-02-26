@@ -1,12 +1,9 @@
+#include <unordered_map>
 #include <ModelManager.hpp>
 #include <D3DRootSignatureDynamic.hpp>
 
 // Model Manager VS Individual
-ModelManagerVSIndividual::ModelManagerVSIndividual(MemoryManager* memoryManager)
-	: ModelManager{ memoryManager }, m_constantsRootIndex{ 0u }
-{}
-
-void ModelManagerVSIndividual::_setGraphicsConstantRootIndex(
+void ModelManagerVSIndividual::SetGraphicsConstantsRootIndex(
 	const D3DDescriptorManager& descriptorManager, size_t constantsRegisterSpace
 ) noexcept {
 	m_constantsRootIndex = descriptorManager.GetRootIndexCBV(
@@ -14,27 +11,10 @@ void ModelManagerVSIndividual::_setGraphicsConstantRootIndex(
 	);
 }
 
-void ModelManagerVSIndividual::ConfigureModelBundle(
-	ModelBundleVSIndividual& modelBundleObj, std::vector<std::uint32_t>&& modelIndices,
-	std::shared_ptr<ModelBundle>&& modelBundle
-) const noexcept {
-	modelBundleObj.SetModelBundle(std::move(modelBundle), std::move(modelIndices));
-}
-
-void ModelManagerVSIndividual::ConfigureModelBundleRemove(
-	size_t bundleIndex, ModelBuffers& modelBuffers
-) noexcept {
-	const ModelBundleVSIndividual& modelBundle     = m_modelBundles.at(bundleIndex);
-	const std::vector<std::uint32_t>& modelIndices = modelBundle.GetModelIndices();
-
-	for (std::uint32_t modelIndex : modelIndices)
-		modelBuffers.Remove(modelIndex);
-}
-
 void ModelManagerVSIndividual::SetDescriptorLayout(
 	std::vector<D3DDescriptorManager>& descriptorManagers, size_t vsRegisterSpace
 ) {
-	constexpr UINT pushConstantCount = ModelBundleVSIndividual::GetConstantCount();
+	constexpr UINT pushConstantCount = PipelineModelsVSIndividual::GetConstantCount();
 
 	for (D3DDescriptorManager& descriptorManager : descriptorManagers)
 		descriptorManager.AddConstants(
@@ -47,62 +27,115 @@ void ModelManagerVSIndividual::Draw(
 	const D3DCommandList& graphicsList, const MeshManagerVSIndividual& meshManager,
 	const PipelineManager<Pipeline_t>& pipelineManager
 ) const noexcept {
-	auto previousPSOIndex = std::numeric_limits<size_t>::max();
-
 	GraphicsPipelineVS::SetIATopology(graphicsList);
 
-	for (const ModelBundleVSIndividual& modelBundle : m_modelBundles)
+	const size_t bundleCount = std::size(m_modelBundles);
+
+	for (size_t index = 0u; index < bundleCount; ++index)
 	{
-		// Pipeline Object.
-		BindPipeline(modelBundle, graphicsList, pipelineManager, previousPSOIndex);
+		if (!m_modelBundles.IsInUse(index))
+			continue;
+
+		const ModelBundleVSIndividual& modelBundle = m_modelBundles[index];
 
 		// Mesh
-		const D3DMeshBundleVS& meshBundle = meshManager.GetBundle(
-			static_cast<size_t>(modelBundle.GetMeshBundleIndex())
-		);
-
-		meshBundle.Bind(graphicsList);
+		const D3DMeshBundleVS& meshBundle = meshManager.GetBundle(modelBundle.GetMeshBundleIndex());
 
 		// Model
-		modelBundle.Draw(graphicsList, m_constantsRootIndex, meshBundle);
+		modelBundle.Draw(graphicsList, m_constantsRootIndex, meshBundle, pipelineManager);
 	}
+}
+
+void ModelManagerVSIndividual::DrawSorted(
+	const D3DCommandList& graphicsList, const MeshManagerVSIndividual& meshManager,
+	const PipelineManager<Pipeline_t>& pipelineManager
+) noexcept {
+	GraphicsPipelineVS::SetIATopology(graphicsList);
+
+	const size_t bundleCount = std::size(m_modelBundles);
+
+	for (size_t index = 0u; index < bundleCount; ++index)
+	{
+		if (!m_modelBundles.IsInUse(index))
+			continue;
+
+		ModelBundleVSIndividual& modelBundle = m_modelBundles[index];
+
+		// Mesh
+		const D3DMeshBundleVS& meshBundle    = meshManager.GetBundle(modelBundle.GetMeshBundleIndex());
+
+		// Model
+		modelBundle.DrawSorted(graphicsList, m_constantsRootIndex, meshBundle, pipelineManager);
+	}
+}
+
+void ModelManagerVSIndividual::DrawPipeline(
+	size_t modelBundleIndex, size_t pipelineLocalIndex, const D3DCommandList& graphicsList,
+	const MeshManagerVSIndividual& meshManager
+) const noexcept {
+	if (!m_modelBundles.IsInUse(modelBundleIndex))
+		return;
+
+	const ModelBundleVSIndividual& modelBundle = m_modelBundles[modelBundleIndex];
+
+	// Mesh
+	const D3DMeshBundleVS& meshBundle          = meshManager.GetBundle(modelBundle.GetMeshBundleIndex());
+
+	// Model
+	modelBundle.DrawPipeline(pipelineLocalIndex, graphicsList, m_constantsRootIndex, meshBundle);
+}
+
+void ModelManagerVSIndividual::DrawPipelineSorted(
+	size_t modelBundleIndex, size_t pipelineLocalIndex, const D3DCommandList& graphicsList,
+	const MeshManagerVSIndividual& meshManager
+) noexcept {
+	if (!m_modelBundles.IsInUse(modelBundleIndex))
+		return;
+
+	ModelBundleVSIndividual& modelBundle = m_modelBundles[modelBundleIndex];
+
+	// Mesh
+	const D3DMeshBundleVS& meshBundle    = meshManager.GetBundle(modelBundle.GetMeshBundleIndex());
+
+	// Model
+	modelBundle.DrawPipelineSorted(pipelineLocalIndex, graphicsList, m_constantsRootIndex, meshBundle);
 }
 
 // Model Manager VS Indirect.
 ModelManagerVSIndirect::ModelManagerVSIndirect(
 	ID3D12Device5* device, MemoryManager* memoryManager, std::uint32_t frameCount
-) : ModelManager{ memoryManager },
+) : ModelManager{},
 	m_argumentInputBuffers{}, m_argumentOutputBuffers{},
-	m_cullingDataBuffer{ device, memoryManager, D3D12_RESOURCE_STATE_GENERIC_READ },
+	m_perPipelineBuffer{ device, memoryManager, D3D12_RESOURCE_STATE_GENERIC_READ },
 	m_counterBuffers{},
 	m_counterResetBuffer{ device, memoryManager, D3D12_HEAP_TYPE_UPLOAD },
-	m_meshBundleIndexBuffer{ device, memoryManager, frameCount },
-	m_perModelDataBuffer{ device, memoryManager, D3D12_RESOURCE_STATE_GENERIC_READ },
-	m_dispatchXCount{ 0u }, m_allocatedModelCount{ 0u }, m_constantsVSRootIndex{ 0u },
-	m_constantsCSRootIndex{ 0u }, m_modelBundlesCS{}
+	m_perModelBundleBuffer{ device, memoryManager, frameCount },
+	m_perModelBuffer{ device, memoryManager, D3D12_RESOURCE_STATE_GENERIC_READ },
+	m_dispatchXCount{ 0u }, m_allocatedModelCount{ 0u }, m_csPSOIndex{ 0u }, m_constantsVSRootIndex{ 0u },
+	m_constantsCSRootIndex{ 0u }
 {
 	for (size_t _ = 0u; _ < frameCount; ++_)
 	{
 		m_argumentInputBuffers.emplace_back(
-			SharedBufferCPU{ device, m_memoryManager, D3D12_RESOURCE_STATE_GENERIC_READ }
+			SharedBufferCPU{ device, memoryManager, D3D12_RESOURCE_STATE_GENERIC_READ }
 		);
 		m_argumentOutputBuffers.emplace_back(
 			SharedBufferGPUWriteOnly{
-				device, m_memoryManager, D3D12_RESOURCE_STATE_COMMON,
+				device, memoryManager, D3D12_RESOURCE_STATE_COMMON,
 				D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS
 			}
 		);
 		// Doing the resetting on the Compute queue, so CG should be fine.
 		m_counterBuffers.emplace_back(
 			SharedBufferGPUWriteOnly{
-				device, m_memoryManager, D3D12_RESOURCE_STATE_COMMON,
+				device, memoryManager, D3D12_RESOURCE_STATE_COMMON,
 				D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS
 			}
 		);
 	}
 }
 
-void ModelManagerVSIndirect::_setGraphicsConstantRootIndex(
+void ModelManagerVSIndirect::SetGraphicsConstantsRootIndex(
 	const D3DDescriptorManager& descriptorManager, size_t constantsRegisterSpace
 ) noexcept {
 	m_constantsVSRootIndex = descriptorManager.GetRootIndexCBV(
@@ -110,11 +143,22 @@ void ModelManagerVSIndirect::_setGraphicsConstantRootIndex(
 	);
 }
 
-void ModelManagerVSIndirect::SetComputeConstantRootIndex(
+void ModelManagerVSIndirect::SetComputeConstantsRootIndex(
 	const D3DDescriptorManager& descriptorManager, size_t constantsRegisterSpace
 ) noexcept {
 	m_constantsVSRootIndex = descriptorManager.GetRootIndexCBV(
 		s_constantDataCSCBVRegisterSlot, constantsRegisterSpace
+	);
+}
+
+void ModelManagerVSIndirect::ChangeModelPipeline(
+	std::uint32_t bundleIndex, std::uint32_t modelIndexInBundle, std::uint32_t oldPipelineIndex,
+	std::uint32_t newPipelineIndex
+) {
+	m_modelBundles[bundleIndex].MoveModel(
+		modelIndexInBundle, bundleIndex, oldPipelineIndex, newPipelineIndex,
+		m_argumentInputBuffers, m_perPipelineBuffer, m_perModelBuffer,
+		m_argumentOutputBuffers, m_counterBuffers
 	);
 }
 
@@ -127,7 +171,7 @@ void ModelManagerVSIndirect::UpdateAllocatedModelCount() noexcept
 	// in some freed memory. We should set the model count to the total allocated model count, that
 	// way it won't skip the last ones and also not unnecessarily add extra ones.
 	m_allocatedModelCount = static_cast<UINT>(
-		m_perModelDataBuffer.Size() / ModelBundleCSIndirect::GetPerModelStride()
+		m_perModelBuffer.Size() / PipelineModelsCSIndirect::GetPerModelStride()
 	);
 
 	// ThreadBlockSize is the number of threads in a thread group. If the allocated model count
@@ -136,110 +180,133 @@ void ModelManagerVSIndirect::UpdateAllocatedModelCount() noexcept
 	m_dispatchXCount = static_cast<UINT>(std::ceil(m_allocatedModelCount / THREADBLOCKSIZE));
 }
 
-void ModelManagerVSIndirect::ConfigureModelBundle(
-	ModelBundleVSIndirect& modelBundleObj, std::vector<std::uint32_t>&& modelIndices,
-	std::shared_ptr<ModelBundle>&& modelBundle
+std::uint32_t ModelManagerVSIndirect::AddModelBundle(
+	std::shared_ptr<ModelBundle>&& modelBundle, std::vector<std::uint32_t>&& modelBufferIndices
 ) {
-	ModelBundleCSIndirect modelBundleCS{};
+	const size_t bundleIndex  = m_modelBundles.Add(ModelBundleVSIndirect{});
+	const auto bundleIndexU32 = static_cast<std::uint32_t>(bundleIndex);
 
-	modelBundleCS.SetModelBundle(modelBundle, std::move(modelIndices));
-	modelBundleObj.SetModelBundle(std::move(modelBundle));
+	ModelBundleVSIndirect& localModelBundle = m_modelBundles[bundleIndex];
 
-	modelBundleCS.CreateBuffers(m_argumentInputBuffers, m_cullingDataBuffer, m_perModelDataBuffer);
+	localModelBundle.SetModelIndices(std::move(modelBufferIndices));
 
-	modelBundleObj.CreateBuffers(
-		m_argumentOutputBuffers, m_counterBuffers, modelBundleCS.GetModelCount()
-	);
+	_addModelsFromBundle(localModelBundle, *modelBundle, bundleIndexU32);
 
 	UpdateCounterResetValues();
 
-	modelBundleObj.SetID(static_cast<std::uint32_t>(modelBundleCS.GetID()));
-
-	const std::uint32_t modelBundleIndexInBuffer = modelBundleCS.GetModelBundleIndex();
-
-	m_meshBundleIndexBuffer.Add(modelBundleIndexInBuffer);
-
-	m_modelBundlesCS.emplace_back(std::move(modelBundleCS));
+	m_perModelBundleBuffer.ExtendBufferIfNecessaryFor(bundleIndex);
 
 	UpdateAllocatedModelCount();
+
+	localModelBundle.SetModelBundle(std::move(modelBundle));
+
+	return bundleIndexU32;
 }
 
-void ModelManagerVSIndirect::ConfigureModelBundleRemove(
-	size_t bundleIndex, ModelBuffers& modelBuffers
-) noexcept {
-	const ModelBundleVSIndirect& modelBundleVS = m_modelBundles[bundleIndex];
+void ModelManagerVSIndirect::_addModelsFromBundle(
+	ModelBundleVSIndirect& localModelBundle, const ModelBundle& modelBundle, std::uint32_t modelBundleIndex
+) {
+	const std::vector<std::shared_ptr<Model>>& models = modelBundle.GetModels();
 
+	const size_t modelCount = std::size(models);
+
+	std::unordered_map<std::uint32_t, std::vector<std::uint32_t>> pipelineModelIndicesMap{};
+
+	for (size_t index = 0u; index < modelCount; ++index)
 	{
-		const std::vector<SharedBufferData>& argumentOutputSharedData
-			= modelBundleVS.GetArgumentOutputSharedData();
+		const std::shared_ptr<Model>& model      = models[index];
 
-		for (size_t index = 0u; index < std::size(m_argumentOutputBuffers); ++index)
-			m_argumentOutputBuffers[index].RelinquishMemory(argumentOutputSharedData[index]);
+		std::vector<std::uint32_t>& modelIndices = pipelineModelIndicesMap[model->GetPipelineIndex()];
 
-		const std::vector<SharedBufferData>& counterSharedData = modelBundleVS.GetCounterSharedData();
-
-		for (size_t index = 0u; index < std::size(m_counterBuffers); ++index)
-			m_counterBuffers[index].RelinquishMemory(counterSharedData[index]);
+		modelIndices.emplace_back(static_cast<std::uint32_t>(index));
 	}
 
-	// The index should be the same as the VS one.
-	const ModelBundleCSIndirect& modelBundleCS = m_modelBundlesCS[bundleIndex];
+	for (const auto& pipelineModelIndices : pipelineModelIndicesMap)
+		localModelBundle.AddModels(
+			pipelineModelIndices.first, modelBundleIndex, pipelineModelIndices.second,
+			m_argumentInputBuffers, m_perPipelineBuffer, m_perModelBuffer,
+			m_argumentOutputBuffers, m_counterBuffers
+		);
+}
 
-	{
-		const std::vector<SharedBufferData>& argumentInputSharedData
-			= modelBundleCS.GetArgumentInputSharedData();
+std::vector<std::uint32_t> ModelManagerVSIndirect::RemoveModelBundle(std::uint32_t bundleIndex) noexcept
+{
+	const size_t bundleIndexST              = bundleIndex;
 
-		for (size_t index = 0u; index < std::size(m_argumentInputBuffers); ++index)
-			m_argumentInputBuffers[index].RelinquishMemory(argumentInputSharedData[index]);
+	ModelBundleVSIndirect& localModelBundle = m_modelBundles[bundleIndexST];
 
-		modelBundleCS.ResetCullingData();
+	std::vector<std::uint32_t> modelBufferIndices = localModelBundle.TakeModelBufferIndices();
 
-		m_cullingDataBuffer.RelinquishMemory(modelBundleCS.GetCullingSharedData());
-		m_perModelDataBuffer.RelinquishMemory(modelBundleCS.GetPerModelDataSharedData());
+	localModelBundle.CleanupData(
+		m_argumentInputBuffers, m_perPipelineBuffer, m_perModelBuffer,
+		m_argumentOutputBuffers, m_counterBuffers
+	);
 
-		// Remove the model indices
-		const std::vector<std::uint32_t>& modelIndices = modelBundleCS.GetModelIndices();
+	m_modelBundles.RemoveElement(bundleIndexST);
 
-		for (std::uint32_t modelIndex : modelIndices)
-			modelBuffers.Remove(modelIndex);
-	}
-
-	m_modelBundlesCS.erase(std::next(std::begin(m_modelBundlesCS), bundleIndex));
+	return modelBufferIndices;
 }
 
 void ModelManagerVSIndirect::UpdatePerFrame(
 	UINT64 frameIndex, const MeshManagerVSIndirect& meshManager
 ) const noexcept {
-	std::uint8_t* bufferOffsetPtr = m_meshBundleIndexBuffer.GetInstancePtr(frameIndex);
-	constexpr size_t strideSize   = sizeof(std::uint32_t);
+	std::uint8_t* bufferOffsetPtr = m_perModelBundleBuffer.GetInstancePtr(frameIndex);
+	constexpr size_t strideSize   = sizeof(PerModelBundleData);
 	size_t bufferOffset           = 0u;
 
-	// This is necessary because, while the indices should be the same as the CS bundles
-	// if we decide to remove a bundle, the bundles afterwards will be shifted. In that
-	// case either we can shift the modelBundleIndices to accommodate the bundle changes or
-	// write data the modelBundles' old position. I think the second approach is better
-	// as the model bundle indices are currently set as GPU only data. While the mesh indices
-	// are cpu data which is reset every frame.
-	for (const ModelBundleCSIndirect& bundle : m_modelBundlesCS)
+	const size_t modelBundleCount = std::size(m_modelBundles);
+
+	for (size_t index = 0u; index < modelBundleCount; ++index)
 	{
-		const std::uint32_t meshBundleIndex = bundle.GetMeshBundleIndex();
+		if (!m_modelBundles.IsInUse(index))
+			continue;
 
-		const D3DMeshBundleVS& meshBundle   = meshManager.GetBundle(static_cast<size_t>(meshBundleIndex));
+		const ModelBundleVSIndirect& vsBundle = m_modelBundles[index];
 
-		bundle.Update(static_cast<size_t>(frameIndex), meshBundle);
+		const std::uint32_t meshBundleIndex   = vsBundle.GetMeshBundleIndex();
 
-		const std::uint32_t modelBundleIndex = bundle.GetModelBundleIndex();
+		const D3DMeshBundleVS& meshBundle     = meshManager.GetBundle(meshBundleIndex);
 
-		bufferOffset = strideSize * modelBundleIndex;
+		vsBundle.Update(static_cast<size_t>(frameIndex), meshBundle);
 
 		memcpy(bufferOffsetPtr + bufferOffset, &meshBundleIndex, strideSize);
+
+		bufferOffset += strideSize;
+	}
+}
+
+void ModelManagerVSIndirect::UpdatePerFrameSorted(
+	UINT64 frameIndex, const MeshManagerVSIndirect& meshManager
+) noexcept {
+	std::uint8_t* bufferOffsetPtr = m_perModelBundleBuffer.GetInstancePtr(frameIndex);
+	constexpr size_t strideSize   = sizeof(PerModelBundleData);
+	size_t bufferOffset           = 0u;
+
+	const size_t modelBundleCount = std::size(m_modelBundles);
+
+	for (size_t index = 0u; index < modelBundleCount; ++index)
+	{
+		if (!m_modelBundles.IsInUse(index))
+			continue;
+
+		ModelBundleVSIndirect& vsBundle     = m_modelBundles[index];
+
+		const std::uint32_t meshBundleIndex = vsBundle.GetMeshBundleIndex();
+
+		const D3DMeshBundleVS& meshBundle   = meshManager.GetBundle(meshBundleIndex);
+
+		vsBundle.UpdateSorted(static_cast<size_t>(frameIndex), meshBundle);
+
+		memcpy(bufferOffsetPtr + bufferOffset, &meshBundleIndex, strideSize);
+
+		bufferOffset += strideSize;
 	}
 }
 
 void ModelManagerVSIndirect::SetDescriptorLayoutVS(
 	std::vector<D3DDescriptorManager>& descriptorManagers, size_t vsRegisterSpace
 ) const noexcept {
-	constexpr auto pushConstantCount = ModelBundleVSIndirect::GetConstantCount();
+	constexpr UINT pushConstantCount = PipelineModelsVSIndirect::GetConstantCount();
 
 	for (D3DDescriptorManager& descriptorManager : descriptorManagers)
 		descriptorManager.AddConstants(
@@ -251,7 +318,7 @@ void ModelManagerVSIndirect::SetDescriptorLayoutVS(
 void ModelManagerVSIndirect::SetDescriptorLayoutCS(
 	std::vector<D3DDescriptorManager>& descriptorManagers, size_t csRegisterSpace
 ) const noexcept {
-	constexpr auto pushConstantCount = GetConstantCount();
+	constexpr UINT pushConstantCount = GetConstantCount();
 
 	for (D3DDescriptorManager& descriptorManager : descriptorManagers)
 	{
@@ -260,10 +327,10 @@ void ModelManagerVSIndirect::SetDescriptorLayoutCS(
 			D3D12_SHADER_VISIBILITY_ALL
 		);
 		descriptorManager.AddRootSRV(
-			s_argumentInputBufferSRVRegisterSlot, csRegisterSpace, D3D12_SHADER_VISIBILITY_ALL
+			s_argumentInputSRVRegisterSlot, csRegisterSpace, D3D12_SHADER_VISIBILITY_ALL
 		);
 		descriptorManager.AddRootSRV(
-			s_cullingDataBufferSRVRegisterSlot, csRegisterSpace, D3D12_SHADER_VISIBILITY_ALL
+			s_perPipelineSRVRegisterSlot, csRegisterSpace, D3D12_SHADER_VISIBILITY_ALL
 		);
 		descriptorManager.AddRootUAV(
 			s_argumenOutputUAVRegisterSlot, csRegisterSpace, D3D12_SHADER_VISIBILITY_ALL
@@ -272,10 +339,10 @@ void ModelManagerVSIndirect::SetDescriptorLayoutCS(
 			s_counterUAVRegisterSlot, csRegisterSpace, D3D12_SHADER_VISIBILITY_ALL
 		);
 		descriptorManager.AddRootSRV(
-			s_perModelDataSRVRegisterSlot, csRegisterSpace, D3D12_SHADER_VISIBILITY_ALL
+			s_perModelSRVRegisterSlot, csRegisterSpace, D3D12_SHADER_VISIBILITY_ALL
 		);
 		descriptorManager.AddRootSRV(
-			s_meshBundleIndexSRVRegisterSlot, csRegisterSpace, D3D12_SHADER_VISIBILITY_ALL
+			s_perModelBundleSRVRegisterSlot, csRegisterSpace, D3D12_SHADER_VISIBILITY_ALL
 		);
 	}
 }
@@ -290,12 +357,11 @@ void ModelManagerVSIndirect::SetDescriptors(
 		D3DDescriptorManager& descriptorManager = descriptorManagers[index];
 
 		descriptorManager.SetRootSRV(
-			s_argumentInputBufferSRVRegisterSlot, csRegisterSpace,
+			s_argumentInputSRVRegisterSlot, csRegisterSpace,
 			m_argumentInputBuffers[index].GetGPUAddress(), false
 		);
 		descriptorManager.SetRootSRV(
-			s_cullingDataBufferSRVRegisterSlot, csRegisterSpace,
-			m_cullingDataBuffer.GetGPUAddress(), false
+			s_perPipelineSRVRegisterSlot, csRegisterSpace, m_perPipelineBuffer.GetGPUAddress(), false
 		);
 		descriptorManager.SetRootUAV(
 			s_argumenOutputUAVRegisterSlot, csRegisterSpace,
@@ -305,12 +371,11 @@ void ModelManagerVSIndirect::SetDescriptors(
 			s_counterUAVRegisterSlot, csRegisterSpace, m_counterBuffers[index].GetGPUAddress(), false
 		);
 		descriptorManager.SetRootSRV(
-			s_perModelDataSRVRegisterSlot, csRegisterSpace,
-			m_perModelDataBuffer.GetGPUAddress(), false
+			s_perModelSRVRegisterSlot, csRegisterSpace, m_perModelBuffer.GetGPUAddress(), false
 		);
 
-		m_meshBundleIndexBuffer.SetRootSRVCom(
-			descriptorManager, s_meshBundleIndexSRVRegisterSlot, csRegisterSpace
+		m_perModelBundleBuffer.SetRootSRVCom(
+			descriptorManager, s_perModelBundleSRVRegisterSlot, csRegisterSpace
 		);
 	}
 }
@@ -345,25 +410,42 @@ void ModelManagerVSIndirect::Draw(
 	size_t frameIndex, const D3DCommandList& graphicsList, ID3D12CommandSignature* commandSignature,
 	const MeshManagerVSIndirect& meshManager, const PipelineManager<GraphicsPipeline_t>& pipelineManager
 ) const noexcept {
-	auto previousPSOIndex = std::numeric_limits<size_t>::max();
-
 	GraphicsPipelineVS::SetIATopology(graphicsList);
 
-	for (const ModelBundleVSIndirect& modelBundle : m_modelBundles)
+	const size_t bundleCount = std::size(m_modelBundles);
+
+	for (size_t index = 0u; index < bundleCount; ++index)
 	{
-		// Pipeline Object.
-		BindPipeline(modelBundle, graphicsList, pipelineManager, previousPSOIndex);
+		if (!m_modelBundles.IsInUse(index))
+			continue;
+
+		const ModelBundleVSIndirect& modelBundle = m_modelBundles[index];
 
 		// Mesh
-		const D3DMeshBundleVS& meshBundle = meshManager.GetBundle(
-			static_cast<size_t>(modelBundle.GetMeshBundleIndex())
-		);
-
-		meshBundle.Bind(graphicsList);
+		const D3DMeshBundleVS& meshBundle = meshManager.GetBundle(modelBundle.GetMeshBundleIndex());
 
 		// Model
-		modelBundle.Draw(frameIndex, commandSignature, graphicsList);
+		modelBundle.Draw(frameIndex, graphicsList, commandSignature, meshBundle, pipelineManager);
 	}
+}
+
+void ModelManagerVSIndirect::DrawPipeline(
+	size_t frameIndex, size_t modelBundleIndex, size_t pipelineLocalIndex,
+	const D3DCommandList& graphicsList, ID3D12CommandSignature* commandSignature,
+	const MeshManagerVSIndirect& meshManager
+) const noexcept {
+	if (!m_modelBundles.IsInUse(modelBundleIndex))
+		return;
+
+	const ModelBundleVSIndirect& modelBundle = m_modelBundles[modelBundleIndex];
+
+	// Mesh
+	const D3DMeshBundleVS& meshBundle        = meshManager.GetBundle(modelBundle.GetMeshBundleIndex());
+
+	// Model
+	modelBundle.DrawPipeline(
+		pipelineLocalIndex, frameIndex, graphicsList, commandSignature, meshBundle
+	);
 }
 
 void ModelManagerVSIndirect::ResetCounterBuffer(
@@ -410,27 +492,7 @@ void ModelManagerVSIndirect::UpdateCounterResetValues()
 }
 
 // Model Manager MS.
-ModelManagerMS::ModelManagerMS(MemoryManager* memoryManager)
-	: ModelManager{ memoryManager }, m_constantsRootIndex{ 0u }
-{}
-
-void ModelManagerMS::ConfigureModelBundle(
-	ModelBundleMSIndividual& modelBundleObj, std::vector<std::uint32_t>&& modelIndices,
-	std::shared_ptr<ModelBundle>&& modelBundle
-) {
-	modelBundleObj.SetModelBundle(std::move(modelBundle), std::move(modelIndices));
-}
-
-void ModelManagerMS::ConfigureModelBundleRemove(size_t bundleIndex, ModelBuffers& modelBuffers) noexcept
-{
-	const ModelBundleMSIndividual& modelBundle     = m_modelBundles.at(bundleIndex);
-	const std::vector<std::uint32_t>& modelIndices = modelBundle.GetModelIndices();
-
-	for (std::uint32_t modelIndex : modelIndices)
-		modelBuffers.Remove(modelIndex);
-}
-
-void ModelManagerMS::_setGraphicsConstantRootIndex(
+void ModelManagerMS::SetGraphicsConstantsRootIndex(
 	const D3DDescriptorManager& descriptorManager, size_t constantsRegisterSpace
 ) noexcept {
 	m_constantsRootIndex = descriptorManager.GetRootIndexCBV(
@@ -442,7 +504,7 @@ void ModelManagerMS::SetDescriptorLayout(
 	std::vector<D3DDescriptorManager>& descriptorManagers, size_t msRegisterSpace
 ) const noexcept {
 	constexpr UINT meshConstantCount  = D3DMeshBundleMS::GetConstantCount();
-	constexpr UINT modelConstantCount = ModelBundleMSIndividual::GetConstantCount();
+	constexpr UINT modelConstantCount = PipelineModelsMSIndividual::GetConstantCount();
 
 	for (D3DDescriptorManager& descriptorManager : descriptorManagers)
 		descriptorManager.AddConstants(
@@ -455,29 +517,72 @@ void ModelManagerMS::Draw(
 	const D3DCommandList& graphicsList, const MeshManagerMS& meshManager,
 	const PipelineManager<Pipeline_t>& pipelineManager
 ) const noexcept {
-	auto previousPSOIndex              = std::numeric_limits<size_t>::max();
-	ID3D12GraphicsCommandList* cmdList = graphicsList.Get();
+	const size_t bundleCount = std::size(m_modelBundles);
 
-	for (const ModelBundleMSIndividual& modelBundle : m_modelBundles)
+	for (size_t index = 0u; index < bundleCount; ++index)
 	{
-		// Pipeline Object.
-		BindPipeline(modelBundle, graphicsList, pipelineManager, previousPSOIndex);
+		if (!m_modelBundles.IsInUse(index))
+			continue;
 
-		const auto meshBundleIndex        = static_cast<size_t>(
-			modelBundle.GetMeshBundleIndex()
-		);
-		const D3DMeshBundleMS& meshBundle = meshManager.GetBundle(meshBundleIndex);
+		const ModelBundleMSIndividual& modelBundle = m_modelBundles[index];
 
-		constexpr UINT constBufferCount   = D3DMeshBundleMS::GetConstantCount();
-
-		const D3DMeshBundleMS::MeshBundleDetailsMS meshBundleDetailsMS
-			= meshBundle.GetMeshBundleDetailsMS();
-
-		cmdList->SetGraphicsRoot32BitConstants(
-			m_constantsRootIndex, constBufferCount, &meshBundleDetailsMS, 0u
-		);
+		// Mesh
+		const D3DMeshBundleMS& meshBundle = meshManager.GetBundle(modelBundle.GetMeshBundleIndex());
 
 		// Model
-		modelBundle.Draw(graphicsList, m_constantsRootIndex, meshBundle);
+		modelBundle.Draw(graphicsList, m_constantsRootIndex, meshBundle, pipelineManager);
 	}
+}
+
+void ModelManagerMS::DrawSorted(
+	const D3DCommandList& graphicsList, const MeshManagerMS& meshManager,
+	const PipelineManager<Pipeline_t>& pipelineManager
+) noexcept {
+	const size_t bundleCount = std::size(m_modelBundles);
+
+	for (size_t index = 0u; index < bundleCount; ++index)
+	{
+		if (!m_modelBundles.IsInUse(index))
+			continue;
+
+		ModelBundleMSIndividual& modelBundle = m_modelBundles[index];
+
+		// Mesh
+		const D3DMeshBundleMS& meshBundle    = meshManager.GetBundle(modelBundle.GetMeshBundleIndex());
+
+		// Model
+		modelBundle.Draw(graphicsList, m_constantsRootIndex, meshBundle, pipelineManager);
+	}
+}
+
+void ModelManagerMS::DrawPipeline(
+	size_t modelBundleIndex, size_t pipelineLocalIndex, const D3DCommandList& graphicsList,
+	const MeshManagerMS& meshManager
+) const noexcept {
+	if (!m_modelBundles.IsInUse(modelBundleIndex))
+		return;
+
+	const ModelBundleMSIndividual& modelBundle = m_modelBundles[modelBundleIndex];
+
+	// Mesh
+	const D3DMeshBundleMS& meshBundle          = meshManager.GetBundle(modelBundle.GetMeshBundleIndex());
+
+	// Model
+	modelBundle.DrawPipeline(pipelineLocalIndex, graphicsList, m_constantsRootIndex, meshBundle);
+}
+
+void ModelManagerMS::DrawPipelineSorted(
+	size_t modelBundleIndex, size_t pipelineLocalIndex, const D3DCommandList& graphicsList,
+	const MeshManagerMS& meshManager
+) noexcept {
+	if (!m_modelBundles.IsInUse(modelBundleIndex))
+		return;
+
+	ModelBundleMSIndividual& modelBundle = m_modelBundles[modelBundleIndex];
+
+	// Mesh
+	const D3DMeshBundleMS& meshBundle    = meshManager.GetBundle(modelBundle.GetMeshBundleIndex());
+
+	// Model
+	modelBundle.DrawPipelineSorted(pipelineLocalIndex, graphicsList, m_constantsRootIndex, meshBundle);
 }
