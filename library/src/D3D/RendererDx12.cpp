@@ -41,19 +41,22 @@ void RendererDx12::SetShaderPath(const wchar_t* path)
 	m_gaia.GetRenderEngine().SetShaderPath(path);
 }
 
-std::uint32_t RendererDx12::AddGraphicsPipeline(const ShaderName& pixelShader)
+std::uint32_t RendererDx12::AddGraphicsPipeline(const ExternalGraphicsPipeline& gfxPipeline)
 {
-	return m_gaia.GetRenderEngine().AddGraphicsPipeline(pixelShader);
+	//return m_gaia.GetRenderEngine().AddGraphicsPipeline(pixelShader);
+	return 0u;
 }
 
-void RendererDx12::ChangePixelShader(std::uint32_t modelBundleID, const ShaderName& pixelShader)
-{
-	m_gaia.GetRenderEngine().ChangePixelShader(modelBundleID, pixelShader);
+void RendererDx12::ChangeModelPipelineInBundle(
+	std::uint32_t modelBundleIndex, std::uint32_t modelIndex,
+	std::uint32_t oldPipelineIndex, std::uint32_t newPipelineIndex
+) {
+	//m_gaia.GetRenderEngine().ChangePixelShader(modelBundleID, pixelShader);
 }
 
-void RendererDx12::MakePixelShaderRemovable(const ShaderName& pixelShader) noexcept
+void RendererDx12::RemoveGraphicsPipeline(std::uint32_t pipelineIndex) noexcept
 {
-	m_gaia.GetRenderEngine().MakePixelShaderRemovable(pixelShader);
+	//m_gaia.GetRenderEngine().MakePixelShaderRemovable(pixelShader);
 }
 
 size_t RendererDx12::AddTexture(STexture&& texture)
@@ -81,15 +84,15 @@ void RendererDx12::WaitForGPUToFinish()
 	m_gaia.GetRenderEngine().WaitForGPUToFinish();
 }
 
-std::uint32_t RendererDx12::AddModelBundle(
-	std::shared_ptr<ModelBundle>&& modelBundle, const ShaderName& pixelShader
-) {
-	return m_gaia.GetRenderEngine().AddModelBundle(std::move(modelBundle), pixelShader);
+std::uint32_t RendererDx12::AddModelBundle(std::shared_ptr<ModelBundle>&& modelBundle)
+{
+	//return m_gaia.GetRenderEngine().AddModelBundle(std::move(modelBundle), pixelShader);
+	return 0u;
 }
 
-void RendererDx12::RemoveModelBundle(std::uint32_t bundleID) noexcept
+void RendererDx12::RemoveModelBundle(std::uint32_t bundleIndex) noexcept
 {
-	m_gaia.GetRenderEngine().RemoveModelBundle(bundleID);
+	m_gaia.GetRenderEngine().RemoveModelBundle(bundleIndex);
 }
 
 std::uint32_t RendererDx12::AddMeshBundle(std::unique_ptr<MeshBundleTemporary> meshBundle)
@@ -144,4 +147,50 @@ void RendererDx12::QueueExternalBufferGPUCopy(
 		externalBufferSrcIndex, externalBufferDstIndex, dstBufferOffset, srcBufferOffset,
 		srcDataSizeInBytes
 	);
+}
+
+std::uint32_t RendererDx12::AddExternalRenderPass()
+{
+	return 0u;
+}
+
+ExternalRenderPass* RendererDx12::GetExternalRenderPassRP(size_t index) const noexcept
+{
+	return nullptr;
+}
+
+std::shared_ptr<ExternalRenderPass> RendererDx12::GetExternalRenderPassSP(
+	size_t index
+) const noexcept {
+	return nullptr;
+}
+
+void RendererDx12::SetSwapchainExternalRenderPass()
+{
+
+}
+
+ExternalRenderPass* RendererDx12::GetSwapchainExternalRenderPassRP() const noexcept
+{
+	return nullptr;
+}
+
+std::shared_ptr<ExternalRenderPass> RendererDx12::GetSwapchainExternalRenderPassSP() const noexcept
+{
+	return nullptr;
+}
+
+void RendererDx12::RemoveExternalRenderPass(size_t index) noexcept
+{
+
+}
+
+void RendererDx12::RemoveSwapchainExternalRenderPass() noexcept
+{
+
+}
+
+size_t RendererDx12::GetActiveRenderPassCount() const noexcept
+{
+	return 0u;
 }

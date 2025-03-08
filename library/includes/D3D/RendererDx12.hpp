@@ -25,37 +25,45 @@ public:
 	void SetShaderPath(const wchar_t* path) override;
 
 	[[nodiscard]]
-	std::uint32_t AddGraphicsPipeline(const ShaderName& pixelShader) override;
+	std::uint32_t AddGraphicsPipeline(const ExternalGraphicsPipeline& gfxPipeline) override;
 
-	void ChangePixelShader(std::uint32_t modelBundleID, const ShaderName& pixelShader) override;
-	void MakePixelShaderRemovable(const ShaderName& pixelShader) noexcept override;
+	void ChangeModelPipelineInBundle(
+		std::uint32_t modelBundleIndex, std::uint32_t modelIndex,
+		std::uint32_t oldPipelineIndex, std::uint32_t newPipelineIndex
+	) override;
+	void RemoveGraphicsPipeline(std::uint32_t pipelineIndex) noexcept override;
 
 	[[nodiscard]]
-	// The returned Index is the texture's ID. Not its index in the shader. It should be
-	// used to remove or bind the texture.
 	size_t AddTexture(STexture&& texture) override;
+
 	void UnbindTexture(size_t index) override;
+
 	[[nodiscard]]
-	// The returned index is the index of the texture in the shader.
 	std::uint32_t BindTexture(size_t index) override;
+
 	void RemoveTexture(size_t index) override;
 
 	[[nodiscard]]
-	std::uint32_t AddModelBundle(
-		std::shared_ptr<ModelBundle>&& modelBundle, const ShaderName& pixelShader
-	) override;
+	std::uint32_t AddModelBundle(std::shared_ptr<ModelBundle>&& modelBundle) override;
 
-	void RemoveModelBundle(std::uint32_t bundleID) noexcept override;
+	void RemoveModelBundle(std::uint32_t bundleIndex) noexcept override;
 
 	[[nodiscard]]
 	std::uint32_t AddMeshBundle(std::unique_ptr<MeshBundleTemporary> meshBundle) override;
+
 	void RemoveMeshBundle(std::uint32_t bundleIndex) noexcept override;
 
 	[[nodiscard]]
 	std::uint32_t AddCamera(std::shared_ptr<Camera>&& camera) noexcept override;
+
 	void SetCamera(std::uint32_t index) noexcept override;
 	void RemoveCamera(std::uint32_t index) noexcept override;
 
+	void Render() override;
+	void WaitForGPUToFinish() override;
+
+public:
+	// External stuff
 	[[nodiscard]]
 	ExternalResourceManager* GetExternalResourceManager() noexcept override;
 
@@ -70,8 +78,27 @@ public:
 		size_t dstBufferOffset, size_t srcBufferOffset = 0, size_t srcDataSizeInBytes = 0
 	) override;
 
-	void Render() override;
-	void WaitForGPUToFinish() override;
+	[[nodiscard]]
+	std::uint32_t AddExternalRenderPass() override;
+	[[nodiscard]]
+	ExternalRenderPass* GetExternalRenderPassRP(size_t index) const noexcept override;
+	[[nodiscard]]
+	std::shared_ptr<ExternalRenderPass> GetExternalRenderPassSP(
+		size_t index
+	) const noexcept override;
+
+	void SetSwapchainExternalRenderPass() override;
+
+	[[nodiscard]]
+	ExternalRenderPass* GetSwapchainExternalRenderPassRP() const noexcept override;
+	[[nodiscard]]
+	std::shared_ptr<ExternalRenderPass> GetSwapchainExternalRenderPassSP() const noexcept override;
+
+	void RemoveExternalRenderPass(size_t index) noexcept override;
+	void RemoveSwapchainExternalRenderPass() noexcept override;
+
+	[[nodiscard]]
+	size_t GetActiveRenderPassCount() const noexcept override;
 
 private:
 	Gaia m_gaia;

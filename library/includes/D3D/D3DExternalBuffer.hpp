@@ -46,4 +46,23 @@ public:
 		return *this;
 	}
 };
+
+class D3DExternalTexture : public ExternalTexture
+{
+public:
+	D3DExternalTexture(ID3D12Device* device, MemoryManager* memoryManager);
+
+	void Create(
+		std::uint32_t width, std::uint32_t height, ExternalFormat format, ExternalTexture2DType type,
+		bool copySrc, bool copyDst
+	) override;
+
+	void Destroy() noexcept override;
+
+	[[nodiscard]]
+	Extent GetExtent() const noexcept override
+	{
+		return Extent{};
+	}
+};
 #endif

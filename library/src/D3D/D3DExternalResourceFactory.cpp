@@ -19,7 +19,7 @@ size_t D3DExternalResourceFactory::CreateExternalBuffer(ExternalBufferType type)
 	);
 }
 
-void D3DExternalResourceFactory::RemoveExternalBuffer(size_t index) noexcept
+size_t D3DExternalResourceFactory::CreateExternalTexture()
 {
-	m_externalBuffers.RemoveElement(index);
+	return 0u;
 }

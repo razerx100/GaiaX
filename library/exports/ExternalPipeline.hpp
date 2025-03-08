@@ -11,19 +11,29 @@ class ExternalGraphicsPipeline
 	enum class State : std::uint8_t
 	{
 		Unknown         = 0u,
-		AlphaBlending   = 1u,
-		BackfaceCulling = 2u
+		BackfaceCulling = 1u
 	};
 
 public:
 	using RenderFormats_t = std::array<std::uint8_t, 8u>;
 
 public:
-	ExternalGraphicsPipeline(ShaderName fragmentShader)
-		: m_fragmentShader{ fragmentShader },
-		m_renderTargetFormats{ 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u },
-		m_renderTargetCount{ 0u }, m_depthFormat{ 0u }, m_stencilFormat{ 0u }, m_pipelineStates{ 0u }
+	ExternalGraphicsPipeline()
+		: m_fragmentShader{}, m_renderTargetFormats{ 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u },
+		m_renderTargetAlphaBlendingState{ 0u }, m_renderTargetCount{ 0u },
+		m_depthFormat{ 0u }, m_stencilFormat{ 0u }, m_pipelineStates{ 0u }
 	{}
+
+	ExternalGraphicsPipeline(const ShaderName& fragmentShader)
+		: ExternalGraphicsPipeline{}
+	{
+		SetFragmentShader(fragmentShader);
+	}
+
+	void SetFragmentShader(const ShaderName& fragmentShader) noexcept
+	{
+		m_fragmentShader = fragmentShader;
+	}
 
 	void EnableDepthTesting(ExternalFormat format) noexcept
 	{
@@ -32,10 +42,6 @@ public:
 	void EnableStencilTesting(ExternalFormat format) noexcept
 	{
 		m_stencilFormat = static_cast<std::uint8_t>(format);
-	}
-	void EnableAlphaBlending() noexcept
-	{
-		m_pipelineStates |= static_cast<std::uint8_t>(State::AlphaBlending);
 	}
 	void EnableBackfaceCulling() noexcept
 	{
@@ -50,6 +56,10 @@ public:
 			m_renderTargetCount <= 8u
 			&& "A pipeline can have 8 concurrent Render Targets at max."
 		);
+
+		const auto flagPosition = static_cast<std::uint8_t>(1u << m_renderTargetCount);
+
+		m_renderTargetAlphaBlendingState          |= flagPosition;
 
 		m_renderTargetFormats[m_renderTargetCount] = static_cast<std::uint8_t>(format);
 
@@ -67,13 +77,6 @@ public:
 		return static_cast<ExternalFormat>(m_stencilFormat);
 	}
 	[[nodiscard]]
-	bool GetAlphaBlendingState() const noexcept
-	{
-		constexpr auto blendStateU8 = static_cast<std::uint8_t>(State::AlphaBlending);
-
-		return (m_pipelineStates & blendStateU8) == blendStateU8;
-	}
-	[[nodiscard]]
 	bool GetBackfaceCullingState() const noexcept
 	{
 		constexpr auto backfaceStateU8 = static_cast<std::uint8_t>(State::BackfaceCulling);
@@ -88,12 +91,35 @@ public:
 	std::uint32_t GetRenderTargetCount() const noexcept { return m_renderTargetCount; }
 
 	[[nodiscard]]
-	RenderFormats_t GetRenderTargetFormats() const noexcept { return m_renderTargetFormats; }
+	ExternalFormat GetRenderTargetFormat(size_t index) const noexcept
+	{
+		return static_cast<ExternalFormat>(m_renderTargetFormats[index]);
+	}
+	[[nodiscard]]
+	bool GetRenderTargetBlendingState(size_t index) const noexcept
+	{
+		const auto flagPosition = static_cast<std::uint8_t>(1u << index);
+
+		return (m_renderTargetAlphaBlendingState & flagPosition) == flagPosition;
+	}
+	// If multiple pipelines have the same attachment signature, they can be rendered in the
+	// same render pass.
+	[[nodiscard]]
+	bool IsAttachmentSignatureSame(const ExternalGraphicsPipeline& other) const noexcept
+	{
+		// If the render target count doesn't match, no need to do the next check.
+		return m_renderTargetCount == other.m_renderTargetCount &&
+			AreRenderTargetFormatsSame(other) &&
+			m_depthFormat == other.m_depthFormat &&
+			m_stencilFormat == other.m_stencilFormat;
+	}
 
 private:
 	[[nodiscard]]
 	bool AreRenderTargetFormatsSame(const ExternalGraphicsPipeline& other) const noexcept
 	{
+		// In case the size of the valid render target formats aren't the same, it should still not
+		// be an issue, as we are comparing an array, which will have the same actual size.
 		bool isSame = true;
 
 		const size_t formatCount = std::size(m_renderTargetFormats);
@@ -112,7 +138,8 @@ private:
 private:
 	ShaderName      m_fragmentShader;
 	RenderFormats_t m_renderTargetFormats;
-	std::uint32_t   m_renderTargetCount;
+	std::uint8_t    m_renderTargetAlphaBlendingState;
+	std::uint8_t    m_renderTargetCount;
 	std::uint8_t    m_depthFormat;
 	std::uint8_t    m_stencilFormat;
 	std::uint16_t   m_pipelineStates;
@@ -121,6 +148,7 @@ public:
 	ExternalGraphicsPipeline(const ExternalGraphicsPipeline& other) noexcept
 		: m_fragmentShader{ other.m_fragmentShader },
 		m_renderTargetFormats{ other.m_renderTargetFormats },
+		m_renderTargetAlphaBlendingState{ other.m_renderTargetAlphaBlendingState },
 		m_renderTargetCount{ other.m_renderTargetCount },
 		m_depthFormat{ other.m_depthFormat },
 		m_stencilFormat{ other.m_stencilFormat },
@@ -128,12 +156,13 @@ public:
 	{}
 	ExternalGraphicsPipeline& operator=(const ExternalGraphicsPipeline& other) noexcept
 	{
-		m_fragmentShader      = other.m_fragmentShader;
-		m_renderTargetFormats = other.m_renderTargetFormats;
-		m_renderTargetCount   = other.m_renderTargetCount;
-		m_depthFormat         = other.m_depthFormat;
-		m_stencilFormat       = other.m_stencilFormat;
-		m_pipelineStates      = other.m_pipelineStates;
+		m_fragmentShader                 = other.m_fragmentShader;
+		m_renderTargetFormats            = other.m_renderTargetFormats;
+		m_renderTargetAlphaBlendingState = other.m_renderTargetAlphaBlendingState;
+		m_renderTargetCount              = other.m_renderTargetCount;
+		m_depthFormat                    = other.m_depthFormat;
+		m_stencilFormat                  = other.m_stencilFormat;
+		m_pipelineStates                 = other.m_pipelineStates;
 
 		return *this;
 	}
@@ -141,6 +170,7 @@ public:
 	ExternalGraphicsPipeline(ExternalGraphicsPipeline&& other) noexcept
 		: m_fragmentShader{ std::move(other.m_fragmentShader) },
 		m_renderTargetFormats{ std::move(other.m_renderTargetFormats) },
+		m_renderTargetAlphaBlendingState{ other.m_renderTargetAlphaBlendingState },
 		m_renderTargetCount{ other.m_renderTargetCount },
 		m_depthFormat{ other.m_depthFormat },
 		m_stencilFormat{ other.m_stencilFormat },
@@ -148,12 +178,13 @@ public:
 	{}
 	ExternalGraphicsPipeline& operator=(ExternalGraphicsPipeline&& other) noexcept
 	{
-		m_fragmentShader      = std::move(other.m_fragmentShader);
-		m_renderTargetFormats = std::move(other.m_renderTargetFormats);
-		m_renderTargetCount   = other.m_renderTargetCount;
-		m_depthFormat         = other.m_depthFormat;
-		m_stencilFormat       = other.m_stencilFormat;
-		m_pipelineStates      = other.m_pipelineStates;
+		m_fragmentShader                 = std::move(other.m_fragmentShader);
+		m_renderTargetFormats            = std::move(other.m_renderTargetFormats);
+		m_renderTargetAlphaBlendingState = other.m_renderTargetAlphaBlendingState;
+		m_renderTargetCount              = other.m_renderTargetCount;
+		m_depthFormat                    = other.m_depthFormat;
+		m_stencilFormat                  = other.m_stencilFormat;
+		m_pipelineStates                 = other.m_pipelineStates;
 
 		return *this;
 	}
@@ -161,10 +192,8 @@ public:
 	bool operator==(const ExternalGraphicsPipeline& other) const noexcept
 	{
 		return m_fragmentShader == other.m_fragmentShader &&
-			AreRenderTargetFormatsSame(other) &&
-			m_renderTargetCount == other.m_renderTargetCount &&
-			m_depthFormat       == other.m_depthFormat &&
-			m_stencilFormat     == other.m_stencilFormat &&
+			IsAttachmentSignatureSame(other) &&
+			m_renderTargetAlphaBlendingState == other.m_renderTargetAlphaBlendingState &&
 			m_pipelineStates    == other.m_pipelineStates;
 	}
 };
@@ -172,7 +201,13 @@ public:
 class ExternalComputePipeline
 {
 public:
-	ExternalComputePipeline(ShaderName computeShader) : m_computeShader{ computeShader } {}
+	ExternalComputePipeline() : m_computeShader{} {}
+	ExternalComputePipeline(const ShaderName& computeShader) : m_computeShader{ computeShader } {}
+
+	void SetComputeShader(const ShaderName& computeShader) noexcept
+	{
+		m_computeShader = computeShader;
+	}
 
 	[[nodiscard]]
 	const ShaderName& GetComputeShader() const noexcept { return m_computeShader; }
