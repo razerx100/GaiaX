@@ -9,6 +9,13 @@
 class SwapchainManager
 {
 public:
+	struct Extent
+	{
+		UINT width;
+		UINT height;
+	};
+
+public:
 	SwapchainManager(D3DReusableDescriptorHeap* rtvHeap, UINT bufferCount);
 	SwapchainManager(
 		D3DReusableDescriptorHeap* rtvHeap, UINT bufferCount,
@@ -31,6 +38,9 @@ public:
 	{
 		return m_renderTargets[frameIndex];
 	}
+
+	[[nodiscard]]
+	Extent GetCurrentRenderArea() const noexcept;
 
 	[[nodiscard]]
 	static constexpr DXGI_FORMAT GetFormat() noexcept { return DXGI_FORMAT_B8G8R8A8_UNORM_SRGB; }

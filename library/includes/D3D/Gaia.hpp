@@ -27,6 +27,9 @@ public:
 	[[nodiscard]]
 	DeviceManager::Resolution GetFirstDisplayCoordinates() const;
 
+	[[nodiscard]]
+	SwapchainManager::Extent GetCurrentRenderArea() const noexcept;
+
 private:
 	void CreateDevice();
 	void CreateRenderEngine(

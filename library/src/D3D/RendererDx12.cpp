@@ -24,11 +24,18 @@ void RendererDx12::Resize(std::uint32_t width, std::uint32_t height)
 	m_gaia.Resize(width, height);
 }
 
-Renderer::Resolution RendererDx12::GetFirstDisplayCoordinates() const
+Renderer::Extent RendererDx12::GetCurrentRenderingExtent() const noexcept
+{
+	auto [width, height] = m_gaia.GetCurrentRenderArea();
+
+	return Renderer::Extent{ .width = width, .height = height };
+}
+
+Renderer::Extent RendererDx12::GetFirstDisplayCoordinates() const
 {
 	auto [width, height] = m_gaia.GetFirstDisplayCoordinates();
 
-	return Renderer::Resolution{ .width = width, .height = height };
+	return Renderer::Extent{ .width = width, .height = height };
 }
 
 void RendererDx12::SetBackgroundColour(const std::array<float, 4>& colour) noexcept

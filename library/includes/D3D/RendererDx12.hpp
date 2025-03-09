@@ -19,7 +19,10 @@ public:
 	void Resize(std::uint32_t width, std::uint32_t height) override;
 
 	[[nodiscard]]
-	Resolution GetFirstDisplayCoordinates() const override;
+	Extent GetCurrentRenderingExtent() const noexcept override;
+
+	[[nodiscard]]
+	Extent GetFirstDisplayCoordinates() const override;
 
 	void SetBackgroundColour(const std::array<float, 4>& colour) noexcept override;
 	void SetShaderPath(const wchar_t* path) override;

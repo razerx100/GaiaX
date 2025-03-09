@@ -95,3 +95,8 @@ DeviceManager::Resolution Gaia::GetFirstDisplayCoordinates() const
 {
 	return m_deviceManager.GetDisplayResolution(0u);
 }
+
+SwapchainManager::Extent Gaia::GetCurrentRenderArea() const noexcept
+{
+	return m_swapchain->GetCurrentRenderArea();
+}

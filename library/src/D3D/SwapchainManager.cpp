@@ -83,3 +83,11 @@ void SwapchainManager::Resize(UINT width, UINT height)
 
 	CreateRTVs();
 }
+
+SwapchainManager::Extent SwapchainManager::GetCurrentRenderArea() const noexcept
+{
+	DXGI_SWAP_CHAIN_DESC1 desc{};
+	m_swapchain->GetDesc1(&desc);
+
+	return Extent{ .width = desc.Width, .height = desc.Height };
+}

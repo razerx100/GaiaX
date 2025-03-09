@@ -18,7 +18,7 @@
 class Renderer
 {
 public:
-	struct Resolution
+	struct Extent
 	{
 		std::uint32_t width;
 		std::uint32_t height;
@@ -31,7 +31,10 @@ public:
 	virtual void Resize(std::uint32_t width, std::uint32_t height) = 0;
 
 	[[nodiscard]]
-	virtual Resolution GetFirstDisplayCoordinates() const = 0;
+	virtual Extent GetCurrentRenderingExtent() const noexcept = 0;
+
+	[[nodiscard]]
+	virtual Extent GetFirstDisplayCoordinates() const = 0;
 
 	virtual void SetBackgroundColour(const std::array<float, 4>& colour) noexcept = 0;
 	virtual void SetShaderPath(const wchar_t* path) = 0;
