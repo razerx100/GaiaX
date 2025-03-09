@@ -126,5 +126,9 @@ public:
 
 	[[nodiscard]]
 	virtual size_t GetActiveRenderPassCount() const noexcept = 0;
+
+	// Necessary on Vulkan, as different devices can have different supported formats.
+	[[nodiscard]]
+	virtual ExternalFormat GetSwapchainFormat() const noexcept = 0;
 };
 #endif

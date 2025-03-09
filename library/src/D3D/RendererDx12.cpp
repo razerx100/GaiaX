@@ -201,3 +201,8 @@ size_t RendererDx12::GetActiveRenderPassCount() const noexcept
 {
 	return 0u;
 }
+
+ExternalFormat RendererDx12::GetSwapchainFormat() const noexcept
+{
+	return ExternalFormat::UNKNOWN;
+}
