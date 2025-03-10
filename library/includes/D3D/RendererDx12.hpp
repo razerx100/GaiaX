@@ -24,7 +24,6 @@ public:
 	[[nodiscard]]
 	Extent GetFirstDisplayCoordinates() const override;
 
-	void SetBackgroundColour(const std::array<float, 4>& colour) noexcept override;
 	void SetShaderPath(const wchar_t* path) override;
 
 	[[nodiscard]]

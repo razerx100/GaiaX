@@ -38,11 +38,6 @@ Renderer::Extent RendererDx12::GetFirstDisplayCoordinates() const
 	return Renderer::Extent{ .width = width, .height = height };
 }
 
-void RendererDx12::SetBackgroundColour(const std::array<float, 4>& colour) noexcept
-{
-	m_gaia.GetRenderEngine().SetBackgroundColour(colour);
-}
-
 void RendererDx12::SetShaderPath(const wchar_t* path)
 {
 	m_gaia.GetRenderEngine().SetShaderPath(path);
