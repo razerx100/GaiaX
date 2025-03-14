@@ -2,8 +2,10 @@
 
 // Swapchain Manager
 SwapchainManager::SwapchainManager(D3DReusableDescriptorHeap* rtvHeap, UINT bufferCount)
-	: m_swapchain{}, m_renderTargets{}, m_presentFlag{ 0u }
+	: m_swapchain{}, m_renderTargetResources{}, m_renderTargets{}, m_presentFlag{ 0u }
 {
+	m_renderTargetResources.resize(bufferCount);
+
 	for (UINT index = 0u; index < bufferCount; ++index)
 		m_renderTargets.emplace_back(rtvHeap);
 }
@@ -59,19 +61,20 @@ void SwapchainManager::CreateRTVs()
 {
 	for (size_t index = 0u; index < std::size(m_renderTargets); ++index)
 	{
-		ComPtr<ID3D12Resource> renderTarget{};
+		ComResource renderTargetResource{};
 
-		m_swapchain->GetBuffer(static_cast<UINT>(index), IID_PPV_ARGS(&renderTarget));
+		m_swapchain->GetBuffer(static_cast<UINT>(index), IID_PPV_ARGS(&renderTargetResource));
 
-		m_renderTargets[index].Create(std::move(renderTarget), GetFormat());
+		m_renderTargets[index].Create(renderTargetResource.Get(), GetFormat());
+		m_renderTargetResources[index] = std::move(renderTargetResource);
 	}
 }
 
 void SwapchainManager::Resize(UINT width, UINT height)
 {
 	// Must be called before calling ResizeBuffers.
-	for (auto& renderTarget : m_renderTargets)
-		renderTarget.Reset();
+	for (ComResource& renderTargetResource : m_renderTargetResources)
+		renderTargetResource.Reset();
 
 	DXGI_SWAP_CHAIN_DESC1 desc{};
 	m_swapchain->GetDesc1(&desc);

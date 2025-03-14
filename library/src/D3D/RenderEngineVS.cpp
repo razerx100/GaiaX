@@ -3,11 +3,7 @@
 // VS Individual
 RenderEngineVSIndividual::RenderEngineVSIndividual(
 	const DeviceManager& deviceManager, std::shared_ptr<ThreadPool> threadPool, size_t frameCount
-) : RenderEngineCommon{ deviceManager, std::move(threadPool), frameCount },
-	m_modelManager{},
-	m_modelBuffers{
-		deviceManager.GetDevice(), &m_memoryManager, static_cast<std::uint32_t>(frameCount)
-	}
+) : RenderEngineCommon{ deviceManager, std::move(threadPool), frameCount, ModelManagerVSIndividual{} }
 {
 	SetGraphicsDescriptorBufferLayout();
 
@@ -40,7 +36,7 @@ void RenderEngineVSIndividual::FinaliseInitialisation(const DeviceManager& devic
 
 		m_graphicsRootSignature.CreateSignature(deviceManager.GetDevice(), rootSignatureDynamic);
 
-		m_renderPassManager.SetRootSignature(m_graphicsRootSignature.Get());
+		m_graphicsPipelineManager.SetRootSignature(m_graphicsRootSignature.Get());
 	}
 
 	m_cameraManager.SetDescriptorGraphics(
@@ -91,20 +87,17 @@ void RenderEngineVSIndividual::SetGraphicsDescriptors()
 }
 
 void RenderEngineVSIndividual::ExecutePipelineStages(
-	size_t frameIndex, const RenderTarget& renderTarget, UINT64& counterValue,
+	size_t frameIndex, ID3D12Resource* swapchainBackBuffer, UINT64& counterValue,
 	ID3D12Fence* waitFence
 ) {
 	waitFence = GenericCopyStage(frameIndex, counterValue, waitFence);
 
-	DrawingStage(frameIndex, renderTarget, counterValue, waitFence);
+	DrawingStage(frameIndex, swapchainBackBuffer, counterValue, waitFence);
 }
 
-std::uint32_t RenderEngineVSIndividual::AddModelBundle(
-	std::shared_ptr<ModelBundle>&& modelBundle, const ShaderName& pixelShader
-) {
+std::uint32_t RenderEngineVSIndividual::AddModelBundle(std::shared_ptr<ModelBundle>&& modelBundle)
+{
 	WaitForGPUToFinish();
-
-	m_renderPassManager.AddOrGetGraphicsPipeline(pixelShader);
 
 	std::vector<std::uint32_t> modelBufferIndices = AddModelsToBuffer(*modelBundle, m_modelBuffers);
 
@@ -182,8 +175,38 @@ ID3D12Fence* RenderEngineVSIndividual::GenericCopyStage(
 	return signalledFence;
 }
 
+void RenderEngineVSIndividual::DrawRenderPassPipelines(
+	const D3DCommandList& graphicsCmdList, const ExternalRenderPass_t& renderPass
+) noexcept {
+	const std::vector<D3DExternalRenderPass::PipelineDetails>& pipelineDetails
+		= renderPass.GetPipelineDetails();
+
+	for (const D3DExternalRenderPass::PipelineDetails& details : pipelineDetails)
+	{
+		const std::vector<std::uint32_t>& bundleIndices        = details.modelBundleIndices;
+		const std::vector<std::uint32_t>& pipelineLocalIndices = details.pipelineLocalIndices;
+
+		m_graphicsPipelineManager.BindPipeline(details.pipelineGlobalIndex, graphicsCmdList);
+
+		const size_t bundleCount = std::size(bundleIndices);
+
+		if (details.renderSorted)
+			for (size_t index = 0u; index < bundleCount; ++index)
+				m_modelManager.DrawPipelineSorted(
+					bundleIndices[index], pipelineLocalIndices[index],
+					graphicsCmdList, m_meshManager
+				);
+		else
+			for (size_t index = 0u; index < bundleCount; ++index)
+				m_modelManager.DrawPipeline(
+					bundleIndices[index], pipelineLocalIndices[index],
+					graphicsCmdList, m_meshManager
+				);
+	}
+}
+
 void RenderEngineVSIndividual::DrawingStage(
-	size_t frameIndex, const RenderTarget& renderTarget, UINT64& counterValue, ID3D12Fence* waitFence
+	size_t frameIndex, ID3D12Resource* swapchainBackBuffer, UINT64& counterValue, ID3D12Fence* waitFence
 ) {
 	// Graphics Phase
 	const D3DCommandList& graphicsCmdList = m_graphicsQueue.GetCommandList(frameIndex);
@@ -201,15 +224,34 @@ void RenderEngineVSIndividual::DrawingStage(
 
 		m_graphicsDescriptorManagers[frameIndex].BindDescriptors(graphicsCmdListScope);
 
-		m_renderPassManager.BeginRenderingWithDepth(
-			graphicsCmdListScope, renderTarget, m_backgroundColour
-		);
+		// Normal passes
+		const size_t renderPassCount = std::size(m_renderPasses);
 
-		m_modelManager.Draw(
-			graphicsCmdListScope, m_meshManager, m_renderPassManager.GetGraphicsPipelineManager()
-		);
+		for (size_t index = 0u; index < renderPassCount; ++index)
+		{
+			if (!m_renderPasses.IsInUse(index))
+				continue;
 
-		m_renderPassManager.EndRendering(graphicsCmdListScope, renderTarget);
+			const ExternalRenderPass_t& renderPass = *m_renderPasses[index];
+
+			renderPass.StartPass(graphicsCmdListScope);
+
+			DrawRenderPassPipelines(graphicsCmdListScope, renderPass);
+
+			// No need to end passes for non swapchain passes.
+		}
+
+		// The one for the swapchain
+		if (m_swapchainRenderPass)
+		{
+			const ExternalRenderPass_t& renderPass = *m_swapchainRenderPass;
+
+			renderPass.StartPass(graphicsCmdListScope);
+
+			DrawRenderPassPipelines(graphicsCmdListScope, renderPass);
+
+			renderPass.EndPassForSwapchain(graphicsCmdListScope, swapchainBackBuffer);
+		}
 	}
 
 	{
@@ -231,11 +273,13 @@ void RenderEngineVSIndividual::DrawingStage(
 // VS Indirect
 RenderEngineVSIndirect::RenderEngineVSIndirect(
 	const DeviceManager& deviceManager, std::shared_ptr<ThreadPool> threadPool, size_t frameCount
-) : RenderEngineCommon{ deviceManager, std::move(threadPool), frameCount },
-	m_modelManager{ deviceManager.GetDevice(), &m_memoryManager, static_cast<std::uint32_t>(frameCount) },
-	m_modelBuffers{
-		deviceManager.GetDevice(), &m_memoryManager, static_cast<std::uint32_t>(frameCount)
-	}, m_computeQueue{}, m_computeWait{}, m_computeDescriptorManagers{},
+) : RenderEngineCommon{
+		deviceManager, std::move(threadPool), frameCount,
+		ModelManagerVSIndirect{
+			deviceManager.GetDevice(), &m_memoryManager, static_cast<std::uint32_t>(frameCount)
+		}
+	},
+	m_computeQueue{}, m_computeWait{}, m_computeDescriptorManagers{},
 	m_computePipelineManager{ deviceManager.GetDevice() }, m_computeRootSignature{}, m_commandSignature{}
 {
 	ID3D12Device5* device = deviceManager.GetDevice();
@@ -290,7 +334,7 @@ void RenderEngineVSIndirect::FinaliseInitialisation(const DeviceManager& deviceM
 
 		m_graphicsRootSignature.CreateSignature(device, rootSignatureDynamic);
 
-		m_renderPassManager.SetRootSignature(m_graphicsRootSignature.Get());
+		m_graphicsPipelineManager.SetRootSignature(m_graphicsRootSignature.Get());
 	}
 
 	CreateCommandSignature(device);
@@ -339,7 +383,7 @@ void RenderEngineVSIndirect::FinaliseInitialisation(const DeviceManager& deviceM
 
 	// Add the Frustum Culling shader.
 	const std::uint32_t frustumCSOIndex = m_computePipelineManager.AddOrGetComputePipeline(
-		L"VertexShaderCSIndirect"
+		ShaderName{ L"VertexShaderCSIndirect" }
 	);
 
 	m_modelManager.SetCSPSOIndex(frustumCSOIndex);
@@ -384,14 +428,14 @@ void RenderEngineVSIndirect::SetComputeDescriptorBufferLayout()
 }
 
 void RenderEngineVSIndirect::ExecutePipelineStages(
-	size_t frameIndex, const RenderTarget& renderTarget, UINT64& counterValue,
+	size_t frameIndex, ID3D12Resource* swapchainBackBuffer, UINT64& counterValue,
 	ID3D12Fence* waitFence
 ) {
 	waitFence = GenericCopyStage(frameIndex, counterValue, waitFence);
 
 	waitFence = FrustumCullingStage(frameIndex, counterValue, waitFence);
 
-	DrawingStage(frameIndex, renderTarget, counterValue, waitFence);
+	DrawingStage(frameIndex, swapchainBackBuffer, counterValue, waitFence);
 }
 
 void RenderEngineVSIndirect::SetShaderPath(const std::wstring& shaderPath)
@@ -401,10 +445,50 @@ void RenderEngineVSIndirect::SetShaderPath(const std::wstring& shaderPath)
 	m_computePipelineManager.SetShaderPath(shaderPath);
 }
 
-void RenderEngineVSIndirect::_updatePerFrame(UINT64 frameIndex) const noexcept
+void RenderEngineVSIndirect::UpdateRenderPassPipelines(
+	size_t frameIndex, const ExternalRenderPass_t& renderPass
+) noexcept {
+	const std::vector<D3DExternalRenderPass::PipelineDetails>& pipelineDetails
+		= renderPass.GetPipelineDetails();
+
+	for (const D3DExternalRenderPass::PipelineDetails& details : pipelineDetails)
+	{
+		const std::vector<std::uint32_t>& bundleIndices        = details.modelBundleIndices;
+		const std::vector<std::uint32_t>& pipelineLocalIndices = details.pipelineLocalIndices;
+
+		const size_t bundleCount = std::size(bundleIndices);
+
+		if (details.renderSorted)
+			for (size_t index = 0u; index < bundleCount; ++index)
+				m_modelManager.UpdatePipelinePerFrameSorted(
+					frameIndex, bundleIndices[index], pipelineLocalIndices[index], m_meshManager
+				);
+		else
+			for (size_t index = 0u; index < bundleCount; ++index)
+				m_modelManager.UpdatePipelinePerFrame(
+					frameIndex, bundleIndices[index], pipelineLocalIndices[index], m_meshManager
+				);
+	}
+}
+
+void RenderEngineVSIndirect::_updatePerFrame(UINT64 frameIndex) noexcept
 {
 	m_modelBuffers.Update(frameIndex);
-	m_modelManager.UpdatePerFrame(frameIndex, m_meshManager);
+
+		// Normal passes
+	const size_t renderPassCount = std::size(m_renderPasses);
+
+	for (size_t index = 0u; index < renderPassCount; ++index)
+	{
+		if (!m_renderPasses.IsInUse(index))
+			continue;
+
+		UpdateRenderPassPipelines(frameIndex, *m_renderPasses[index]);
+	}
+
+	// The one for the swapchain
+	if (m_swapchainRenderPass)
+		UpdateRenderPassPipelines(frameIndex, *m_swapchainRenderPass);
 }
 
 void RenderEngineVSIndirect::CreateCommandSignature(ID3D12Device* device)
@@ -507,12 +591,9 @@ void RenderEngineVSIndirect::SetModelComputeDescriptors()
 	}
 }
 
-std::uint32_t RenderEngineVSIndirect::AddModelBundle(
-	std::shared_ptr<ModelBundle>&& modelBundle, const ShaderName& pixelShader
-) {
+std::uint32_t RenderEngineVSIndirect::AddModelBundle(std::shared_ptr<ModelBundle>&& modelBundle)
+{
 	WaitForGPUToFinish();
-
-	m_renderPassManager.AddOrGetGraphicsPipeline(pixelShader);
 
 	std::vector<std::uint32_t> modelBufferIndices = AddModelsToBuffer(*modelBundle, m_modelBuffers);
 
@@ -635,8 +716,33 @@ ID3D12Fence* RenderEngineVSIndirect::FrustumCullingStage(
 	return computeWaitFence.Get();
 }
 
+void RenderEngineVSIndirect::DrawRenderPassPipelines(
+	size_t frameIndex, const D3DCommandList& graphicsCmdList, const ExternalRenderPass_t& renderPass
+) noexcept {
+	const std::vector<D3DExternalRenderPass::PipelineDetails>& pipelineDetails
+		= renderPass.GetPipelineDetails();
+
+	ID3D12CommandSignature* commandSignature = m_commandSignature.Get();
+
+	for (const D3DExternalRenderPass::PipelineDetails& details : pipelineDetails)
+	{
+		const std::vector<std::uint32_t>& bundleIndices        = details.modelBundleIndices;
+		const std::vector<std::uint32_t>& pipelineLocalIndices = details.pipelineLocalIndices;
+
+		m_graphicsPipelineManager.BindPipeline(details.pipelineGlobalIndex, graphicsCmdList);
+
+		const size_t bundleCount = std::size(bundleIndices);
+
+		for (size_t index = 0u; index < bundleCount; ++index)
+			m_modelManager.DrawPipeline(
+				frameIndex, bundleIndices[index], pipelineLocalIndices[index],
+				graphicsCmdList, commandSignature, m_meshManager
+			);
+	}
+}
+
 void RenderEngineVSIndirect::DrawingStage(
-	size_t frameIndex, const RenderTarget& renderTarget, UINT64& counterValue, ID3D12Fence* waitFence
+	size_t frameIndex, ID3D12Resource* swapchainBackBuffer, UINT64& counterValue, ID3D12Fence* waitFence
 ) {
 	// Graphics Phase
 	const D3DCommandList& graphicsCmdList = m_graphicsQueue.GetCommandList(frameIndex);
@@ -654,16 +760,34 @@ void RenderEngineVSIndirect::DrawingStage(
 
 		m_graphicsDescriptorManagers[frameIndex].BindDescriptors(graphicsCmdListScope);
 
-		m_renderPassManager.BeginRenderingWithDepth(
-			graphicsCmdListScope, renderTarget, m_backgroundColour
-		);
+		// Normal passes
+		const size_t renderPassCount = std::size(m_renderPasses);
 
-		m_modelManager.Draw(
-			frameIndex, graphicsCmdListScope, m_commandSignature.Get(), m_meshManager,
-			m_renderPassManager.GetGraphicsPipelineManager()
-		);
+		for (size_t index = 0u; index < renderPassCount; ++index)
+		{
+			if (!m_renderPasses.IsInUse(index))
+				continue;
 
-		m_renderPassManager.EndRendering(graphicsCmdListScope, renderTarget);
+			const ExternalRenderPass_t& renderPass = *m_renderPasses[index];
+
+			renderPass.StartPass(graphicsCmdListScope);
+
+			DrawRenderPassPipelines(frameIndex, graphicsCmdListScope, renderPass);
+
+			// No need to end passes for non swapchain passes.
+		}
+
+		// The one for the swapchain
+		if (m_swapchainRenderPass)
+		{
+			const ExternalRenderPass_t& renderPass = *m_swapchainRenderPass;
+
+			renderPass.StartPass(graphicsCmdListScope);
+
+			DrawRenderPassPipelines(frameIndex, graphicsCmdListScope, renderPass);
+
+			renderPass.EndPassForSwapchain(graphicsCmdListScope, swapchainBackBuffer);
+		}
 	}
 
 	{

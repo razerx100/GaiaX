@@ -1,125 +1,106 @@
 #ifndef D3D_RENDER_PASS_MANAGER_HPP_
 #define D3D_RENDER_PASS_MANAGER_HPP_
-#include <memory>
-#include <PipelineManager.hpp>
-#include <DepthBuffer.hpp>
-#include <D3DRenderTarget.hpp>
+#include <array>
+#include <utility>
+#include <D3DResourceBarrier.hpp>
+#include <D3DCommandQueue.hpp>
+#include <D3DRenderingAttachments.hpp>
 
-template<typename Pipeline_t>
 class D3DRenderPassManager
 {
+	struct DepthStencilInfo
+	{
+		float        depthClearColour;
+		std::uint8_t stencilClearColour;
+		std::uint8_t dsvFlags;
+		std::uint8_t clearFlags;
+	};
+
 public:
-	D3DRenderPassManager(ID3D12Device5* device)
-		: m_graphicsPipelineManager{ device }, m_depthBuffer{}, m_rtvFormat{ DXGI_FORMAT_UNKNOWN }
+	using RTVClearColour = std::array<float, 4u>;
+
+public:
+	D3DRenderPassManager(D3DReusableDescriptorHeap* rtvHeap, D3DReusableDescriptorHeap* dsvHeap)
+		: m_rtvHeap{ rtvHeap }, m_renderTargets{}, m_rtvHandles{}, m_rtvClearColours{},
+		m_depthStencilTarget{ dsvHeap }, m_dsvHandle{}, m_startImageBarriers{},
+		m_depthStencilInfo{
+			.depthClearColour = 1.f, .stencilClearColour = 0u, .dsvFlags = 0u, .clearFlags = 0u
+		}
 	{}
 
-	void SetShaderPath(const std::wstring& shaderPath) noexcept
-	{
-		m_graphicsPipelineManager.SetShaderPath(shaderPath);
-	}
-
-	void SetRootSignature(ID3D12RootSignature* rootSignature) noexcept
-	{
-		m_graphicsPipelineManager.SetRootSignature(rootSignature);
-	}
-
-	void SetRTVFormat(DXGI_FORMAT rtvFormat) noexcept
-	{
-		m_rtvFormat = rtvFormat;
-	}
-
-	void SetDepthTesting(
-		ID3D12Device5* device, MemoryManager* memoryManager, D3DReusableDescriptorHeap* dsvHeap
-	) {
-		m_depthBuffer = std::make_unique<DepthBuffer>(device, memoryManager, dsvHeap);
-	}
-
-	void SetPSOOverwritable(const ShaderName& pixelShader) noexcept
-	{
-		m_graphicsPipelineManager.SetOverwritable(pixelShader);
-	}
-
-	void ResizeDepthBuffer(UINT width, UINT height)
-	{
-		if (m_depthBuffer)
-			m_depthBuffer->Create(width, height);
-	}
-
-	void BeginRenderingWithDepth(
-		const D3DCommandList& graphicsCmdList, const RenderTarget& renderTarget,
-		const std::array<float, 4u>& clearValues
-	) const noexcept {
-		renderTarget.ToRenderState(graphicsCmdList);
-
-		const D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = m_depthBuffer->ClearDSV(graphicsCmdList);
-
-		renderTarget.Set(graphicsCmdList, clearValues, &dsvHandle);
-	}
-
-	void BeginRendering(
-		const D3DCommandList& graphicsCmdList, const RenderTarget& renderTarget,
-		const std::array<float, 4u>& clearValues
-	) const noexcept {
-		renderTarget.ToRenderState(graphicsCmdList);
-
-		renderTarget.Set(graphicsCmdList, clearValues, nullptr);
-	}
-
-	void EndRendering(
-		const D3DCommandList& graphicsCmdList, const RenderTarget& renderTarget
-	) const noexcept {
-		renderTarget.ToPresentState(graphicsCmdList);
-	}
-
-	std::uint32_t AddOrGetGraphicsPipeline(const ShaderName& pixelShader)
-	{
-		return m_graphicsPipelineManager.AddOrGetGraphicsPipeline(
-			pixelShader, m_rtvFormat, GetDSVFormat()
-		);
-	}
-
-	void RecreatePipelines()
-	{
-		m_graphicsPipelineManager.RecreateAllGraphicsPipelines(m_rtvFormat, GetDSVFormat());
-	}
-
+	void AddRenderTarget(
+		ID3D12Resource* renderTargetResource, DXGI_FORMAT rtvFormat, bool clearAtStart
+	);
 	[[nodiscard]]
-	const PipelineManager<Pipeline_t>& GetGraphicsPipelineManager() const noexcept
-	{
-		return m_graphicsPipelineManager;
-	}
+	std::uint32_t AddStartBarrier(const ResourceBarrierBuilder& barrierBuilder) noexcept;
+
+	void RecreateRenderTarget(
+		size_t renderTargetIndex, size_t barrierIndex, ID3D12Resource* renderTargetResource,
+		DXGI_FORMAT rtvFormat
+	);
+
+	void SetDepthStencilTarget(
+		ID3D12Resource* depthStencilTargetResource, DXGI_FORMAT dsvFormat,
+		bool depthClearAtStart, bool stencilClearAtStart, D3D12_DSV_FLAGS dsvFlags
+	);
+
+	void RecreateDepthStencilTarget(
+		size_t barrierIndex, ID3D12Resource* depthStencilTargetResource, DXGI_FORMAT dsvFormat
+	);
+
+	// These functions can be used every frame.
+	void SetTransitionAfterState(size_t barrierIndex, D3D12_RESOURCE_STATES afterState) noexcept;
+
+	void SetDepthClearValue(float depthClearValue) noexcept;
+	void SetStencilClearValue(std::uint8_t stencilClearValue) noexcept;
+
+	void SetRenderTargetClearValue(
+		size_t renderTargetIndex, const RTVClearColour& clearValue
+	) noexcept;
+
+	void StartPass(const D3DCommandList& graphicsCmdList) const noexcept;
+
+	// Only need to end pass for the swapchain, as in Dx12 we don't need any specific end rendering
+	// API call.
+	void EndPassForSwapchain(
+		const D3DCommandList& graphicsCmdList, ID3D12Resource* srcRenderTarget,
+		ID3D12Resource* swapchainBackBuffer
+	) const noexcept;
 
 private:
-	[[nodiscard]]
-	DXGI_FORMAT GetDSVFormat() const noexcept
-	{
-		DXGI_FORMAT dsvFormat = DXGI_FORMAT_UNKNOWN;
-
-		if (m_depthBuffer)
-			dsvFormat = m_depthBuffer->GetFormat();
-
-		return dsvFormat;
-	}
-
-private:
-	PipelineManager<Pipeline_t>  m_graphicsPipelineManager;
-	std::unique_ptr<DepthBuffer> m_depthBuffer;
-	DXGI_FORMAT                  m_rtvFormat;
+	D3DReusableDescriptorHeap*               m_rtvHeap;
+	std::vector<RenderTarget>                m_renderTargets;
+	std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> m_rtvHandles;
+	std::vector<RTVClearColour>              m_rtvClearColours;
+	DepthStencilTarget                       m_depthStencilTarget;
+	D3D12_CPU_DESCRIPTOR_HANDLE              m_dsvHandle;
+	D3DResourceBarrier1_1                    m_startImageBarriers;
+	DepthStencilInfo                         m_depthStencilInfo;
 
 public:
 	D3DRenderPassManager(const D3DRenderPassManager&) = delete;
 	D3DRenderPassManager& operator=(const D3DRenderPassManager&) = delete;
 
 	D3DRenderPassManager(D3DRenderPassManager&& other) noexcept
-		: m_graphicsPipelineManager{ std::move(other.m_graphicsPipelineManager) },
-		m_depthBuffer{ std::move(other.m_depthBuffer) },
-		m_rtvFormat{ other.m_rtvFormat }
+		: m_rtvHeap{ std::exchange(other.m_rtvHeap, nullptr) },
+		m_renderTargets{ std::move(other.m_renderTargets) },
+		m_rtvHandles{ std::move(other.m_rtvHandles) },
+		m_rtvClearColours{ std::move(other.m_rtvClearColours) },
+		m_depthStencilTarget{ std::move(other.m_depthStencilTarget) },
+		m_dsvHandle{ other.m_dsvHandle },
+		m_startImageBarriers{ std::move(other.m_startImageBarriers) },
+		m_depthStencilInfo{ other.m_depthStencilInfo }
 	{}
 	D3DRenderPassManager& operator=(D3DRenderPassManager&& other) noexcept
 	{
-		m_graphicsPipelineManager = std::move(other.m_graphicsPipelineManager);
-		m_depthBuffer             = std::move(other.m_depthBuffer);
-		m_rtvFormat               = other.m_rtvFormat;
+		m_rtvHeap            = std::exchange(other.m_rtvHeap, nullptr);
+		m_renderTargets      = std::move(other.m_renderTargets);
+		m_rtvHandles         = std::move(other.m_rtvHandles);
+		m_rtvClearColours    = std::move(other.m_rtvClearColours);
+		m_depthStencilTarget = std::move(other.m_depthStencilTarget);
+		m_dsvHandle          = other.m_dsvHandle;
+		m_startImageBarriers = std::move(other.m_startImageBarriers);
+		m_depthStencilInfo   = other.m_depthStencilInfo;
 
 		return *this;
 	}

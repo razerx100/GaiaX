@@ -303,6 +303,52 @@ void ModelManagerVSIndirect::UpdatePerFrameSorted(
 	}
 }
 
+void ModelManagerVSIndirect::UpdatePipelinePerFrame(
+	UINT64 frameIndex, size_t modelBundleIndex, size_t pipelineLocalIndex,
+	const MeshManagerVSIndirect& meshManager
+) const noexcept {
+	std::uint8_t* bufferOffsetPtr = m_perModelBundleBuffer.GetInstancePtr(frameIndex);
+	constexpr size_t strideSize   = sizeof(PerModelBundleData);
+
+	if (!m_modelBundles.IsInUse(modelBundleIndex))
+		return;
+
+	const size_t bufferOffset             = strideSize * modelBundleIndex;
+
+	const ModelBundleVSIndirect& vsBundle = m_modelBundles[modelBundleIndex];
+
+	const std::uint32_t meshBundleIndex   = vsBundle.GetMeshBundleIndex();
+
+	const D3DMeshBundleVS& meshBundle     = meshManager.GetBundle(meshBundleIndex);
+
+	vsBundle.UpdatePipeline(pipelineLocalIndex, static_cast<size_t>(frameIndex), meshBundle);
+
+	memcpy(bufferOffsetPtr + bufferOffset, &meshBundleIndex, strideSize);
+}
+
+void ModelManagerVSIndirect::UpdatePipelinePerFrameSorted(
+	UINT64 frameIndex, size_t modelBundleIndex, size_t pipelineLocalIndex,
+	const MeshManagerVSIndirect& meshManager
+) noexcept {
+	std::uint8_t* bufferOffsetPtr = m_perModelBundleBuffer.GetInstancePtr(frameIndex);
+	constexpr size_t strideSize   = sizeof(PerModelBundleData);
+
+	if (!m_modelBundles.IsInUse(modelBundleIndex))
+		return;
+
+	const size_t bufferOffset           = strideSize * modelBundleIndex;
+
+	ModelBundleVSIndirect& vsBundle     = m_modelBundles[modelBundleIndex];
+
+	const std::uint32_t meshBundleIndex = vsBundle.GetMeshBundleIndex();
+
+	const D3DMeshBundleVS& meshBundle   = meshManager.GetBundle(meshBundleIndex);
+
+	vsBundle.UpdatePipelineSorted(pipelineLocalIndex, static_cast<size_t>(frameIndex), meshBundle);
+
+	memcpy(bufferOffsetPtr + bufferOffset, &meshBundleIndex, strideSize);
+}
+
 void ModelManagerVSIndirect::SetDescriptorLayoutVS(
 	std::vector<D3DDescriptorManager>& descriptorManagers, size_t vsRegisterSpace
 ) const noexcept {

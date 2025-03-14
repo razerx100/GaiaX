@@ -45,20 +45,21 @@ void RendererDx12::SetShaderPath(const wchar_t* path)
 
 std::uint32_t RendererDx12::AddGraphicsPipeline(const ExternalGraphicsPipeline& gfxPipeline)
 {
-	//return m_gaia.GetRenderEngine().AddGraphicsPipeline(pixelShader);
-	return 0u;
+	return m_gaia.GetRenderEngine().AddGraphicsPipeline(gfxPipeline);
 }
 
 void RendererDx12::ChangeModelPipelineInBundle(
 	std::uint32_t modelBundleIndex, std::uint32_t modelIndex,
 	std::uint32_t oldPipelineIndex, std::uint32_t newPipelineIndex
 ) {
-	//m_gaia.GetRenderEngine().ChangePixelShader(modelBundleID, pixelShader);
+	m_gaia.GetRenderEngine().ChangeModelPipelineInBundle(
+		modelBundleIndex, modelIndex, oldPipelineIndex, newPipelineIndex
+	);
 }
 
 void RendererDx12::RemoveGraphicsPipeline(std::uint32_t pipelineIndex) noexcept
 {
-	//m_gaia.GetRenderEngine().MakePixelShaderRemovable(pixelShader);
+	m_gaia.GetRenderEngine().RemoveGraphicsPipeline(pipelineIndex);
 }
 
 size_t RendererDx12::AddTexture(STexture&& texture)
@@ -88,8 +89,7 @@ void RendererDx12::WaitForGPUToFinish()
 
 std::uint32_t RendererDx12::AddModelBundle(std::shared_ptr<ModelBundle>&& modelBundle)
 {
-	//return m_gaia.GetRenderEngine().AddModelBundle(std::move(modelBundle), pixelShader);
-	return 0u;
+	return m_gaia.GetRenderEngine().AddModelBundle(std::move(modelBundle));
 }
 
 void RendererDx12::RemoveModelBundle(std::uint32_t bundleIndex) noexcept
@@ -153,51 +153,51 @@ void RendererDx12::QueueExternalBufferGPUCopy(
 
 std::uint32_t RendererDx12::AddExternalRenderPass()
 {
-	return 0u;
+	return m_gaia.GetRenderEngine().AddExternalRenderPass();
 }
 
 ExternalRenderPass* RendererDx12::GetExternalRenderPassRP(size_t index) const noexcept
 {
-	return nullptr;
+	return m_gaia.GetRenderEngine().GetExternalRenderPassRP(index);
 }
 
 std::shared_ptr<ExternalRenderPass> RendererDx12::GetExternalRenderPassSP(
 	size_t index
 ) const noexcept {
-	return nullptr;
+	return m_gaia.GetRenderEngine().GetExternalRenderPassSP(index);
 }
 
 void RendererDx12::SetSwapchainExternalRenderPass()
 {
-
+	m_gaia.GetRenderEngine().SetSwapchainExternalRenderPass();
 }
 
 ExternalRenderPass* RendererDx12::GetSwapchainExternalRenderPassRP() const noexcept
 {
-	return nullptr;
+	return m_gaia.GetRenderEngine().GetSwapchainExternalRenderPassRP();
 }
 
 std::shared_ptr<ExternalRenderPass> RendererDx12::GetSwapchainExternalRenderPassSP() const noexcept
 {
-	return nullptr;
+	return m_gaia.GetRenderEngine().GetSwapchainExternalRenderPassSP();
 }
 
 void RendererDx12::RemoveExternalRenderPass(size_t index) noexcept
 {
-
+	m_gaia.GetRenderEngine().RemoveExternalRenderPass(index);
 }
 
 void RendererDx12::RemoveSwapchainExternalRenderPass() noexcept
 {
-
+	m_gaia.GetRenderEngine().RemoveSwapchainExternalRenderPass();
 }
 
 size_t RendererDx12::GetActiveRenderPassCount() const noexcept
 {
-	return 0u;
+	return m_gaia.GetRenderEngine().GetActiveRenderPassCount();
 }
 
 ExternalFormat RendererDx12::GetSwapchainFormat() const noexcept
 {
-	return ExternalFormat::UNKNOWN;
+	return m_gaia.GetSwapchainFormat();
 }

@@ -6,16 +6,18 @@
 class RenderEngineVSIndividual : public
 	RenderEngineCommon
 	<
-	MeshManagerVSIndividual,
-	GraphicsPipelineVSIndividualDraw,
-	RenderEngineVSIndividual
+		ModelManagerVSIndividual,
+		MeshManagerVSIndividual,
+		GraphicsPipelineVSIndividualDraw,
+		RenderEngineVSIndividual
 	>
 {
 	friend class RenderEngineCommon
 		<
-		MeshManagerVSIndividual,
-		GraphicsPipelineVSIndividualDraw,
-		RenderEngineVSIndividual
+			ModelManagerVSIndividual,
+			MeshManagerVSIndividual,
+			GraphicsPipelineVSIndividualDraw,
+			RenderEngineVSIndividual
 		>;
 
 public:
@@ -26,9 +28,7 @@ public:
 	void FinaliseInitialisation(const DeviceManager& deviceManager) override;
 
 	[[nodiscard]]
-	std::uint32_t AddModelBundle(
-		std::shared_ptr<ModelBundle>&& modelBundle, const ShaderName& pixelShader
-	) override;
+	std::uint32_t AddModelBundle(std::shared_ptr<ModelBundle>&& modelBundle) override;
 
 	[[nodiscard]]
 	std::uint32_t AddMeshBundle(std::unique_ptr<MeshBundleTemporary> meshBundle) override;
@@ -37,7 +37,7 @@ public:
 
 private:
 	void ExecutePipelineStages(
-		size_t frameIndex, const RenderTarget& renderTarget, UINT64& counterValue,
+		size_t frameIndex, ID3D12Resource* swapchainBackBuffer, UINT64& counterValue,
 		ID3D12Fence* waitFence
 	);
 
@@ -46,7 +46,8 @@ private:
 		size_t frameIndex, UINT64& counterValue, ID3D12Fence* waitFence
 	);
 	void DrawingStage(
-		size_t frameIndex, const RenderTarget& renderTarget, UINT64& counterValue, ID3D12Fence* waitFence
+		size_t frameIndex, ID3D12Resource* swapchainBackBuffer, UINT64& counterValue,
+		ID3D12Fence* waitFence
 	);
 
 	void SetGraphicsDescriptorBufferLayout();
@@ -58,23 +59,20 @@ private:
 	}
 
 private:
-	ModelManagerVSIndividual m_modelManager;
-	ModelBuffers             m_modelBuffers;
+	void DrawRenderPassPipelines(
+		const D3DCommandList& graphicsCmdList, const ExternalRenderPass_t& renderPass
+	) noexcept;
 
 public:
 	RenderEngineVSIndividual(const RenderEngineVSIndividual&) = delete;
 	RenderEngineVSIndividual& operator=(const RenderEngineVSIndividual&) = delete;
 
 	RenderEngineVSIndividual(RenderEngineVSIndividual&& other) noexcept
-		: RenderEngineCommon{ std::move(other) },
-		m_modelManager{ std::move(other.m_modelManager) },
-		m_modelBuffers{ std::move(other.m_modelBuffers) }
+		: RenderEngineCommon{ std::move(other) }
 	{}
 	RenderEngineVSIndividual& operator=(RenderEngineVSIndividual&& other) noexcept
 	{
 		RenderEngineCommon::operator=(std::move(other));
-		m_modelManager = std::move(other.m_modelManager);
-		m_modelBuffers = std::move(other.m_modelBuffers);
 
 		return *this;
 	}
@@ -83,6 +81,7 @@ public:
 class RenderEngineVSIndirect : public
 	RenderEngineCommon
 	<
+		ModelManagerVSIndirect,
 		MeshManagerVSIndirect,
 		GraphicsPipelineVSIndirectDraw,
 		RenderEngineVSIndirect
@@ -90,6 +89,7 @@ class RenderEngineVSIndirect : public
 {
 	friend class RenderEngineCommon
 		<
+			ModelManagerVSIndirect,
 			MeshManagerVSIndirect,
 			GraphicsPipelineVSIndirectDraw,
 			RenderEngineVSIndirect
@@ -105,9 +105,7 @@ public:
 	void FinaliseInitialisation(const DeviceManager& deviceManager) override;
 
 	[[nodiscard]]
-	std::uint32_t AddModelBundle(
-		std::shared_ptr<ModelBundle>&& modelBundle, const ShaderName& pixelShader
-	) override;
+	std::uint32_t AddModelBundle(std::shared_ptr<ModelBundle>&& modelBundle) override;
 
 	void RemoveModelBundle(std::uint32_t bundleIndex) noexcept override;
 
@@ -120,7 +118,7 @@ public:
 
 private:
 	void ExecutePipelineStages(
-		size_t frameIndex, const RenderTarget& renderTarget, UINT64& counterValue,
+		size_t frameIndex, ID3D12Resource* swapchainBackBuffer, UINT64& counterValue,
 		ID3D12Fence* waitFence
 	);
 
@@ -133,7 +131,8 @@ private:
 		size_t frameIndex, UINT64& counterValue, ID3D12Fence* waitFence
 	);
 	void DrawingStage(
-		size_t frameIndex, const RenderTarget& renderTarget, UINT64& counterValue, ID3D12Fence* waitFence
+		size_t frameIndex, ID3D12Resource* swapchainBackBuffer, UINT64& counterValue,
+		ID3D12Fence* waitFence
 	);
 
 	void SetGraphicsDescriptorBufferLayout();
@@ -144,7 +143,14 @@ private:
 
 	void CreateCommandSignature(ID3D12Device* device);
 
-	void _updatePerFrame(UINT64 frameIndex) const noexcept;
+	void _updatePerFrame(UINT64 frameIndex) noexcept;
+
+private:
+	void DrawRenderPassPipelines(
+		size_t frameIndex , const D3DCommandList& graphicsCmdList, const ExternalRenderPass_t& renderPass
+	) noexcept;
+
+	void UpdateRenderPassPipelines(size_t frameIndex, const ExternalRenderPass_t& renderPass) noexcept;
 
 private:
 	// Compute
@@ -155,8 +161,6 @@ private:
 	static constexpr size_t s_cameraCSCBVRegisterSlot       = 1u;
 
 private:
-	ModelManagerVSIndirect             m_modelManager;
-	ModelBuffers                       m_modelBuffers;
 	D3DCommandQueue                    m_computeQueue;
 	std::vector<D3DFence>              m_computeWait;
 	std::vector<D3DDescriptorManager>  m_computeDescriptorManagers;
@@ -170,8 +174,6 @@ public:
 
 	RenderEngineVSIndirect(RenderEngineVSIndirect&& other) noexcept
 		: RenderEngineCommon{ std::move(other) },
-		m_modelManager{ std::move(other.m_modelManager) },
-		m_modelBuffers{ std::move(other.m_modelBuffers) },
 		m_computeQueue{ std::move(other.m_computeQueue) },
 		m_computeWait{ std::move(other.m_computeWait) },
 		m_computeDescriptorManagers{ std::move(other.m_computeDescriptorManagers) },
@@ -182,8 +184,6 @@ public:
 	RenderEngineVSIndirect& operator=(RenderEngineVSIndirect&& other) noexcept
 	{
 		RenderEngineCommon::operator=(std::move(other));
-		m_modelManager              = std::move(other.m_modelManager);
-		m_modelBuffers              = std::move(other.m_modelBuffers);
 		m_computeQueue              = std::move(other.m_computeQueue);
 		m_computeWait               = std::move(other.m_computeWait);
 		m_computeDescriptorManagers = std::move(other.m_computeDescriptorManagers);

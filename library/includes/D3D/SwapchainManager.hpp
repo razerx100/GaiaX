@@ -2,7 +2,7 @@
 #define SWAP_CHAIN_MANAGER_HPP_
 #include <D3DHeaders.hpp>
 #include <vector>
-#include <D3DRenderTarget.hpp>
+#include <D3DRenderingAttachments.hpp>
 #include <D3DDescriptorHeapManager.hpp>
 #include <D3DCommandQueue.hpp>
 
@@ -34,9 +34,9 @@ public:
 		return m_swapchain->GetCurrentBackBufferIndex();
 	}
 	[[nodiscard]]
-	const RenderTarget& GetRenderTarget(size_t frameIndex) const noexcept
+	ID3D12Resource* GetRenderTarget(size_t frameIndex) const noexcept
 	{
-		return m_renderTargets[frameIndex];
+		return m_renderTargetResources[frameIndex].Get();
 	}
 
 	[[nodiscard]]
@@ -49,7 +49,11 @@ private:
 	void CreateRTVs();
 
 private:
+	using ComResource = ComPtr<ID3D12Resource>;
+
+private:
 	ComPtr<IDXGISwapChain4>   m_swapchain;
+	std::vector<ComResource>  m_renderTargetResources;
 	std::vector<RenderTarget> m_renderTargets;
 	UINT                      m_presentFlag;
 
@@ -59,14 +63,16 @@ public:
 
 	SwapchainManager(SwapchainManager&& other) noexcept
 		: m_swapchain{ std::move(other.m_swapchain) },
+		m_renderTargetResources{ std::move(other.m_renderTargetResources) },
 		m_renderTargets{ std::move(other.m_renderTargets) },
 		m_presentFlag{ other.m_presentFlag }
 	{}
 	SwapchainManager& operator=(SwapchainManager&& other) noexcept
 	{
-		m_swapchain     = std::move(other.m_swapchain);
-		m_renderTargets = std::move(other.m_renderTargets);
-		m_presentFlag   = other.m_presentFlag;
+		m_swapchain             = std::move(other.m_swapchain);
+		m_renderTargetResources = std::move(other.m_renderTargetResources);
+		m_renderTargets         = std::move(other.m_renderTargets);
+		m_presentFlag           = other.m_presentFlag;
 
 		return *this;
 	}

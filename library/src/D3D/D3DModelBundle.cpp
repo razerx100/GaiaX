@@ -95,37 +95,29 @@ void PipelineModelsBase::RemoveModelSorted(std::uint32_t localIndex) noexcept
 }
 
 // Pipeline Models VS Individual
-void PipelineModelsVSIndividual::_draw(
-	size_t modelCount,
-	const ModelData& (PipelineModelsVSIndividual::* GetModelData) (size_t) const noexcept,
-	bool (PipelineModelsVSIndividual::* IsModelInUse) (size_t) const noexcept,
-	const D3DCommandList& graphicsList, UINT constantsRootIndex, const D3DMeshBundleVS& meshBundle,
+void PipelineModelsVSIndividual::DrawModel(
+	bool isInUse, const ModelData& modelData,
+	ID3D12GraphicsCommandList* graphicsList, UINT constantsRootIndex, const D3DMeshBundleVS& meshBundle,
 	const std::vector<std::shared_ptr<Model>>& models
 ) const noexcept {
-	ID3D12GraphicsCommandList* cmdList = graphicsList.Get();
+	const std::shared_ptr<Model>& model = models[modelData.bundleIndex];
 
-	for (size_t index = 0; index < modelCount; ++index)
-	{
-		const ModelData& modelData          = (this->*GetModelData)(index);
-		const std::shared_ptr<Model>& model = models[modelData.bundleIndex];
+	if (!isInUse || !model->IsVisible())
+		return;
 
-		if (!(this->*IsModelInUse)(index) || !model->IsVisible())
-			continue;
+	constexpr UINT pushConstantCount = GetConstantCount();
 
-		constexpr UINT pushConstantCount = GetConstantCount();
+	graphicsList->SetGraphicsRoot32BitConstants(
+		constantsRootIndex, pushConstantCount, &modelData.bufferIndex, 0u
+	);
 
-		cmdList->SetGraphicsRoot32BitConstants(
-			constantsRootIndex, pushConstantCount, &modelData.bufferIndex, 0u
-		);
+	const MeshTemporaryDetailsVS& meshDetailsVS = meshBundle.GetMeshDetails(model->GetMeshIndex());
+	const D3D12_DRAW_INDEXED_ARGUMENTS meshArgs = GetDrawIndexedIndirectCommand(meshDetailsVS);
 
-		const MeshTemporaryDetailsVS& meshDetailsVS = meshBundle.GetMeshDetails(model->GetMeshIndex());
-		const D3D12_DRAW_INDEXED_ARGUMENTS meshArgs = GetDrawIndexedIndirectCommand(meshDetailsVS);
-
-		cmdList->DrawIndexedInstanced(
-			meshArgs.IndexCountPerInstance, meshArgs.InstanceCount, meshArgs.StartIndexLocation,
-			meshArgs.BaseVertexLocation, meshArgs.StartInstanceLocation
-		);
-	}
+	graphicsList->DrawIndexedInstanced(
+		meshArgs.IndexCountPerInstance, meshArgs.InstanceCount, meshArgs.StartIndexLocation,
+		meshArgs.BaseVertexLocation, meshArgs.StartInstanceLocation
+	);
 }
 
 void PipelineModelsVSIndividual::Draw(
@@ -134,12 +126,7 @@ void PipelineModelsVSIndividual::Draw(
 ) const noexcept {
 	const size_t modelCount = std::size(m_modelData);
 
-	_draw(
-		modelCount,
-		&PipelineModelsVSIndividual::_getModelData<false>,
-		&PipelineModelsVSIndividual::_isModelInUse<false>,
-		graphicsList, constantsRootIndex, meshBundle, models
-	);
+	_draw<false>(modelCount, graphicsList, constantsRootIndex, meshBundle, models);
 }
 
 void PipelineModelsVSIndividual::DrawSorted(
@@ -151,67 +138,54 @@ void PipelineModelsVSIndividual::DrawSorted(
 	// Draw
 	const size_t modelCount = std::size(m_sortedData);
 
-	_draw(
-		modelCount,
-		&PipelineModelsVSIndividual::_getModelData<true>,
-		&PipelineModelsVSIndividual::_isModelInUse<true>,
-		graphicsList, constantsRootIndex, meshBundle, models
-	);
+	_draw<true>(modelCount, graphicsList, constantsRootIndex, meshBundle, models);
 }
 
 // Pipeline Models MS Individual
-void PipelineModelsMSIndividual::_draw(
-	size_t modelCount,
-	const ModelData& (PipelineModelsMSIndividual::* GetModelData) (size_t) const noexcept,
-	bool (PipelineModelsMSIndividual::* IsModelInUse) (size_t) const noexcept,
-	const D3DCommandList& graphicsList, UINT constantsRootIndex, const D3DMeshBundleMS& meshBundle,
+void PipelineModelsMSIndividual::DrawModel(
+	bool isInUse, const ModelData& modelData, ID3D12GraphicsCommandList6* graphicsList,
+	UINT constantsRootIndex, const D3DMeshBundleMS& meshBundle,
 	const std::vector<std::shared_ptr<Model>>& models
 ) const noexcept {
-	ID3D12GraphicsCommandList6* cmdList = graphicsList.Get();
+	const std::shared_ptr<Model>& model = models[modelData.bundleIndex];
 
-	for (size_t index = 0u; index < modelCount; ++index)
+	if (!isInUse || !model->IsVisible())
+		return;
+
+	constexpr UINT pushConstantCount = GetConstantCount();
+	constexpr UINT constBufferOffset = D3DMeshBundleMS::GetConstantCount();
+
+	const MeshTemporaryDetailsMS& meshDetailsMS = meshBundle.GetMeshDetails(model->GetMeshIndex());
+
+	const ModelDetailsMS constants
 	{
-		const ModelData& modelData          = (this->*GetModelData)(index);
-		const std::shared_ptr<Model>& model = models[modelData.bundleIndex];
+		.meshDetails = MeshDetails
+			{
+				.meshletCount  = meshDetailsMS.meshletCount,
+				.meshletOffset = meshDetailsMS.meshletOffset,
+				.indexOffset   = meshDetailsMS.indexOffset,
+				.primOffset    = meshDetailsMS.primitiveOffset,
+				.vertexOffset  = meshDetailsMS.vertexOffset,
+			},
+		.modelBufferIndex = modelData.bufferIndex
+	};
 
-		if (!(this->*IsModelInUse)(index) || !model->IsVisible())
-			continue;
+	graphicsList->SetGraphicsRoot32BitConstants(
+		constantsRootIndex, pushConstantCount, &constants, constBufferOffset
+	);
 
-		constexpr UINT pushConstantCount = GetConstantCount();
-		constexpr UINT constBufferOffset = D3DMeshBundleMS::GetConstantCount();
+	// If we have an Amplification shader, this will launch an amplification global workGroup.
+	// We would want each Amplification shader lane to process a meshlet and launch the necessary
+	// Mesh Shader workGroups. On Nvdia we can have a maximum of 32 lanes active
+	// in a wave and 64 on AMD. So, a workGroup will be able to work on 32/64
+	// meshlets concurrently.
+	const UINT amplficationGroupCount = DivRoundUp(
+		meshDetailsMS.meshletCount, s_amplificationLaneCount
+	);
 
-		const MeshTemporaryDetailsMS& meshDetailsMS = meshBundle.GetMeshDetails(model->GetMeshIndex());
-
-		const ModelDetailsMS constants
-		{
-			.meshDetails = MeshDetails
-				{
-					.meshletCount  = meshDetailsMS.meshletCount,
-					.meshletOffset = meshDetailsMS.meshletOffset,
-					.indexOffset   = meshDetailsMS.indexOffset,
-					.primOffset    = meshDetailsMS.primitiveOffset,
-					.vertexOffset  = meshDetailsMS.vertexOffset,
-				},
-			.modelBufferIndex = modelData.bufferIndex
-		};
-
-		cmdList->SetGraphicsRoot32BitConstants(
-			constantsRootIndex, pushConstantCount, &constants, constBufferOffset
-		);
-
-		// If we have an Amplification shader, this will launch an amplification global workGroup.
-		// We would want each Amplification shader lane to process a meshlet and launch the necessary
-		// Mesh Shader workGroups. On Nvdia we can have a maximum of 32 lanes active
-		// in a wave and 64 on AMD. So, a workGroup will be able to work on 32/64
-		// meshlets concurrently.
-		const UINT amplficationGroupCount = DivRoundUp(
-			meshDetailsMS.meshletCount, s_amplificationLaneCount
-		);
-
-		cmdList->DispatchMesh(amplficationGroupCount, 1u, 1u);
-		// It might be worth checking if we are reaching the Group Count Limit and if needed
-		// launch more Groups. Could achieve that by passing a GroupLaunch index.
-	}
+	graphicsList->DispatchMesh(amplficationGroupCount, 1u, 1u);
+	// It might be worth checking if we are reaching the Group Count Limit and if needed
+	// launch more Groups. Could achieve that by passing a GroupLaunch index.
 }
 
 void PipelineModelsMSIndividual::Draw(
@@ -220,12 +194,7 @@ void PipelineModelsMSIndividual::Draw(
 ) const noexcept {
 	const size_t modelCount = std::size(m_modelData);
 
-	_draw(
-		modelCount,
-		&PipelineModelsMSIndividual::_getModelData<false>,
-		&PipelineModelsMSIndividual::_isModelInUse<false>,
-		graphicsList, constantsRootIndex, meshBundle, models
-	);
+	_draw<false>(modelCount, graphicsList, constantsRootIndex, meshBundle, models);
 }
 
 void PipelineModelsMSIndividual::DrawSorted(
@@ -237,12 +206,7 @@ void PipelineModelsMSIndividual::DrawSorted(
 	// Draw
 	const size_t modelCount = std::size(m_sortedData);
 
-	_draw(
-		modelCount,
-		&PipelineModelsMSIndividual::_getModelData<true>,
-		&PipelineModelsMSIndividual::_isModelInUse<true>,
-		graphicsList, constantsRootIndex, meshBundle, models
-	);
+	_draw<true>(modelCount, graphicsList, constantsRootIndex, meshBundle, models);
 }
 
 // Pipeline Models CS Indirect
@@ -410,71 +374,13 @@ void PipelineModelsCSIndirect::AllocateBuffers(
 	}
 }
 
-void PipelineModelsCSIndirect::_update(
-	size_t modelCount,
-	const ModelData& (PipelineModelsCSIndirect::* GetModelData) (size_t) const noexcept,
-	bool (PipelineModelsCSIndirect::* IsModelInUse) (size_t) const noexcept,
-	size_t frameIndex, const D3DMeshBundleVS& meshBundle,
-	const std::vector<std::shared_ptr<Model>>& models
-) const noexcept {
-	if (!modelCount)
-		return;
-
-	const SharedBufferData& argumentInputSharedData = m_argumentInputSharedData[frameIndex];
-
-	std::uint8_t* argumentInputStart = argumentInputSharedData.bufferData->CPUHandle();
-	std::uint8_t* perModelStart      = m_perModelSharedData.bufferData->CPUHandle();
-
-	constexpr size_t argumentStride = sizeof(IndirectArgument);
-	auto argumentOffset             = static_cast<size_t>(argumentInputSharedData.offset);
-
-	constexpr size_t perModelStride = sizeof(PerModelData);
-	auto perModelOffset             = static_cast<size_t>(m_perModelSharedData.offset);
-	constexpr auto isVisibleOffset  = offsetof(PerModelData, isVisible);
-
-	for (size_t index = 0u; index < modelCount; ++index)
-	{
-		const ModelData& modelData          = (this->*GetModelData)(index);
-		const std::shared_ptr<Model>& model = models[modelData.bundleIndex];
-
-		const MeshTemporaryDetailsVS& meshDetailsVS = meshBundle.GetMeshDetails(model->GetMeshIndex());
-		const D3D12_DRAW_INDEXED_ARGUMENTS meshArgs = PipelineModelsBase::GetDrawIndexedIndirectCommand(
-			meshDetailsVS
-		);
-
-		IndirectArgument arguments
-		{
-			.modelIndex    = modelData.bufferIndex,
-			.drawArguments = meshArgs
-		};
-
-		memcpy(argumentInputStart + argumentOffset, &arguments, argumentStride);
-
-		argumentOffset += argumentStride;
-
-		// Model Visiblity
-		const auto visiblity = static_cast<std::uint32_t>(
-			(this->*IsModelInUse)(index) && model->IsVisible()
-		);
-
-		memcpy(perModelStart + perModelOffset + isVisibleOffset, &visiblity, sizeof(std::uint32_t));
-
-		perModelOffset += perModelStride;
-	}
-}
-
 void PipelineModelsCSIndirect::Update(
 	size_t frameIndex, const D3DMeshBundleVS& meshBundle,
 	const std::vector<std::shared_ptr<Model>>& models
 ) const noexcept {
 	const size_t modelCount = std::size(m_modelData);
 
-	_update(
-		modelCount,
-		&PipelineModelsCSIndirect::_getModelData<false>,
-		&PipelineModelsCSIndirect::_isModelInUse<false>,
-		frameIndex, meshBundle, models
-	);
+	_update<false>(modelCount, frameIndex, meshBundle, models);
 }
 
 void PipelineModelsCSIndirect::UpdateSorted(
@@ -485,12 +391,7 @@ void PipelineModelsCSIndirect::UpdateSorted(
 
 	const size_t modelCount = std::size(m_sortedData);
 
-	_update(
-		modelCount,
-		&PipelineModelsCSIndirect::_getModelData<true>,
-		&PipelineModelsCSIndirect::_isModelInUse<true>,
-		frameIndex, meshBundle, models
-	);
+	_update<true>(modelCount, frameIndex, meshBundle, models);
 }
 
 void PipelineModelsCSIndirect::RelinquishMemory(
@@ -498,7 +399,7 @@ void PipelineModelsCSIndirect::RelinquishMemory(
 	SharedBufferCPU& perPipelineSharedBuffer, SharedBufferCPU& perModelSharedBuffer
 ) noexcept {
 	// Input Buffers
-	for (size_t index = 0u; index < std::size(argumentInputSharedBuffers); ++index)
+	for (size_t index = 0u; index < std::size(m_argumentInputSharedData); ++index)
 	{
 		SharedBufferCPU& argumentSharedBuffer = argumentInputSharedBuffers[index];
 		SharedBufferData& argumentSharedData  = m_argumentInputSharedData[index];
@@ -615,7 +516,7 @@ void PipelineModelsVSIndirect::RelinquishMemory(
 	std::vector<SharedBufferGPUWriteOnly>& counterSharedBuffers
 ) noexcept {
 	// Output Buffers
-	for (size_t index = 0u; index < std::size(argumentOutputSharedBuffers); ++index)
+	for (size_t index = 0u; index < std::size(m_argumentOutputSharedData); ++index)
 	{
 		SharedBufferGPUWriteOnly& argumentSharedBuffer = argumentOutputSharedBuffers[index];
 		SharedBufferData& argumentSharedData           = m_argumentOutputSharedData[index];
@@ -629,7 +530,7 @@ void PipelineModelsVSIndirect::RelinquishMemory(
 	}
 
 	// Counter Shared Buffer
-	for (size_t index = 0u; index < std::size(counterSharedBuffers); ++index)
+	for (size_t index = 0u; index < std::size(m_counterSharedData); ++index)
 	{
 		SharedBufferGPUWriteOnly& counterSharedBuffer = counterSharedBuffers[index];
 		SharedBufferData& counterSharedData           = m_counterSharedData[index];
@@ -1274,6 +1175,32 @@ void ModelBundleVSIndirect::UpdateSorted(size_t frameIndex, const D3DMeshBundleV
 
 		pipeline.UpdateSorted(frameIndex, meshBundle, models);
 	}
+}
+
+void ModelBundleVSIndirect::UpdatePipeline(
+	size_t pipelineLocalIndex, size_t frameIndex, const D3DMeshBundleVS& meshBundle
+) const noexcept {
+	const auto& models = m_modelBundle->GetModels();
+
+	if (!m_pipelines.IsInUse(pipelineLocalIndex))
+		return;
+
+	const PipelineModelsCSIndirect& pipeline = m_pipelines[pipelineLocalIndex];
+
+	pipeline.Update(frameIndex, meshBundle, models);
+}
+
+void ModelBundleVSIndirect::UpdatePipelineSorted(
+	size_t pipelineLocalIndex, size_t frameIndex, const D3DMeshBundleVS& meshBundle
+) noexcept {
+	const auto& models = m_modelBundle->GetModels();
+
+	if (!m_pipelines.IsInUse(pipelineLocalIndex))
+		return;
+
+	PipelineModelsCSIndirect& pipeline = m_pipelines[pipelineLocalIndex];
+
+	pipeline.UpdateSorted(frameIndex, meshBundle, models);
 }
 
 void ModelBundleVSIndirect::Draw(

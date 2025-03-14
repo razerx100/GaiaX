@@ -46,6 +46,7 @@ public:
 public:
 	virtual ~ExternalTexture() = default;
 
+	// The two copy flags are only necessary on Vulkan for now.
 	virtual void Create(
 		std::uint32_t width, std::uint32_t height, ExternalFormat format, ExternalTexture2DType type,
 		bool copySrc, bool copyDst

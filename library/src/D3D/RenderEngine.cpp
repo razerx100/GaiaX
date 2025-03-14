@@ -22,8 +22,8 @@ RenderEngine::RenderEngine(
 	m_textureStorage{ device, &m_memoryManager },
 	m_textureManager{ device },
 	m_cameraManager{ device, &m_memoryManager },
+	m_rtvHeap{ device, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE },
 	m_dsvHeap{ device, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE },
-	m_backgroundColour{ 0.0001f, 0.0001f, 0.0001f, 0.0001f },
 	m_viewportAndScissors{}, m_temporaryDataBuffer{}, m_copyNecessary{ false }
 {
 	for (size_t _ = 0u; _ < frameCount; ++_)
@@ -40,11 +40,6 @@ RenderEngine::RenderEngine(
 
 	m_graphicsQueue.Create(device, D3D12_COMMAND_LIST_TYPE_DIRECT, frameCount);
 	m_copyQueue.Create(device, D3D12_COMMAND_LIST_TYPE_COPY, frameCount);
-}
-
-void RenderEngine::SetBackgroundColour(const std::array<float, 4>& colourVector) noexcept
-{
-	m_backgroundColour = colourVector;
 }
 
 size_t RenderEngine::AddTexture(STexture&& texture)

@@ -25,6 +25,12 @@ public:
 	const RenderEngine& GetRenderEngine() const noexcept { return *m_renderEngine; }
 
 	[[nodiscard]]
+	ExternalFormat GetSwapchainFormat() const noexcept
+	{
+		return GetExternalFormat(m_swapchain->GetFormat());
+	}
+
+	[[nodiscard]]
 	DeviceManager::Resolution GetFirstDisplayCoordinates() const;
 
 	[[nodiscard]]

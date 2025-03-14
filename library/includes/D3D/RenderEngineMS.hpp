@@ -6,6 +6,7 @@
 class RenderEngineMS : public
 	RenderEngineCommon
 	<
+		ModelManagerMS,
 		MeshManagerMS,
 		GraphicsPipelineMS,
 		RenderEngineMS
@@ -13,6 +14,7 @@ class RenderEngineMS : public
 {
 	friend class RenderEngineCommon
 		<
+			ModelManagerMS,
 			MeshManagerMS,
 			GraphicsPipelineMS,
 			RenderEngineMS
@@ -26,9 +28,7 @@ public:
 	void FinaliseInitialisation(const DeviceManager& deviceManager) override;
 
 	[[nodiscard]]
-	std::uint32_t AddModelBundle(
-		std::shared_ptr<ModelBundle>&& modelBundle, const ShaderName& pixelShader
-	) override;
+	std::uint32_t AddModelBundle(std::shared_ptr<ModelBundle>&& modelBundle) override;
 
 	void RemoveModelBundle(std::uint32_t bundleIndex) noexcept override;
 
@@ -37,7 +37,7 @@ public:
 
 private:
 	void ExecutePipelineStages(
-		size_t frameIndex, const RenderTarget& renderTarget, UINT64& counterValue,
+		size_t frameIndex, ID3D12Resource* swapchainBackBuffer, UINT64& counterValue,
 		ID3D12Fence* waitFence
 	);
 
@@ -46,7 +46,8 @@ private:
 		size_t frameIndex, UINT64& counterValue, ID3D12Fence* waitFence
 	);
 	void DrawingStage(
-		size_t frameIndex, const RenderTarget& renderTarget, UINT64& counterValue, ID3D12Fence* waitFence
+		size_t frameIndex, ID3D12Resource* swapchainBackBuffer, UINT64& counterValue,
+		ID3D12Fence* waitFence
 	);
 
 	void SetGraphicsDescriptorBufferLayout();
@@ -58,23 +59,20 @@ private:
 	}
 
 private:
-	ModelManagerMS m_modelManager;
-	ModelBuffers   m_modelBuffers;
+	void DrawRenderPassPipelines(
+		const D3DCommandList& graphicsCmdList, const ExternalRenderPass_t& renderPass
+	) noexcept;
 
 public:
 	RenderEngineMS(const RenderEngineMS&) = delete;
 	RenderEngineMS& operator=(const RenderEngineMS&) = delete;
 
 	RenderEngineMS(RenderEngineMS&& other) noexcept
-		: RenderEngineCommon{ std::move(other) },
-		m_modelManager{ std::move(other.m_modelManager) },
-		m_modelBuffers{ std::move(other.m_modelBuffers) }
+		: RenderEngineCommon{ std::move(other) }
 	{}
 	RenderEngineMS& operator=(RenderEngineMS&& other) noexcept
 	{
 		RenderEngineCommon::operator=(std::move(other));
-		m_modelManager = std::move(other.m_modelManager);
-		m_modelBuffers = std::move(other.m_modelBuffers);
 
 		return *this;
 	}

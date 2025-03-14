@@ -4,6 +4,7 @@
 #include <ranges>
 #include <algorithm>
 #include <concepts>
+#include <type_traits>
 #include <D3DRootSignature.hpp>
 #include <GraphicsPipelineVS.hpp>
 #include <GraphicsPipelineMS.hpp>
@@ -13,6 +14,11 @@
 template<typename Pipeline>
 class PipelineManager
 {
+public:
+	using PipelineExt = std::conditional_t<
+		std::is_same_v<Pipeline, ComputePipeline>, ExternalComputePipeline, ExternalGraphicsPipeline
+	>;
+
 public:
 	PipelineManager(ID3D12Device5* device)
 		: m_device{ device }, m_rootSignature{ nullptr }, m_shaderPath{}, m_pipelines{}
@@ -30,23 +36,20 @@ public:
 
 	void BindPipeline(size_t index, const D3DCommandList& commandList) const noexcept
 	{
-		m_pipelines.at(index).Bind(commandList);
+		m_pipelines[index].Bind(commandList);
 	}
 
-	void SetOverwritable(const ShaderName& shaderName) noexcept
+	void SetOverwritable(size_t pipelineIndex) noexcept
 	{
-		std::optional<std::uint32_t> oPsoIndex = TryToGetPSOIndex(shaderName);
-
-		if (oPsoIndex)
-			m_pipelines.MakeUnavailable(oPsoIndex.value());
+		m_pipelines.MakeUnavailable(pipelineIndex);
 	}
 
 	std::uint32_t AddOrGetGraphicsPipeline(
-		const ShaderName& pixelShader, DXGI_FORMAT rtvFormat, DXGI_FORMAT dsvFormat
+		const PipelineExt& extPipeline
 	) requires !std::is_same_v<Pipeline, ComputePipeline>
 	{
 		auto psoIndex                          = std::numeric_limits<std::uint32_t>::max();
-		std::optional<std::uint32_t> oPSOIndex = TryToGetPSOIndex(pixelShader);
+		std::optional<std::uint32_t> oPSOIndex = TryToGetPSOIndex(extPipeline);
 
 		if (oPSOIndex)
 			psoIndex = oPSOIndex.value();
@@ -54,9 +57,7 @@ public:
 		{
 			Pipeline pipeline{};
 
-			pipeline.Create(
-				m_device, m_rootSignature, rtvFormat, dsvFormat, m_shaderPath, pixelShader
-			);
+			pipeline.Create(m_device, m_rootSignature, m_shaderPath, extPipeline);
 
 			psoIndex = static_cast<std::uint32_t>(m_pipelines.Add(std::move(pipeline)));
 		}
@@ -64,11 +65,11 @@ public:
 		return psoIndex;
 	}
 
-	std::uint32_t AddOrGetComputePipeline(const ShaderName& computeShader)
+	std::uint32_t AddOrGetComputePipeline(const PipelineExt& extPipeline)
 		requires std::is_same_v<Pipeline, ComputePipeline>
 	{
 		auto psoIndex                          = std::numeric_limits<std::uint32_t>::max();
-		std::optional<std::uint32_t> oPSOIndex = TryToGetPSOIndex(computeShader);
+		std::optional<std::uint32_t> oPSOIndex = TryToGetPSOIndex(extPipeline);
 
 		if (oPSOIndex)
 			psoIndex = oPSOIndex.value();
@@ -76,7 +77,7 @@ public:
 		{
 			Pipeline pipeline{};
 
-			pipeline.Create(m_device, m_rootSignature, m_shaderPath, computeShader);
+			pipeline.Create(m_device, m_rootSignature, m_shaderPath, extPipeline);
 
 			psoIndex = static_cast<std::uint32_t>(m_pipelines.Add(std::move(pipeline)));
 		}
@@ -84,11 +85,11 @@ public:
 		return psoIndex;
 	}
 
-	void RecreateAllGraphicsPipelines(DXGI_FORMAT rtvFormat, DXGI_FORMAT dsvFormat)
+	void RecreateAllGraphicsPipelines()
 		requires !std::is_same_v<Pipeline, ComputePipeline>
 	{
 		for (Pipeline& pipeline : m_pipelines)
-			pipeline.Recreate(m_device, m_rootSignature, rtvFormat, dsvFormat, m_shaderPath);
+			pipeline.Recreate(m_device, m_rootSignature, m_shaderPath);
 	}
 	void RecreateAllComputePipelines() requires std::is_same_v<Pipeline, ComputePipeline>
 	{
@@ -104,16 +105,16 @@ public:
 
 private:
 	[[nodiscard]]
-	std::optional<std::uint32_t> TryToGetPSOIndex(const ShaderName& shaderName) const noexcept
+	std::optional<std::uint32_t> TryToGetPSOIndex(const PipelineExt& extPipeline) const noexcept
 	{
 		std::optional<std::uint32_t> oPSOIndex{};
 
 		const std::vector<Pipeline>& pipelines = m_pipelines.Get();
 
 		auto result = std::ranges::find_if(pipelines,
-			[&shaderName](const Pipeline& pipeline)
+			[&extPipeline](const Pipeline& pipeline)
 			{
-				return shaderName == pipeline.GetShaderName();
+				return extPipeline == pipeline.GetExternalPipeline();
 			});
 
 		if (result != std::end(pipelines))

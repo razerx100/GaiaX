@@ -14,9 +14,6 @@ Gaia::Gaia(
 
 	CreateSwapchain(bufferCount, windowHandle);
 
-	// Need to create the render targets and stuffs.
-	m_renderEngine->SetSwapchainRTVFormat(SwapchainManager::GetFormat());
-
 	Resize(width, height);
 }
 
@@ -83,8 +80,8 @@ void Gaia::Resize(UINT width, UINT height)
 
 void Gaia::Render()
 {
-	const size_t nextImageIndex          = m_swapchain->GetCurrentBackBufferIndex();
-	const RenderTarget& nextRenderTarget = m_swapchain->GetRenderTarget(nextImageIndex);
+	const size_t nextImageIndex      = m_swapchain->GetCurrentBackBufferIndex();
+	ID3D12Resource* nextRenderTarget = m_swapchain->GetRenderTarget(nextImageIndex);
 
 	m_renderEngine->Render(nextImageIndex, nextRenderTarget);
 

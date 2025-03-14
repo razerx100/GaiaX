@@ -1,6 +1,7 @@
 #ifndef D3D_RESOURCE_BARRIER_HPP_
 #define D3D_RESOURCE_BARRIER_HPP_
 #include <array>
+#include <vector>
 #include <cassert>
 #include <D3DHeaders.hpp>
 
@@ -54,6 +55,7 @@ private:
 };
 
 template<UINT barrierCount = 1u>
+// This one can be created and destroyed every frame.
 class D3DResourceBarrier
 {
 public:
@@ -70,10 +72,19 @@ public:
 		return *this;
 	}
 
-	[[nodiscard]]
 	D3DResourceBarrier& AddBarrier(const ResourceBarrierBuilder& barrierBuilder)
 	{
 		return AddBarrier(barrierBuilder.Get());
+	}
+
+	void SetTransitionAfterState(size_t barrierIndex, D3D12_RESOURCE_STATES afterState) noexcept
+	{
+		m_barriers[barrierIndex].Transition.StateAfter = afterState;
+	}
+
+	void SetTransitionResource(size_t barrierIndex, ID3D12Resource* resource) noexcept
+	{
+		m_barriers[barrierIndex].Transition.pResource = resource;
 	}
 
 	void RecordBarriers(ID3D12GraphicsCommandList* commandList) const noexcept
@@ -84,5 +95,74 @@ public:
 private:
 	size_t                                           m_currentIndex;
 	std::array<D3D12_RESOURCE_BARRIER, barrierCount> m_barriers;
+};
+
+// This one should not be created and destroyed on every frame.
+class D3DResourceBarrier1_1
+{
+public:
+	D3DResourceBarrier1_1() : m_barriers{} {}
+	D3DResourceBarrier1_1(size_t totalBarrierCount) : D3DResourceBarrier1_1{}
+	{
+		m_barriers.reserve(totalBarrierCount);
+	}
+
+	D3DResourceBarrier1_1& AddBarrier(const D3D12_RESOURCE_BARRIER& barrier)
+	{
+		m_barriers.emplace_back(barrier);
+
+		return *this;
+	}
+
+	D3DResourceBarrier1_1& AddBarrier(const ResourceBarrierBuilder& barrierBuilder)
+	{
+		return AddBarrier(barrierBuilder.Get());
+	}
+
+	void SetTransitionAfterState(size_t barrierIndex, D3D12_RESOURCE_STATES afterState) noexcept
+	{
+		m_barriers[barrierIndex].Transition.StateAfter = afterState;
+	}
+
+	void SetTransitionResource(size_t barrierIndex, ID3D12Resource* resource) noexcept
+	{
+		m_barriers[barrierIndex].Transition.pResource = resource;
+	}
+
+	void RecordBarriers(ID3D12GraphicsCommandList* commandList) const noexcept
+	{
+		commandList->ResourceBarrier(
+			static_cast<UINT>(std::size(m_barriers)), std::data(m_barriers)
+		);
+	}
+
+	[[nodiscard]]
+	std::uint32_t GetCount() const noexcept
+	{
+		return static_cast<std::uint32_t>(std::size(m_barriers));
+	}
+
+private:
+	std::vector<D3D12_RESOURCE_BARRIER> m_barriers;
+
+public:
+	D3DResourceBarrier1_1(const D3DResourceBarrier1_1& other) noexcept
+		: m_barriers{ other.m_barriers }
+	{}
+	D3DResourceBarrier1_1& operator=(const D3DResourceBarrier1_1& other) noexcept
+	{
+		m_barriers = other.m_barriers;
+
+		return *this;
+	}
+	D3DResourceBarrier1_1(D3DResourceBarrier1_1&& other) noexcept
+		: m_barriers{ std::move(other.m_barriers) }
+	{}
+	D3DResourceBarrier1_1& operator=(D3DResourceBarrier1_1&& other) noexcept
+	{
+		m_barriers = std::move(other.m_barriers);
+
+		return *this;
+	}
 };
 #endif

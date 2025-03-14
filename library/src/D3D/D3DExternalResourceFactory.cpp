@@ -21,5 +21,7 @@ size_t D3DExternalResourceFactory::CreateExternalBuffer(ExternalBufferType type)
 
 size_t D3DExternalResourceFactory::CreateExternalTexture()
 {
-	return 0u;
+	return m_externalTextures.Add(
+		std::make_shared<D3DExternalTexture>(m_device, m_memoryManager)
+	);
 }

@@ -57,6 +57,18 @@ public:
 		return &m_resourceFactory;
 	}
 
+	[[nodiscard]]
+	D3DExternalResourceFactory* GetD3DResourceFactory() noexcept
+	{
+		return &m_resourceFactory;
+	}
+
+	[[nodiscard]]
+	D3DExternalResourceFactory const* GetD3DResourceFactory() const noexcept
+	{
+		return &m_resourceFactory;
+	}
+
 private:
 	struct GPUCopyDetails
 	{

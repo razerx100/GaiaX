@@ -3,22 +3,20 @@
 
 std::unique_ptr<D3DPipelineObject> GraphicsPipelineMS::_createGraphicsPipeline(
 	ID3D12Device2* device, ID3D12RootSignature* graphicsRootSignature,
-	DXGI_FORMAT rtvFormat, DXGI_FORMAT dsvFormat,
-	const std::wstring& shaderPath, const ShaderName& pixelShader
+	const std::wstring& shaderPath, const ExternalGraphicsPipeline& graphicsExtPipeline
 ) const {
 	constexpr const wchar_t* meshShaderName = L"MeshShaderMSIndividual";
 	constexpr const wchar_t* ampShaderName  = L"MeshShaderASIndividual";
 
 	return CreateGraphicsPipelineMS(
 		device, graphicsRootSignature, s_shaderBytecodeType,
-		rtvFormat, dsvFormat, shaderPath, pixelShader, meshShaderName, ampShaderName
+		shaderPath, graphicsExtPipeline, meshShaderName, ampShaderName
 	);
 }
 
 std::unique_ptr<D3DPipelineObject> GraphicsPipelineMS::CreateGraphicsPipelineMS(
-	ID3D12Device2* device, ID3D12RootSignature* graphicsRootSignature,
-	ShaderType binaryType, DXGI_FORMAT rtvFormat, DXGI_FORMAT dsvFormat,
-	const std::wstring& shaderPath, const ShaderName& pixelShader,
+	ID3D12Device2* device, ID3D12RootSignature* graphicsRootSignature, ShaderType binaryType,
+	const std::wstring& shaderPath, const ExternalGraphicsPipeline& graphicsExtPipeline,
 	const ShaderName& meshShader, const ShaderName& amplificationShader
 ) {
 	auto ms              = std::make_unique<D3DShader>();
@@ -33,18 +31,12 @@ std::unique_ptr<D3DPipelineObject> GraphicsPipelineMS::CreateGraphicsPipelineMS(
 
 	auto ps              = std::make_unique<D3DShader>();
 	const bool fsSuccess = ps->LoadBinary(
-		shaderPath + pixelShader.GetNameWithExtension(binaryType)
+		shaderPath + graphicsExtPipeline.GetFragmentShader().GetNameWithExtension(binaryType)
 	);
 
 	GraphicsPipelineBuilderMS builder{ graphicsRootSignature };
 
-	builder.AddRenderTarget(rtvFormat).SetCullMode(D3D12_CULL_MODE_BACK);
-
-	if (dsvFormat != DXGI_FORMAT_UNKNOWN)
-		builder.SetDepthStencilState(
-			DepthStencilStateBuilder{}.Enable(TRUE, D3D12_DEPTH_WRITE_MASK_ALL, FALSE),
-			dsvFormat
-		);
+	ConfigurePipelineBuilder(builder, graphicsExtPipeline);
 
 	auto pso = std::make_unique<D3DPipelineObject>();
 

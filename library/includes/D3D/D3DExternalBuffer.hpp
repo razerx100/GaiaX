@@ -2,6 +2,7 @@
 #define D3D_EXTERNAL_BUFFER_HPP_
 #include <ExternalBuffer.hpp>
 #include <D3DResources.hpp>
+#include <D3DResourceBarrier.hpp>
 
 class D3DExternalBuffer : public ExternalBuffer
 {
@@ -57,12 +58,52 @@ public:
 		bool copySrc, bool copyDst
 	) override;
 
-	void Destroy() noexcept override;
+	void Destroy() noexcept override { m_texture.Destroy(); }
+
+	void SetCurrentState(D3D12_RESOURCE_STATES newState) noexcept
+	{
+		m_currentState = newState;
+	}
 
 	[[nodiscard]]
 	Extent GetExtent() const noexcept override
 	{
-		return Extent{};
+		return Extent
+		{
+			.width  = static_cast<std::uint32_t>(m_texture.GetWidth()),
+			.height = m_texture.GetHeight()
+		};
+	}
+
+	[[nodiscard]]
+	// This actually won't change the state. It would just replace the older state with the new one.
+	// And keep track of it.
+	ResourceBarrierBuilder TransitionState(D3D12_RESOURCE_STATES newState) noexcept;
+
+	[[nodiscard]]
+	D3D12_RESOURCE_STATES GetCurrentState() const noexcept { return m_currentState; }
+
+	[[nodiscard]]
+	const Texture& GetTexture() const noexcept { return m_texture; }
+
+private:
+	Texture               m_texture;
+	D3D12_RESOURCE_STATES m_currentState;
+
+public:
+	D3DExternalTexture(const D3DExternalTexture&) = delete;
+	D3DExternalTexture& operator=(const D3DExternalTexture&) = delete;
+
+	D3DExternalTexture(D3DExternalTexture&& other) noexcept
+		: m_texture{ std::move(other.m_texture) },
+		m_currentState{ other.m_currentState }
+	{}
+	D3DExternalTexture& operator=(D3DExternalTexture&& other) noexcept
+	{
+		m_texture      = std::move(other.m_texture);
+		m_currentState = other.m_currentState;
+
+		return *this;
 	}
 };
 #endif

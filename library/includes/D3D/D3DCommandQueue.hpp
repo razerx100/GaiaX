@@ -27,13 +27,29 @@ public:
 	{
 		Copy(src, 0u, dst, 0u, src.BufferSize());
 	}
+	// Texture copied by this function will usually be used in the shaders. And so the state
+	// is implicitly promoted and doesn't require a barrier afterwards.
 	void Copy(
 		const Buffer& src, UINT64 srcOffset, const Texture& dst, UINT subresourceIndex
 	) const noexcept;
+	// Texture copied by this function will usually be used in the shaders. And so the state
+	// is implicitly promoted and doesn't require a barrier afterwards.
 	void CopyWhole(
 		const Buffer& src, const Texture& dst, UINT subresourceIndex
 	) const noexcept {
 		Copy(src, 0u, dst, subresourceIndex);
+	}
+
+	// If we are copying render targets or depth/stencil textures, we would need to
+	// transition to the proper state afterwards.
+	void CopyTexture(
+		ID3D12Resource* src, ID3D12Resource* dst, UINT srcSubresourceIndex, UINT dstSubresourceIndex
+	) const noexcept;
+
+	void Copy(
+		const Texture& src, const Texture& dst, UINT srcSubresourceIndex, UINT dstSubresourceIndex
+	) const noexcept {
+		CopyTexture(src.Get(), dst.Get(), srcSubresourceIndex, dstSubresourceIndex);
 	}
 
 	template<std::uint32_t BarrierCount = 1u>

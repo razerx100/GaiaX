@@ -74,6 +74,31 @@ void D3DCommandList::Copy(
 	);
 }
 
+void D3DCommandList::CopyTexture(
+	ID3D12Resource* src, ID3D12Resource* dst, UINT srcSubresourceIndex, UINT dstSubresourceIndex
+) const noexcept {
+	D3D12_TEXTURE_COPY_LOCATION dstLocation
+	{
+		.pResource        = dst,
+		.Type             = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX,
+		.SubresourceIndex = dstSubresourceIndex
+	};
+
+	D3D12_TEXTURE_COPY_LOCATION srcLocation
+	{
+		.pResource        = src,
+		.Type             = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX,
+		.SubresourceIndex = srcSubresourceIndex
+	};
+
+	m_commandList->CopyTextureRegion(
+		&dstLocation,
+		0u, 0u, 0u,
+		&srcLocation,
+		nullptr
+	);
+}
+
 // D3D Command Queue
 void D3DCommandQueue::Create(ID3D12Device4* device, D3D12_COMMAND_LIST_TYPE type, size_t bufferCount)
 {

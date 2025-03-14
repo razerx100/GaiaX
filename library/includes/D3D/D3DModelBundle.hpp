@@ -168,11 +168,23 @@ public:
 	static consteval UINT GetConstantCount() noexcept { return 1u; }
 
 private:
+	template<bool Sorted>
 	void _draw(
-		size_t modelCount,
-		const ModelData& (PipelineModelsVSIndividual::* GetModelData) (size_t) const noexcept,
-		bool (PipelineModelsVSIndividual::* IsModelInUse) (size_t) const noexcept,
-		const D3DCommandList& graphicsList, UINT constantsRootIndex, const D3DMeshBundleVS& meshBundle,
+		size_t modelCount, const D3DCommandList& graphicsList, UINT constantsRootIndex,
+		const D3DMeshBundleVS& meshBundle, const std::vector<std::shared_ptr<Model>>& models
+	) const noexcept {
+		ID3D12GraphicsCommandList* cmdList = graphicsList.Get();
+
+		for (size_t index = 0; index < modelCount; ++index)
+			DrawModel(
+				_isModelInUse<Sorted>(index), _getModelData<Sorted>(index), cmdList, constantsRootIndex,
+				meshBundle, models
+			);
+	}
+
+	void DrawModel(
+		bool isInUse, const ModelData& modelData, ID3D12GraphicsCommandList* graphicsList,
+		UINT constantsRootIndex, const D3DMeshBundleVS& meshBundle,
 		const std::vector<std::shared_ptr<Model>>& models
 	) const noexcept;
 
@@ -238,11 +250,23 @@ private:
 		return (num + den - 1) / den;
 	}
 
+	template<bool Sorted>
 	void _draw(
-		size_t modelCount,
-		const ModelData& (PipelineModelsMSIndividual::* GetModelData) (size_t) const noexcept,
-		bool (PipelineModelsMSIndividual::* IsModelInUse) (size_t) const noexcept,
-		const D3DCommandList& graphicsList, UINT constantsRootIndex, const D3DMeshBundleMS& meshBundle,
+		size_t modelCount, const D3DCommandList& graphicsList, UINT constantsRootIndex,
+		const D3DMeshBundleMS& meshBundle, const std::vector<std::shared_ptr<Model>>& models
+	) const noexcept {
+		ID3D12GraphicsCommandList6* cmdList = graphicsList.Get();
+
+		for (size_t index = 0u; index < modelCount; ++index)
+			DrawModel(
+				_isModelInUse<Sorted>(index), _getModelData<Sorted>(index), cmdList, constantsRootIndex,
+				meshBundle, models
+			);
+	}
+
+	void DrawModel(
+		bool isInUse, const ModelData& modelData, ID3D12GraphicsCommandList6* graphicsList,
+		UINT constantsRootIndex, const D3DMeshBundleMS& meshBundle,
 		const std::vector<std::shared_ptr<Model>>& models
 	) const noexcept;
 
@@ -343,13 +367,56 @@ public:
 	}
 
 private:
+	template<bool Sorted>
 	void _update(
-		size_t modelCount,
-		const ModelData& (PipelineModelsCSIndirect::* GetModelData) (size_t) const noexcept,
-		bool (PipelineModelsCSIndirect::* IsModelInUse) (size_t) const noexcept,
-		size_t frameIndex, const D3DMeshBundleVS& meshBundle,
+		size_t modelCount, size_t frameIndex, const D3DMeshBundleVS& meshBundle,
 		const std::vector<std::shared_ptr<Model>>& models
-	) const noexcept;
+	) const noexcept {
+		if (!modelCount)
+			return;
+
+		const SharedBufferData& argumentInputSharedData = m_argumentInputSharedData[frameIndex];
+
+		std::uint8_t* argumentInputStart = argumentInputSharedData.bufferData->CPUHandle();
+		std::uint8_t* perModelStart      = m_perModelSharedData.bufferData->CPUHandle();
+
+		constexpr size_t argumentStride = sizeof(IndirectArgument);
+		auto argumentOffset             = static_cast<size_t>(argumentInputSharedData.offset);
+
+		constexpr size_t perModelStride = sizeof(PerModelData);
+		auto perModelOffset             = static_cast<size_t>(m_perModelSharedData.offset);
+		constexpr auto isVisibleOffset  = offsetof(PerModelData, isVisible);
+
+		for (size_t index = 0u; index < modelCount; ++index)
+		{
+			const ModelData& modelData          = _getModelData<Sorted>(index);
+			const std::shared_ptr<Model>& model = models[modelData.bundleIndex];
+
+			const MeshTemporaryDetailsVS& meshDetailsVS = meshBundle.GetMeshDetails(model->GetMeshIndex());
+			const D3D12_DRAW_INDEXED_ARGUMENTS meshArgs = PipelineModelsBase::GetDrawIndexedIndirectCommand(
+				meshDetailsVS
+			);
+
+			IndirectArgument arguments
+			{
+				.modelIndex    = modelData.bufferIndex,
+				.drawArguments = meshArgs
+			};
+
+			memcpy(argumentInputStart + argumentOffset, &arguments, argumentStride);
+
+			argumentOffset += argumentStride;
+
+			// Model Visiblity
+			const auto visiblity = static_cast<std::uint32_t>(
+				_isModelInUse<Sorted>(index) && model->IsVisible()
+			);
+
+			memcpy(perModelStart + perModelOffset + isVisibleOffset, &visiblity, sizeof(std::uint32_t));
+
+			perModelOffset += perModelStride;
+		}
+	}
 
 private:
 	SharedBufferData              m_perPipelineSharedData;
@@ -978,6 +1045,13 @@ public:
 
 	void Update(size_t frameIndex, const D3DMeshBundleVS& meshBundle) const noexcept;
 	void UpdateSorted(size_t frameIndex, const D3DMeshBundleVS& meshBundle) noexcept;
+
+	void UpdatePipeline(
+		size_t pipelineLocalIndex, size_t frameIndex, const D3DMeshBundleVS& meshBundle
+	) const noexcept;
+	void UpdatePipelineSorted(
+		size_t pipelineLocalIndex, size_t frameIndex, const D3DMeshBundleVS& meshBundle
+	) noexcept;
 
 	void Draw(
 		size_t frameIndex, const D3DCommandList& graphicsList, ID3D12CommandSignature* commandSignature,
