@@ -100,7 +100,7 @@ void D3DExternalRenderPass::SetDepthStencil(
 	std::uint32_t externalTextureIndex, D3D12_RESOURCE_STATES newState, D3D12_DSV_FLAGS dsvFlags,
 	bool clearDepth, bool clearStencil
 ) {
-	if (m_depthStencilDetails.textureIndex != std::numeric_limits<std::uint32_t>::max())
+	if (m_depthStencilDetails.textureIndex == std::numeric_limits<std::uint32_t>::max())
 	{
 		m_depthStencilDetails.textureIndex  = externalTextureIndex;
 
@@ -117,7 +117,7 @@ void D3DExternalRenderPass::SetDepthStencil(
 		m_depthStencilDetails.textureIndex
 	);
 
-	// If the current state is either common / depth read, we must replace it with depth write.
+	// If the current state is in depth read, we must replace it with depth write.
 	if (externalTexture->GetCurrentState() != D3D12_RESOURCE_STATE_DEPTH_WRITE)
 	{
 		m_renderPassManager.SetTransitionAfterState(
@@ -187,6 +187,8 @@ std::uint32_t D3DExternalRenderPass::AddRenderTarget(
 
 	D3DExternalTexture* externalTexture = m_resourceFactory->GetD3DExternalTexture(externalTextureIndex);
 
+	// Even though the textures will be created in the Render Target state, it might be changed to
+	// a different one, so we must change it back.
 	const std::uint32_t renderTargetBarrierIndex = m_renderPassManager.AddStartBarrier(
 		externalTexture->TransitionState(D3D12_RESOURCE_STATE_RENDER_TARGET)
 	);
