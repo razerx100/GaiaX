@@ -47,7 +47,8 @@ public:
 public:
 	virtual ~ExternalTexture() = default;
 
-	// The two copy flags are only necessary on Vulkan for now.
+	// The two copy flags are only necessary on Vulkan for now. Until Dx12 Enhanced Barrier is more common.
+	// It is available on Win11 only now.
 	virtual void Create(
 		std::uint32_t width, std::uint32_t height, ExternalFormat format, ExternalTexture2DType type,
 		bool copySrc, bool copyDst

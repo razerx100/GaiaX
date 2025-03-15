@@ -153,7 +153,19 @@ void D3DExternalRenderPass::SetDepthTesting(
 
 void D3DExternalRenderPass::SetDepthClearColour(float clearColour)
 {
-	m_renderPassManager.SetDepthClearValue(clearColour);
+	if (!m_renderPassManager.IsDepthClearColourSame(clearColour))
+	{
+		D3DExternalTexture* externalTexture = m_resourceFactory->GetD3DExternalTexture(
+			m_depthStencilDetails.textureIndex
+		);
+
+		externalTexture->Recreate(
+			ExternalTexture2DType::Depth,
+			D3D12_CLEAR_VALUE{ .DepthStencil = D3D12_DEPTH_STENCIL_VALUE{ .Depth = clearColour } }
+		);
+
+		m_renderPassManager.SetDepthClearValue(clearColour);
+	}
 }
 
 void D3DExternalRenderPass::SetStencilTesting(
@@ -175,7 +187,23 @@ void D3DExternalRenderPass::SetStencilTesting(
 
 void D3DExternalRenderPass::SetStencilClearColour(std::uint32_t clearColour)
 {
-	m_renderPassManager.SetStencilClearValue(static_cast<std::uint8_t>(clearColour));
+	const auto u8ClearColour = static_cast<UINT8>(clearColour);
+
+	if (!m_renderPassManager.IsStencilClearColourSame(u8ClearColour))
+	{
+		D3DExternalTexture* externalTexture = m_resourceFactory->GetD3DExternalTexture(
+			m_depthStencilDetails.textureIndex
+		);
+
+		externalTexture->Recreate(
+			ExternalTexture2DType::Stencil,
+			D3D12_CLEAR_VALUE{
+				.DepthStencil = D3D12_DEPTH_STENCIL_VALUE{ .Stencil = u8ClearColour }
+			}
+		);
+
+		m_renderPassManager.SetStencilClearValue(u8ClearColour);
+	}
 }
 
 std::uint32_t D3DExternalRenderPass::AddRenderTarget(
@@ -219,7 +247,28 @@ void D3DExternalRenderPass::SetRenderTargetClearColour(
 		clearColour.w
 	};
 
-	m_renderPassManager.SetRenderTargetClearValue(renderTargetIndex, d3dClearColour);
+	const auto zRenderTargetIndex = static_cast<size_t>(renderTargetIndex);
+
+	if (!m_renderPassManager.IsRenderTargetClearColourSame(zRenderTargetIndex, d3dClearColour))
+	{
+		D3DExternalTexture* externalTexture = m_resourceFactory->GetD3DExternalTexture(
+			m_renderTargetDetails[zRenderTargetIndex].textureIndex
+		);
+
+		externalTexture->Recreate(
+			ExternalTexture2DType::RenderTarget,
+			D3D12_CLEAR_VALUE{
+				.Color = {
+					clearColour.x,
+					clearColour.y,
+					clearColour.z,
+					clearColour.w
+				}
+			}
+		);
+
+		m_renderPassManager.SetRenderTargetClearValue(zRenderTargetIndex, d3dClearColour);
+	}
 }
 
 void D3DExternalRenderPass::SetSwapchainCopySource(std::uint32_t renderTargetIndex) noexcept

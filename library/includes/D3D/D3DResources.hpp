@@ -152,6 +152,15 @@ public:
 		const D3D12_CLEAR_VALUE* clearValue = nullptr
 	);
 
+	void Recreate2D(
+		D3D12_RESOURCE_STATES currentState, D3D12_RESOURCE_FLAGS flags,
+		const D3D12_CLEAR_VALUE* clearValue
+	);
+	void Recreate3D(
+		D3D12_RESOURCE_STATES currentState, D3D12_RESOURCE_FLAGS flags,
+		const D3D12_CLEAR_VALUE* clearValue
+	);
+
 	void Destroy() noexcept;
 
 	[[nodiscard]]
@@ -193,10 +202,11 @@ private:
 
 private:
 	DXGI_FORMAT m_format;
-	UINT64      m_width;
 	UINT        m_height;
 	UINT16      m_depth;
+	UINT16      m_mipLevels;
 	bool        m_msaa;
+	UINT64      m_width;
 
 public:
 	Texture(const Texture&) = delete;
@@ -204,8 +214,8 @@ public:
 
 	Texture(Texture&& other) noexcept
 		: Resource{ std::move(other) },
-		m_format{ other.m_format }, m_width{ other.m_width }, m_height{ other.m_height },
-		m_depth{ other.m_depth }, m_msaa{ other.m_msaa }
+		m_format{ other.m_format }, m_height{ other.m_height }, m_depth{ other.m_depth },
+		m_mipLevels{ other.m_mipLevels }, m_msaa{ other.m_msaa }, m_width{ other.m_width }
 	{}
 	Texture& operator=(Texture&& other) noexcept
 	{
@@ -214,11 +224,12 @@ public:
 
 		Resource::operator=(std::move(other));
 
-		m_format = other.m_format;
-		m_width  = other.m_width;
-		m_height = other.m_height;
-		m_depth  = other.m_depth;
-		m_msaa   = other.m_msaa;
+		m_format    = other.m_format;
+		m_height    = other.m_height;
+		m_depth     = other.m_depth;
+		m_mipLevels = other.m_mipLevels;
+		m_msaa      = other.m_msaa;
+		m_width     = other.m_width;
 
 		return *this;
 	}

@@ -47,6 +47,7 @@ public:
 		ExternalAttachmentStoreOp storeOP
 	) override;
 	// Only necessary if the LoadOP is clear.
+	// The resource will be recreated if the colour doesn't match with the previous one.
 	void SetDepthClearColour(float clearColour) override;
 
 	void SetStencilTesting(
@@ -54,6 +55,7 @@ public:
 		ExternalAttachmentStoreOp storeOP
 	) override;
 	// Only necessary if the LoadOP is clear.
+	// The resource will be recreated if the colour doesn't match with the previous one.
 	void SetStencilClearColour(std::uint32_t clearColour) override;
 
 	std::uint32_t AddRenderTarget(
@@ -61,6 +63,7 @@ public:
 		ExternalAttachmentStoreOp storeOP
 	) override;
 	// Only necessary if the LoadOP is clear.
+	// The resource will be recreated if the colour doesn't match with the previous one.
 	void SetRenderTargetClearColour(
 		std::uint32_t renderTargetIndex, const DirectX::XMFLOAT4& clearColour
 	) override;

@@ -64,6 +64,20 @@ void D3DExternalTexture::Create(
 	);
 }
 
+void D3DExternalTexture::Recreate(ExternalTexture2DType type, D3D12_CLEAR_VALUE&& clearValue)
+{
+	D3D12_RESOURCE_FLAGS resourceFlag = D3D12_RESOURCE_FLAG_NONE;
+
+	if (type == ExternalTexture2DType::RenderTarget)
+		resourceFlag = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+	else if (type == ExternalTexture2DType::Depth || type == ExternalTexture2DType::Stencil)
+		resourceFlag = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+
+	clearValue.Format = m_texture.Format();
+
+	m_texture.Recreate2D(m_currentState, resourceFlag, &clearValue);
+}
+
 ResourceBarrierBuilder D3DExternalTexture::TransitionState(D3D12_RESOURCE_STATES newState) noexcept
 {
 	ResourceBarrierBuilder barrierBuilder{};

@@ -55,6 +55,15 @@ public:
 	);
 
 	// These functions can be used every frame.
+	[[nodiscard]]
+	bool IsDepthClearColourSame(float depthClearColour) const noexcept;
+	[[nodiscard]]
+	bool IsStencilClearColourSame(std::uint8_t stencilClearColour) const noexcept;
+	[[nodiscard]]
+	bool IsRenderTargetClearColourSame(
+		size_t renderTargetIndex, const RTVClearColour& clearValue
+	) const noexcept;
+
 	void SetTransitionAfterState(size_t barrierIndex, D3D12_RESOURCE_STATES afterState) noexcept;
 
 	void SetDepthClearValue(float depthClearValue) noexcept;

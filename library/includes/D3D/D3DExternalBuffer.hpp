@@ -58,6 +58,9 @@ public:
 		bool copySrc, bool copyDst
 	) override;
 
+	// The format is overwritten with the current texture format.
+	void Recreate(ExternalTexture2DType type, D3D12_CLEAR_VALUE&& clearValue);
+
 	void Destroy() noexcept override { m_texture.Destroy(); }
 
 	void SetCurrentState(D3D12_RESOURCE_STATES newState) noexcept

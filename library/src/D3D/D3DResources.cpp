@@ -146,7 +146,7 @@ D3D12_CONSTANT_BUFFER_VIEW_DESC Buffer::GetCBVDesc(UINT64 startingOffset, UINT b
 // Texture
 Texture::Texture(ID3D12Device* device, MemoryManager* memoryManager, D3D12_HEAP_TYPE memoryType)
 	: Resource{ device, memoryManager, memoryType }, m_format{ DXGI_FORMAT_UNKNOWN },
-	m_width{ 0u }, m_height{ 0u }, m_depth{ 0u }, m_msaa{ false }
+	m_height{ 0u }, m_depth{ 0u }, m_mipLevels{ 0u }, m_msaa{ false }, m_width{ 0u }
 {}
 
 Texture::~Texture() noexcept
@@ -163,8 +163,9 @@ void Texture::Create(
 	m_height = height;
 	m_depth  = depth;
 
-	m_format = textureFormat;
-	m_msaa   = msaa;
+	m_mipLevels = mipLevels;
+	m_format    = textureFormat;
+	m_msaa      = msaa;
 
 	const UINT64 textureAlignment = msaa ?
 		D3D12_DEFAULT_MSAA_RESOURCE_PLACEMENT_ALIGNMENT : D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
@@ -213,6 +214,24 @@ void Texture::Create3D(
 	Create(
 		width, height, depth, mipLevels, textureFormat, D3D12_RESOURCE_DIMENSION_TEXTURE3D,
 		initialState, flags, clearValue, msaa
+	);
+}
+
+void Texture::Recreate2D(
+	D3D12_RESOURCE_STATES currentState, D3D12_RESOURCE_FLAGS flags,
+	const D3D12_CLEAR_VALUE* clearValue
+) {
+	Create2D(
+		m_width, m_height, m_mipLevels, m_format, currentState, flags, m_msaa, clearValue
+	);
+}
+
+void Texture::Recreate3D(
+	D3D12_RESOURCE_STATES currentState, D3D12_RESOURCE_FLAGS flags,
+	const D3D12_CLEAR_VALUE* clearValue
+) {
+	Create3D(
+		m_width, m_height, m_depth, m_mipLevels, m_format, currentState, flags, m_msaa, clearValue
 	);
 }
 
