@@ -76,14 +76,3 @@ void D3DExternalTexture::Recreate(ExternalTexture2DType type)
 
 	m_texture.Recreate2D(m_currentState, resourceFlag, &m_clearValue);
 }
-
-ResourceBarrierBuilder D3DExternalTexture::TransitionState(D3D12_RESOURCE_STATES newState) noexcept
-{
-	ResourceBarrierBuilder barrierBuilder{};
-
-	barrierBuilder.Transition(m_texture.Get(), m_currentState, newState);
-
-	m_currentState = newState;
-
-	return barrierBuilder;
-}

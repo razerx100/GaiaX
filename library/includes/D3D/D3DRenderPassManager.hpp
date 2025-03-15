@@ -22,7 +22,7 @@ public:
 public:
 	D3DRenderPassManager(D3DReusableDescriptorHeap* rtvHeap, D3DReusableDescriptorHeap* dsvHeap)
 		: m_rtvHeap{ rtvHeap }, m_renderTargets{}, m_rtvHandles{}, m_rtvClearColours{},
-		m_depthStencilTarget{ dsvHeap }, m_dsvHandle{}, m_startImageBarriers{},
+		m_depthStencilTarget{ dsvHeap }, m_dsvHandle{},
 		m_depthStencilInfo{
 			.depthClearColour = 1.f, .stencilClearColour = 0u, .dsvFlags = 0u, .clearFlags = 0u
 		}
@@ -33,13 +33,10 @@ public:
 	void AddRenderTarget(
 		ID3D12Resource* renderTargetResource, DXGI_FORMAT rtvFormat, bool clearAtStart
 	);
-	[[nodiscard]]
-	std::uint32_t AddStartBarrier(const ResourceBarrierBuilder& barrierBuilder) noexcept;
 
 	// The resource must have been created before calling this.
 	void RecreateRenderTarget(
-		size_t renderTargetIndex, size_t barrierIndex, ID3D12Resource* renderTargetResource,
-		DXGI_FORMAT rtvFormat
+		size_t renderTargetIndex, ID3D12Resource* renderTargetResource, DXGI_FORMAT rtvFormat
 	);
 
 	// The resource can be null here, but must be created later and then Recreate must be called before
@@ -50,9 +47,7 @@ public:
 	);
 
 	// The resource must have been created before calling this.
-	void RecreateDepthStencilTarget(
-		size_t barrierIndex, ID3D12Resource* depthStencilTargetResource, DXGI_FORMAT dsvFormat
-	);
+	void RecreateDepthStencilTarget(ID3D12Resource* depthStencilTargetResource, DXGI_FORMAT dsvFormat);
 
 	// These functions can be used every frame.
 	[[nodiscard]]
@@ -63,8 +58,6 @@ public:
 	bool IsRenderTargetClearColourSame(
 		size_t renderTargetIndex, const RTVClearColour& clearValue
 	) const noexcept;
-
-	void SetTransitionAfterState(size_t barrierIndex, D3D12_RESOURCE_STATES afterState) noexcept;
 
 	void SetDepthClearValue(float depthClearValue) noexcept;
 	void SetStencilClearValue(std::uint8_t stencilClearValue) noexcept;
@@ -89,7 +82,6 @@ private:
 	std::vector<RTVClearColour>              m_rtvClearColours;
 	DepthStencilTarget                       m_depthStencilTarget;
 	D3D12_CPU_DESCRIPTOR_HANDLE              m_dsvHandle;
-	D3DResourceBarrier1_1                    m_startImageBarriers;
 	DepthStencilInfo                         m_depthStencilInfo;
 
 public:
@@ -103,7 +95,6 @@ public:
 		m_rtvClearColours{ std::move(other.m_rtvClearColours) },
 		m_depthStencilTarget{ std::move(other.m_depthStencilTarget) },
 		m_dsvHandle{ other.m_dsvHandle },
-		m_startImageBarriers{ std::move(other.m_startImageBarriers) },
 		m_depthStencilInfo{ other.m_depthStencilInfo }
 	{}
 	D3DRenderPassManager& operator=(D3DRenderPassManager&& other) noexcept
@@ -114,7 +105,6 @@ public:
 		m_rtvClearColours    = std::move(other.m_rtvClearColours);
 		m_depthStencilTarget = std::move(other.m_depthStencilTarget);
 		m_dsvHandle          = other.m_dsvHandle;
-		m_startImageBarriers = std::move(other.m_startImageBarriers);
 		m_depthStencilInfo   = other.m_depthStencilInfo;
 
 		return *this;

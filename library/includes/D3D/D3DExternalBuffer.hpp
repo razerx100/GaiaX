@@ -84,10 +84,7 @@ public:
 	}
 
 	[[nodiscard]]
-	// This actually won't change the state. It would just replace the older state with the new one.
-	// And keep track of it.
-	// Need to get rid of this function
-	ResourceBarrierBuilder TransitionState(D3D12_RESOURCE_STATES newState) noexcept;
+	bool IsTextureCreated() const noexcept { return m_texture.Get(); }
 
 	[[nodiscard]]
 	D3D12_RESOURCE_STATES GetCurrentState() const noexcept { return m_currentState; }

@@ -4,12 +4,9 @@ D3DExternalRenderPass::D3DExternalRenderPass(
 	D3DExternalResourceFactory* resourceFactory, D3DReusableDescriptorHeap* rtvHeap,
 	D3DReusableDescriptorHeap* dsvHeap
 ) : m_resourceFactory{ resourceFactory }, m_renderPassManager{ rtvHeap, dsvHeap },
-	m_pipelineDetails{}, m_renderTargetDetails{},
-	m_depthStencilDetails
-	{
-		.textureIndex = std::numeric_limits<std::uint32_t>::max(),
-		.barrierIndex = std::numeric_limits<std::uint32_t>::max()
-	}, m_swapchainCopySource{ std::numeric_limits<std::uint32_t>::max() }
+	m_pipelineDetails{}, m_renderTargetTextureIndices{},
+	m_depthStencilTextureIndex{ std::numeric_limits<std::uint32_t>::max() },
+	m_swapchainCopySource{ std::numeric_limits<std::uint32_t>::max() }
 {}
 
 void D3DExternalRenderPass::AddPipeline(std::uint32_t pipelineIndex, bool sorted)
@@ -63,35 +60,33 @@ void D3DExternalRenderPass::RemovePipeline(std::uint32_t pipelineIndex) noexcept
 
 void D3DExternalRenderPass::ResetAttachmentReferences()
 {
-	if (m_depthStencilDetails.textureIndex != std::numeric_limits<std::uint32_t>::max())
+	if (m_depthStencilTextureIndex != std::numeric_limits<std::uint32_t>::max())
 	{
 		D3DExternalTexture* externalTexture = m_resourceFactory->GetD3DExternalTexture(
-			m_depthStencilDetails.textureIndex
+			m_depthStencilTextureIndex
 		);
 
-		const Texture& depthStencilTexture = externalTexture->GetTexture();
+		const Texture& depthStencilTexture  = externalTexture->GetTexture();
 
 		m_renderPassManager.RecreateDepthStencilTarget(
-			m_depthStencilDetails.barrierIndex, depthStencilTexture.Get(),
-			depthStencilTexture.Format()
+			depthStencilTexture.Get(), depthStencilTexture.Format()
 		);
 	}
 
-	const size_t renderTargetCount = std::size(m_renderTargetDetails);
+	const size_t renderTargetCount = std::size(m_renderTargetTextureIndices);
 
 	for (size_t index = 0u; index < renderTargetCount; ++index)
 	{
-		const AttachmentDetails& renderTargetDetails = m_renderTargetDetails[index];
+		std::uint32_t renderTargetTextureIndex = m_renderTargetTextureIndices[index];
 
-		D3DExternalTexture* externalTexture = m_resourceFactory->GetD3DExternalTexture(
-			renderTargetDetails.textureIndex
+		D3DExternalTexture* externalTexture    = m_resourceFactory->GetD3DExternalTexture(
+			renderTargetTextureIndex
 		);
 
-		const Texture& renderTargetTexture = externalTexture->GetTexture();
+		const Texture& renderTargetTexture     = externalTexture->GetTexture();
 
 		m_renderPassManager.RecreateRenderTarget(
-			index, renderTargetDetails.barrierIndex, renderTargetTexture.Get(),
-			renderTargetTexture.Format()
+			index, renderTargetTexture.Get(), renderTargetTexture.Format()
 		);
 	}
 }
@@ -100,9 +95,9 @@ void D3DExternalRenderPass::SetDepthStencil(
 	std::uint32_t externalTextureIndex, D3D12_RESOURCE_STATES newState, D3D12_DSV_FLAGS dsvFlags,
 	bool clearDepth, bool clearStencil
 ) {
-	if (m_depthStencilDetails.textureIndex == std::numeric_limits<std::uint32_t>::max())
+	if (m_depthStencilTextureIndex == std::numeric_limits<std::uint32_t>::max())
 	{
-		m_depthStencilDetails.textureIndex  = externalTextureIndex;
+		m_depthStencilTextureIndex          = externalTextureIndex;
 
 		D3DExternalTexture* externalTexture = m_resourceFactory->GetD3DExternalTexture(
 			externalTextureIndex
@@ -113,25 +108,15 @@ void D3DExternalRenderPass::SetDepthStencil(
 		externalTexture->SetDepthStencilClearColour(
 			D3D12_DEPTH_STENCIL_VALUE{ .Depth = 1.f, .Stencil = 0u }
 		);
-
-		m_depthStencilDetails.barrierIndex = m_renderPassManager.AddStartBarrier(
-			externalTexture->TransitionState(newState)
-		);
 	}
 
 	D3DExternalTexture* externalTexture = m_resourceFactory->GetD3DExternalTexture(
-		m_depthStencilDetails.textureIndex
+		m_depthStencilTextureIndex
 	);
 
-	// If the current state is either in common / depth read, we must replace it with depth write.
+	// We don't need to change the state if the current state is already DEPTH WRITE.
 	if (externalTexture->GetCurrentState() != D3D12_RESOURCE_STATE_DEPTH_WRITE)
-	{
-		m_renderPassManager.SetTransitionAfterState(
-			m_depthStencilDetails.barrierIndex, newState
-		);
-
 		externalTexture->SetCurrentState(newState);
-	}
 
 	const Texture& depthTexture = externalTexture->GetTexture();
 
@@ -141,8 +126,7 @@ void D3DExternalRenderPass::SetDepthStencil(
 }
 
 void D3DExternalRenderPass::SetDepthTesting(
-	std::uint32_t externalTextureIndex, ExternalAttachmentLoadOp loadOp,
-	ExternalAttachmentStoreOp storeOp
+	std::uint32_t externalTextureIndex, ExternalAttachmentLoadOp loadOp, ExternalAttachmentStoreOp storeOp
 ) {
 	D3D12_RESOURCE_STATES newState = D3D12_RESOURCE_STATE_DEPTH_READ;
 	D3D12_DSV_FLAGS dsvFlags       = D3D12_DSV_FLAG_NONE;
@@ -161,16 +145,16 @@ void D3DExternalRenderPass::SetDepthClearColour(float clearColour)
 {
 	if (!m_renderPassManager.IsDepthClearColourSame(clearColour))
 	{
-		if (m_depthStencilDetails.textureIndex != std::numeric_limits<std::uint32_t>::max())
+		if (m_depthStencilTextureIndex != std::numeric_limits<std::uint32_t>::max())
 		{
 			D3DExternalTexture* externalTexture = m_resourceFactory->GetD3DExternalTexture(
-				m_depthStencilDetails.textureIndex
+				m_depthStencilTextureIndex
 			);
 
 			externalTexture->SetDepthClearColour(clearColour);
 
 			// Only recreate if there is an already existing texture.
-			if (externalTexture->GetTexture().Get())
+			if (externalTexture->IsTextureCreated())
 				externalTexture->Recreate(ExternalTexture2DType::Depth);
 		}
 
@@ -179,8 +163,7 @@ void D3DExternalRenderPass::SetDepthClearColour(float clearColour)
 }
 
 void D3DExternalRenderPass::SetStencilTesting(
-	std::uint32_t externalTextureIndex, ExternalAttachmentLoadOp loadOp,
-	ExternalAttachmentStoreOp storeOp
+	std::uint32_t externalTextureIndex, ExternalAttachmentLoadOp loadOp, ExternalAttachmentStoreOp storeOp
 ) {
 	D3D12_RESOURCE_STATES newState = D3D12_RESOURCE_STATE_DEPTH_READ;
 	D3D12_DSV_FLAGS dsvFlags       = D3D12_DSV_FLAG_NONE;
@@ -201,16 +184,16 @@ void D3DExternalRenderPass::SetStencilClearColour(std::uint32_t clearColour)
 
 	if (!m_renderPassManager.IsStencilClearColourSame(u8ClearColour))
 	{
-		if (m_depthStencilDetails.textureIndex != std::numeric_limits<std::uint32_t>::max())
+		if (m_depthStencilTextureIndex != std::numeric_limits<std::uint32_t>::max())
 		{
 			D3DExternalTexture* externalTexture = m_resourceFactory->GetD3DExternalTexture(
-				m_depthStencilDetails.textureIndex
+				m_depthStencilTextureIndex
 			);
 
 			externalTexture->SetStencilClearColour(u8ClearColour);
 
 			// Only recreate if there is an already existing texture.
-			if (externalTexture->GetTexture().Get())
+			if (externalTexture->IsTextureCreated())
 				externalTexture->Recreate(ExternalTexture2DType::Stencil);
 		}
 
@@ -219,8 +202,7 @@ void D3DExternalRenderPass::SetStencilClearColour(std::uint32_t clearColour)
 }
 
 std::uint32_t D3DExternalRenderPass::AddRenderTarget(
-	std::uint32_t externalTextureIndex, ExternalAttachmentLoadOp loadOp,
-	ExternalAttachmentStoreOp storeOp
+	std::uint32_t externalTextureIndex, ExternalAttachmentLoadOp loadOp, ExternalAttachmentStoreOp storeOp
 ) {
 	const bool clearRenderTarget
 		= loadOp == ExternalAttachmentLoadOp::Clear || storeOp == ExternalAttachmentStoreOp::Store;
@@ -230,25 +212,18 @@ std::uint32_t D3DExternalRenderPass::AddRenderTarget(
 	// Set the default clear colours. Even if they aren't used.
 	externalTexture->SetRenderTargetClearColour({ 0.f, 0.f, 0.f, 0.f });
 
-	const std::uint32_t renderTargetBarrierIndex = m_renderPassManager.AddStartBarrier(
-		externalTexture->TransitionState(D3D12_RESOURCE_STATE_RENDER_TARGET)
-	);
+	externalTexture->SetCurrentState(D3D12_RESOURCE_STATE_RENDER_TARGET);
 
-	const auto renderTargetIndex = static_cast<std::uint32_t>(std::size(m_renderTargetDetails));
+	const auto renderTargetLocalIndex
+		= static_cast<std::uint32_t>(std::size(m_renderTargetTextureIndices));
 
-	m_renderTargetDetails.emplace_back(
-		AttachmentDetails
-		{
-			.textureIndex = externalTextureIndex,
-			.barrierIndex = renderTargetBarrierIndex
-		}
-	);
+	m_renderTargetTextureIndices.emplace_back(externalTextureIndex);
 
 	const Texture& renderTexture = externalTexture->GetTexture();
 
 	m_renderPassManager.AddRenderTarget(renderTexture.Get(), renderTexture.Format(), clearRenderTarget);
 
-	return renderTargetIndex;
+	return renderTargetLocalIndex;
 }
 
 void D3DExternalRenderPass::SetRenderTargetClearColour(
@@ -266,18 +241,18 @@ void D3DExternalRenderPass::SetRenderTargetClearColour(
 
 	if (!m_renderPassManager.IsRenderTargetClearColourSame(zRenderTargetIndex, d3dClearColour))
 	{
-		const AttachmentDetails& renderTargetDetails = m_renderTargetDetails[zRenderTargetIndex];
+		const std::uint32_t renderTargetTextureIndex = m_renderTargetTextureIndices[zRenderTargetIndex];
 
-		if (renderTargetDetails.textureIndex != std::numeric_limits<std::uint32_t>::max())
+		if (renderTargetTextureIndex != std::numeric_limits<std::uint32_t>::max())
 		{
 			D3DExternalTexture* externalTexture = m_resourceFactory->GetD3DExternalTexture(
-				renderTargetDetails.textureIndex
+				renderTargetTextureIndex
 			);
 
 			externalTexture->SetRenderTargetClearColour(d3dClearColour);
 
 			// Only recreate if there is an already existing texture.
-			if (externalTexture->GetTexture().Get())
+			if (externalTexture->IsTextureCreated())
 				externalTexture->Recreate(ExternalTexture2DType::RenderTarget);
 		}
 
@@ -287,7 +262,7 @@ void D3DExternalRenderPass::SetRenderTargetClearColour(
 
 void D3DExternalRenderPass::SetSwapchainCopySource(std::uint32_t renderTargetIndex) noexcept
 {
-	m_swapchainCopySource = m_renderTargetDetails[renderTargetIndex].textureIndex;
+	m_swapchainCopySource = m_renderTargetTextureIndices[renderTargetIndex];
 }
 
 void D3DExternalRenderPass::StartPass(const D3DCommandList& graphicsCmdList) const noexcept

@@ -77,16 +77,6 @@ public:
 		return AddBarrier(barrierBuilder.Get());
 	}
 
-	void SetTransitionAfterState(size_t barrierIndex, D3D12_RESOURCE_STATES afterState) noexcept
-	{
-		m_barriers[barrierIndex].Transition.StateAfter = afterState;
-	}
-
-	void SetTransitionResource(size_t barrierIndex, ID3D12Resource* resource) noexcept
-	{
-		m_barriers[barrierIndex].Transition.pResource = resource;
-	}
-
 	void RecordBarriers(ID3D12GraphicsCommandList* commandList) const noexcept
 	{
 		commandList->ResourceBarrier(barrierCount, std::data(m_barriers));
@@ -117,16 +107,6 @@ public:
 	D3DResourceBarrier1_1& AddBarrier(const ResourceBarrierBuilder& barrierBuilder)
 	{
 		return AddBarrier(barrierBuilder.Get());
-	}
-
-	void SetTransitionAfterState(size_t barrierIndex, D3D12_RESOURCE_STATES afterState) noexcept
-	{
-		m_barriers[barrierIndex].Transition.StateAfter = afterState;
-	}
-
-	void SetTransitionResource(size_t barrierIndex, ID3D12Resource* resource) noexcept
-	{
-		m_barriers[barrierIndex].Transition.pResource = resource;
 	}
 
 	void RecordBarriers(ID3D12GraphicsCommandList* commandList) const noexcept

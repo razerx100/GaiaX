@@ -12,13 +12,6 @@
 class D3DExternalRenderPass : public ExternalRenderPass
 {
 public:
-	struct AttachmentDetails
-	{
-		std::uint32_t textureIndex = std::numeric_limits<std::uint32_t>::max();
-		std::uint32_t barrierIndex = std::numeric_limits<std::uint32_t>::max();
-	};
-
-public:
 	struct PipelineDetails
 	{
 		std::uint32_t              pipelineGlobalIndex;
@@ -89,12 +82,12 @@ private:
 	);
 
 protected:
-	D3DExternalResourceFactory*    m_resourceFactory;
-	D3DRenderPassManager           m_renderPassManager;
-	std::vector<PipelineDetails>   m_pipelineDetails;
-	std::vector<AttachmentDetails> m_renderTargetDetails;
-	AttachmentDetails              m_depthStencilDetails;
-	std::uint32_t                  m_swapchainCopySource;
+	D3DExternalResourceFactory*  m_resourceFactory;
+	D3DRenderPassManager         m_renderPassManager;
+	std::vector<PipelineDetails> m_pipelineDetails;
+	std::vector<std::uint32_t>   m_renderTargetTextureIndices;
+	std::uint32_t                m_depthStencilTextureIndex;
+	std::uint32_t                m_swapchainCopySource;
 
 public:
 	D3DExternalRenderPass(const D3DExternalRenderPass&) = delete;
@@ -104,20 +97,20 @@ public:
 		: m_resourceFactory{ std::exchange(other.m_resourceFactory, nullptr) },
 		m_renderPassManager{ std::move(other.m_renderPassManager) },
 		m_pipelineDetails{ std::move(other.m_pipelineDetails) },
-		m_renderTargetDetails{ std::move(other.m_renderTargetDetails) },
-		m_depthStencilDetails{ other.m_depthStencilDetails },
+		m_renderTargetTextureIndices{ std::move(other.m_renderTargetTextureIndices) },
+		m_depthStencilTextureIndex{ other.m_depthStencilTextureIndex },
 		m_swapchainCopySource{ other.m_swapchainCopySource }
 	{
 		other.m_resourceFactory = nullptr;
 	}
 	D3DExternalRenderPass& operator=(D3DExternalRenderPass&& other) noexcept
 	{
-		m_resourceFactory     = std::exchange(other.m_resourceFactory, nullptr);
-		m_renderPassManager   = std::move(other.m_renderPassManager);
-		m_pipelineDetails     = std::move(other.m_pipelineDetails);
-		m_renderTargetDetails = std::move(other.m_renderTargetDetails);
-		m_depthStencilDetails = other.m_depthStencilDetails;
-		m_swapchainCopySource = other.m_swapchainCopySource;
+		m_resourceFactory            = std::exchange(other.m_resourceFactory, nullptr);
+		m_renderPassManager          = std::move(other.m_renderPassManager);
+		m_pipelineDetails            = std::move(other.m_pipelineDetails);
+		m_renderTargetTextureIndices = std::move(other.m_renderTargetTextureIndices);
+		m_depthStencilTextureIndex   = other.m_depthStencilTextureIndex;
+		m_swapchainCopySource        = other.m_swapchainCopySource;
 
 		return *this;
 	}

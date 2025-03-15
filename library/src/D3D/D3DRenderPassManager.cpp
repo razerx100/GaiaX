@@ -22,30 +22,12 @@ void D3DRenderPassManager::AddRenderTarget(
 	m_rtvClearColours.emplace_back(RTVClearColour{ 0.f, 0.f, 0.f, 0.f });
 }
 
-std::uint32_t D3DRenderPassManager::AddStartBarrier(const ResourceBarrierBuilder& barrierBuilder) noexcept
-{
-	const std::uint32_t barrierIndex = m_startImageBarriers.GetCount();
-
-	m_startImageBarriers.AddBarrier(barrierBuilder);
-
-	return barrierIndex;
-}
-
-void D3DRenderPassManager::SetTransitionAfterState(
-	size_t barrierIndex, D3D12_RESOURCE_STATES afterState
-) noexcept {
-	m_startImageBarriers.SetTransitionAfterState(barrierIndex, afterState);
-}
-
 void D3DRenderPassManager::RecreateRenderTarget(
-	size_t renderTargetIndex, size_t barrierIndex, ID3D12Resource* renderTargetResource,
-	DXGI_FORMAT rtvFormat
+	size_t renderTargetIndex, ID3D12Resource* renderTargetResource, DXGI_FORMAT rtvFormat
 ) {
 	RenderTarget& renderTarget = m_renderTargets[renderTargetIndex];
 
 	renderTarget.Create(renderTargetResource, rtvFormat);
-
-	m_startImageBarriers.SetTransitionResource(barrierIndex, renderTargetResource);
 
 	m_rtvHandles[renderTargetIndex] = renderTarget.GetCPUHandle();
 }
@@ -81,14 +63,12 @@ void D3DRenderPassManager::SetDepthStencilTarget(
 }
 
 void D3DRenderPassManager::RecreateDepthStencilTarget(
-	size_t barrierIndex, ID3D12Resource* depthStencilTargetResource, DXGI_FORMAT dsvFormat
+	ID3D12Resource* depthStencilTargetResource, DXGI_FORMAT dsvFormat
 ) {
 	m_depthStencilTarget.Create(
 		depthStencilTargetResource, dsvFormat,
 		static_cast<D3D12_DSV_FLAGS>(m_depthStencilInfo.dsvFlags)
 	);
-
-	m_startImageBarriers.SetTransitionResource(barrierIndex, depthStencilTargetResource);
 
 	m_dsvHandle = m_depthStencilTarget.GetCPUHandle();
 }
@@ -133,8 +113,6 @@ bool D3DRenderPassManager::IsRenderTargetClearColourSame(
 void D3DRenderPassManager::StartPass(const D3DCommandList& graphicsCmdList) const noexcept
 {
 	ID3D12GraphicsCommandList* gfxCmdList = graphicsCmdList.Get();
-
-	m_startImageBarriers.RecordBarriers(gfxCmdList);
 
 	D3D12_CPU_DESCRIPTOR_HANDLE const* dsvHandle = nullptr;
 
@@ -187,8 +165,14 @@ void D3DRenderPassManager::EndPassForSwapchain(
 
 	graphicsCmdList.CopyTexture(srcRenderTarget, swapchainBackBuffer, 0u, 0u);
 
-	D3DResourceBarrier<>{}
+	D3DResourceBarrier<2u>{}
 	.AddBarrier(
+		ResourceBarrierBuilder{}
+		.Transition(
+			srcRenderTarget,
+			D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET
+		)
+	).AddBarrier(
 		ResourceBarrierBuilder{}
 		.Transition(
 			swapchainBackBuffer,
