@@ -76,6 +76,8 @@ void ModelManagerVSIndividual::DrawPipeline(
 	if (!m_modelBundles.IsInUse(modelBundleIndex))
 		return;
 
+	GraphicsPipelineVS::SetIATopology(graphicsList);
+
 	const ModelBundleVSIndividual& modelBundle = m_modelBundles[modelBundleIndex];
 
 	// Mesh
@@ -91,6 +93,8 @@ void ModelManagerVSIndividual::DrawPipelineSorted(
 ) noexcept {
 	if (!m_modelBundles.IsInUse(modelBundleIndex))
 		return;
+
+	GraphicsPipelineVS::SetIATopology(graphicsList);
 
 	ModelBundleVSIndividual& modelBundle = m_modelBundles[modelBundleIndex];
 
@@ -482,6 +486,8 @@ void ModelManagerVSIndirect::DrawPipeline(
 ) const noexcept {
 	if (!m_modelBundles.IsInUse(modelBundleIndex))
 		return;
+
+	GraphicsPipelineVS::SetIATopology(graphicsList);
 
 	const ModelBundleVSIndirect& modelBundle = m_modelBundles[modelBundleIndex];
 
