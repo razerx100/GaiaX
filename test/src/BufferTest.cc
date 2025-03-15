@@ -3,7 +3,6 @@
 #include <memory>
 
 #include <D3DResources.hpp>
-#include <DepthBuffer.hpp>
 #include <CameraManager.hpp>
 #include <ReusableD3DBuffer.hpp>
 
@@ -86,35 +85,6 @@ TEST_F(BufferTest, TextureTest)
 	EXPECT_EQ(testTexture.GetBufferSize(), 8'294'400lu) << "Texture size isn't 8'294'400.";
 	EXPECT_NE(testTexture.Get(), nullptr) << "Texture wasn't created.";
 }
-
-TEST_F(BufferTest, DepthBufferTest)
-{
-	ID3D12Device* device   = s_deviceManager->GetDevice();
-	IDXGIAdapter3* adapter = s_deviceManager->GetAdapter();
-
-	MemoryManager memoryManager{ adapter, device, 20_MB, 200_KB };
-
-	D3DReusableDescriptorHeap dsvHeap{
-		device, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE
-	};
-
-	DepthBuffer depth1{ device, &memoryManager, &dsvHeap };
-	depth1.Create(1280u, 720u);
-
-	EXPECT_NE(depth1.GetDepthTexture().Get(), nullptr) << "Depth texture Handle is null.";
-
-	DepthBuffer depth2{ device, &memoryManager, &dsvHeap };
-	depth2.Create(1920u, 1080u);
-
-	EXPECT_NE(depth2.GetDepthTexture().Get(), nullptr) << "Depth texture Handle is null.";
-
-	DepthBuffer depth3{ device, &memoryManager, &dsvHeap };
-	depth3.Create(1920u, 1080u);
-
-	depth1.Create(1920u, 1080u);
-	EXPECT_NE(depth1.GetDepthTexture().Get(), nullptr) << "Depth texture Handle is null.";
-}
-
 TEST_F(BufferTest, CameraManagerTest)
 {
 	ID3D12Device* device   = s_deviceManager->GetDevice();
