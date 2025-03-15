@@ -40,9 +40,9 @@ public:
 		ExternalAttachmentStoreOp storeOP
 	) = 0;
 	// Only necessary if the LoadOP is clear.
-	// In Dx12, the resource needs to be recreated after setting the colour or there will validation
-	// warnings.
-	virtual void SetDepthClearColour(float clearColour) noexcept = 0;
+	// In Dx12, the resource needs to be recreated after setting the colour. So, the resource
+	// will be recreated.
+	virtual void SetDepthClearColour(float clearColour) = 0;
 
 	// Since Dx12 doesn't support separate depth and stencil, if depth testing is already enabled
 	// and the texture index is different, then the stencil buffer will be created on the depth buffer.
@@ -51,20 +51,20 @@ public:
 		ExternalAttachmentStoreOp storeOP
 	) = 0;
 	// Only necessary if the LoadOP is clear.
-	// In Dx12, the resource needs to be recreated after setting the colour or there will validation
-	// warnings.
-	virtual void SetStencilClearColour(std::uint32_t clearColour) noexcept = 0;
+	// In Dx12, the resource needs to be recreated after setting the colour. So, the resource
+	// will be recreated.
+	virtual void SetStencilClearColour(std::uint32_t clearColour) = 0;
 
 	virtual std::uint32_t AddRenderTarget(
 		std::uint32_t externalTextureIndex, ExternalAttachmentLoadOp loadOp,
 		ExternalAttachmentStoreOp storeOP
 	) = 0;
 	// Only necessary if the LoadOP is clear.
-	// In Dx12, the resource needs to be recreated after setting the colour or there will validation
-	// warnings.
+	// In Dx12, the resource needs to be recreated after setting the colour. So, the resource
+	// will be recreated.
 	virtual void SetRenderTargetClearColour(
 		std::uint32_t renderTargetIndex, const DirectX::XMFLOAT4& clearColour
-	) noexcept = 0;
+	) = 0;
 
 	virtual void SetSwapchainCopySource(std::uint32_t renderTargetIndex) noexcept = 0;
 };

@@ -151,7 +151,7 @@ void D3DExternalRenderPass::SetDepthTesting(
 	SetDepthStencil(externalTextureIndex, newState, dsvFlags, clearDepth, false);
 }
 
-void D3DExternalRenderPass::SetDepthClearColour(float clearColour) noexcept
+void D3DExternalRenderPass::SetDepthClearColour(float clearColour)
 {
 	m_renderPassManager.SetDepthClearValue(clearColour);
 }
@@ -173,7 +173,7 @@ void D3DExternalRenderPass::SetStencilTesting(
 	SetDepthStencil(externalTextureIndex, newState, dsvFlags, false, clearStencil);
 }
 
-void D3DExternalRenderPass::SetStencilClearColour(std::uint32_t clearColour) noexcept
+void D3DExternalRenderPass::SetStencilClearColour(std::uint32_t clearColour)
 {
 	m_renderPassManager.SetStencilClearValue(static_cast<std::uint8_t>(clearColour));
 }
@@ -210,7 +210,7 @@ std::uint32_t D3DExternalRenderPass::AddRenderTarget(
 
 void D3DExternalRenderPass::SetRenderTargetClearColour(
 	std::uint32_t renderTargetIndex, const DirectX::XMFLOAT4& clearColour
-) noexcept {
+) {
 	const std::array<float, 4u> d3dClearColour
 	{
 		clearColour.x,

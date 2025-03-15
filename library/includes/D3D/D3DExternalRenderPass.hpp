@@ -47,14 +47,14 @@ public:
 		ExternalAttachmentStoreOp storeOP
 	) override;
 	// Only necessary if the LoadOP is clear.
-	void SetDepthClearColour(float clearColour) noexcept override;
+	void SetDepthClearColour(float clearColour) override;
 
 	void SetStencilTesting(
 		std::uint32_t externalTextureIndex, ExternalAttachmentLoadOp loadOp,
 		ExternalAttachmentStoreOp storeOP
 	) override;
 	// Only necessary if the LoadOP is clear.
-	void SetStencilClearColour(std::uint32_t clearColour) noexcept override;
+	void SetStencilClearColour(std::uint32_t clearColour) override;
 
 	std::uint32_t AddRenderTarget(
 		std::uint32_t externalTextureIndex, ExternalAttachmentLoadOp loadOp,
@@ -63,7 +63,7 @@ public:
 	// Only necessary if the LoadOP is clear.
 	void SetRenderTargetClearColour(
 		std::uint32_t renderTargetIndex, const DirectX::XMFLOAT4& clearColour
-	) noexcept override;
+	) override;
 
 	void SetSwapchainCopySource(std::uint32_t renderTargetIndex) noexcept override;
 

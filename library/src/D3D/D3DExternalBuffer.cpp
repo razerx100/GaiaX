@@ -23,7 +23,7 @@ D3DExternalTexture::D3DExternalTexture(ID3D12Device* device, MemoryManager* memo
 
 void D3DExternalTexture::Create(
 	std::uint32_t width, std::uint32_t height, ExternalFormat format, ExternalTexture2DType type,
-	[[maybe_unused]] bool copySrc, [[maybe_unused]] bool copyDst, const ExternalClearColour& clearColour
+	[[maybe_unused]] bool copySrc, [[maybe_unused]] bool copyDst
 ) {
 	D3D12_RESOURCE_FLAGS resourceFlag = D3D12_RESOURCE_FLAG_NONE;
 	const DXGI_FORMAT resourceFormat  = GetDxgiFormat(format);
@@ -36,12 +36,7 @@ void D3DExternalTexture::Create(
 		clearValue   = D3D12_CLEAR_VALUE
 		{
 			.Format = resourceFormat,
-			.Color  = {
-				clearColour.colour[0],
-				clearColour.colour[1],
-				clearColour.colour[2],
-				clearColour.colour[3]
-			}
+			.Color  = { 0.f, 0.f, 0.f, 0.f }
 		};
 	}
 	else if (type == ExternalTexture2DType::Depth)
@@ -50,7 +45,7 @@ void D3DExternalTexture::Create(
 		clearValue   = D3D12_CLEAR_VALUE
 		{
 			.Format       = resourceFormat,
-			.DepthStencil = D3D12_DEPTH_STENCIL_VALUE{ .Depth = clearColour.depth }
+			.DepthStencil = D3D12_DEPTH_STENCIL_VALUE{ .Depth = 1.f }
 		};
 	}
 	else if (type == ExternalTexture2DType::Stencil)
@@ -59,7 +54,7 @@ void D3DExternalTexture::Create(
 		clearValue   = D3D12_CLEAR_VALUE
 		{
 			.Format       = resourceFormat,
-			.DepthStencil = D3D12_DEPTH_STENCIL_VALUE{ .Stencil = static_cast<UINT8>(clearColour.stencil) }
+			.DepthStencil = D3D12_DEPTH_STENCIL_VALUE{ .Stencil = 0u }
 		};
 	}
 
