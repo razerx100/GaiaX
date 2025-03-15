@@ -28,15 +28,9 @@ void D3DExternalTexture::Create(
 	D3D12_RESOURCE_FLAGS resourceFlag = D3D12_RESOURCE_FLAG_NONE;
 
 	if (type == ExternalTexture2DType::RenderTarget)
-	{
-		resourceFlag   = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
-		m_currentState = D3D12_RESOURCE_STATE_RENDER_TARGET;
-	}
+		resourceFlag = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
 	else if (type == ExternalTexture2DType::Depth || type == ExternalTexture2DType::Stencil)
-	{
-		resourceFlag   = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
-		m_currentState = D3D12_RESOURCE_STATE_DEPTH_READ;
-	}
+		resourceFlag = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
 
 	m_texture.Create2D(
 		width, height, 1u, GetDxgiFormat(format), m_currentState, resourceFlag
