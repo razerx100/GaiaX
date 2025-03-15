@@ -18,7 +18,7 @@ void D3DExternalBuffer::Create(size_t bufferSize)
 // External Texture
 D3DExternalTexture::D3DExternalTexture(ID3D12Device* device, MemoryManager* memoryManager)
 	: m_texture{ device, memoryManager, D3D12_HEAP_TYPE_DEFAULT },
-	m_currentState{ D3D12_RESOURCE_STATE_COMMON }
+	m_currentState{ D3D12_RESOURCE_STATE_COMMON }, m_clearValue{ .Format = DXGI_FORMAT_UNKNOWN }
 {}
 
 void D3DExternalTexture::Create(
@@ -27,44 +27,45 @@ void D3DExternalTexture::Create(
 ) {
 	D3D12_RESOURCE_FLAGS resourceFlag = D3D12_RESOURCE_FLAG_NONE;
 	const DXGI_FORMAT resourceFormat  = GetDxgiFormat(format);
-	// D3D12 needs a clear value during the resource creation, or it tanks the performance.
-	D3D12_CLEAR_VALUE clearValue{};
 
 	if (type == ExternalTexture2DType::RenderTarget)
-	{
 		resourceFlag = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
-		clearValue   = D3D12_CLEAR_VALUE
-		{
-			.Format = resourceFormat,
-			.Color  = { 0.f, 0.f, 0.f, 0.f }
-		};
-	}
-	else if (type == ExternalTexture2DType::Depth)
-	{
+	else if (type == ExternalTexture2DType::Depth || type == ExternalTexture2DType::Stencil)
 		resourceFlag = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
-		clearValue   = D3D12_CLEAR_VALUE
-		{
-			.Format       = resourceFormat,
-			.DepthStencil = D3D12_DEPTH_STENCIL_VALUE{ .Depth = 1.f }
-		};
-	}
-	else if (type == ExternalTexture2DType::Stencil)
-	{
-		resourceFlag = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
-		clearValue   = D3D12_CLEAR_VALUE
-		{
-			.Format       = resourceFormat,
-			.DepthStencil = D3D12_DEPTH_STENCIL_VALUE{ .Stencil = 0u }
-		};
-	}
+
+	m_clearValue.Format = resourceFormat;
 
 	// Don't need msaa? For now at least.
 	m_texture.Create2D(
-		width, height, 1u, resourceFormat, m_currentState, resourceFlag, false, &clearValue
+		width, height, 1u, resourceFormat, m_currentState, resourceFlag, false, &m_clearValue
 	);
 }
 
-void D3DExternalTexture::Recreate(ExternalTexture2DType type, D3D12_CLEAR_VALUE&& clearValue)
+void D3DExternalTexture::SetRenderTargetClearColour(const std::array<float, 4u>& colour) noexcept
+{
+	m_clearValue.Color[0] = colour[0];
+	m_clearValue.Color[1] = colour[1];
+	m_clearValue.Color[2] = colour[2];
+	m_clearValue.Color[3] = colour[3];
+}
+
+void D3DExternalTexture::SetDepthStencilClearColour(
+	const D3D12_DEPTH_STENCIL_VALUE& depthStencilColour
+) noexcept {
+	m_clearValue.DepthStencil = depthStencilColour;
+}
+
+void D3DExternalTexture::SetDepthClearColour(float depthColour) noexcept
+{
+	m_clearValue.DepthStencil.Depth = depthColour;
+}
+
+void D3DExternalTexture::SetStencilClearColour(UINT8 stencilColour) noexcept
+{
+	m_clearValue.DepthStencil.Stencil = stencilColour;
+}
+
+void D3DExternalTexture::Recreate(ExternalTexture2DType type)
 {
 	D3D12_RESOURCE_FLAGS resourceFlag = D3D12_RESOURCE_FLAG_NONE;
 
@@ -73,9 +74,7 @@ void D3DExternalTexture::Recreate(ExternalTexture2DType type, D3D12_CLEAR_VALUE&
 	else if (type == ExternalTexture2DType::Depth || type == ExternalTexture2DType::Stencil)
 		resourceFlag = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
 
-	clearValue.Format = m_texture.Format();
-
-	m_texture.Recreate2D(m_currentState, resourceFlag, &clearValue);
+	m_texture.Recreate2D(m_currentState, resourceFlag, &m_clearValue);
 }
 
 ResourceBarrierBuilder D3DExternalTexture::TransitionState(D3D12_RESOURCE_STATES newState) noexcept

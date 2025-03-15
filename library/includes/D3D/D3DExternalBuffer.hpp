@@ -1,5 +1,6 @@
 #ifndef D3D_EXTERNAL_BUFFER_HPP_
 #define D3D_EXTERNAL_BUFFER_HPP_
+#include <array>
 #include <ExternalBuffer.hpp>
 #include <D3DResources.hpp>
 #include <D3DResourceBarrier.hpp>
@@ -58,8 +59,12 @@ public:
 		bool copySrc, bool copyDst
 	) override;
 
-	// The format is overwritten with the current texture format.
-	void Recreate(ExternalTexture2DType type, D3D12_CLEAR_VALUE&& clearValue);
+	void SetRenderTargetClearColour(const std::array<float, 4u>& colour) noexcept;
+	void SetDepthStencilClearColour(const D3D12_DEPTH_STENCIL_VALUE& depthStencilColour) noexcept;
+	void SetDepthClearColour(float depthColour) noexcept;
+	void SetStencilClearColour(UINT8 stencilColour) noexcept;
+
+	void Recreate(ExternalTexture2DType type);
 
 	void Destroy() noexcept override { m_texture.Destroy(); }
 
@@ -81,6 +86,7 @@ public:
 	[[nodiscard]]
 	// This actually won't change the state. It would just replace the older state with the new one.
 	// And keep track of it.
+	// Need to get rid of this function
 	ResourceBarrierBuilder TransitionState(D3D12_RESOURCE_STATES newState) noexcept;
 
 	[[nodiscard]]
@@ -92,6 +98,7 @@ public:
 private:
 	Texture               m_texture;
 	D3D12_RESOURCE_STATES m_currentState;
+	D3D12_CLEAR_VALUE     m_clearValue;
 
 public:
 	D3DExternalTexture(const D3DExternalTexture&) = delete;
@@ -99,12 +106,14 @@ public:
 
 	D3DExternalTexture(D3DExternalTexture&& other) noexcept
 		: m_texture{ std::move(other.m_texture) },
-		m_currentState{ other.m_currentState }
+		m_currentState{ other.m_currentState },
+		m_clearValue{ other.m_clearValue }
 	{}
 	D3DExternalTexture& operator=(D3DExternalTexture&& other) noexcept
 	{
 		m_texture      = std::move(other.m_texture);
 		m_currentState = other.m_currentState;
+		m_clearValue   = other.m_clearValue;
 
 		return *this;
 	}

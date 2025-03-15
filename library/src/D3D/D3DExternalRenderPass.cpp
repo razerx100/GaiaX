@@ -108,6 +108,12 @@ void D3DExternalRenderPass::SetDepthStencil(
 			externalTextureIndex
 		);
 
+		// Set the default clear colours. Even if they aren't used. Depth is fine, as in Dx12,
+		// depth and stencil would be in the same texture.
+		externalTexture->SetDepthStencilClearColour(
+			D3D12_DEPTH_STENCIL_VALUE{ .Depth = 1.f, .Stencil = 0u }
+		);
+
 		m_depthStencilDetails.barrierIndex = m_renderPassManager.AddStartBarrier(
 			externalTexture->TransitionState(newState)
 		);
@@ -155,14 +161,18 @@ void D3DExternalRenderPass::SetDepthClearColour(float clearColour)
 {
 	if (!m_renderPassManager.IsDepthClearColourSame(clearColour))
 	{
-		D3DExternalTexture* externalTexture = m_resourceFactory->GetD3DExternalTexture(
-			m_depthStencilDetails.textureIndex
-		);
+		if (m_depthStencilDetails.textureIndex != std::numeric_limits<std::uint32_t>::max())
+		{
+			D3DExternalTexture* externalTexture = m_resourceFactory->GetD3DExternalTexture(
+				m_depthStencilDetails.textureIndex
+			);
 
-		externalTexture->Recreate(
-			ExternalTexture2DType::Depth,
-			D3D12_CLEAR_VALUE{ .DepthStencil = D3D12_DEPTH_STENCIL_VALUE{ .Depth = clearColour } }
-		);
+			externalTexture->SetDepthClearColour(clearColour);
+
+			// Only recreate if there is an already existing texture.
+			if (externalTexture->GetTexture().Get())
+				externalTexture->Recreate(ExternalTexture2DType::Depth);
+		}
 
 		m_renderPassManager.SetDepthClearValue(clearColour);
 	}
@@ -191,16 +201,18 @@ void D3DExternalRenderPass::SetStencilClearColour(std::uint32_t clearColour)
 
 	if (!m_renderPassManager.IsStencilClearColourSame(u8ClearColour))
 	{
-		D3DExternalTexture* externalTexture = m_resourceFactory->GetD3DExternalTexture(
-			m_depthStencilDetails.textureIndex
-		);
+		if (m_depthStencilDetails.textureIndex != std::numeric_limits<std::uint32_t>::max())
+		{
+			D3DExternalTexture* externalTexture = m_resourceFactory->GetD3DExternalTexture(
+				m_depthStencilDetails.textureIndex
+			);
 
-		externalTexture->Recreate(
-			ExternalTexture2DType::Stencil,
-			D3D12_CLEAR_VALUE{
-				.DepthStencil = D3D12_DEPTH_STENCIL_VALUE{ .Stencil = u8ClearColour }
-			}
-		);
+			externalTexture->SetStencilClearColour(u8ClearColour);
+
+			// Only recreate if there is an already existing texture.
+			if (externalTexture->GetTexture().Get())
+				externalTexture->Recreate(ExternalTexture2DType::Stencil);
+		}
 
 		m_renderPassManager.SetStencilClearValue(u8ClearColour);
 	}
@@ -214,6 +226,9 @@ std::uint32_t D3DExternalRenderPass::AddRenderTarget(
 		= loadOp == ExternalAttachmentLoadOp::Clear || storeOp == ExternalAttachmentStoreOp::Store;
 
 	D3DExternalTexture* externalTexture = m_resourceFactory->GetD3DExternalTexture(externalTextureIndex);
+
+	// Set the default clear colours. Even if they aren't used.
+	externalTexture->SetRenderTargetClearColour({ 0.f, 0.f, 0.f, 0.f });
 
 	const std::uint32_t renderTargetBarrierIndex = m_renderPassManager.AddStartBarrier(
 		externalTexture->TransitionState(D3D12_RESOURCE_STATE_RENDER_TARGET)
@@ -251,21 +266,20 @@ void D3DExternalRenderPass::SetRenderTargetClearColour(
 
 	if (!m_renderPassManager.IsRenderTargetClearColourSame(zRenderTargetIndex, d3dClearColour))
 	{
-		D3DExternalTexture* externalTexture = m_resourceFactory->GetD3DExternalTexture(
-			m_renderTargetDetails[zRenderTargetIndex].textureIndex
-		);
+		const AttachmentDetails& renderTargetDetails = m_renderTargetDetails[zRenderTargetIndex];
 
-		externalTexture->Recreate(
-			ExternalTexture2DType::RenderTarget,
-			D3D12_CLEAR_VALUE{
-				.Color = {
-					clearColour.x,
-					clearColour.y,
-					clearColour.z,
-					clearColour.w
-				}
-			}
-		);
+		if (renderTargetDetails.textureIndex != std::numeric_limits<std::uint32_t>::max())
+		{
+			D3DExternalTexture* externalTexture = m_resourceFactory->GetD3DExternalTexture(
+				renderTargetDetails.textureIndex
+			);
+
+			externalTexture->SetRenderTargetClearColour(d3dClearColour);
+
+			// Only recreate if there is an already existing texture.
+			if (externalTexture->GetTexture().Get())
+				externalTexture->Recreate(ExternalTexture2DType::RenderTarget);
+		}
 
 		m_renderPassManager.SetRenderTargetClearValue(zRenderTargetIndex, d3dClearColour);
 	}
