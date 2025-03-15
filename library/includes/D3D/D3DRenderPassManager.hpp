@@ -28,22 +28,28 @@ public:
 		}
 	{}
 
+	// The resource can be null here, but must be created later and then Recreate must be called before
+	// using the view.
 	void AddRenderTarget(
 		ID3D12Resource* renderTargetResource, DXGI_FORMAT rtvFormat, bool clearAtStart
 	);
 	[[nodiscard]]
 	std::uint32_t AddStartBarrier(const ResourceBarrierBuilder& barrierBuilder) noexcept;
 
+	// The resource must have been created before calling this.
 	void RecreateRenderTarget(
 		size_t renderTargetIndex, size_t barrierIndex, ID3D12Resource* renderTargetResource,
 		DXGI_FORMAT rtvFormat
 	);
 
+	// The resource can be null here, but must be created later and then Recreate must be called before
+	// using the view.
 	void SetDepthStencilTarget(
 		ID3D12Resource* depthStencilTargetResource, DXGI_FORMAT dsvFormat,
 		bool depthClearAtStart, bool stencilClearAtStart, D3D12_DSV_FLAGS dsvFlags
 	);
 
+	// The resource must have been created before calling this.
 	void RecreateDepthStencilTarget(
 		size_t barrierIndex, ID3D12Resource* depthStencilTargetResource, DXGI_FORMAT dsvFormat
 	);

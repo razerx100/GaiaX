@@ -5,10 +5,19 @@ void D3DRenderPassManager::AddRenderTarget(
 ) {
 	RenderTarget renderTarget{ m_rtvHeap };
 
-	renderTarget.Create(renderTargetResource, rtvFormat);
+	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle{};
+
+	// Only create the render target view, if the resource is valid.
+	if (renderTargetResource)
+	{
+		renderTarget.Create(renderTargetResource, rtvFormat);
+
+		rtvHandle = renderTarget.GetCPUHandle();
+	}
+
 	renderTarget.SetClearAtStart(clearAtStart);
 
-	m_rtvHandles.emplace_back(renderTarget.GetCPUHandle());
+	m_rtvHandles.emplace_back(rtvHandle);
 	m_renderTargets.emplace_back(std::move(renderTarget));
 	m_rtvClearColours.emplace_back(RTVClearColour{ 0.f, 0.f, 0.f, 0.f });
 }
@@ -38,7 +47,7 @@ void D3DRenderPassManager::RecreateRenderTarget(
 
 	m_startImageBarriers.SetTransitionResource(barrierIndex, renderTargetResource);
 
-	// No need to fetch the cpu handle again.
+	m_rtvHandles[renderTargetIndex] = renderTarget.GetCPUHandle();
 }
 
 void D3DRenderPassManager::SetDepthStencilTarget(
@@ -47,10 +56,19 @@ void D3DRenderPassManager::SetDepthStencilTarget(
 ) {
 	m_depthStencilInfo.dsvFlags |= dsvFlags;
 
-	m_depthStencilTarget.Create(
-		depthStencilTargetResource, dsvFormat,
-		static_cast<D3D12_DSV_FLAGS>(m_depthStencilInfo.dsvFlags)
-	);
+	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle{};
+
+	// Only create the depth stencil view if the resource is valid.
+	if (depthStencilTargetResource)
+	{
+		m_depthStencilTarget.Create(
+			depthStencilTargetResource, dsvFormat,
+			static_cast<D3D12_DSV_FLAGS>(m_depthStencilInfo.dsvFlags)
+		);
+
+		dsvHandle = m_depthStencilTarget.GetCPUHandle();
+	}
+
 	m_depthStencilTarget.SetClearAtStart(depthClearAtStart || stencilClearAtStart);
 
 	if (depthClearAtStart)
@@ -59,7 +77,7 @@ void D3DRenderPassManager::SetDepthStencilTarget(
 	if (stencilClearAtStart)
 		m_depthStencilInfo.clearFlags |= D3D12_CLEAR_FLAG_STENCIL;
 
-	m_dsvHandle = m_depthStencilTarget.GetCPUHandle();
+	m_dsvHandle = dsvHandle;
 }
 
 void D3DRenderPassManager::RecreateDepthStencilTarget(
@@ -71,6 +89,8 @@ void D3DRenderPassManager::RecreateDepthStencilTarget(
 	);
 
 	m_startImageBarriers.SetTransitionResource(barrierIndex, depthStencilTargetResource);
+
+	m_dsvHandle = m_depthStencilTarget.GetCPUHandle();
 }
 
 void D3DRenderPassManager::SetDepthClearValue(float depthClearValue) noexcept
