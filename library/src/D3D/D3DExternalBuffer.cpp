@@ -26,14 +26,41 @@ void D3DExternalTexture::Create(
 	[[maybe_unused]] bool copySrc, [[maybe_unused]] bool copyDst
 ) {
 	D3D12_RESOURCE_FLAGS resourceFlag = D3D12_RESOURCE_FLAG_NONE;
+	const DXGI_FORMAT resourceFormat  = GetDxgiFormat(format);
+	// D3D12 needs a clear value during the resource creation, or it tanks the performance.
+	D3D12_CLEAR_VALUE clearValue{};
 
 	if (type == ExternalTexture2DType::RenderTarget)
+	{
 		resourceFlag = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
-	else if (type == ExternalTexture2DType::Depth || type == ExternalTexture2DType::Stencil)
+		clearValue   = D3D12_CLEAR_VALUE
+		{
+			.Format = resourceFormat,
+			.Color  = { 0.f, 0.f, 0.f, 0.f }
+		};
+	}
+	else if (type == ExternalTexture2DType::Depth)
+	{
 		resourceFlag = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+		clearValue   = D3D12_CLEAR_VALUE
+		{
+			.Format       = resourceFormat,
+			.DepthStencil = D3D12_DEPTH_STENCIL_VALUE{ .Depth = 1.f }
+		};
+	}
+	else if (type == ExternalTexture2DType::Stencil)
+	{
+		resourceFlag = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+		clearValue   = D3D12_CLEAR_VALUE
+		{
+			.Format       = resourceFormat,
+			.DepthStencil = D3D12_DEPTH_STENCIL_VALUE{ .Stencil = 0u }
+		};
+	}
 
+	// Don't need msaa? For now at least.
 	m_texture.Create2D(
-		width, height, 1u, GetDxgiFormat(format), m_currentState, resourceFlag
+		width, height, 1u, resourceFormat, m_currentState, resourceFlag, false, &clearValue
 	);
 }
 
