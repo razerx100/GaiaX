@@ -55,7 +55,7 @@ public:
 
 	void Create(
 		std::uint32_t width, std::uint32_t height, ExternalFormat format, ExternalTexture2DType type,
-		bool copySrc, bool copyDst
+		bool copySrc, bool copyDst, const ExternalClearColour& clearColour = {}
 	) override;
 
 	void Destroy() noexcept override { m_texture.Destroy(); }
