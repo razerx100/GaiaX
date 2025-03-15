@@ -17,81 +17,11 @@ D3D12_DRAW_INDEXED_ARGUMENTS PipelineModelsBase::GetDrawIndexedIndirectCommand(
 	return indirectCommand;
 }
 
-float PipelineModelsBase::GetWorldZ(
-	const AxisAlignedBoundingBox& aabb, const DirectX::XMMATRIX& world
-) noexcept {
-	using namespace DirectX;
-
-	const XMVECTOR maxAxesV = XMLoadFloat4(&aabb.maxAxes);
-	const XMVECTOR minAxesV = XMLoadFloat4(&aabb.minAxes);
-
-	const XMVECTOR centre  = (maxAxesV + minAxesV) * 0.5f;
-
-	const XMVECTOR extents = maxAxesV - centre;
-
-	const XMVECTOR right   = world.r[0] * XMVectorGetX(extents);
-	const XMVECTOR up      = world.r[1] * XMVectorGetY(extents);
-	const XMVECTOR forward = world.r[2] * XMVectorGetZ(extents);
-
-	// The scaled magnitude of the extents in the world space
-	const XMVECTOR zVec = XMVectorSet(0.f, 0.f, 1.f, 0.f);
-
-	return std::abs(XMVectorGetX(XMVector3Dot(zVec, right)))
-		+ std::abs(XMVectorGetX(XMVector3Dot(zVec, up)))
-		+ std::abs(XMVectorGetX(XMVector3Dot(zVec, forward)));
-}
-
 uint32_t PipelineModelsBase::AddModel(std::uint32_t bundleIndex, std::uint32_t bufferIndex) noexcept
 {
 	return static_cast<std::uint32_t>(
 		m_modelData.Add(ModelData{ .bundleIndex = bundleIndex, .bufferIndex = bufferIndex })
 	);
-}
-
-std::uint32_t PipelineModelsBase::AddModelSorted(std::uint32_t bundleIndex, std::uint32_t bufferIndex) noexcept
-{
-	const size_t oldModelCount     = std::size(m_modelData);
-
-	const std::uint32_t modelIndex = AddModel(bundleIndex, bufferIndex);
-
-	const size_t newModelCount     = std::size(m_modelData);
-
-	if (newModelCount > oldModelCount)
-	{
-		m_sortedData.reserve(newModelCount);
-
-		ModelDataIt startIt = std::begin(m_modelData);
-
-		for (size_t index = 0u; index < newModelCount; ++index)
-			if (m_modelData.IsInUse(index))
-				m_sortedData.emplace_back(
-					SortedData
-					{
-						.it     = std::next(startIt, index),
-						.worldZ = 0.f
-					}
-				);
-	}
-
-	return modelIndex;
-}
-
-void PipelineModelsBase::RemoveModelSorted(std::uint32_t localIndex) noexcept
-{
-	const size_t localIndexSZT = localIndex;
-
-	const ModelData& modelData = m_modelData[localIndexSZT];
-
-	auto modelDataIt = std::ranges::find(
-		m_sortedData, modelData, [](const SortedData& sortedData)
-		{
-			return *sortedData.it;
-		}
-	);
-
-	m_sortedData.erase(modelDataIt);
-
-	RemoveModel(localIndex);
 }
 
 // Pipeline Models VS Individual
@@ -126,19 +56,13 @@ void PipelineModelsVSIndividual::Draw(
 ) const noexcept {
 	const size_t modelCount = std::size(m_modelData);
 
-	_draw<false>(modelCount, graphicsList, constantsRootIndex, meshBundle, models);
-}
+	ID3D12GraphicsCommandList* cmdList = graphicsList.Get();
 
-void PipelineModelsVSIndividual::DrawSorted(
-	const D3DCommandList& graphicsList, UINT constantsRootIndex, const D3DMeshBundleVS& meshBundle,
-	const std::vector<std::shared_ptr<Model>>& models
-) noexcept {
-	SortDetails(meshBundle, models);
-
-	// Draw
-	const size_t modelCount = std::size(m_sortedData);
-
-	_draw<true>(modelCount, graphicsList, constantsRootIndex, meshBundle, models);
+	for (size_t index = 0; index < modelCount; ++index)
+		DrawModel(
+			m_modelData.IsInUse(index), m_modelData[index], cmdList, constantsRootIndex,
+			meshBundle, models
+		);
 }
 
 // Pipeline Models MS Individual
@@ -194,19 +118,13 @@ void PipelineModelsMSIndividual::Draw(
 ) const noexcept {
 	const size_t modelCount = std::size(m_modelData);
 
-	_draw<false>(modelCount, graphicsList, constantsRootIndex, meshBundle, models);
-}
+	ID3D12GraphicsCommandList6* cmdList = graphicsList.Get();
 
-void PipelineModelsMSIndividual::DrawSorted(
-	const D3DCommandList& graphicsList, UINT constantsRootIndex, const D3DMeshBundleMS& meshBundle,
-	const std::vector<std::shared_ptr<Model>>& models
-) noexcept {
-	SortDetails(meshBundle, models);
-
-	// Draw
-	const size_t modelCount = std::size(m_sortedData);
-
-	_draw<true>(modelCount, graphicsList, constantsRootIndex, meshBundle, models);
+	for (size_t index = 0u; index < modelCount; ++index)
+		DrawModel(
+			m_modelData.IsInUse(index), m_modelData[index], cmdList, constantsRootIndex,
+			meshBundle, models
+		);
 }
 
 // Pipeline Models CS Indirect
@@ -254,14 +172,13 @@ std::vector<PipelineModelsCSIndirect::IndexLink> PipelineModelsCSIndirect::Remov
 	return activeIndexLink;
 }
 
-void PipelineModelsCSIndirect::UpdateNonPerFrameData(
-	std::uint32_t modelBundleIndex, bool areSortedModels
-) noexcept {
+void PipelineModelsCSIndirect::UpdateNonPerFrameData(std::uint32_t modelBundleIndex) noexcept
+{
 	constexpr size_t argumentStrideSize = sizeof(IndirectArgument);
 	constexpr size_t perModelStride     = sizeof(PerModelData);
 	constexpr size_t perPipelineStride  = sizeof(PerPipelineData);
 
-	const size_t modelCount = GetModelCount(areSortedModels);
+	const size_t modelCount = GetModelCount();
 
 	if (!modelCount)
 		return;
@@ -318,9 +235,9 @@ void PipelineModelsCSIndirect::UpdateNonPerFrameData(
 
 void PipelineModelsCSIndirect::AllocateBuffers(
 	std::vector<SharedBufferCPU>& argumentInputSharedBuffers,
-	SharedBufferCPU& perPipelineSharedBuffer, SharedBufferCPU& perModelSharedBuffer, bool areSortedModels
+	SharedBufferCPU& perPipelineSharedBuffer, SharedBufferCPU& perModelSharedBuffer
 ) {
-	const size_t modelCount = GetModelCount(areSortedModels);
+	const size_t modelCount = GetModelCount();
 
 	if (!modelCount)
 		return;
@@ -380,18 +297,50 @@ void PipelineModelsCSIndirect::Update(
 ) const noexcept {
 	const size_t modelCount = std::size(m_modelData);
 
-	_update<false>(modelCount, frameIndex, meshBundle, models);
-}
+	if (!modelCount)
+		return;
 
-void PipelineModelsCSIndirect::UpdateSorted(
-	size_t frameIndex, const D3DMeshBundleVS& meshBundle,
-	const std::vector<std::shared_ptr<Model>>& models
-) noexcept {
-	SortDetails(meshBundle, models);
+	const SharedBufferData& argumentInputSharedData = m_argumentInputSharedData[frameIndex];
 
-	const size_t modelCount = std::size(m_sortedData);
+	std::uint8_t* argumentInputStart = argumentInputSharedData.bufferData->CPUHandle();
+	std::uint8_t* perModelStart      = m_perModelSharedData.bufferData->CPUHandle();
 
-	_update<true>(modelCount, frameIndex, meshBundle, models);
+	constexpr size_t argumentStride = sizeof(IndirectArgument);
+	auto argumentOffset             = static_cast<size_t>(argumentInputSharedData.offset);
+
+	constexpr size_t perModelStride = sizeof(PerModelData);
+	auto perModelOffset             = static_cast<size_t>(m_perModelSharedData.offset);
+	constexpr auto isVisibleOffset  = offsetof(PerModelData, isVisible);
+
+	for (size_t index = 0u; index < modelCount; ++index)
+	{
+		const ModelData& modelData          = m_modelData[index];
+		const std::shared_ptr<Model>& model = models[modelData.bundleIndex];
+
+		const MeshTemporaryDetailsVS& meshDetailsVS = meshBundle.GetMeshDetails(model->GetMeshIndex());
+		const D3D12_DRAW_INDEXED_ARGUMENTS meshArgs = PipelineModelsBase::GetDrawIndexedIndirectCommand(
+			meshDetailsVS
+		);
+
+		IndirectArgument arguments
+		{
+			.modelIndex    = modelData.bufferIndex,
+			.drawArguments = meshArgs
+		};
+
+		memcpy(argumentInputStart + argumentOffset, &arguments, argumentStride);
+
+		argumentOffset += argumentStride;
+
+		// Model Visiblity
+		const auto visiblity = static_cast<std::uint32_t>(
+			m_modelData.IsInUse(index) && model->IsVisible()
+		);
+
+		memcpy(perModelStart + perModelOffset + isVisibleOffset, &visiblity, sizeof(std::uint32_t));
+
+		perModelOffset += perModelStride;
+	}
 }
 
 void PipelineModelsCSIndirect::RelinquishMemory(
@@ -568,29 +517,6 @@ void ModelBundleVSIndividual::Draw(
 	}
 }
 
-void ModelBundleVSIndividual::DrawSorted(
-	const D3DCommandList& graphicsList, UINT constantsRootIndex, const D3DMeshBundleVS& meshBundle,
-	const PipelineManager<GraphicsPipeline_t>& pipelineManager
-) noexcept {
-	meshBundle.Bind(graphicsList);
-
-	const auto& models         = m_modelBundle->GetModels();
-
-	const size_t pipelineCount = std::size(m_pipelines);
-
-	for (size_t index = 0u; index < pipelineCount; ++index)
-	{
-		if (!m_pipelines.IsInUse(index))
-			continue;
-
-		PipelineModelsVSIndividual& pipeline = m_pipelines[index];
-
-		pipelineManager.BindPipeline(pipeline.GetPSOIndex(), graphicsList);
-
-		pipeline.DrawSorted(graphicsList, constantsRootIndex, meshBundle, models);
-	}
-}
-
 void ModelBundleVSIndividual::DrawPipeline(
 	size_t pipelineLocalIndex, const D3DCommandList& graphicsList, UINT constantsRootIndex,
 	const D3DMeshBundleVS& meshBundle
@@ -605,22 +531,6 @@ void ModelBundleVSIndividual::DrawPipeline(
 	const PipelineModelsVSIndividual& pipeline = m_pipelines[pipelineLocalIndex];
 
 	pipeline.Draw(graphicsList, constantsRootIndex, meshBundle, models);
-}
-
-void ModelBundleVSIndividual::DrawPipelineSorted(
-	size_t pipelineLocalIndex, const D3DCommandList& graphicsList, UINT constantsRootIndex,
-	const D3DMeshBundleVS& meshBundle
-) noexcept {
-	if (!m_pipelines.IsInUse(pipelineLocalIndex))
-		return;
-
-	meshBundle.Bind(graphicsList);
-
-	const auto& models = m_modelBundle->GetModels();
-
-	PipelineModelsVSIndividual& pipeline = m_pipelines[pipelineLocalIndex];
-
-	pipeline.DrawSorted(graphicsList, constantsRootIndex, meshBundle, models);
 }
 
 // Model Bundle MS Individual
@@ -659,29 +569,6 @@ void ModelBundleMSIndividual::Draw(
 	}
 }
 
-void ModelBundleMSIndividual::DrawSorted(
-	const D3DCommandList& graphicsList, UINT constantsRootIndex, const D3DMeshBundleMS& meshBundle,
-	const PipelineManager<GraphicsPipeline_t>& pipelineManager
-) noexcept {
-	SetMeshBundleConstants(graphicsList.Get(), constantsRootIndex, meshBundle);
-
-	const auto& models         = m_modelBundle->GetModels();
-
-	const size_t pipelineCount = std::size(m_pipelines);
-
-	for (size_t index = 0u; index < pipelineCount; ++index)
-	{
-		if (!m_pipelines.IsInUse(index))
-			continue;
-
-		PipelineModelsMSIndividual& pipeline = m_pipelines[index];
-
-		pipelineManager.BindPipeline(pipeline.GetPSOIndex(), graphicsList);
-
-		pipeline.DrawSorted(graphicsList, constantsRootIndex, meshBundle, models);
-	}
-}
-
 void ModelBundleMSIndividual::DrawPipeline(
 	size_t pipelineLocalIndex, const D3DCommandList& graphicsList, UINT constantsRootIndex,
 	const D3DMeshBundleMS& meshBundle
@@ -696,22 +583,6 @@ void ModelBundleMSIndividual::DrawPipeline(
 	const PipelineModelsMSIndividual& pipeline = m_pipelines[pipelineLocalIndex];
 
 	pipeline.Draw(graphicsList, constantsRootIndex, meshBundle, models);
-}
-
-void ModelBundleMSIndividual::DrawPipelineSorted(
-	size_t pipelineLocalIndex, const D3DCommandList& graphicsList, UINT constantsRootIndex,
-	const D3DMeshBundleMS& meshBundle
-) noexcept {
-	if (!m_pipelines.IsInUse(pipelineLocalIndex))
-		return;
-
-	SetMeshBundleConstants(graphicsList.Get(), constantsRootIndex, meshBundle);
-
-	const auto& models = m_modelBundle->GetModels();
-
-	PipelineModelsMSIndividual& pipeline = m_pipelines[pipelineLocalIndex];
-
-	pipeline.DrawSorted(graphicsList, constantsRootIndex, meshBundle, models);
 }
 
 // Model Bundle VS Indirect
@@ -787,23 +658,7 @@ void ModelBundleVSIndirect::AddModel(
 	const std::uint32_t bufferIndex = m_modelBufferIndices[modelIndex];
 
 	_addModels(
-		pipelineIndex, modelBundleIndex, &modelIndex, &bufferIndex, 1u, false,
-		argumentInputSharedBuffers, perPipelineSharedBuffer, perModelDataCSBuffer,
-		argumentOutputSharedBuffers, counterSharedBuffers
-	);
-}
-
-void ModelBundleVSIndirect::AddModelSorted(
-	std::uint32_t pipelineIndex, std::uint32_t modelBundleIndex, std::uint32_t modelIndex,
-	std::vector<SharedBufferCPU>& argumentInputSharedBuffers,
-	SharedBufferCPU& perPipelineSharedBuffer, SharedBufferCPU& perModelDataCSBuffer,
-	std::vector<SharedBufferGPUWriteOnly>& argumentOutputSharedBuffers,
-	std::vector<SharedBufferGPUWriteOnly>& counterSharedBuffers
-) {
-	const std::uint32_t bufferIndex = m_modelBufferIndices[modelIndex];
-
-	_addModels(
-		pipelineIndex, modelBundleIndex, &modelIndex, &bufferIndex, 1u, true,
+		pipelineIndex, modelBundleIndex, &modelIndex, &bufferIndex, 1u,
 		argumentInputSharedBuffers, perPipelineSharedBuffer, perModelDataCSBuffer,
 		argumentOutputSharedBuffers, counterSharedBuffers
 	);
@@ -826,46 +681,20 @@ void ModelBundleVSIndirect::AddModels(
 
 	_addModels(
 		pipelineIndex, modelBundleIndex, std::data(modelIndices), std::data(bufferIndices),
-		modelCount, false,
-		argumentInputSharedBuffers, perPipelineSharedBuffer, perModelDataCSBuffer,
-		argumentOutputSharedBuffers, counterSharedBuffers
-	);
-}
-
-void ModelBundleVSIndirect::AddModelsSorted(
-	std::uint32_t pipelineIndex, std::uint32_t modelBundleIndex,
-	const std::vector<std::uint32_t>& modelIndices,
-	std::vector<SharedBufferCPU>& argumentInputSharedBuffers,
-	SharedBufferCPU& perPipelineSharedBuffer, SharedBufferCPU& perModelDataCSBuffer,
-	std::vector<SharedBufferGPUWriteOnly>& argumentOutputSharedBuffers,
-	std::vector<SharedBufferGPUWriteOnly>& counterSharedBuffers
-) {
-	const size_t modelCount = std::size(modelIndices);
-
-	std::vector<std::uint32_t> bufferIndices(modelCount);
-
-	for (size_t index = 0u; index < modelCount; ++index)
-		bufferIndices[index] = m_modelBufferIndices[modelIndices[index]];
-
-	_addModels(
-		pipelineIndex, modelBundleIndex, std::data(modelIndices), std::data(bufferIndices),
-		modelCount, true,
-		argumentInputSharedBuffers, perPipelineSharedBuffer, perModelDataCSBuffer,
+		modelCount, argumentInputSharedBuffers, perPipelineSharedBuffer, perModelDataCSBuffer,
 		argumentOutputSharedBuffers, counterSharedBuffers
 	);
 }
 
 void ModelBundleVSIndirect::_moveModel(
 	std::uint32_t modelIndex, std::uint32_t modelBundleIndex,
-	std::uint32_t oldPipelineIndex, std::uint32_t newPipelineIndex, bool areModelsSorted,
+	std::uint32_t oldPipelineIndex, std::uint32_t newPipelineIndex,
 	std::vector<SharedBufferCPU>& argumentInputSharedBuffers,
 	SharedBufferCPU& perPipelineSharedBuffer, SharedBufferCPU& perModelDataCSBuffer,
 	std::vector<SharedBufferGPUWriteOnly>& argumentOutputSharedBuffers,
 	std::vector<SharedBufferGPUWriteOnly>& counterSharedBuffers
 ) {
-	const MoveModelCommonData moveData = areModelsSorted ?
-		_moveModelCommon<true>(modelIndex, oldPipelineIndex, newPipelineIndex)
-		: _moveModelCommon<false>(modelIndex, oldPipelineIndex, newPipelineIndex);
+	const MoveModelCommonData moveData = _moveModelCommon(modelIndex, oldPipelineIndex, newPipelineIndex);
 
 	std::uint32_t newPipelineLocalIndex            = moveData.newLocalPipelineIndex;
 	const PipelineModelsBase::ModelData& modelData = moveData.removedModelData;
@@ -877,7 +706,7 @@ void ModelBundleVSIndirect::_moveModel(
 	if (modelData.bundleIndex != std::numeric_limits<std::uint32_t>::max())
 		_addModelsToPipeline(
 			newPipelineLocalIndex, modelBundleIndex,
-			&modelData.bundleIndex, &modelData.bufferIndex, 1u, areModelsSorted,
+			&modelData.bundleIndex, &modelData.bufferIndex, 1u,
 			argumentInputSharedBuffers, perPipelineSharedBuffer, perModelDataCSBuffer,
 			argumentOutputSharedBuffers, counterSharedBuffers
 		);
@@ -893,22 +722,7 @@ void ModelBundleVSIndirect::MoveModel(
 ) {
 	_moveModel(
 		modelIndex, modelBundleIndex, oldPipelineIndex, newPipelineIndex,
-		false, argumentInputSharedBuffers, perPipelineSharedBuffer, perModelDataCSBuffer,
-		argumentOutputSharedBuffers, counterSharedBuffers
-	);
-}
-
-void ModelBundleVSIndirect::MoveModelSorted(
-	std::uint32_t modelIndex, std::uint32_t modelBundleIndex,
-	std::uint32_t oldPipelineIndex, std::uint32_t newPipelineIndex,
-	std::vector<SharedBufferCPU>& argumentInputSharedBuffers,
-	SharedBufferCPU& perPipelineSharedBuffer, SharedBufferCPU& perModelDataCSBuffer,
-	std::vector<SharedBufferGPUWriteOnly>& argumentOutputSharedBuffers,
-	std::vector<SharedBufferGPUWriteOnly>& counterSharedBuffers
-) {
-	_moveModel(
-		modelIndex, modelBundleIndex, oldPipelineIndex, newPipelineIndex,
-		true, argumentInputSharedBuffers, perPipelineSharedBuffer, perModelDataCSBuffer,
+		argumentInputSharedBuffers, perPipelineSharedBuffer, perModelDataCSBuffer,
 		argumentOutputSharedBuffers, counterSharedBuffers
 	);
 }
@@ -974,7 +788,7 @@ size_t ModelBundleVSIndirect::FindAddableStartIndex(
 
 void ModelBundleVSIndirect::ResizePreviousPipelines(
 	size_t addableStartIndex, size_t pipelineLocalIndex, std::uint32_t modelBundleIndex,
-	bool areModelsSorted, std::vector<SharedBufferCPU>& argumentInputSharedBuffers,
+	std::vector<SharedBufferCPU>& argumentInputSharedBuffers,
 	SharedBufferCPU& perPipelineSharedBuffer, SharedBufferCPU& perModelDataCSBuffer,
 	std::vector<SharedBufferGPUWriteOnly>& argumentOutputSharedBuffers,
 	std::vector<SharedBufferGPUWriteOnly>& counterSharedBuffers
@@ -993,22 +807,19 @@ void ModelBundleVSIndirect::ResizePreviousPipelines(
 			pipelineMap[indexLink.bundleIndex] = indexLink.localIndex;
 
 		csPipeline.AllocateBuffers(
-			argumentInputSharedBuffers, perPipelineSharedBuffer, perModelDataCSBuffer,
-			areModelsSorted
+			argumentInputSharedBuffers, perPipelineSharedBuffer, perModelDataCSBuffer
 		);
 
-		csPipeline.UpdateNonPerFrameData(modelBundleIndex, areModelsSorted);
+		csPipeline.UpdateNonPerFrameData(modelBundleIndex);
 
-		const auto newModelCount = static_cast<std::uint32_t>(
-			csPipeline.GetModelCount(areModelsSorted)
-		);
+		const auto newModelCount = static_cast<std::uint32_t>(csPipeline.GetModelCount());
 
 		vsPipeline.AllocateBuffers(argumentOutputSharedBuffers, counterSharedBuffers, newModelCount);
 	}
 }
 
 void ModelBundleVSIndirect::RecreateFollowingPipelines(
-	size_t pipelineLocalIndex, std::uint32_t modelBundleIndex, bool areModelsSorted,
+	size_t pipelineLocalIndex, std::uint32_t modelBundleIndex,
 	std::vector<SharedBufferCPU>& argumentInputSharedBuffers,
 	SharedBufferCPU& perPipelineSharedBuffer, SharedBufferCPU& perModelDataCSBuffer,
 	std::vector<SharedBufferGPUWriteOnly>& argumentOutputSharedBuffers,
@@ -1029,18 +840,15 @@ void ModelBundleVSIndirect::RecreateFollowingPipelines(
 		);
 
 		csPipeline.AllocateBuffers(
-			argumentInputSharedBuffers, perPipelineSharedBuffer, perModelDataCSBuffer,
-			areModelsSorted
+			argumentInputSharedBuffers, perPipelineSharedBuffer, perModelDataCSBuffer
 		);
 
-		csPipeline.UpdateNonPerFrameData(modelBundleIndex, areModelsSorted);
+		csPipeline.UpdateNonPerFrameData(modelBundleIndex);
 
 		// VS
 		vsPipeline.RelinquishMemory(argumentOutputSharedBuffers, counterSharedBuffers);
 
-		const auto newModelCount = static_cast<std::uint32_t>(
-			csPipeline.GetModelCount(areModelsSorted)
-		);
+		const auto newModelCount = static_cast<std::uint32_t>(csPipeline.GetModelCount());
 
 		vsPipeline.AllocateBuffers(argumentOutputSharedBuffers, counterSharedBuffers, newModelCount);
 	}
@@ -1049,8 +857,7 @@ void ModelBundleVSIndirect::RecreateFollowingPipelines(
 void ModelBundleVSIndirect::_addModels(
 	std::uint32_t pipelineIndex, std::uint32_t modelBundleIndex,
 	std::uint32_t const* modelIndices, std::uint32_t const* bufferIndices,
-	size_t modelCount, bool areModelsSorted,
-	std::vector<SharedBufferCPU>& argumentInputSharedBuffers,
+	size_t modelCount, std::vector<SharedBufferCPU>& argumentInputSharedBuffers,
 	SharedBufferCPU& perPipelineSharedBuffer, SharedBufferCPU& perModelDataCSBuffer,
 	std::vector<SharedBufferGPUWriteOnly>& argumentOutputSharedBuffers,
 	std::vector<SharedBufferGPUWriteOnly>& counterSharedBuffers
@@ -1058,7 +865,7 @@ void ModelBundleVSIndirect::_addModels(
 	const auto pipelineLocalIndex = static_cast<std::uint32_t>(GetLocalPipelineIndex(pipelineIndex));
 
 	_addModelsToPipeline(
-		pipelineLocalIndex, modelBundleIndex, modelIndices, bufferIndices, modelCount, areModelsSorted,
+		pipelineLocalIndex, modelBundleIndex, modelIndices, bufferIndices, modelCount,
 		argumentInputSharedBuffers, perPipelineSharedBuffer, perModelDataCSBuffer,
 		argumentOutputSharedBuffers, counterSharedBuffers
 	);
@@ -1067,8 +874,7 @@ void ModelBundleVSIndirect::_addModels(
 void ModelBundleVSIndirect::_addModelsToPipeline(
 	std::uint32_t pipelineLocalIndex, std::uint32_t modelBundleIndex,
 	std::uint32_t const* modelIndices, std::uint32_t const* bufferIndices,
-	size_t modelCount, bool areModelsSorted,
-	std::vector<SharedBufferCPU>& argumentInputSharedBuffers,
+	size_t modelCount, std::vector<SharedBufferCPU>& argumentInputSharedBuffers,
 	SharedBufferCPU& perPipelineSharedBuffer, SharedBufferCPU& perModelDataCSBuffer,
 	std::vector<SharedBufferGPUWriteOnly>& argumentOutputSharedBuffers,
 	std::vector<SharedBufferGPUWriteOnly>& counterSharedBuffers
@@ -1081,17 +887,12 @@ void ModelBundleVSIndirect::_addModelsToPipeline(
 	// Add the model data first.
 	for (size_t index = 0u; index < modelCount; ++index)
 	{
-		auto localModelIndex = std::numeric_limits<std::uint32_t>::max();
-
 		const std::uint32_t modelIndex  = modelIndices[index];
 		const std::uint32_t bufferIndex = bufferIndices[index];
 
-		if (areModelsSorted)
-			localModelIndex = pipeline.AddModelSorted(modelIndex, bufferIndex);
-		else
-			localModelIndex = pipeline.AddModel(modelIndex, bufferIndex);
+		const std::uint32_t localModelIndex = pipeline.AddModel(modelIndex, bufferIndex);
 
-		LocalIndexMap_t& pipelineMap = m_localModelIndexMap[pipelineLocalIndex];
+		LocalIndexMap_t& pipelineMap        = m_localModelIndexMap[pipelineLocalIndex];
 
 		pipelineMap.insert_or_assign(modelIndex, localModelIndex);
 	}
@@ -1104,20 +905,17 @@ void ModelBundleVSIndirect::_addModelsToPipeline(
 		if (modelCount > addableModelCount)
 		{
 			pipeline.AllocateBuffers(
-				argumentInputSharedBuffers, perPipelineSharedBuffer, perModelDataCSBuffer,
-				areModelsSorted
+				argumentInputSharedBuffers, perPipelineSharedBuffer, perModelDataCSBuffer
 			);
 
-			const auto newPipelineModelCount = static_cast<std::uint32_t>(
-				pipeline.GetModelCount(areModelsSorted)
-				);
+			const auto newPipelineModelCount = static_cast<std::uint32_t>(pipeline.GetModelCount());
 
 			m_vsPipelines[pipelineLocalIndex].AllocateBuffers(
 				argumentOutputSharedBuffers, counterSharedBuffers, newPipelineModelCount
 			);
 		}
 
-		pipeline.UpdateNonPerFrameData(modelBundleIndex, areModelsSorted);
+		pipeline.UpdateNonPerFrameData(modelBundleIndex);
 	}
 	else
 	{
@@ -1128,7 +926,7 @@ void ModelBundleVSIndirect::_addModelsToPipeline(
 		// require any actual new buffer allocation.
 		if (addableStartIndex != std::numeric_limits<size_t>::max())
 			ResizePreviousPipelines(
-				addableStartIndex, pipelineLocalIndex, modelBundleIndex, areModelsSorted,
+				addableStartIndex, pipelineLocalIndex, modelBundleIndex,
 				argumentInputSharedBuffers, perPipelineSharedBuffer, perModelDataCSBuffer,
 				argumentOutputSharedBuffers, counterSharedBuffers
 			);
@@ -1136,7 +934,7 @@ void ModelBundleVSIndirect::_addModelsToPipeline(
 		// buffers of the following pipelines.
 		else
 			RecreateFollowingPipelines(
-				pipelineLocalIndex, modelBundleIndex, areModelsSorted,
+				pipelineLocalIndex, modelBundleIndex,
 				argumentInputSharedBuffers, perPipelineSharedBuffer, perModelDataCSBuffer,
 				argumentOutputSharedBuffers, counterSharedBuffers
 			);
@@ -1160,23 +958,6 @@ void ModelBundleVSIndirect::Update(size_t frameIndex, const D3DMeshBundleVS& mes
 	}
 }
 
-void ModelBundleVSIndirect::UpdateSorted(size_t frameIndex, const D3DMeshBundleVS& meshBundle) noexcept
-{
-	const auto& models         = m_modelBundle->GetModels();
-
-	const size_t pipelineCount = std::size(m_pipelines);
-
-	for (size_t index = 0u; index < pipelineCount; ++index)
-	{
-		if (!m_pipelines.IsInUse(index))
-			continue;
-
-		PipelineModelsCSIndirect& pipeline = m_pipelines[index];
-
-		pipeline.UpdateSorted(frameIndex, meshBundle, models);
-	}
-}
-
 void ModelBundleVSIndirect::UpdatePipeline(
 	size_t pipelineLocalIndex, size_t frameIndex, const D3DMeshBundleVS& meshBundle
 ) const noexcept {
@@ -1188,19 +969,6 @@ void ModelBundleVSIndirect::UpdatePipeline(
 	const PipelineModelsCSIndirect& pipeline = m_pipelines[pipelineLocalIndex];
 
 	pipeline.Update(frameIndex, meshBundle, models);
-}
-
-void ModelBundleVSIndirect::UpdatePipelineSorted(
-	size_t pipelineLocalIndex, size_t frameIndex, const D3DMeshBundleVS& meshBundle
-) noexcept {
-	const auto& models = m_modelBundle->GetModels();
-
-	if (!m_pipelines.IsInUse(pipelineLocalIndex))
-		return;
-
-	PipelineModelsCSIndirect& pipeline = m_pipelines[pipelineLocalIndex];
-
-	pipeline.UpdateSorted(frameIndex, meshBundle, models);
 }
 
 void ModelBundleVSIndirect::Draw(

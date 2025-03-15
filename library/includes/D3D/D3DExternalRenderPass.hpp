@@ -15,7 +15,6 @@ public:
 	struct PipelineDetails
 	{
 		std::uint32_t              pipelineGlobalIndex;
-		bool                       renderSorted;
 		std::vector<std::uint32_t> modelBundleIndices;
 		std::vector<std::uint32_t> pipelineLocalIndices;
 	};
@@ -27,7 +26,7 @@ public:
 	);
 
 	// All the pipelines in a RenderPass must have the same Attachment Signature.
-	void AddPipeline(std::uint32_t pipelineIndex, bool sorted) override;
+	void AddPipeline(std::uint32_t pipelineIndex) override;
 
 	void RemoveModelBundle(std::uint32_t bundleIndex) noexcept override;
 	void RemovePipeline(std::uint32_t pipelineIndex) noexcept override;

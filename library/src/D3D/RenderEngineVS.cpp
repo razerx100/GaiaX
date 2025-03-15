@@ -177,7 +177,7 @@ ID3D12Fence* RenderEngineVSIndividual::GenericCopyStage(
 
 void RenderEngineVSIndividual::DrawRenderPassPipelines(
 	const D3DCommandList& graphicsCmdList, const ExternalRenderPass_t& renderPass
-) noexcept {
+) const noexcept {
 	const std::vector<D3DExternalRenderPass::PipelineDetails>& pipelineDetails
 		= renderPass.GetPipelineDetails();
 
@@ -190,18 +190,10 @@ void RenderEngineVSIndividual::DrawRenderPassPipelines(
 
 		const size_t bundleCount = std::size(bundleIndices);
 
-		if (details.renderSorted)
-			for (size_t index = 0u; index < bundleCount; ++index)
-				m_modelManager.DrawPipelineSorted(
-					bundleIndices[index], pipelineLocalIndices[index],
-					graphicsCmdList, m_meshManager
-				);
-		else
-			for (size_t index = 0u; index < bundleCount; ++index)
-				m_modelManager.DrawPipeline(
-					bundleIndices[index], pipelineLocalIndices[index],
-					graphicsCmdList, m_meshManager
-				);
+		for (size_t index = 0u; index < bundleCount; ++index)
+			m_modelManager.DrawPipeline(
+				bundleIndices[index], pipelineLocalIndices[index], graphicsCmdList, m_meshManager
+			);
 	}
 }
 
@@ -447,7 +439,7 @@ void RenderEngineVSIndirect::SetShaderPath(const std::wstring& shaderPath)
 
 void RenderEngineVSIndirect::UpdateRenderPassPipelines(
 	size_t frameIndex, const ExternalRenderPass_t& renderPass
-) noexcept {
+) const noexcept {
 	const std::vector<D3DExternalRenderPass::PipelineDetails>& pipelineDetails
 		= renderPass.GetPipelineDetails();
 
@@ -458,20 +450,14 @@ void RenderEngineVSIndirect::UpdateRenderPassPipelines(
 
 		const size_t bundleCount = std::size(bundleIndices);
 
-		if (details.renderSorted)
-			for (size_t index = 0u; index < bundleCount; ++index)
-				m_modelManager.UpdatePipelinePerFrameSorted(
-					frameIndex, bundleIndices[index], pipelineLocalIndices[index], m_meshManager
-				);
-		else
-			for (size_t index = 0u; index < bundleCount; ++index)
-				m_modelManager.UpdatePipelinePerFrame(
-					frameIndex, bundleIndices[index], pipelineLocalIndices[index], m_meshManager
-				);
+		for (size_t index = 0u; index < bundleCount; ++index)
+			m_modelManager.UpdatePipelinePerFrame(
+				frameIndex, bundleIndices[index], pipelineLocalIndices[index], m_meshManager
+			);
 	}
 }
 
-void RenderEngineVSIndirect::_updatePerFrame(UINT64 frameIndex) noexcept
+void RenderEngineVSIndirect::_updatePerFrame(UINT64 frameIndex) const noexcept
 {
 	m_modelBuffers.Update(frameIndex);
 
@@ -718,7 +704,7 @@ ID3D12Fence* RenderEngineVSIndirect::FrustumCullingStage(
 
 void RenderEngineVSIndirect::DrawRenderPassPipelines(
 	size_t frameIndex, const D3DCommandList& graphicsCmdList, const ExternalRenderPass_t& renderPass
-) noexcept {
+) const noexcept {
 	const std::vector<D3DExternalRenderPass::PipelineDetails>& pipelineDetails
 		= renderPass.GetPipelineDetails();
 

@@ -155,18 +155,11 @@ public:
 		const D3DCommandList& graphicsList, const MeshManagerVSIndividual& meshManager,
 		const PipelineManager<Pipeline_t>& pipelineManager
 	) const noexcept;
-	void DrawSorted(
-		const D3DCommandList& graphicsList, const MeshManagerVSIndividual& meshManager,
-		const PipelineManager<Pipeline_t>& pipelineManager
-	) noexcept;
+
 	void DrawPipeline(
 		size_t modelBundleIndex, size_t pipelineLocalIndex, const D3DCommandList& graphicsList,
 		const MeshManagerVSIndividual& meshManager
 	) const noexcept;
-	void DrawPipelineSorted(
-		size_t modelBundleIndex, size_t pipelineLocalIndex, const D3DCommandList& graphicsList,
-		const MeshManagerVSIndividual& meshManager
-	) noexcept;
 
 private:
 	UINT m_constantsRootIndex;
@@ -268,16 +261,11 @@ public:
 	UINT GetConstantsVSRootIndex() const noexcept { return m_constantsVSRootIndex; }
 
 	void UpdatePerFrame(UINT64 frameIndex, const MeshManagerVSIndirect& meshManager) const noexcept;
-	void UpdatePerFrameSorted(UINT64 frameIndex, const MeshManagerVSIndirect& meshManager) noexcept;
 
 	void UpdatePipelinePerFrame(
 		UINT64 frameIndex, size_t modelBundleIndex, size_t pipelineLocalIndex,
 		const MeshManagerVSIndirect& meshManager
 	) const noexcept;
-	void UpdatePipelinePerFrameSorted(
-		UINT64 frameIndex, size_t modelBundleIndex, size_t pipelineLocalIndex,
-		const MeshManagerVSIndirect& meshManager
-	) noexcept;
 
 private:
 	void _addModelsFromBundle(
@@ -385,18 +373,11 @@ public:
 		const D3DCommandList& graphicsList, const MeshManagerMS& meshManager,
 		const PipelineManager<Pipeline_t>& pipelineManager
 	) const noexcept;
-	void DrawSorted(
-		const D3DCommandList& graphicsList, const MeshManagerMS& meshManager,
-		const PipelineManager<Pipeline_t>& pipelineManager
-	) noexcept;
+
 	void DrawPipeline(
 		size_t modelBundleIndex, size_t pipelineLocalIndex, const D3DCommandList& graphicsList,
 		const MeshManagerMS& meshManager
 	) const noexcept;
-	void DrawPipelineSorted(
-		size_t modelBundleIndex, size_t pipelineLocalIndex, const D3DCommandList& graphicsList,
-		const MeshManagerMS& meshManager
-	) noexcept;
 
 private:
 	UINT m_constantsRootIndex;

@@ -389,11 +389,11 @@ public:
 	}
 
 protected:
-	void Update(UINT64 frameIndex) noexcept
+	void Update(UINT64 frameIndex) const noexcept
 	{
 		m_cameraManager.Update(frameIndex);
 
-		static_cast<Derived*>(this)->_updatePerFrame(frameIndex);
+		static_cast<Derived const*>(this)->_updatePerFrame(frameIndex);
 
 		m_externalResourceManager.UpdateExtensionData(static_cast<size_t>(frameIndex));
 	}

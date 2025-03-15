@@ -183,7 +183,7 @@ ID3D12Fence* RenderEngineMS::GenericCopyStage(
 
 void RenderEngineMS::DrawRenderPassPipelines(
 	const D3DCommandList& graphicsCmdList, const ExternalRenderPass_t& renderPass
-) noexcept {
+) const noexcept {
 	const std::vector<D3DExternalRenderPass::PipelineDetails>& pipelineDetails
 		= renderPass.GetPipelineDetails();
 
@@ -196,18 +196,10 @@ void RenderEngineMS::DrawRenderPassPipelines(
 
 		const size_t bundleCount = std::size(bundleIndices);
 
-		if (details.renderSorted)
-			for (size_t index = 0u; index < bundleCount; ++index)
-				m_modelManager.DrawPipelineSorted(
-					bundleIndices[index], pipelineLocalIndices[index],
-					graphicsCmdList, m_meshManager
-				);
-		else
-			for (size_t index = 0u; index < bundleCount; ++index)
-				m_modelManager.DrawPipeline(
-					bundleIndices[index], pipelineLocalIndices[index],
-					graphicsCmdList, m_meshManager
-				);
+		for (size_t index = 0u; index < bundleCount; ++index)
+			m_modelManager.DrawPipeline(
+				bundleIndices[index], pipelineLocalIndices[index], graphicsCmdList, m_meshManager
+			);
 	}
 }
 

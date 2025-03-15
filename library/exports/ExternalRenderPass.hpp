@@ -23,7 +23,7 @@ public:
 	virtual ~ExternalRenderPass() = default;
 
 	// All the pipelines in a RenderPass must have the same Attachment Signature.
-	virtual void AddPipeline(std::uint32_t pipelineIndex, bool sorted) = 0;
+	virtual void AddPipeline(std::uint32_t pipelineIndex) = 0;
 
 	virtual void AddModelBundle(std::uint32_t bundleIndex) = 0;
 

@@ -61,7 +61,7 @@ private:
 private:
 	void DrawRenderPassPipelines(
 		const D3DCommandList& graphicsCmdList, const ExternalRenderPass_t& renderPass
-	) noexcept;
+	) const noexcept;
 
 public:
 	RenderEngineMS(const RenderEngineMS&) = delete;

@@ -9,15 +9,9 @@ D3DExternalRenderPass::D3DExternalRenderPass(
 	m_swapchainCopySource{ std::numeric_limits<std::uint32_t>::max() }
 {}
 
-void D3DExternalRenderPass::AddPipeline(std::uint32_t pipelineIndex, bool sorted)
+void D3DExternalRenderPass::AddPipeline(std::uint32_t pipelineIndex)
 {
-	m_pipelineDetails.emplace_back(
-		PipelineDetails
-		{
-			.pipelineGlobalIndex = pipelineIndex,
-			.renderSorted        = sorted
-		}
-	);
+	m_pipelineDetails.emplace_back(PipelineDetails{ .pipelineGlobalIndex = pipelineIndex });
 }
 
 void D3DExternalRenderPass::RemoveModelBundle(std::uint32_t bundleIndex) noexcept

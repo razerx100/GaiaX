@@ -61,7 +61,7 @@ private:
 private:
 	void DrawRenderPassPipelines(
 		const D3DCommandList& graphicsCmdList, const ExternalRenderPass_t& renderPass
-	) noexcept;
+	) const noexcept;
 
 public:
 	RenderEngineVSIndividual(const RenderEngineVSIndividual&) = delete;
@@ -143,14 +143,16 @@ private:
 
 	void CreateCommandSignature(ID3D12Device* device);
 
-	void _updatePerFrame(UINT64 frameIndex) noexcept;
+	void _updatePerFrame(UINT64 frameIndex) const noexcept;
 
 private:
 	void DrawRenderPassPipelines(
 		size_t frameIndex , const D3DCommandList& graphicsCmdList, const ExternalRenderPass_t& renderPass
-	) noexcept;
+	) const noexcept;
 
-	void UpdateRenderPassPipelines(size_t frameIndex, const ExternalRenderPass_t& renderPass) noexcept;
+	void UpdateRenderPassPipelines(
+		size_t frameIndex, const ExternalRenderPass_t& renderPass
+	) const noexcept;
 
 private:
 	// Compute
