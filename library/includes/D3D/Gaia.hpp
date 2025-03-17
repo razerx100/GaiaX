@@ -50,13 +50,13 @@ private:
 
 private:
 	DeviceManager                              m_deviceManager;
+	// The rtv heap must be before the render engine, so the render engine is destroyed first and
+	// no external render targets have a dangling pointer.
+	std::unique_ptr<D3DReusableDescriptorHeap> m_rtvHeap;
 	// Putting the RenderEngine before the swapchain, because the swapchain
 	// requires a presentation queue. I am using the graphics queue as the
 	// presentation engine/queue.
 	std::unique_ptr<RenderEngine>              m_renderEngine;
-	// Swapchain and RTVHeap are unique_ptrs because the ReusableHeap ctor requires a valid device.
-	// Which is created later. And the swapchain requires the RTV heap.
-	std::unique_ptr<D3DReusableDescriptorHeap> m_rtvHeap;
 	std::unique_ptr<SwapchainManager>          m_swapchain;
 	UINT                                       m_windowWidth;
 	UINT                                       m_windowHeight;
@@ -69,8 +69,8 @@ public:
 
 	Gaia(Gaia&& other) noexcept
 		: m_deviceManager{ std::move(other.m_deviceManager) },
-		m_renderEngine{ std::move(other.m_renderEngine) },
 		m_rtvHeap{ std::move(other.m_rtvHeap) },
+		m_renderEngine{ std::move(other.m_renderEngine) },
 		m_swapchain{ std::move(other.m_swapchain) },
 		m_windowWidth{ other.m_windowWidth },
 		m_windowHeight{ other.m_windowHeight }
@@ -78,8 +78,8 @@ public:
 	Gaia& operator=(Gaia&& other) noexcept
 	{
 		m_deviceManager = std::move(other.m_deviceManager);
-		m_renderEngine  = std::move(other.m_renderEngine);
 		m_rtvHeap       = std::move(other.m_rtvHeap);
+		m_renderEngine  = std::move(other.m_renderEngine);
 		m_swapchain     = std::move(other.m_swapchain);
 		m_windowWidth   = other.m_windowWidth;
 		m_windowHeight  = other.m_windowHeight;
