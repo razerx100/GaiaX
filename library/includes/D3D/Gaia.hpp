@@ -31,6 +31,11 @@ public:
 	}
 
 	[[nodiscard]]
+	std::uint32_t AddExternalRenderPass();
+
+	void SetSwapchainExternalRenderPass();
+
+	[[nodiscard]]
 	DeviceManager::Resolution GetFirstDisplayCoordinates() const;
 
 	[[nodiscard]]

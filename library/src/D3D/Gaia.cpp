@@ -28,6 +28,10 @@ void Gaia::CreateDevice()
 	m_deviceManager.GetDebugLogger().AddCallbackType(DebugCallbackType::FileOut);
 #endif
 	m_deviceManager.Create(s_featureLevel);
+
+	m_rtvHeap = std::make_unique<D3DReusableDescriptorHeap>(
+		m_deviceManager.GetDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_RTV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE
+	);
 }
 
 void Gaia::CreateRenderEngine(
@@ -49,12 +53,6 @@ void Gaia::CreateRenderEngine(
 
 void Gaia::CreateSwapchain(std::uint32_t frameCount, void* windowHandle)
 {
-	ID3D12Device5* device = m_deviceManager.GetDevice();
-
-	m_rtvHeap = std::make_unique<D3DReusableDescriptorHeap>(
-		device, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE
-	);
-
 	m_swapchain = std::make_unique<SwapchainManager>(
 		m_rtvHeap.get(), frameCount, m_deviceManager.GetFactory(),
 		m_renderEngine->GetPresentQueue(), static_cast<HWND>(windowHandle)
@@ -96,4 +94,14 @@ DeviceManager::Resolution Gaia::GetFirstDisplayCoordinates() const
 SwapchainManager::Extent Gaia::GetCurrentRenderArea() const noexcept
 {
 	return m_swapchain->GetCurrentRenderArea();
+}
+
+std::uint32_t Gaia::AddExternalRenderPass()
+{
+	return m_renderEngine->AddExternalRenderPass(m_rtvHeap.get());
+}
+
+void Gaia::SetSwapchainExternalRenderPass()
+{
+	m_renderEngine->SetSwapchainExternalRenderPass(m_rtvHeap.get());
 }

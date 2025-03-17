@@ -22,7 +22,6 @@ RenderEngine::RenderEngine(
 	m_textureStorage{ device, &m_memoryManager },
 	m_textureManager{ device },
 	m_cameraManager{ device, &m_memoryManager },
-	m_rtvHeap{ device, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE },
 	m_dsvHeap{ device, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE },
 	m_viewportAndScissors{}, m_temporaryDataBuffer{}, m_copyNecessary{ false }
 {

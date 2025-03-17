@@ -108,7 +108,7 @@ public:
 	);
 
 	[[nodiscard]]
-	virtual std::uint32_t AddExternalRenderPass() = 0;
+	virtual std::uint32_t AddExternalRenderPass(D3DReusableDescriptorHeap* rtvHeap) = 0;
 	[[nodiscard]]
 	virtual ExternalRenderPass* GetExternalRenderPassRP(size_t index) const noexcept = 0;
 	[[nodiscard]]
@@ -116,7 +116,7 @@ public:
 		size_t index
 	) const noexcept = 0;
 
-	virtual void SetSwapchainExternalRenderPass() = 0;
+	virtual void SetSwapchainExternalRenderPass(D3DReusableDescriptorHeap* rtvHeap) = 0;
 
 	[[nodiscard]]
 	virtual ExternalRenderPass* GetSwapchainExternalRenderPassRP() const noexcept = 0;
@@ -171,7 +171,6 @@ protected:
 	TextureStorage                    m_textureStorage;
 	TextureManager                    m_textureManager;
 	CameraManager                     m_cameraManager;
-	D3DReusableDescriptorHeap         m_rtvHeap;
 	D3DReusableDescriptorHeap         m_dsvHeap;
 	ViewportAndScissorManager         m_viewportAndScissors;
 	TemporaryDataBufferGPU            m_temporaryDataBuffer;
@@ -196,7 +195,6 @@ public:
 		m_textureStorage{ std::move(other.m_textureStorage) },
 		m_textureManager{ std::move(other.m_textureManager) },
 		m_cameraManager{ std::move(other.m_cameraManager) },
-		m_rtvHeap{ std::move(other.m_rtvHeap) },
 		m_dsvHeap{ std::move(other.m_dsvHeap) },
 		m_viewportAndScissors{ other.m_viewportAndScissors },
 		m_temporaryDataBuffer{ std::move(other.m_temporaryDataBuffer) },
@@ -218,7 +216,6 @@ public:
 		m_textureStorage             = std::move(other.m_textureStorage);
 		m_textureManager             = std::move(other.m_textureManager);
 		m_cameraManager              = std::move(other.m_cameraManager);
-		m_rtvHeap                    = std::move(other.m_rtvHeap);
 		m_dsvHeap                    = std::move(other.m_dsvHeap);
 		m_viewportAndScissors        = other.m_viewportAndScissors;
 		m_temporaryDataBuffer        = std::move(other.m_temporaryDataBuffer);
@@ -322,13 +319,13 @@ public:
 	}
 
 	[[nodiscard]]
-	std::uint32_t AddExternalRenderPass() override
+	std::uint32_t AddExternalRenderPass(D3DReusableDescriptorHeap* rtvHeap) override
 	{
 		return static_cast<std::uint32_t>(
 			m_renderPasses.Add(
 				std::make_shared<ExternalRenderPass_t>(
 					&m_modelManager, m_externalResourceManager.GetD3DResourceFactory(),
-					&m_rtvHeap, &m_dsvHeap
+					rtvHeap, &m_dsvHeap
 				)
 			)
 		);
@@ -352,11 +349,11 @@ public:
 		m_renderPasses.RemoveElement(index);
 	}
 
-	void SetSwapchainExternalRenderPass() override
+	void SetSwapchainExternalRenderPass(D3DReusableDescriptorHeap* rtvHeap) override
 	{
 		m_swapchainRenderPass = std::make_shared<ExternalRenderPass_t>(
 			&m_modelManager, m_externalResourceManager.GetD3DResourceFactory(),
-			&m_rtvHeap, &m_dsvHeap
+			rtvHeap, &m_dsvHeap
 		);
 	}
 

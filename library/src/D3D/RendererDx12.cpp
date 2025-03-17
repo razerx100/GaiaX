@@ -153,7 +153,7 @@ void RendererDx12::QueueExternalBufferGPUCopy(
 
 std::uint32_t RendererDx12::AddExternalRenderPass()
 {
-	return m_gaia.GetRenderEngine().AddExternalRenderPass();
+	return m_gaia.AddExternalRenderPass();
 }
 
 ExternalRenderPass* RendererDx12::GetExternalRenderPassRP(size_t index) const noexcept
@@ -169,7 +169,7 @@ std::shared_ptr<ExternalRenderPass> RendererDx12::GetExternalRenderPassSP(
 
 void RendererDx12::SetSwapchainExternalRenderPass()
 {
-	m_gaia.GetRenderEngine().SetSwapchainExternalRenderPass();
+	m_gaia.SetSwapchainExternalRenderPass();
 }
 
 ExternalRenderPass* RendererDx12::GetSwapchainExternalRenderPassRP() const noexcept
