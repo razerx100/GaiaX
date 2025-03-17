@@ -30,13 +30,13 @@ enum class ExternalBlendFactor : std::uint8_t
 
 struct ExternalBlendState
 {
-	bool                enabled;
-	ExternalBlendOP     alphaBlendOP;
-	ExternalBlendOP     colourBlendOP;
-	ExternalBlendFactor alphaBlendSrc;
-	ExternalBlendFactor alphaBlendDst;
-	ExternalBlendFactor colourBlendSrc;
-	ExternalBlendFactor colourBlendDst;
+	bool                enabled        = false;
+	ExternalBlendOP     alphaBlendOP   = ExternalBlendOP::Add;
+	ExternalBlendOP     colourBlendOP  = ExternalBlendOP::Add;
+	ExternalBlendFactor alphaBlendSrc  = ExternalBlendFactor::One;
+	ExternalBlendFactor alphaBlendDst  = ExternalBlendFactor::Zero;
+	ExternalBlendFactor colourBlendSrc = ExternalBlendFactor::One;
+	ExternalBlendFactor colourBlendDst = ExternalBlendFactor::Zero;
 
 	bool operator==(const ExternalBlendState& other) const noexcept
 	{
@@ -69,12 +69,7 @@ public:
 		: m_fragmentShader{}, m_renderTargetFormats{ 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u },
 		m_blendStates{}, m_renderTargetCount{ 0u }, m_depthFormat{ 0u }, m_stencilFormat{ 0u },
 		m_pipelineStates{ 0u }
-	{
-		const ExternalBlendState defaultState = GetDefaultBlendState();
-
-		for (ExternalBlendState& blendState : m_blendStates)
-			blendState = defaultState;
-	}
+	{}
 
 	ExternalGraphicsPipeline(const ShaderName& fragmentShader)
 		: ExternalGraphicsPipeline{}
@@ -199,21 +194,6 @@ private:
 			}
 
 		return isSame;
-	}
-
-	[[nodiscard]]
-	static ExternalBlendState GetDefaultBlendState() noexcept
-	{
-		return ExternalBlendState
-		{
-			.enabled        = false,
-			.alphaBlendOP   = ExternalBlendOP::Add,
-			.colourBlendOP  = ExternalBlendOP::Add,
-			.alphaBlendSrc  = ExternalBlendFactor::One,
-			.alphaBlendDst  = ExternalBlendFactor::Zero,
-			.colourBlendSrc = ExternalBlendFactor::One,
-			.colourBlendDst = ExternalBlendFactor::Zero
-		};
 	}
 
 private:
