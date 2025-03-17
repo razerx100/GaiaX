@@ -4,6 +4,19 @@
 #include <Exception.hpp>
 
 // Resource
+Resource::Resource()
+	: m_resource{ nullptr }, m_device{ nullptr }, m_memoryManager{ nullptr },
+	m_allocationInfo{
+		.heapOffset = 0u,
+		.heap       = nullptr,
+		.size       = 0u,
+		.alignment  = 0u,
+		.memoryID   = 0u,
+		.isValid    = false
+	},
+	m_resourceType{ D3D12_HEAP_TYPE_CUSTOM }
+{}
+
 Resource::Resource(ID3D12Device* device, MemoryManager* memoryManager, D3D12_HEAP_TYPE memoryType)
 	: m_resource{ nullptr }, m_device{ device }, m_memoryManager{ memoryManager },
 	m_allocationInfo{
@@ -46,6 +59,8 @@ void Resource::CreatePlacedResource(
 }
 
 // Buffer
+Buffer::Buffer() : Resource{}, m_cpuHandle{ nullptr }, m_bufferSize{ 0u } {}
+
 Buffer::Buffer(ID3D12Device* device, MemoryManager* memoryManager, D3D12_HEAP_TYPE memoryType)
 	: Resource{ device, memoryManager, memoryType }, m_cpuHandle{ nullptr }, m_bufferSize{ 0u }
 {}
@@ -74,8 +89,7 @@ void Buffer::Create(
 	};
 
 	// If the buffer pointer is already allocated, then free it.
-	if (m_resource != nullptr)
-		Destroy();
+	Destroy();
 
 	Allocate(bufferDesc, false);
 
@@ -144,6 +158,11 @@ D3D12_CONSTANT_BUFFER_VIEW_DESC Buffer::GetCBVDesc(UINT64 startingOffset, UINT b
 }
 
 // Texture
+Texture::Texture()
+	: Resource{}, m_format{ DXGI_FORMAT_UNKNOWN },
+	m_height{ 0u }, m_depth{ 0u }, m_mipLevels{ 0u }, m_msaa{ false }, m_width{ 0u }
+{}
+
 Texture::Texture(ID3D12Device* device, MemoryManager* memoryManager, D3D12_HEAP_TYPE memoryType)
 	: Resource{ device, memoryManager, memoryType }, m_format{ DXGI_FORMAT_UNKNOWN },
 	m_height{ 0u }, m_depth{ 0u }, m_mipLevels{ 0u }, m_msaa{ false }, m_width{ 0u }
@@ -185,8 +204,7 @@ void Texture::Create(
 	};
 
 	// If the texture pointer is already allocated, then free it.
-	if (m_resource != nullptr)
-		Destroy();
+	Destroy();
 
 	Allocate(textureDesc, msaa);
 

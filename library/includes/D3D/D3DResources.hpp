@@ -8,6 +8,8 @@
 class Resource
 {
 public:
+	// If the default ctor is used, then a new object will have to be moved in it.
+	Resource();
 	Resource(ID3D12Device* device, MemoryManager* memoryManager, D3D12_HEAP_TYPE memoryType);
 
 	[[nodiscard]]
@@ -66,7 +68,10 @@ public:
 class Buffer : public Resource
 {
 public:
+	// If the default ctor is used, then a new object will have to be moved in it.
+	Buffer();
 	Buffer(ID3D12Device* device, MemoryManager* memoryManager, D3D12_HEAP_TYPE memoryType);
+
 	~Buffer() noexcept;
 
 	void Create(
@@ -135,7 +140,10 @@ public:
 class Texture : public Resource
 {
 public:
+	// If the default ctor is used, then a new object will have to be moved in it.
+	Texture();
 	Texture(ID3D12Device* device, MemoryManager* memoryManager, D3D12_HEAP_TYPE memoryType);
+
 	~Texture() noexcept;
 
 	void Create2D(

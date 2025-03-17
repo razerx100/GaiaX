@@ -5,6 +5,7 @@
 #include <D3DDescriptorHeapManager.hpp>
 #include <D3DCommandQueue.hpp>
 #include <TemporaryDataBuffer.hpp>
+#include <ReusableVector.hpp>
 #include <deque>
 #include <optional>
 #include <Texture.hpp>
@@ -13,15 +14,15 @@
 // But can be removed and re-added.
 class TextureStorage
 {
-	static constexpr size_t s_defaultSamplerIndex = 0u;
+	inline static size_t s_defaultSamplerIndex = 0u;
 public:
 	TextureStorage(ID3D12Device* device, MemoryManager* memoryManager)
 		: m_device{ device }, m_memoryManager{ memoryManager },
-		m_textures{}, m_samplers{}, m_availableTextureIndices{},
-		m_availableSamplerIndices{}, m_transitionQueue{}, m_textureBindingIndices{},
+		m_textures{}, m_samplers{}, m_transitionQueue{}, m_textureBindingIndices{},
 		m_samplerBindingIndices{}
 	{
-		m_samplers.emplace_back(SamplerBuilder{}.Get());
+		// This should always be 0 but still doing this to please the compiler.
+		s_defaultSamplerIndex = m_samplers.Add(SamplerBuilder{}.Get());
 	}
 
 	[[nodiscard]]
@@ -112,17 +113,15 @@ private:
 	) noexcept;
 
 private:
-	ID3D12Device*                  m_device;
-	MemoryManager*                 m_memoryManager;
+	ID3D12Device*                     m_device;
+	MemoryManager*                    m_memoryManager;
 	// The TextureView objects need to have the same address until their data is copied.
 	// For the transitionQueue member and also the StagingBufferManager.
-	std::deque<Texture>            m_textures;
-	std::deque<D3D12_SAMPLER_DESC> m_samplers;
-	std::vector<bool>              m_availableTextureIndices;
-	std::vector<bool>              m_availableSamplerIndices;
-	std::queue<Texture const*>     m_transitionQueue;
-	std::vector<UINT>		       m_textureBindingIndices;
-	std::vector<UINT>              m_samplerBindingIndices;
+	ReusableDeque<Texture>            m_textures;
+	ReusableDeque<D3D12_SAMPLER_DESC> m_samplers;
+	std::queue<Texture const*>        m_transitionQueue;
+	std::vector<UINT>		          m_textureBindingIndices;
+	std::vector<UINT>                 m_samplerBindingIndices;
 
 	static constexpr DXGI_FORMAT s_textureFormat = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
 
@@ -134,23 +133,19 @@ public:
 		: m_device{ other.m_device }, m_memoryManager{ other.m_memoryManager },
 		m_textures{ std::move(other.m_textures) },
 		m_samplers{ std::move(other.m_samplers) },
-		m_availableTextureIndices{ std::move(other.m_availableTextureIndices) },
-		m_availableSamplerIndices{ std::move(other.m_availableSamplerIndices) },
 		m_transitionQueue{ std::move(other.m_transitionQueue) },
 		m_textureBindingIndices{ std::move(other.m_textureBindingIndices) },
 		m_samplerBindingIndices{ std::move(other.m_samplerBindingIndices) }
 	{}
 	TextureStorage& operator=(TextureStorage&& other) noexcept
 	{
-		m_device                  = other.m_device;
-		m_memoryManager           = other.m_memoryManager;
-		m_textures                = std::move(other.m_textures);
-		m_samplers                = std::move(other.m_samplers);
-		m_availableTextureIndices = std::move(other.m_availableTextureIndices);
-		m_availableSamplerIndices = std::move(other.m_availableSamplerIndices);
-		m_transitionQueue         = std::move(other.m_transitionQueue);
-		m_textureBindingIndices   = std::move(other.m_textureBindingIndices);
-		m_samplerBindingIndices   = std::move(other.m_samplerBindingIndices);
+		m_device                = other.m_device;
+		m_memoryManager         = other.m_memoryManager;
+		m_textures              = std::move(other.m_textures);
+		m_samplers              = std::move(other.m_samplers);
+		m_transitionQueue       = std::move(other.m_transitionQueue);
+		m_textureBindingIndices = std::move(other.m_textureBindingIndices);
+		m_samplerBindingIndices = std::move(other.m_samplerBindingIndices);
 
 		return *this;
 	}

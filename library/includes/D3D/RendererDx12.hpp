@@ -38,12 +38,12 @@ public:
 	[[nodiscard]]
 	size_t AddTexture(STexture&& texture) override;
 
-	void UnbindTexture(size_t index) override;
+	void UnbindTexture(size_t textureIndex) override;
 
 	[[nodiscard]]
-	std::uint32_t BindTexture(size_t index) override;
+	std::uint32_t BindTexture(size_t textureIndex) override;
 
-	void RemoveTexture(size_t index) override;
+	void RemoveTexture(size_t textureIndex) override;
 
 	[[nodiscard]]
 	std::uint32_t AddModelBundle(std::shared_ptr<ModelBundle>&& modelBundle) override;

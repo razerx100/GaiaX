@@ -46,7 +46,7 @@ public:
 	[[nodiscard]]
 	std::uint32_t BindTexture(size_t textureIndex);
 
-	void RemoveTexture(size_t index);
+	void RemoveTexture(size_t textureIndex);
 
 	[[nodiscard]]
 	std::uint32_t AddCamera(std::shared_ptr<Camera> camera) noexcept

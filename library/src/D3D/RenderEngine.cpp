@@ -136,18 +136,18 @@ std::uint32_t RenderEngine::BindTexture(size_t textureIndex)
 	return freeGlobalDescIndex;
 }
 
-void RenderEngine::RemoveTexture(size_t index)
+void RenderEngine::RemoveTexture(size_t textureIndex)
 {
 	WaitForGPUToFinish();
 
-	m_textureManager.RemoveLocalTextureDescriptor(static_cast<UINT>(index));
+	m_textureManager.RemoveLocalTextureDescriptor(static_cast<UINT>(textureIndex));
 
-	const UINT globalDescriptorIndex = m_textureStorage.GetTextureBindingIndex(index);
+	const UINT globalDescriptorIndex = m_textureStorage.GetTextureBindingIndex(textureIndex);
 	m_textureManager.SetAvailableIndex<D3D12_DESCRIPTOR_RANGE_TYPE_SRV>(
 		globalDescriptorIndex, true
 	);
 
-	m_textureStorage.RemoveTexture(index);
+	m_textureStorage.RemoveTexture(textureIndex);
 }
 
 void RenderEngine::WaitForGPUToFinish()

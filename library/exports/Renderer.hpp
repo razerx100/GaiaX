@@ -52,13 +52,13 @@ public:
 	[[nodiscard]]
 	virtual size_t AddTexture(STexture&& texture) = 0;
 
-	virtual void UnbindTexture(size_t index) = 0;
+	virtual void UnbindTexture(size_t textureIndex) = 0;
 
 	// The returned index is the index of the bound texture in the shader.
 	[[nodiscard]]
-	virtual std::uint32_t BindTexture(size_t index) = 0;
+	virtual std::uint32_t BindTexture(size_t textureIndex) = 0;
 
-	virtual void RemoveTexture(size_t index) = 0;
+	virtual void RemoveTexture(size_t textureIndex) = 0;
 
 	[[nodiscard]]
 	virtual std::uint32_t AddModelBundle(std::shared_ptr<ModelBundle>&& modelBundle) = 0;

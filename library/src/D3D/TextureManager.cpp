@@ -1,32 +1,6 @@
 #include <TextureManager.hpp>
 #include <D3DResourceBarrier.hpp>
 
-template<typename T>
-[[nodiscard]]
-static std::pair<size_t, T*> AddResource(
-	std::vector<bool>& availableIndices, std::deque<T>& resources, T&& resource
-) noexcept {
-	auto index     = std::numeric_limits<size_t>::max();
-	T* resourcePtr = nullptr;
-
-	auto result = std::ranges::find(availableIndices, true);
-
-	if (result != std::end(availableIndices))
-	{
-		index       = static_cast<size_t>(std::distance(std::begin(availableIndices), result));
-		resourcePtr = &resources[index];
-	}
-	else
-	{
-		index          = std::size(resources);
-		T& returnedRef = resources.emplace_back(std::move(resource));
-		availableIndices.emplace_back(false);
-		resourcePtr    = &returnedRef;
-	}
-
-	return { index, resourcePtr };
-}
-
 // Texture storage
 void TextureStorage::SetBindingIndex(
 	size_t index, UINT bindingIndex, std::vector<UINT>& bindingIndices
@@ -43,10 +17,9 @@ size_t TextureStorage::AddTexture(
 	STexture&& texture, StagingBufferManager& stagingBufferManager, TemporaryDataBufferGPU& tempBuffer,
 	bool msaa/* = false */
 ) {
-	auto [index, texturePtr] = AddResource(
-		m_availableTextureIndices, m_textures,
-		Texture{ m_device, m_memoryManager, D3D12_HEAP_TYPE_DEFAULT }
-	);
+	const size_t index = m_textures.Add(Texture{ m_device, m_memoryManager, D3D12_HEAP_TYPE_DEFAULT });
+
+	Texture* texturePtr = &m_textures[index];
 
 	texturePtr->Create2D(
 		texture.width, texture.height, 1u, s_textureFormat, D3D12_RESOURCE_STATE_COMMON,
@@ -55,6 +28,7 @@ size_t TextureStorage::AddTexture(
 
 	stagingBufferManager.AddTexture(std::move(texture.data), texturePtr, tempBuffer);
 
+	// Should be fine because of the deque.
 	m_transitionQueue.push(texturePtr);
 
 	return index;
@@ -62,9 +36,7 @@ size_t TextureStorage::AddTexture(
 
 size_t TextureStorage::AddSampler(const SamplerBuilder& builder)
 {
-	auto [index, samplerPtr] = AddResource(m_availableSamplerIndices, m_samplers, builder.Get());
-
-	return index;
+	return m_samplers.Add(builder.Get());
 }
 
 void TextureStorage::TransitionQueuedTextures(const D3DCommandList& graphicsCmdList)
@@ -86,14 +58,15 @@ void TextureStorage::TransitionQueuedTextures(const D3DCommandList& graphicsCmdL
 
 void TextureStorage::RemoveTexture(size_t index)
 {
-	m_availableTextureIndices[index] = true;
 	m_textures[index].Destroy();
+	m_textures.RemoveElement(index);
 }
 
 void TextureStorage::RemoveSampler(size_t index)
 {
 	if (index != s_defaultSamplerIndex)
-		m_availableSamplerIndices[index] = true;
+		m_samplers.RemoveElement(index);
+
 	// Don't need to destroy this like textures, as it doesn't require any buffer allocations.
 }
 
