@@ -118,10 +118,12 @@ void ConfigurePipelineBuilder(
 		builder.SetDepthStencilState(depthStencilBuilder, depthStencilFormat);
 	}
 
-	// Will add Colour blending later.
 	const size_t renderTargetCount = graphicsExtPipeline.GetRenderTargetCount();
 
 	for (size_t index = 0u; index < renderTargetCount; ++index)
-		builder.AddRenderTarget(GetDxgiFormat(graphicsExtPipeline.GetRenderTargetFormat(index)));
+		builder.AddRenderTarget(
+			GetDxgiFormat(graphicsExtPipeline.GetRenderTargetFormat(index)),
+			GetD3DBlendState(graphicsExtPipeline.GetBlendState(index))
+		);
 }
 #endif

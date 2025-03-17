@@ -103,7 +103,7 @@ public:
 			{
 				.AlphaToCoverageEnable  = FALSE,
 				.IndependentBlendEnable = FALSE,
-				.RenderTarget           = { GetBlendDesc() }
+				.RenderTarget           = {}
 			},
 			.SampleMask            = UINT_MAX,
 			.RasterizerState       = D3D12_RASTERIZER_DESC
@@ -156,8 +156,9 @@ public:
 		return *this;
 	}
 
-	GraphicsPipelineBuilder& AddRenderTarget(DXGI_FORMAT rtvFormat)
-	{
+	GraphicsPipelineBuilder& AddRenderTarget(
+		DXGI_FORMAT rtvFormat, const D3D12_RENDER_TARGET_BLEND_DESC& blendState
+	) {
 		const size_t maxNumRenderTargets = std::size(m_pipelineState.RTVFormats);
 
 		assert(
@@ -167,7 +168,7 @@ public:
 
 		const size_t currentRTVIndex = m_pipelineState.NumRenderTargets;
 
-		m_pipelineState.BlendState.RenderTarget[currentRTVIndex] = GetBlendDesc();
+		m_pipelineState.BlendState.RenderTarget[currentRTVIndex] = blendState;
 		m_pipelineState.RTVFormats[currentRTVIndex]              = rtvFormat;
 
 		++m_pipelineState.NumRenderTargets;
@@ -203,25 +204,6 @@ public:
 
 	[[nodiscard]]
 	PipelineStateType Get() const noexcept { return m_pipelineState; }
-
-private:
-	[[nodiscard]]
-	static D3D12_RENDER_TARGET_BLEND_DESC GetBlendDesc() noexcept
-	{
-		return D3D12_RENDER_TARGET_BLEND_DESC
-		{
-			.BlendEnable           = FALSE,
-			.LogicOpEnable         = FALSE,
-			.SrcBlend              = D3D12_BLEND_ONE,
-			.DestBlend             = D3D12_BLEND_ZERO,
-			.BlendOp               = D3D12_BLEND_OP_ADD,
-			.SrcBlendAlpha         = D3D12_BLEND_ONE,
-			.DestBlendAlpha        = D3D12_BLEND_ZERO,
-			.BlendOpAlpha          = D3D12_BLEND_OP_ADD,
-			.LogicOp               = D3D12_LOGIC_OP_NOOP,
-			.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL
-		};
-	}
 
 private:
 	PipelineStateType m_pipelineState;
