@@ -75,7 +75,9 @@ UINT RenderEngine::UnbindTextureCommon(UINT textureBoundIndex)
 
 	m_textureManager.SetLocalDescriptor<DescType>(globalDescriptor, localCacheIndex);
 
-	m_textureManager.SetAvailableIndex<D3D12_DESCRIPTOR_RANGE_TYPE_SRV>(textureBoundIndex, true);
+	m_textureManager.SetLocalDescriptorAvailability<DescType>(localCacheIndex, false);
+
+	m_textureManager.SetAvailableIndex<DescType>(textureBoundIndex, true);
 
 	return localCacheIndex;
 }
@@ -89,7 +91,7 @@ void RenderEngine::UnbindTexture(size_t textureIndex)
 	m_textureStorage.SetTextureCacheDetails(static_cast<UINT>(textureIndex), localCacheIndex);
 }
 
-UINT RenderEngine::BindTextureCommon(const Texture& texture, std::optional<UINT> localCacheIndex)
+UINT RenderEngine::BindTextureCommon(const Texture& texture, std::optional<UINT> oLocalCacheIndex)
 {
 	WaitForGPUToFinish();
 
@@ -123,10 +125,14 @@ UINT RenderEngine::BindTextureCommon(const Texture& texture, std::optional<UINT>
 
 	m_textureManager.SetAvailableIndex<DescType>(freeGlobalDescIndex, false);
 
-	if (localCacheIndex)
+	if (oLocalCacheIndex)
 	{
+		const UINT localCacheIndex = oLocalCacheIndex.value();
+
 		const D3D12_CPU_DESCRIPTOR_HANDLE localDescriptor
-			= m_textureManager.GetLocalDescriptor<DescType>(localCacheIndex.value());
+			= m_textureManager.GetLocalDescriptor<DescType>(localCacheIndex);
+
+		m_textureManager.SetLocalDescriptorAvailability<DescType>(localCacheIndex, true);
 
 		for (D3DDescriptorManager& descriptorManager : m_graphicsDescriptorManagers)
 			descriptorManager.SetDescriptorSRV(
@@ -151,6 +157,8 @@ std::uint32_t RenderEngine::BindTexture(size_t textureIndex)
 {
 	const Texture& texture = m_textureStorage.Get(textureIndex);
 
+	// The current caching system only works for read only single textures which are bound to
+	// multiple descriptor managers. Because we only cache one of them.
 	std::optional<UINT> localCacheIndex = m_textureStorage.GetAndRemoveTextureLocalDescIndex(
 		static_cast<UINT>(textureIndex)
 	);
@@ -170,7 +178,9 @@ void RenderEngine::RemoveTexture(size_t textureIndex)
 		= m_textureStorage.GetAndRemoveTextureCacheDetails(static_cast<UINT>(textureIndex));
 
 	for (UINT localCacheIndex : localTextureCacheIndices)
-		m_textureManager.RemoveLocalDescriptor<D3D12_DESCRIPTOR_RANGE_TYPE_SRV>(localCacheIndex);
+		m_textureManager.SetLocalDescriptorAvailability<D3D12_DESCRIPTOR_RANGE_TYPE_SRV>(
+			localCacheIndex, true
+		);
 
 	const UINT globalDescriptorIndex = m_textureStorage.GetTextureBindingIndex(textureIndex);
 

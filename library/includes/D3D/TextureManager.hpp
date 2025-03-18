@@ -244,12 +244,12 @@ public:
 	}
 
 	template<D3D12_DESCRIPTOR_RANGE_TYPE type>
-	void SetAvailableIndex(UINT descriptorIndex, bool availablity) noexcept
+	void SetAvailableIndex(UINT descriptorIndex, bool availability) noexcept
 	{
 		IndicesManager& availableIndices = GetAvailableIndices<type>();
 
 		if (std::size(availableIndices) > descriptorIndex)
-			availableIndices.ToggleAvailability(static_cast<size_t>(descriptorIndex), availablity);
+			availableIndices.ToggleAvailability(static_cast<size_t>(descriptorIndex), availability);
 	}
 
 	template<D3D12_DESCRIPTOR_RANGE_TYPE type>
@@ -268,11 +268,11 @@ public:
 	}
 
 	template<D3D12_DESCRIPTOR_RANGE_TYPE type>
-	void RemoveLocalDescriptor(std::uint32_t localDescIndex) noexcept
+	void SetLocalDescriptorAvailability(UINT localDescIndex, bool availability) noexcept
 	{
 		IndicesManager& localCaches = GetCaches<type>();
 
-		localCaches.ToggleAvailability(localDescIndex, false);
+		localCaches.ToggleAvailability(localDescIndex, availability);
 	}
 
 	template<D3D12_DESCRIPTOR_RANGE_TYPE type>

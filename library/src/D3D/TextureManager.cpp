@@ -95,7 +95,11 @@ std::optional<UINT> TextureStorage::GetAndRemoveTextureLocalDescIndex(UINT textu
 	std::optional<UINT> oLocalDescIndex{};
 
 	if (result != std::end(m_textureCacheDetails))
+	{
 		oLocalDescIndex = result->localDescIndex;
+
+		m_textureCacheDetails.erase(result);
+	}
 
 	return oLocalDescIndex;
 }
