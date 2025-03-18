@@ -19,11 +19,8 @@ public:
 	TextureStorage(ID3D12Device* device, MemoryManager* memoryManager)
 		: m_device{ device }, m_memoryManager{ memoryManager },
 		m_textures{}, m_samplers{}, m_transitionQueue{}, m_textureBindingIndices{},
-		m_samplerBindingIndices{}
-	{
-		// This should always be 0 but still doing this to please the compiler.
-		s_defaultSamplerIndex = m_samplers.Add(SamplerBuilder{}.Get());
-	}
+		m_samplerBindingIndices{}, m_textureCacheDetails{}
+	{}
 
 	[[nodiscard]]
 	size_t AddTexture(
@@ -44,6 +41,14 @@ public:
 	{
 		SetBindingIndex(samplerIndex, bindingIndex, m_samplerBindingIndices);
 	}
+
+	void SetTextureCacheDetails(UINT textureIndex, UINT localDescIndex) noexcept;
+
+	[[nodiscard]]
+	std::optional<UINT> GetAndRemoveTextureLocalDescIndex(UINT textureIndex) noexcept;
+
+	[[nodiscard]]
+	std::vector<UINT> GetAndRemoveTextureCacheDetails(UINT textureIndex) noexcept;
 
 	[[nodiscard]]
 	const Texture& Get(size_t index) const noexcept
@@ -66,17 +71,6 @@ public:
 	{
 		return GetBindingIndex(samplerIndex, m_samplerBindingIndices);
 	}
-	[[nodiscard]]
-	static constexpr UINT GetDefaultSamplerIndex() noexcept
-	{
-		return static_cast<UINT>(s_defaultSamplerIndex);
-	}
-
-	[[nodiscard]]
-	const D3D12_SAMPLER_DESC& GetDefaultSampler() const noexcept
-	{
-		return m_samplers[s_defaultSamplerIndex];
-	}
 
 	[[nodiscard]]
 	const D3D12_SAMPLER_DESC& GetSampler(size_t index) const noexcept
@@ -90,6 +84,19 @@ public:
 	// have exclusive ownership. But if the transfer and graphics queues have the same family, then
 	// the ownership transfer wouldn't be necessary.
 	void TransitionQueuedTextures(const D3DCommandList& graphicsCmdList);
+
+private:
+	struct TextureCacheDetails
+	{
+		UINT textureIndex;
+		UINT localDescIndex;
+
+		constexpr bool operator==(const TextureCacheDetails& other) const noexcept
+		{
+			return textureIndex   == other.textureIndex
+				&& localDescIndex == other.localDescIndex;
+		}
+	};
 
 private:
 	[[nodiscard]]
@@ -123,6 +130,9 @@ private:
 	std::vector<UINT>		          m_textureBindingIndices;
 	std::vector<UINT>                 m_samplerBindingIndices;
 
+	std::vector<TextureCacheDetails>  m_textureCacheDetails;
+	// Sampler cache too at some point?
+
 	static constexpr DXGI_FORMAT s_textureFormat = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
 
 public:
@@ -135,7 +145,8 @@ public:
 		m_samplers{ std::move(other.m_samplers) },
 		m_transitionQueue{ std::move(other.m_transitionQueue) },
 		m_textureBindingIndices{ std::move(other.m_textureBindingIndices) },
-		m_samplerBindingIndices{ std::move(other.m_samplerBindingIndices) }
+		m_samplerBindingIndices{ std::move(other.m_samplerBindingIndices) },
+		m_textureCacheDetails{ std::move(other.m_textureCacheDetails) }
 	{}
 	TextureStorage& operator=(TextureStorage&& other) noexcept
 	{
@@ -146,6 +157,7 @@ public:
 		m_transitionQueue       = std::move(other.m_transitionQueue);
 		m_textureBindingIndices = std::move(other.m_textureBindingIndices);
 		m_samplerBindingIndices = std::move(other.m_samplerBindingIndices);
+		m_textureCacheDetails   = std::move(other.m_textureCacheDetails);
 
 		return *this;
 	}
@@ -165,10 +177,9 @@ public:
 	TextureManager(ID3D12Device* device)
 		: m_device{ device },
 		m_availableIndicesTextures{ s_textureDescriptorCount }, m_availableIndicesSamplers{},
-		m_localDescHeap{
+		m_localTextureDescHeap{
 			device, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE
-		}, m_inactiveTextureIndices{}, m_inactiveSamplerIndices{},
-		m_localTextureDescCount{ 0u }, m_localSamplerDescCount{ 0u }
+		}, m_textureCaches{}
 	{}
 
 	void SetDescriptorLayout(
@@ -185,31 +196,11 @@ private:
 	ID3D12Device*     m_device;
 	IndicesManager    m_availableIndicesTextures;
 	IndicesManager    m_availableIndicesSamplers;
-	D3DDescriptorHeap m_localDescHeap;
-	std::vector<UINT> m_inactiveTextureIndices;
-	std::vector<UINT> m_inactiveSamplerIndices;
-	UINT              m_localTextureDescCount;
-	UINT              m_localSamplerDescCount;
+	D3DDescriptorHeap m_localTextureDescHeap;
+	IndicesManager    m_textureCaches;
+	// Need another local heap for the samplers.
 
 private:
-	template<D3D12_DESCRIPTOR_RANGE_TYPE type>
-	[[nodiscard]]
-	std::vector<UINT>& GetInactiveDetails() noexcept
-	{
-		if constexpr (type == D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER)
-			return m_inactiveSamplerIndices;
-		else
-			return m_inactiveTextureIndices;
-	}
-	template<D3D12_DESCRIPTOR_RANGE_TYPE type>
-	[[nodiscard]]
-	UINT& GetLocalDescCount() noexcept
-	{
-		if constexpr (type == D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER)
-			return m_localSamplerDescCount;
-		else
-			return m_localTextureDescCount;
-	}
 	template<D3D12_DESCRIPTOR_RANGE_TYPE type>
 	[[nodiscard]]
 	auto&& GetAvailableIndices(this auto&& self) noexcept
@@ -218,6 +209,28 @@ private:
 			return std::forward_like<decltype(self)>(self.m_availableIndicesSamplers);
 		else
 			return std::forward_like<decltype(self)>(self.m_availableIndicesTextures);
+	}
+
+	template<D3D12_DESCRIPTOR_RANGE_TYPE type>
+	[[nodiscard]]
+	auto&& GetCaches(this auto&& self) noexcept
+	{
+		if constexpr (type == D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER)
+			// This one needs to be changed with the sampler cache when implemented.
+			return std::forward_like<decltype(self)>(self.m_textureCaches);
+		else
+			return std::forward_like<decltype(self)>(self.m_textureCaches);
+	}
+
+	template<D3D12_DESCRIPTOR_RANGE_TYPE type>
+	[[nodiscard]]
+	auto&& GetLocalDescHeap(this auto&& self) noexcept
+	{
+		if constexpr (type == D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER)
+			// This one needs to be changed with the sampler heap when implemented.
+			return std::forward_like<decltype(self)>(self.m_localTextureDescHeap);
+		else
+			return std::forward_like<decltype(self)>(self.m_localTextureDescHeap);
 	}
 
 public:
@@ -254,11 +267,73 @@ public:
 		}
 	}
 
-	[[nodiscard]]
-	std::optional<D3D12_CPU_DESCRIPTOR_HANDLE> GetLocalTextureDescriptor(UINT inactiveIndex) noexcept;
+	template<D3D12_DESCRIPTOR_RANGE_TYPE type>
+	void RemoveLocalDescriptor(std::uint32_t localDescIndex) noexcept
+	{
+		IndicesManager& localCaches = GetCaches<type>();
 
-	void RemoveLocalTextureDescriptor(UINT inactiveIndex) noexcept;
-	void SetLocalTextureDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE unboundHandle, UINT inactiveIndex);
+		localCaches.ToggleAvailability(localDescIndex, false);
+	}
+
+	template<D3D12_DESCRIPTOR_RANGE_TYPE type>
+	UINT GetFirstFreeLocalDescriptor()
+	{
+		IndicesManager& localCaches      = GetCaches<type>();
+
+		std::optional<size_t> oFreeIndex = localCaches.GetFirstAvailableIndex();
+
+		if (!oFreeIndex)
+		{
+			const auto newLocalDescCount = static_cast<UINT>(
+				std::size(localCaches) + s_localDescriptorCount
+			);
+
+			localCaches.Resize(newLocalDescCount);
+
+			oFreeIndex = localCaches.GetFirstAvailableIndex();
+
+			// Extended the desc heap.
+			D3DDescriptorHeap& localDescHeap    = GetLocalDescHeap<type>();
+
+			D3D12_DESCRIPTOR_HEAP_TYPE heapType = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+
+			if constexpr (type == D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER)
+				heapType = D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER;
+
+			if (localDescHeap.Get() != nullptr)
+			{
+				D3DDescriptorHeap newLocalHeap{ m_device, heapType, D3D12_DESCRIPTOR_HEAP_FLAG_NONE };
+
+				newLocalHeap.Create(newLocalDescCount);
+
+				newLocalHeap.CopyHeap(localDescHeap);
+
+				localDescHeap = std::move(newLocalHeap);
+			}
+			else
+				localDescHeap.Create(newLocalDescCount);
+		}
+
+		return static_cast<UINT>(oFreeIndex.value());
+	}
+
+	template<D3D12_DESCRIPTOR_RANGE_TYPE type>
+	[[nodiscard]]
+	D3D12_CPU_DESCRIPTOR_HANDLE GetLocalDescriptor(UINT localDescIndex) noexcept
+	{
+		const D3DDescriptorHeap& localDescHeap = GetLocalDescHeap<type>();
+
+		return localDescHeap.GetCPUHandle(localDescIndex);
+	}
+
+	template<D3D12_DESCRIPTOR_RANGE_TYPE type>
+	void SetLocalDescriptor(
+	D3D12_CPU_DESCRIPTOR_HANDLE unboundHandle, UINT localDescIndex)
+	{
+		D3DDescriptorHeap& localDescHeap = GetLocalDescHeap<type>();
+
+		localDescHeap.CopyDescriptor(unboundHandle, localDescIndex);
+	}
 
 public:
 	TextureManager(const TextureManager&) = delete;
@@ -268,22 +343,16 @@ public:
 		: m_device{ other.m_device },
 		m_availableIndicesTextures{ std::move(other.m_availableIndicesTextures) },
 		m_availableIndicesSamplers{ std::move(other.m_availableIndicesSamplers) },
-		m_localDescHeap{ std::move(other.m_localDescHeap) },
-		m_inactiveTextureIndices{ std::move(other.m_inactiveTextureIndices) },
-		m_inactiveSamplerIndices{ std::move(other.m_inactiveSamplerIndices) },
-		m_localTextureDescCount{ other.m_localTextureDescCount },
-		m_localSamplerDescCount{ other.m_localSamplerDescCount }
+		m_localTextureDescHeap{ std::move(other.m_localTextureDescHeap) },
+		m_textureCaches{ std::move(other.m_textureCaches) }
 	{}
 	TextureManager& operator=(TextureManager&& other) noexcept
 	{
 		m_device                   = other.m_device;
 		m_availableIndicesTextures = std::move(other.m_availableIndicesTextures);
 		m_availableIndicesSamplers = std::move(other.m_availableIndicesSamplers);
-		m_localDescHeap            = std::move(other.m_localDescHeap);
-		m_inactiveTextureIndices   = std::move(other.m_inactiveTextureIndices);
-		m_inactiveSamplerIndices   = std::move(other.m_inactiveSamplerIndices);
-		m_localTextureDescCount    = other.m_localTextureDescCount;
-		m_localSamplerDescCount    = other.m_localSamplerDescCount;
+		m_localTextureDescHeap     = std::move(other.m_localTextureDescHeap);
+		m_textureCaches            = std::move(other.m_textureCaches);
 
 		return *this;
 	}

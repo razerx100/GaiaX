@@ -54,32 +54,42 @@ size_t RenderEngine::AddTexture(STexture&& texture)
 	return textureIndex;
 }
 
-void RenderEngine::UnbindTextureCommon(UINT textureBoundIndex, UINT textureIndex)
+UINT RenderEngine::UnbindTextureCommon(UINT textureBoundIndex)
 {
 	// This function shouldn't need to wait for the GPU to finish, as it isn't doing
 	// anything on the GPU side.
-	if (!std::empty(m_graphicsDescriptorManagers))
-	{
-		D3DDescriptorManager& descriptorManager = m_graphicsDescriptorManagers.front();
+	static constexpr D3D12_DESCRIPTOR_RANGE_TYPE DescType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
 
-		D3D12_CPU_DESCRIPTOR_HANDLE globalDescriptor = descriptorManager.GetCPUHandleSRV(
-			s_textureSRVRegisterSlot, s_pixelShaderRegisterSpace, textureBoundIndex
-		);
+	assert(
+		!std::empty(m_graphicsDescriptorManagers)
+		&& "The Descriptor Managers should be created before calling this."
+	);
 
-		m_textureManager.SetLocalTextureDescriptor(globalDescriptor, textureIndex);
+	D3DDescriptorManager& descriptorManager = m_graphicsDescriptorManagers.front();
 
-		m_textureManager.SetAvailableIndex<D3D12_DESCRIPTOR_RANGE_TYPE_SRV>(textureBoundIndex, true);
-	}
+	D3D12_CPU_DESCRIPTOR_HANDLE globalDescriptor = descriptorManager.GetCPUHandleSRV(
+		s_textureSRVRegisterSlot, s_pixelShaderRegisterSpace, textureBoundIndex
+	);
+
+	const UINT localCacheIndex = m_textureManager.GetFirstFreeLocalDescriptor<DescType>();
+
+	m_textureManager.SetLocalDescriptor<DescType>(globalDescriptor, localCacheIndex);
+
+	m_textureManager.SetAvailableIndex<D3D12_DESCRIPTOR_RANGE_TYPE_SRV>(textureBoundIndex, true);
+
+	return localCacheIndex;
 }
 
 void RenderEngine::UnbindTexture(size_t textureIndex)
 {
 	const UINT globalDescIndex = m_textureStorage.GetTextureBindingIndex(textureIndex);
 
-	UnbindTextureCommon(globalDescIndex, static_cast<UINT>(textureIndex));
+	const UINT localCacheIndex = UnbindTextureCommon(globalDescIndex);
+
+	m_textureStorage.SetTextureCacheDetails(static_cast<UINT>(textureIndex), localCacheIndex);
 }
 
-std::uint32_t RenderEngine::BindTextureCommon(const Texture& texture, UINT textureIndex)
+UINT RenderEngine::BindTextureCommon(const Texture& texture, std::optional<UINT> localCacheIndex)
 {
 	WaitForGPUToFinish();
 
@@ -113,11 +123,10 @@ std::uint32_t RenderEngine::BindTextureCommon(const Texture& texture, UINT textu
 
 	m_textureManager.SetAvailableIndex<DescType>(freeGlobalDescIndex, false);
 
-	auto localDesc = m_textureManager.GetLocalTextureDescriptor(textureIndex);
-
-	if (localDesc)
+	if (localCacheIndex)
 	{
-		D3D12_CPU_DESCRIPTOR_HANDLE localDescriptor = localDesc.value();
+		const D3D12_CPU_DESCRIPTOR_HANDLE localDescriptor
+			= m_textureManager.GetLocalDescriptor<DescType>(localCacheIndex.value());
 
 		for (D3DDescriptorManager& descriptorManager : m_graphicsDescriptorManagers)
 			descriptorManager.SetDescriptorSRV(
@@ -142,9 +151,11 @@ std::uint32_t RenderEngine::BindTexture(size_t textureIndex)
 {
 	const Texture& texture = m_textureStorage.Get(textureIndex);
 
-	const std::uint32_t freeGlobalDescIndex = BindTextureCommon(
-		texture, static_cast<UINT>(textureIndex)
+	std::optional<UINT> localCacheIndex = m_textureStorage.GetAndRemoveTextureLocalDescIndex(
+		static_cast<UINT>(textureIndex)
 	);
+
+	const UINT freeGlobalDescIndex = BindTextureCommon(texture, localCacheIndex);
 
 	m_textureStorage.SetTextureBindingIndex(textureIndex, freeGlobalDescIndex);
 
@@ -155,9 +166,14 @@ void RenderEngine::RemoveTexture(size_t textureIndex)
 {
 	WaitForGPUToFinish();
 
-	m_textureManager.RemoveLocalTextureDescriptor(static_cast<UINT>(textureIndex));
+	std::vector<UINT> localTextureCacheIndices
+		= m_textureStorage.GetAndRemoveTextureCacheDetails(static_cast<UINT>(textureIndex));
+
+	for (UINT localCacheIndex : localTextureCacheIndices)
+		m_textureManager.RemoveLocalDescriptor<D3D12_DESCRIPTOR_RANGE_TYPE_SRV>(localCacheIndex);
 
 	const UINT globalDescriptorIndex = m_textureStorage.GetTextureBindingIndex(textureIndex);
+
 	m_textureManager.SetAvailableIndex<D3D12_DESCRIPTOR_RANGE_TYPE_SRV>(
 		globalDescriptorIndex, true
 	);

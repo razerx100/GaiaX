@@ -90,9 +90,10 @@ public:
 
 private:
 	[[nodiscard]]
-	std::uint32_t BindTextureCommon(const Texture& texture, UINT textureIndex);
+	UINT BindTextureCommon(const Texture& texture, std::optional<UINT> localCacheIndex);
 
-	void UnbindTextureCommon(UINT textureBoundIndex, UINT textureIndex);
+	[[nodiscard]]
+	UINT UnbindTextureCommon(UINT textureBoundIndex);
 
 public:
 	// External stuff
