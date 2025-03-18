@@ -85,8 +85,7 @@ std::uint32_t RenderEngine::BindTextureCommon(const Texture& texture, UINT textu
 
 	static constexpr D3D12_DESCRIPTOR_RANGE_TYPE DescType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
 
-	std::optional<std::uint32_t> oFreeGlobalDescIndex
-		= m_textureManager.GetFreeGlobalDescriptorIndex<DescType>();
+	std::optional<size_t> oFreeGlobalDescIndex = m_textureManager.GetFreeGlobalDescriptorIndex<DescType>();
 
 	// If there is no free global index, increase the limit. Right now it should be possible to
 	// have 65535 bound textures at once. There could be more textures.
@@ -110,7 +109,7 @@ std::uint32_t RenderEngine::BindTextureCommon(const Texture& texture, UINT textu
 		// Don't need to reset the pipelines, since the table was created as bindless.
 	}
 
-	const UINT freeGlobalDescIndex = oFreeGlobalDescIndex.value();
+	const auto freeGlobalDescIndex = static_cast<UINT>(oFreeGlobalDescIndex.value());
 
 	m_textureManager.SetAvailableIndex<DescType>(freeGlobalDescIndex, false);
 

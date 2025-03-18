@@ -13,4 +13,4 @@ Use the ADD_TEST_GAIA cmake flag to add unit testing.
 
 ## Requirements
 cmake 3.21+.\
-C++20 Standard supported Compiler.
+C++23 Standard supported Compiler (deducing this).

@@ -164,11 +164,11 @@ class TextureManager
 public:
 	TextureManager(ID3D12Device* device)
 		: m_device{ device },
+		m_availableIndicesTextures{ s_textureDescriptorCount }, m_availableIndicesSamplers{},
 		m_localDescHeap{
 			device, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE
 		}, m_inactiveTextureIndices{}, m_inactiveSamplerIndices{},
-		m_availableIndicesTextures(s_textureDescriptorCount, true),
-		m_availableIndicesSamplers{}, m_localTextureDescCount{ 0u }, m_localSamplerDescCount{ 0u }
+		m_localTextureDescCount{ 0u }, m_localSamplerDescCount{ 0u }
 	{}
 
 	void SetDescriptorLayout(
@@ -182,18 +182,12 @@ public:
 	// TODO: Add another of these functions for the samplers.
 
 private:
-	[[nodiscard]]
-	static std::optional<UINT> FindFreeIndex(
-		const std::vector<bool>& availableIndices
-	) noexcept;
-
-private:
 	ID3D12Device*     m_device;
+	IndicesManager    m_availableIndicesTextures;
+	IndicesManager    m_availableIndicesSamplers;
 	D3DDescriptorHeap m_localDescHeap;
 	std::vector<UINT> m_inactiveTextureIndices;
 	std::vector<UINT> m_inactiveSamplerIndices;
-	std::vector<bool> m_availableIndicesTextures;
-	std::vector<bool> m_availableIndicesSamplers;
 	UINT              m_localTextureDescCount;
 	UINT              m_localSamplerDescCount;
 
@@ -218,40 +212,31 @@ private:
 	}
 	template<D3D12_DESCRIPTOR_RANGE_TYPE type>
 	[[nodiscard]]
-	const std::vector<bool>& GetAvailableIndices() const noexcept
+	auto&& GetAvailableIndices(this auto&& self) noexcept
 	{
 		if constexpr (type == D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER)
-			return m_availableIndicesSamplers;
+			return std::forward_like<decltype(self)>(self.m_availableIndicesSamplers);
 		else
-			return m_availableIndicesTextures;
-	}
-	template<D3D12_DESCRIPTOR_RANGE_TYPE type>
-	[[nodiscard]]
-	std::vector<bool>& GetAvailableIndices() noexcept
-	{
-		if constexpr (type == D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER)
-			return m_availableIndicesSamplers;
-		else
-			return m_availableIndicesTextures;
+			return std::forward_like<decltype(self)>(self.m_availableIndicesTextures);
 	}
 
 public:
 	template<D3D12_DESCRIPTOR_RANGE_TYPE type>
 	[[nodiscard]]
-	std::optional<UINT> GetFreeGlobalDescriptorIndex() const noexcept
+	std::optional<size_t> GetFreeGlobalDescriptorIndex() const noexcept
 	{
-		const std::vector<bool>& availableIndices = GetAvailableIndices<type>();
+		const IndicesManager& availableIndices = GetAvailableIndices<type>();
 
-		return FindFreeIndex(availableIndices);
+		return availableIndices.GetFirstAvailableIndex();
 	}
 
 	template<D3D12_DESCRIPTOR_RANGE_TYPE type>
 	void SetAvailableIndex(UINT descriptorIndex, bool availablity) noexcept
 	{
-		std::vector<bool>& availableIndices = GetAvailableIndices<type>();
+		IndicesManager& availableIndices = GetAvailableIndices<type>();
 
 		if (std::size(availableIndices) > descriptorIndex)
-			availableIndices[static_cast<size_t>(descriptorIndex)] = availablity;
+			availableIndices.ToggleAvailability(static_cast<size_t>(descriptorIndex), availablity);
 	}
 
 	template<D3D12_DESCRIPTOR_RANGE_TYPE type>
@@ -260,12 +245,12 @@ public:
 		if constexpr (type == D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER)
 		{
 			const size_t newSize = std::size(m_availableIndicesSamplers) + s_samplerDescriptorCount;
-			m_availableIndicesSamplers.resize(newSize, true);
+			m_availableIndicesSamplers.Resize(newSize);
 		}
 		else
 		{
 			const size_t newSize = std::size(m_availableIndicesTextures) + s_textureDescriptorCount;
-			m_availableIndicesTextures.resize(newSize, true);
+			m_availableIndicesTextures.Resize(newSize);
 		}
 	}
 
@@ -281,22 +266,22 @@ public:
 
 	TextureManager(TextureManager&& other) noexcept
 		: m_device{ other.m_device },
+		m_availableIndicesTextures{ std::move(other.m_availableIndicesTextures) },
+		m_availableIndicesSamplers{ std::move(other.m_availableIndicesSamplers) },
 		m_localDescHeap{ std::move(other.m_localDescHeap) },
 		m_inactiveTextureIndices{ std::move(other.m_inactiveTextureIndices) },
 		m_inactiveSamplerIndices{ std::move(other.m_inactiveSamplerIndices) },
-		m_availableIndicesTextures{ std::move(other.m_availableIndicesTextures) },
-		m_availableIndicesSamplers{ std::move(other.m_availableIndicesSamplers) },
 		m_localTextureDescCount{ other.m_localTextureDescCount },
 		m_localSamplerDescCount{ other.m_localSamplerDescCount }
 	{}
 	TextureManager& operator=(TextureManager&& other) noexcept
 	{
 		m_device                   = other.m_device;
+		m_availableIndicesTextures = std::move(other.m_availableIndicesTextures);
+		m_availableIndicesSamplers = std::move(other.m_availableIndicesSamplers);
 		m_localDescHeap            = std::move(other.m_localDescHeap);
 		m_inactiveTextureIndices   = std::move(other.m_inactiveTextureIndices);
 		m_inactiveSamplerIndices   = std::move(other.m_inactiveSamplerIndices);
-		m_availableIndicesTextures = std::move(other.m_availableIndicesTextures);
-		m_availableIndicesSamplers = std::move(other.m_availableIndicesSamplers);
 		m_localTextureDescCount    = other.m_localTextureDescCount;
 		m_localSamplerDescCount    = other.m_localSamplerDescCount;
 

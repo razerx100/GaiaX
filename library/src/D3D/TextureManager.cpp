@@ -92,17 +92,6 @@ void TextureManager::SetDescriptorTable(
 		descriptorManager.SetDescriptorTableSRV(texturesRegisterSlot, textureRegisterSpace, 0u, true);
 }
 
-std::optional<UINT> TextureManager::FindFreeIndex(
-	const std::vector<bool>& availableIndices
-) noexcept {
-	auto result = std::ranges::find(availableIndices, true);
-
-	if (result != std::end(availableIndices))
-		return static_cast<UINT>(std::distance(std::begin(availableIndices), result));
-
-	return {};
-}
-
 void TextureManager::SetLocalTextureDescriptor(
 	D3D12_CPU_DESCRIPTOR_HANDLE unboundHandle, UINT inactiveIndex
 ) {

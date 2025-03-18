@@ -26,7 +26,7 @@ target_link_libraries(GaiaXLib PRIVATE
     d3d12.lib dxgi.lib dxguid.lib uuid.lib d3dcompiler.lib
 )
 
-target_compile_options(GaiaXLib PRIVATE /fp:fast /MP /Ot /W4 /Gy /std:c++20 /Zc:__cplusplus)
+target_compile_options(GaiaXLib PRIVATE /fp:fast /MP /Ot /W4 /Gy /std:c++latest /Zc:__cplusplus)
 
 include(FetchContent)
 
