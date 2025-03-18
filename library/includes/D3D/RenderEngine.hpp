@@ -92,9 +92,6 @@ private:
 	[[nodiscard]]
 	UINT BindTextureCommon(const Texture& texture, std::optional<UINT> oLocalCacheIndex);
 
-	[[nodiscard]]
-	UINT UnbindTextureCommon(UINT textureBoundIndex);
-
 public:
 	// External stuff
 	[[nodiscard]]

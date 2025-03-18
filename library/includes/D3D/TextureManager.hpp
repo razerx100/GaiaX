@@ -203,7 +203,7 @@ private:
 private:
 	template<D3D12_DESCRIPTOR_RANGE_TYPE type>
 	[[nodiscard]]
-	auto&& GetAvailableIndices(this auto&& self) noexcept
+	auto&& GetAvailableBindings(this auto&& self) noexcept
 	{
 		if constexpr (type == D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER)
 			return std::forward_like<decltype(self)>(self.m_availableIndicesSamplers);
@@ -238,22 +238,22 @@ public:
 	[[nodiscard]]
 	std::optional<size_t> GetFreeGlobalDescriptorIndex() const noexcept
 	{
-		const IndicesManager& availableIndices = GetAvailableIndices<type>();
+		const IndicesManager& availableBindings = GetAvailableBindings<type>();
 
-		return availableIndices.GetFirstAvailableIndex();
+		return availableBindings.GetFirstAvailableIndex();
 	}
 
 	template<D3D12_DESCRIPTOR_RANGE_TYPE type>
-	void SetAvailableIndex(UINT descriptorIndex, bool availability) noexcept
+	void SetBindingAvailability(UINT descriptorIndex, bool availability) noexcept
 	{
-		IndicesManager& availableIndices = GetAvailableIndices<type>();
+		IndicesManager& availableBindings = GetAvailableBindings<type>();
 
-		if (std::size(availableIndices) > descriptorIndex)
-			availableIndices.ToggleAvailability(static_cast<size_t>(descriptorIndex), availability);
+		if (std::size(availableBindings) > descriptorIndex)
+			availableBindings.ToggleAvailability(static_cast<size_t>(descriptorIndex), availability);
 	}
 
 	template<D3D12_DESCRIPTOR_RANGE_TYPE type>
-	void IncreaseAvailableIndices() noexcept
+	void IncreaseMaximumBindingCount() noexcept
 	{
 		if constexpr (type == D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER)
 		{
