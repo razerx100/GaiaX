@@ -58,6 +58,13 @@ public:
 	[[nodiscard]]
 	virtual std::uint32_t BindTexture(size_t textureIndex) = 0;
 
+	virtual void UnbindExternalTexture(size_t textureIndex) = 0;
+
+	virtual void RebindExternalTexture(size_t textureIndex, std::uint32_t bindingIndex) = 0;
+
+	[[nodiscard]]
+	virtual std::uint32_t BindExternalTexture(size_t textureIndex) = 0;
+
 	virtual void RemoveTexture(size_t textureIndex) = 0;
 
 	[[nodiscard]]

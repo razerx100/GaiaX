@@ -46,6 +46,13 @@ public:
 	[[nodiscard]]
 	std::uint32_t BindTexture(size_t textureIndex);
 
+	void UnbindExternalTexture(size_t textureIndex);
+
+	void RebindExternalTexture(size_t textureIndex, UINT bindingIndex);
+
+	[[nodiscard]]
+	std::uint32_t BindExternalTexture(size_t textureIndex);
+
 	void RemoveTexture(size_t textureIndex);
 
 	[[nodiscard]]

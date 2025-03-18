@@ -54,6 +54,12 @@ public:
 		return m_externalBuffers[index]->GetBuffer();
 	}
 
+	[[nodiscard]]
+	const Texture& GetD3DTexture(size_t index) const noexcept
+	{
+		return m_externalTextures[index]->GetTexture();
+	}
+
 	void RemoveExternalBuffer(size_t index) noexcept override
 	{
 		m_externalBuffers[index].reset();

@@ -64,12 +64,12 @@ public:
 	[[nodiscard]]
 	UINT GetTextureBindingIndex(size_t textureIndex) const noexcept
 	{
-		return GetBindingIndex(textureIndex, m_textureBindingIndices);
+		return m_textureBindingIndices[textureIndex];
 	}
 	[[nodiscard]]
 	UINT GetSamplerBindingIndex(size_t samplerIndex) const noexcept
 	{
-		return GetBindingIndex(samplerIndex, m_samplerBindingIndices);
+		return m_samplerBindingIndices[samplerIndex];
 	}
 
 	[[nodiscard]]
@@ -99,22 +99,6 @@ private:
 	};
 
 private:
-	[[nodiscard]]
-	static UINT GetBindingIndex(
-		size_t index, const std::vector<UINT>& bindingIndices
-	) noexcept {
-		// The plan is to not initialise the bindingIndices container, if we
-		// aren't using the remove and re-adding binding feature. As an element will be
-		// added initially and if that feature isn't used, then storing the indices will
-		// be just a waste of space. So, if the bindingIndices isn't populated, that
-		// will mean the every single element here is also bound. So, their indices should
-		// be the same.
-		if (std::size(bindingIndices) > index)
-			return bindingIndices[index];
-		else
-			return static_cast<UINT>(index);
-	}
-
 	static void SetBindingIndex(
 		size_t index, UINT bindingIndex, std::vector<UINT>& bindingIndices
 	) noexcept;

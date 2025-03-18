@@ -163,6 +163,43 @@ std::uint32_t RenderEngine::BindTexture(size_t textureIndex)
 	return freeGlobalDescIndex;
 }
 
+void RenderEngine::UnbindExternalTexture(size_t textureIndex)
+{
+	static constexpr D3D12_DESCRIPTOR_RANGE_TYPE DescType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+
+	const UINT globalDescIndex = m_externalResourceManager.GetTextureBindingIndex(textureIndex);
+
+	m_textureManager.SetBindingAvailability<DescType>(globalDescIndex, true);
+}
+
+void RenderEngine::RebindExternalTexture(size_t textureIndex, UINT bindingIndex)
+{
+	D3DExternalResourceFactory* resourceFactory = m_externalResourceManager.GetD3DResourceFactory();
+
+	const Texture& texture = resourceFactory->GetD3DTexture(textureIndex);
+
+	for (D3DDescriptorManager& descriptorManager : m_graphicsDescriptorManagers)
+		descriptorManager.CreateSRV(
+			s_textureSRVRegisterSlot, s_pixelShaderRegisterSpace, bindingIndex,
+			texture.Get(), texture.GetSRVDesc()
+		);
+}
+
+std::uint32_t RenderEngine::BindExternalTexture(size_t textureIndex)
+{
+	D3DExternalResourceFactory* resourceFactory = m_externalResourceManager.GetD3DResourceFactory();
+
+	const Texture& texture = resourceFactory->GetD3DTexture(textureIndex);
+
+	// Can't cache as the underlying resource might change or we might have a separate texture
+	// on each descriptor buffer.
+	const UINT freeGlobalDescIndex = BindTextureCommon(texture, {});
+
+	m_externalResourceManager.SetTextureBindingIndex(textureIndex, freeGlobalDescIndex);
+
+	return freeGlobalDescIndex;
+}
+
 void RenderEngine::RemoveTexture(size_t textureIndex)
 {
 	WaitForGPUToFinish();

@@ -45,6 +45,14 @@ public:
 
 	void SetGraphicsDescriptorLayout(std::vector<D3DDescriptorManager>& descriptorManagers);
 
+	void SetTextureBindingIndex(size_t textureIndex, UINT bindingIndex) noexcept;
+
+	[[nodiscard]]
+	UINT GetTextureBindingIndex(size_t textureIndex) const noexcept
+	{
+		return m_textureBindingIndices[textureIndex];
+	}
+
 	[[nodiscard]]
 	ExternalResourceFactory* GetResourceFactory() noexcept override
 	{
@@ -90,6 +98,7 @@ private:
 	D3DExternalResourceFactory     m_resourceFactory;
 	ReusableVector<GfxExtension_t> m_gfxExtensions;
 	std::vector<GPUCopyDetails>    m_copyQueueDetails;
+	std::vector<UINT>              m_textureBindingIndices;
 
 	static constexpr size_t s_externalBufferRegisterSpace = 2u;
 
@@ -100,13 +109,15 @@ public:
 	D3DExternalResourceManager(D3DExternalResourceManager&& other) noexcept
 		: m_resourceFactory{ std::move(other.m_resourceFactory) },
 		m_gfxExtensions{ std::move(other.m_gfxExtensions) },
-		m_copyQueueDetails{ std::move(other.m_copyQueueDetails) }
+		m_copyQueueDetails{ std::move(other.m_copyQueueDetails) },
+		m_textureBindingIndices{ std::move(other.m_textureBindingIndices) }
 	{}
 	D3DExternalResourceManager& operator=(D3DExternalResourceManager&& other) noexcept
 	{
-		m_resourceFactory  = std::move(other.m_resourceFactory);
-		m_gfxExtensions    = std::move(other.m_gfxExtensions);
-		m_copyQueueDetails = std::move(other.m_copyQueueDetails);
+		m_resourceFactory       = std::move(other.m_resourceFactory);
+		m_gfxExtensions         = std::move(other.m_gfxExtensions);
+		m_copyQueueDetails      = std::move(other.m_copyQueueDetails);
+		m_textureBindingIndices = std::move(other.m_textureBindingIndices);
 
 		return *this;
 	}
