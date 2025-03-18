@@ -160,7 +160,7 @@ std::optional<D3D12_CPU_DESCRIPTOR_HANDLE> TextureManager::GetLocalTextureDescri
 	{
 		const auto localDescIndex = static_cast<UINT>(
 			std::distance(std::begin(inactiveDescDetails), result)
-			);
+		);
 
 		inactiveDescDetails.erase(result);
 

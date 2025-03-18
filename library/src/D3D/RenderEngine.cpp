@@ -54,34 +54,39 @@ size_t RenderEngine::AddTexture(STexture&& texture)
 	return textureIndex;
 }
 
-void RenderEngine::UnbindTexture(size_t textureIndex)
+void RenderEngine::UnbindTextureCommon(UINT textureBoundIndex, UINT textureIndex)
 {
 	// This function shouldn't need to wait for the GPU to finish, as it isn't doing
 	// anything on the GPU side.
-	const UINT globalDescIndex = m_textureStorage.GetTextureBindingIndex(textureIndex);
-
 	if (!std::empty(m_graphicsDescriptorManagers))
 	{
 		D3DDescriptorManager& descriptorManager = m_graphicsDescriptorManagers.front();
 
 		D3D12_CPU_DESCRIPTOR_HANDLE globalDescriptor = descriptorManager.GetCPUHandleSRV(
-			s_textureSRVRegisterSlot, s_pixelShaderRegisterSpace, globalDescIndex
+			s_textureSRVRegisterSlot, s_pixelShaderRegisterSpace, textureBoundIndex
 		);
 
-		m_textureManager.SetLocalTextureDescriptor(globalDescriptor, static_cast<UINT>(textureIndex));
+		m_textureManager.SetLocalTextureDescriptor(globalDescriptor, textureIndex);
 
-		m_textureManager.SetAvailableIndex<D3D12_DESCRIPTOR_RANGE_TYPE_SRV>(globalDescIndex, true);
+		m_textureManager.SetAvailableIndex<D3D12_DESCRIPTOR_RANGE_TYPE_SRV>(textureBoundIndex, true);
 	}
 }
 
-std::uint32_t RenderEngine::BindTexture(size_t textureIndex)
+void RenderEngine::UnbindTexture(size_t textureIndex)
+{
+	const UINT globalDescIndex = m_textureStorage.GetTextureBindingIndex(textureIndex);
+
+	UnbindTextureCommon(globalDescIndex, static_cast<UINT>(textureIndex));
+}
+
+std::uint32_t RenderEngine::BindTextureCommon(const Texture& texture, UINT textureIndex)
 {
 	WaitForGPUToFinish();
 
 	static constexpr D3D12_DESCRIPTOR_RANGE_TYPE DescType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
 
-	const Texture& texture    = m_textureStorage.Get(textureIndex);
-	auto oFreeGlobalDescIndex = m_textureManager.GetFreeGlobalDescriptorIndex<DescType>();
+	std::optional<std::uint32_t> oFreeGlobalDescIndex
+		= m_textureManager.GetFreeGlobalDescriptorIndex<DescType>();
 
 	// If there is no free global index, increase the limit. Right now it should be possible to
 	// have 65535 bound textures at once. There could be more textures.
@@ -108,9 +113,8 @@ std::uint32_t RenderEngine::BindTexture(size_t textureIndex)
 	const UINT freeGlobalDescIndex = oFreeGlobalDescIndex.value();
 
 	m_textureManager.SetAvailableIndex<DescType>(freeGlobalDescIndex, false);
-	m_textureStorage.SetTextureBindingIndex(textureIndex, freeGlobalDescIndex);
 
-	auto localDesc = m_textureManager.GetLocalTextureDescriptor(static_cast<UINT>(textureIndex));
+	auto localDesc = m_textureManager.GetLocalTextureDescriptor(textureIndex);
 
 	if (localDesc)
 	{
@@ -131,6 +135,19 @@ std::uint32_t RenderEngine::BindTexture(size_t textureIndex)
 	// Since it is a descriptor table, there is no point in setting it every time.
 	// It should be fine to just bind it once after the descriptorManagers have
 	// been created.
+
+	return freeGlobalDescIndex;
+}
+
+std::uint32_t RenderEngine::BindTexture(size_t textureIndex)
+{
+	const Texture& texture = m_textureStorage.Get(textureIndex);
+
+	const std::uint32_t freeGlobalDescIndex = BindTextureCommon(
+		texture, static_cast<UINT>(textureIndex)
+	);
+
+	m_textureStorage.SetTextureBindingIndex(textureIndex, freeGlobalDescIndex);
 
 	return freeGlobalDescIndex;
 }

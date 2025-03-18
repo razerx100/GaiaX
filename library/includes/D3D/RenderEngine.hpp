@@ -88,6 +88,12 @@ public:
 	[[nodiscard]]
 	const D3DCommandQueue& GetPresentQueue() const noexcept { return m_graphicsQueue; }
 
+private:
+	[[nodiscard]]
+	std::uint32_t BindTextureCommon(const Texture& texture, UINT textureIndex);
+
+	void UnbindTextureCommon(UINT textureBoundIndex, UINT textureIndex);
+
 public:
 	// External stuff
 	[[nodiscard]]
