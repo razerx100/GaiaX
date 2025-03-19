@@ -2,8 +2,7 @@
 #include <limits>
 
 D3DExternalResourceManager::D3DExternalResourceManager(ID3D12Device* device, MemoryManager* memoryManager)
-	: m_resourceFactory{ device, memoryManager }, m_gfxExtensions{}, m_copyQueueDetails{},
-	m_textureBindingIndices{}
+	: m_resourceFactory{ device, memoryManager }, m_gfxExtensions{}, m_copyQueueDetails{}
 {}
 
 void D3DExternalResourceManager::OnGfxExtensionDeletion(const GraphicsTechniqueExtension& gfxExtension)
@@ -163,12 +162,4 @@ void D3DExternalResourceManager::CopyQueuedBuffers(const D3DCommandList& copyCmd
 
 		m_copyQueueDetails.clear();
 	}
-}
-
-void D3DExternalResourceManager::SetTextureBindingIndex(size_t textureIndex, UINT bindingIndex) noexcept
-{
-	if (std::size(m_textureBindingIndices) <= textureIndex)
-		m_textureBindingIndices.resize(textureIndex + 1u);
-
-	m_textureBindingIndices[textureIndex] = bindingIndex;
 }

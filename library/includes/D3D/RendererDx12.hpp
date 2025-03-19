@@ -38,12 +38,12 @@ public:
 	[[nodiscard]]
 	size_t AddTexture(STexture&& texture) override;
 
-	void UnbindTexture(size_t textureIndex) override;
+	void UnbindTexture(size_t textureIndex, std::uint32_t bindingIndex) override;
 
 	[[nodiscard]]
 	std::uint32_t BindTexture(size_t textureIndex) override;
 
-	void UnbindExternalTexture(size_t textureIndex) override;
+	void UnbindExternalTexture(std::uint32_t bindingIndex) override;
 
 	void RebindExternalTexture(size_t textureIndex, std::uint32_t bindingIndex) override;
 

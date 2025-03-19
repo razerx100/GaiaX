@@ -18,8 +18,7 @@ class TextureStorage
 public:
 	TextureStorage(ID3D12Device* device, MemoryManager* memoryManager)
 		: m_device{ device }, m_memoryManager{ memoryManager },
-		m_textures{}, m_samplers{}, m_transitionQueue{}, m_textureBindingIndices{},
-		m_samplerBindingIndices{}, m_textureCacheDetails{}
+		m_textures{}, m_samplers{}, m_transitionQueue{}, m_textureCacheDetails{}
 	{}
 
 	[[nodiscard]]
@@ -32,15 +31,6 @@ public:
 
 	void RemoveTexture(size_t index);
 	void RemoveSampler(size_t index);
-
-	void SetTextureBindingIndex(size_t textureIndex, UINT bindingIndex) noexcept
-	{
-		SetBindingIndex(textureIndex, bindingIndex, m_textureBindingIndices);
-	}
-	void SetSamplerBindingIndex(size_t samplerIndex, UINT bindingIndex) noexcept
-	{
-		SetBindingIndex(samplerIndex, bindingIndex, m_samplerBindingIndices);
-	}
 
 	void SetTextureCacheDetails(UINT textureIndex, UINT localDescIndex) noexcept;
 
@@ -59,17 +49,6 @@ public:
 	Texture const* GetPtr(size_t index) const noexcept
 	{
 		return &m_textures[index];
-	}
-
-	[[nodiscard]]
-	UINT GetTextureBindingIndex(size_t textureIndex) const noexcept
-	{
-		return m_textureBindingIndices[textureIndex];
-	}
-	[[nodiscard]]
-	UINT GetSamplerBindingIndex(size_t samplerIndex) const noexcept
-	{
-		return m_samplerBindingIndices[samplerIndex];
 	}
 
 	[[nodiscard]]
@@ -99,11 +78,6 @@ private:
 	};
 
 private:
-	static void SetBindingIndex(
-		size_t index, UINT bindingIndex, std::vector<UINT>& bindingIndices
-	) noexcept;
-
-private:
 	ID3D12Device*                     m_device;
 	MemoryManager*                    m_memoryManager;
 	// The TextureView objects need to have the same address until their data is copied.
@@ -111,8 +85,6 @@ private:
 	ReusableDeque<Texture>            m_textures;
 	ReusableDeque<D3D12_SAMPLER_DESC> m_samplers;
 	std::queue<Texture const*>        m_transitionQueue;
-	std::vector<UINT>		          m_textureBindingIndices;
-	std::vector<UINT>                 m_samplerBindingIndices;
 
 	std::vector<TextureCacheDetails>  m_textureCacheDetails;
 	// Sampler cache too at some point?
@@ -128,20 +100,16 @@ public:
 		m_textures{ std::move(other.m_textures) },
 		m_samplers{ std::move(other.m_samplers) },
 		m_transitionQueue{ std::move(other.m_transitionQueue) },
-		m_textureBindingIndices{ std::move(other.m_textureBindingIndices) },
-		m_samplerBindingIndices{ std::move(other.m_samplerBindingIndices) },
 		m_textureCacheDetails{ std::move(other.m_textureCacheDetails) }
 	{}
 	TextureStorage& operator=(TextureStorage&& other) noexcept
 	{
-		m_device                = other.m_device;
-		m_memoryManager         = other.m_memoryManager;
-		m_textures              = std::move(other.m_textures);
-		m_samplers              = std::move(other.m_samplers);
-		m_transitionQueue       = std::move(other.m_transitionQueue);
-		m_textureBindingIndices = std::move(other.m_textureBindingIndices);
-		m_samplerBindingIndices = std::move(other.m_samplerBindingIndices);
-		m_textureCacheDetails   = std::move(other.m_textureCacheDetails);
+		m_device              = other.m_device;
+		m_memoryManager       = other.m_memoryManager;
+		m_textures            = std::move(other.m_textures);
+		m_samplers            = std::move(other.m_samplers);
+		m_transitionQueue     = std::move(other.m_transitionQueue);
+		m_textureCacheDetails = std::move(other.m_textureCacheDetails);
 
 		return *this;
 	}

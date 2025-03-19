@@ -52,13 +52,15 @@ public:
 	[[nodiscard]]
 	virtual size_t AddTexture(STexture&& texture) = 0;
 
-	virtual void UnbindTexture(size_t textureIndex) = 0;
+	// The texture index is necessary to cache the descriptor.
+	virtual void UnbindTexture(size_t textureIndex, std::uint32_t bindingIndex) = 0;
 
 	// The returned index is the index of the bound texture in the shader.
 	[[nodiscard]]
 	virtual std::uint32_t BindTexture(size_t textureIndex) = 0;
 
-	virtual void UnbindExternalTexture(size_t textureIndex) = 0;
+	// Doesn't require the texture index, because we don't cache it.
+	virtual void UnbindExternalTexture(std::uint32_t bindingIndex) = 0;
 
 	virtual void RebindExternalTexture(size_t textureIndex, std::uint32_t bindingIndex) = 0;
 

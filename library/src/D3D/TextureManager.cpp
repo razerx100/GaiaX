@@ -2,15 +2,6 @@
 #include <D3DResourceBarrier.hpp>
 
 // Texture storage
-void TextureStorage::SetBindingIndex(
-	size_t index, UINT bindingIndex, std::vector<UINT>& bindingIndices
-) noexcept {
-	if (std::size(bindingIndices) <= index)
-		bindingIndices.resize(index + 1u);
-
-	bindingIndices[index] = bindingIndex;
-}
-
 size_t TextureStorage::AddTexture(
 	STexture&& texture, StagingBufferManager& stagingBufferManager, TemporaryDataBufferGPU& tempBuffer,
 	bool msaa/* = false */

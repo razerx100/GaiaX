@@ -42,11 +42,11 @@ public:
 	[[nodiscard]]
 	size_t AddTexture(STexture&& texture);
 
-	void UnbindTexture(size_t textureIndex);
+	void UnbindTexture(size_t textureIndex, UINT bindingIndex);
 	[[nodiscard]]
 	std::uint32_t BindTexture(size_t textureIndex);
 
-	void UnbindExternalTexture(size_t textureIndex);
+	void UnbindExternalTexture(UINT bindingIndex);
 
 	void RebindExternalTexture(size_t textureIndex, UINT bindingIndex);
 

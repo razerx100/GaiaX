@@ -67,9 +67,9 @@ size_t RendererDx12::AddTexture(STexture&& texture)
 	return m_gaia.GetRenderEngine().AddTexture(std::move(texture));
 }
 
-void RendererDx12::UnbindTexture(size_t textureIndex)
+void RendererDx12::UnbindTexture(size_t textureIndex, std::uint32_t bindingIndex)
 {
-	m_gaia.GetRenderEngine().UnbindTexture(textureIndex);
+	m_gaia.GetRenderEngine().UnbindTexture(textureIndex, bindingIndex);
 }
 
 std::uint32_t RendererDx12::BindTexture(size_t textureIndex)
@@ -77,9 +77,9 @@ std::uint32_t RendererDx12::BindTexture(size_t textureIndex)
 	return m_gaia.GetRenderEngine().BindTexture(textureIndex);
 }
 
-void RendererDx12::UnbindExternalTexture(size_t textureIndex)
+void RendererDx12::UnbindExternalTexture(std::uint32_t bindingIndex)
 {
-	m_gaia.GetRenderEngine().UnbindExternalTexture(textureIndex);
+	m_gaia.GetRenderEngine().UnbindExternalTexture(bindingIndex);
 }
 
 void RendererDx12::RebindExternalTexture(size_t textureIndex, std::uint32_t bindingIndex)
