@@ -196,10 +196,10 @@ void D3DExternalRenderPass::SetStencilClearColour(std::uint32_t clearColour)
 }
 
 std::uint32_t D3DExternalRenderPass::AddRenderTarget(
-	std::uint32_t externalTextureIndex, ExternalAttachmentLoadOp loadOp, ExternalAttachmentStoreOp storeOp
+	std::uint32_t externalTextureIndex, ExternalAttachmentLoadOp loadOp,
+	[[maybe_unused]] ExternalAttachmentStoreOp storeOp
 ) {
-	const bool clearRenderTarget
-		= loadOp == ExternalAttachmentLoadOp::Clear || storeOp == ExternalAttachmentStoreOp::Store;
+	const bool clearRenderTarget = loadOp == ExternalAttachmentLoadOp::Clear;
 
 	D3DExternalTexture* externalTexture = m_resourceFactory->GetD3DExternalTexture(externalTextureIndex);
 
