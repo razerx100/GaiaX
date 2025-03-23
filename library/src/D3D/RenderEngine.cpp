@@ -17,12 +17,12 @@ RenderEngine::RenderEngine(
 	m_graphicsQueue{}, m_graphicsWait{},
 	m_copyQueue{}, m_copyWait{},
 	m_stagingManager{ device, &m_memoryManager, m_threadPool.get() },
-	m_externalResourceManager{ device, &m_memoryManager },
-	m_graphicsDescriptorManagers{}, m_graphicsRootSignature{},
+	m_dsvHeap{ device, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE },
+	m_graphicsDescriptorManagers{},
+	m_externalResourceManager{ device, &m_memoryManager }, m_graphicsRootSignature{},
 	m_textureStorage{ device, &m_memoryManager },
 	m_textureManager{ device },
 	m_cameraManager{ device, &m_memoryManager },
-	m_dsvHeap{ device, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE },
 	m_viewportAndScissors{}, m_temporaryDataBuffer{}, m_copyNecessary{ false }
 {
 	for (size_t _ = 0u; _ < frameCount; ++_)

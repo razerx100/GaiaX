@@ -176,13 +176,13 @@ protected:
 	D3DCommandQueue                   m_copyQueue;
 	std::vector<D3DFence>             m_copyWait;
 	StagingBufferManager              m_stagingManager;
-	D3DExternalResourceManager        m_externalResourceManager;
+	D3DReusableDescriptorHeap         m_dsvHeap;
 	std::vector<D3DDescriptorManager> m_graphicsDescriptorManagers;
+	D3DExternalResourceManager        m_externalResourceManager;
 	D3DRootSignature                  m_graphicsRootSignature;
 	TextureStorage                    m_textureStorage;
 	TextureManager                    m_textureManager;
 	CameraManager                     m_cameraManager;
-	D3DReusableDescriptorHeap         m_dsvHeap;
 	ViewportAndScissorManager         m_viewportAndScissors;
 	TemporaryDataBufferGPU            m_temporaryDataBuffer;
 	bool                              m_copyNecessary;
@@ -200,13 +200,13 @@ public:
 		m_copyQueue{ std::move(other.m_copyQueue) },
 		m_copyWait{ std::move(other.m_copyWait) },
 		m_stagingManager{ std::move(other.m_stagingManager) },
-		m_externalResourceManager{ std::move(other.m_externalResourceManager) },
+		m_dsvHeap{ std::move(other.m_dsvHeap) },
 		m_graphicsDescriptorManagers{ std::move(other.m_graphicsDescriptorManagers) },
+		m_externalResourceManager{ std::move(other.m_externalResourceManager) },
 		m_graphicsRootSignature{ std::move(other.m_graphicsRootSignature) },
 		m_textureStorage{ std::move(other.m_textureStorage) },
 		m_textureManager{ std::move(other.m_textureManager) },
 		m_cameraManager{ std::move(other.m_cameraManager) },
-		m_dsvHeap{ std::move(other.m_dsvHeap) },
 		m_viewportAndScissors{ other.m_viewportAndScissors },
 		m_temporaryDataBuffer{ std::move(other.m_temporaryDataBuffer) },
 		m_copyNecessary{ other.m_copyNecessary }
@@ -221,13 +221,13 @@ public:
 		m_copyQueue                  = std::move(other.m_copyQueue);
 		m_copyWait                   = std::move(other.m_copyWait);
 		m_stagingManager             = std::move(other.m_stagingManager);
-		m_externalResourceManager    = std::move(other.m_externalResourceManager);
+		m_dsvHeap                    = std::move(other.m_dsvHeap);
 		m_graphicsDescriptorManagers = std::move(other.m_graphicsDescriptorManagers);
+		m_externalResourceManager    = std::move(other.m_externalResourceManager);
 		m_graphicsRootSignature      = std::move(other.m_graphicsRootSignature);
 		m_textureStorage             = std::move(other.m_textureStorage);
 		m_textureManager             = std::move(other.m_textureManager);
 		m_cameraManager              = std::move(other.m_cameraManager);
-		m_dsvHeap                    = std::move(other.m_dsvHeap);
 		m_viewportAndScissors        = other.m_viewportAndScissors;
 		m_temporaryDataBuffer        = std::move(other.m_temporaryDataBuffer);
 		m_copyNecessary              = other.m_copyNecessary;
