@@ -20,19 +20,15 @@ public:
 
 public:
 	D3DRenderPassManager()
-		: m_rtvHandles{}, m_rtvClearFlags{}, m_rtvClearColours {}, m_dsvHandle{},
+		: m_rtvHandles{}, m_rtvClearFlags{}, m_rtvClearColours {}, m_dsvHandle{ .ptr = 0u },
 		m_depthStencilInfo{ .depthClearColour = 1.f, .stencilClearColour = 0u, .clearFlags = 0u }
 	{}
 
-	void AddRenderTarget(
-		D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle, bool clearAtStart
-	);
+	void AddRenderTarget(bool clearAtStart);
 
 	void SetRTVHandle(size_t renderTargetIndex, D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle);
 
-	void SetDepthStencilTarget(
-		D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle, bool depthClearAtStart, bool stencilClearAtStart
-	);
+	void SetDepthStencilTarget(bool depthClearAtStart, bool stencilClearAtStart);
 
 	void SetDSVHandle(D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle);
 

@@ -1,8 +1,10 @@
 #include <D3DRenderPassManager.hpp>
 
-void D3DRenderPassManager::AddRenderTarget(D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle, bool clearAtStart)
+void D3DRenderPassManager::AddRenderTarget(bool clearAtStart)
 {
-	m_rtvHandles.emplace_back(rtvHandle);
+	// The RTV handle won't be a valid one before the resource is created. So, add an invalid one
+	// to reserve the space.
+	m_rtvHandles.emplace_back(D3D12_CPU_DESCRIPTOR_HANDLE{ .ptr = 0u });
 	m_rtvClearFlags.emplace_back(clearAtStart);
 	m_rtvClearColours.emplace_back(RTVClearColour{ 0.f, 0.f, 0.f, 0.f });
 }
@@ -12,16 +14,13 @@ void D3DRenderPassManager::SetRTVHandle(size_t renderTargetIndex, D3D12_CPU_DESC
 	m_rtvHandles[renderTargetIndex] = rtvHandle;
 }
 
-void D3DRenderPassManager::SetDepthStencilTarget(
-	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle, bool depthClearAtStart, bool stencilClearAtStart
-) {
+void D3DRenderPassManager::SetDepthStencilTarget(bool depthClearAtStart, bool stencilClearAtStart)
+{
 	if (depthClearAtStart)
 		m_depthStencilInfo.clearFlags |= D3D12_CLEAR_FLAG_DEPTH;
 
 	if (stencilClearAtStart)
 		m_depthStencilInfo.clearFlags |= D3D12_CLEAR_FLAG_STENCIL;
-
-	m_dsvHandle = dsvHandle;
 }
 
 void D3DRenderPassManager::SetDSVHandle(D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle)

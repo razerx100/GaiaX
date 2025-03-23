@@ -107,9 +107,7 @@ void D3DExternalRenderPass::SetDepthStencil(
 	if (externalTexture->GetCurrentState() != D3D12_RESOURCE_STATE_DEPTH_WRITE)
 		externalTexture->SetCurrentState(newState);
 
-	m_renderPassManager.SetDepthStencilTarget(
-		externalTexture->GetAttachmentHandle(), clearDepth, clearStencil
-	);
+	m_renderPassManager.SetDepthStencilTarget(clearDepth, clearStencil);
 }
 
 void D3DExternalRenderPass::SetDepthTesting(
@@ -208,7 +206,7 @@ std::uint32_t D3DExternalRenderPass::AddRenderTarget(
 
 	m_renderTargetTextureIndices.emplace_back(externalTextureIndex);
 
-	m_renderPassManager.AddRenderTarget(externalTexture->GetAttachmentHandle(), clearRenderTarget);
+	m_renderPassManager.AddRenderTarget(clearRenderTarget);
 
 	return renderTargetLocalIndex;
 }
