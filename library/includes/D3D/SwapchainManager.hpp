@@ -52,10 +52,10 @@ private:
 	using ComResource = ComPtr<ID3D12Resource>;
 
 private:
-	ComPtr<IDXGISwapChain4>   m_swapchain;
-	std::vector<ComResource>  m_renderTargetResources;
-	std::vector<RenderTarget> m_renderTargets;
-	UINT                      m_presentFlag;
+	ComPtr<IDXGISwapChain4>          m_swapchain;
+	std::vector<ComResource>         m_renderTargetResources;
+	std::vector<RenderingAttachment> m_renderTargets;
+	UINT                             m_presentFlag;
 
 public:
 	SwapchainManager(const SwapchainManager&) = delete;

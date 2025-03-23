@@ -8,13 +8,22 @@
 class RenderingAttachment
 {
 public:
-	RenderingAttachment(D3DReusableDescriptorHeap* attachmentHeap)
-		: m_attachmentHeap{ attachmentHeap }, m_descriptorIndex{ std::numeric_limits<UINT>::max() },
-		m_clearAtStart{ false }
+	RenderingAttachment()
+		: m_attachmentHeap{ nullptr }, m_descriptorIndex{ std::numeric_limits<UINT>::max() },
+		m_dsvFlags{ D3D12_DSV_FLAG_NONE }
 	{}
 	~RenderingAttachment() noexcept;
 
-	void SetClearAtStart(bool value) noexcept { m_clearAtStart = value; }
+	void SetAttachmentHeap(D3DReusableDescriptorHeap* attachmentHeap) noexcept
+	{
+		m_attachmentHeap = attachmentHeap;
+	}
+
+	void AddDSVFlag(D3D12_DSV_FLAGS dsvFlag) noexcept { m_dsvFlags |= dsvFlag; }
+
+	void CreateRTV(ID3D12Resource* renderTarget, DXGI_FORMAT rtvFormat);
+
+	void CreateDSV(ID3D12Resource* depthStencilTarget, DXGI_FORMAT dsvFormat);
 
 	[[nodiscard]]
 	D3D12_CPU_DESCRIPTOR_HANDLE GetCPUHandle() const noexcept
@@ -22,13 +31,10 @@ public:
 		return m_attachmentHeap->GetCPUHandle(m_descriptorIndex);
 	}
 
-	[[nodiscard]]
-	bool ShouldClearAtStart() const noexcept { return m_clearAtStart; }
-
-protected:
+private:
 	D3DReusableDescriptorHeap* m_attachmentHeap;
 	UINT                       m_descriptorIndex;
-	bool                       m_clearAtStart;
+	UINT                       m_dsvFlags;
 
 public:
 	RenderingAttachment(const RenderingAttachment&) = delete;
@@ -36,59 +42,14 @@ public:
 
 	RenderingAttachment(RenderingAttachment&& other) noexcept
 		: m_attachmentHeap{ std::exchange(other.m_attachmentHeap, nullptr) },
-		m_descriptorIndex{ other.m_descriptorIndex },
-		m_clearAtStart{ other.m_clearAtStart }
+		m_descriptorIndex{ other.m_descriptorIndex }, m_dsvFlags{ other.m_dsvFlags }
 	{}
 
 	RenderingAttachment& operator=(RenderingAttachment&& other) noexcept
 	{
 		m_attachmentHeap  = std::exchange(other.m_attachmentHeap, nullptr);
 		m_descriptorIndex = other.m_descriptorIndex;
-		m_clearAtStart    = other.m_clearAtStart;
-
-		return *this;
-	}
-};
-
-class RenderTarget : public RenderingAttachment
-{
-public:
-	RenderTarget(D3DReusableDescriptorHeap* rtvHeap) : RenderingAttachment{ rtvHeap } {}
-
-	void Create(ID3D12Resource* renderTarget, DXGI_FORMAT rtvFormat);
-
-public:
-	RenderTarget(const RenderTarget&) = delete;
-	RenderTarget& operator=(const RenderTarget&) = delete;
-
-	RenderTarget(RenderTarget&& other) noexcept : RenderingAttachment{ std::move(other) } {}
-
-	RenderTarget& operator=(RenderTarget&& other) noexcept
-	{
-		RenderingAttachment::operator=(std::move(other));
-
-		return *this;
-	}
-};
-
-class DepthStencilTarget : public RenderingAttachment
-{
-public:
-	DepthStencilTarget(D3DReusableDescriptorHeap* dsvHeap) : RenderingAttachment{ dsvHeap } {}
-
-	void Create(
-		ID3D12Resource* depthStencilTarget, DXGI_FORMAT dsvFormat, D3D12_DSV_FLAGS dsvFlag
-	);
-
-public:
-	DepthStencilTarget(const DepthStencilTarget&) = delete;
-	DepthStencilTarget& operator=(const DepthStencilTarget&) = delete;
-
-	DepthStencilTarget(DepthStencilTarget&& other) noexcept : RenderingAttachment{ std::move(other) } {}
-
-	DepthStencilTarget& operator=(DepthStencilTarget&& other) noexcept
-	{
-		RenderingAttachment::operator=(std::move(other));
+		m_dsvFlags        = other.m_dsvFlags;
 
 		return *this;
 	}

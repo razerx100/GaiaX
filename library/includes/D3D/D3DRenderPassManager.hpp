@@ -12,7 +12,6 @@ class D3DRenderPassManager
 	{
 		float        depthClearColour;
 		std::uint8_t stencilClearColour;
-		std::uint8_t dsvFlags;
 		std::uint8_t clearFlags;
 	};
 
@@ -20,34 +19,22 @@ public:
 	using RTVClearColour = std::array<float, 4u>;
 
 public:
-	D3DRenderPassManager(D3DReusableDescriptorHeap* rtvHeap, D3DReusableDescriptorHeap* dsvHeap)
-		: m_rtvHeap{ rtvHeap }, m_renderTargets{}, m_rtvHandles{}, m_rtvClearColours{},
-		m_depthStencilTarget{ dsvHeap }, m_dsvHandle{},
-		m_depthStencilInfo{
-			.depthClearColour = 1.f, .stencilClearColour = 0u, .dsvFlags = 0u, .clearFlags = 0u
-		}
+	D3DRenderPassManager()
+		: m_rtvHandles{}, m_rtvClearFlags{}, m_rtvClearColours {}, m_dsvHandle{},
+		m_depthStencilInfo{ .depthClearColour = 1.f, .stencilClearColour = 0u, .clearFlags = 0u }
 	{}
 
-	// The resource can be null here, but must be created later and then Recreate must be called before
-	// using the view.
 	void AddRenderTarget(
-		ID3D12Resource* renderTargetResource, DXGI_FORMAT rtvFormat, bool clearAtStart
+		D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle, bool clearAtStart
 	);
 
-	// The resource must have been created before calling this.
-	void RecreateRenderTarget(
-		size_t renderTargetIndex, ID3D12Resource* renderTargetResource, DXGI_FORMAT rtvFormat
-	);
+	void SetRTVHandle(size_t renderTargetIndex, D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle);
 
-	// The resource can be null here, but must be created later and then Recreate must be called before
-	// using the view.
 	void SetDepthStencilTarget(
-		ID3D12Resource* depthStencilTargetResource, DXGI_FORMAT dsvFormat,
-		bool depthClearAtStart, bool stencilClearAtStart, D3D12_DSV_FLAGS dsvFlags
+		D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle, bool depthClearAtStart, bool stencilClearAtStart
 	);
 
-	// The resource must have been created before calling this.
-	void RecreateDepthStencilTarget(ID3D12Resource* depthStencilTargetResource, DXGI_FORMAT dsvFormat);
+	void SetDSVHandle(D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle);
 
 	// These functions can be used every frame.
 	[[nodiscard]]
@@ -76,11 +63,9 @@ public:
 	) const noexcept;
 
 private:
-	D3DReusableDescriptorHeap*               m_rtvHeap;
-	std::vector<RenderTarget>                m_renderTargets;
 	std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> m_rtvHandles;
+	std::vector<bool>                        m_rtvClearFlags;
 	std::vector<RTVClearColour>              m_rtvClearColours;
-	DepthStencilTarget                       m_depthStencilTarget;
 	D3D12_CPU_DESCRIPTOR_HANDLE              m_dsvHandle;
 	DepthStencilInfo                         m_depthStencilInfo;
 
@@ -89,23 +74,19 @@ public:
 	D3DRenderPassManager& operator=(const D3DRenderPassManager&) = delete;
 
 	D3DRenderPassManager(D3DRenderPassManager&& other) noexcept
-		: m_rtvHeap{ std::exchange(other.m_rtvHeap, nullptr) },
-		m_renderTargets{ std::move(other.m_renderTargets) },
-		m_rtvHandles{ std::move(other.m_rtvHandles) },
+		: m_rtvHandles{ std::move(other.m_rtvHandles) },
+		m_rtvClearFlags{ std::move(other.m_rtvClearFlags) },
 		m_rtvClearColours{ std::move(other.m_rtvClearColours) },
-		m_depthStencilTarget{ std::move(other.m_depthStencilTarget) },
 		m_dsvHandle{ other.m_dsvHandle },
 		m_depthStencilInfo{ other.m_depthStencilInfo }
 	{}
 	D3DRenderPassManager& operator=(D3DRenderPassManager&& other) noexcept
 	{
-		m_rtvHeap            = std::exchange(other.m_rtvHeap, nullptr);
-		m_renderTargets      = std::move(other.m_renderTargets);
-		m_rtvHandles         = std::move(other.m_rtvHandles);
-		m_rtvClearColours    = std::move(other.m_rtvClearColours);
-		m_depthStencilTarget = std::move(other.m_depthStencilTarget);
-		m_dsvHandle          = other.m_dsvHandle;
-		m_depthStencilInfo   = other.m_depthStencilInfo;
+		m_rtvHandles       = std::move(other.m_rtvHandles);
+		m_rtvClearFlags    = std::move(other.m_rtvClearFlags);
+		m_rtvClearColours  = std::move(other.m_rtvClearColours);
+		m_dsvHandle        = other.m_dsvHandle;
+		m_depthStencilInfo = other.m_depthStencilInfo;
 
 		return *this;
 	}

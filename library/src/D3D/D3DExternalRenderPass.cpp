@@ -3,8 +3,8 @@
 D3DExternalRenderPass::D3DExternalRenderPass(
 	D3DExternalResourceFactory* resourceFactory, D3DReusableDescriptorHeap* rtvHeap,
 	D3DReusableDescriptorHeap* dsvHeap
-) : m_resourceFactory{ resourceFactory }, m_renderPassManager{ rtvHeap, dsvHeap },
-	m_pipelineDetails{}, m_renderTargetTextureIndices{},
+) : m_rtvHeap{ rtvHeap }, m_dsvHeap{ dsvHeap }, m_resourceFactory{ resourceFactory },
+	m_renderPassManager{}, m_pipelineDetails{}, m_renderTargetTextureIndices{},
 	m_depthStencilTextureIndex{ std::numeric_limits<std::uint32_t>::max() },
 	m_swapchainCopySource{ std::numeric_limits<std::uint32_t>::max() }
 {}
@@ -62,9 +62,7 @@ void D3DExternalRenderPass::ResetAttachmentReferences()
 
 		const Texture& depthStencilTexture  = externalTexture->GetTexture();
 
-		m_renderPassManager.RecreateDepthStencilTarget(
-			depthStencilTexture.Get(), depthStencilTexture.Format()
-		);
+		m_renderPassManager.SetDSVHandle(externalTexture->GetAttachmentHandle());
 	}
 
 	const size_t renderTargetCount = std::size(m_renderTargetTextureIndices);
@@ -79,14 +77,12 @@ void D3DExternalRenderPass::ResetAttachmentReferences()
 
 		const Texture& renderTargetTexture     = externalTexture->GetTexture();
 
-		m_renderPassManager.RecreateRenderTarget(
-			index, renderTargetTexture.Get(), renderTargetTexture.Format()
-		);
+		m_renderPassManager.SetRTVHandle(index, externalTexture->GetAttachmentHandle());
 	}
 }
 
 void D3DExternalRenderPass::SetDepthStencil(
-	std::uint32_t externalTextureIndex, D3D12_RESOURCE_STATES newState, D3D12_DSV_FLAGS dsvFlags,
+	std::uint32_t externalTextureIndex, D3D12_RESOURCE_STATES newState, D3D12_DSV_FLAGS dsvFlag,
 	bool clearDepth, bool clearStencil
 ) {
 	if (m_depthStencilTextureIndex == std::numeric_limits<std::uint32_t>::max())
@@ -97,8 +93,9 @@ void D3DExternalRenderPass::SetDepthStencil(
 			externalTextureIndex
 		);
 
-		// Set the default clear colours. Even if they aren't used. Depth is fine, as in Dx12,
-		// depth and stencil would be in the same texture.
+		externalTexture->SetAttachmentHeap(m_dsvHeap);
+
+		// Set the default clear colours. Even if they aren't used.
 		externalTexture->SetDepthStencilClearColour(
 			D3D12_DEPTH_STENCIL_VALUE{ .Depth = 1.f, .Stencil = 0u }
 		);
@@ -108,6 +105,8 @@ void D3DExternalRenderPass::SetDepthStencil(
 		m_depthStencilTextureIndex
 	);
 
+	externalTexture->AddDSVFlag(dsvFlag);
+
 	// We don't need to change the state if the current state is already DEPTH WRITE.
 	if (externalTexture->GetCurrentState() != D3D12_RESOURCE_STATE_DEPTH_WRITE)
 		externalTexture->SetCurrentState(newState);
@@ -115,7 +114,7 @@ void D3DExternalRenderPass::SetDepthStencil(
 	const Texture& depthTexture = externalTexture->GetTexture();
 
 	m_renderPassManager.SetDepthStencilTarget(
-		depthTexture.Get(), depthTexture.Format(), clearDepth, clearStencil, dsvFlags
+		externalTexture->GetAttachmentHandle(), clearDepth, clearStencil
 	);
 }
 
@@ -203,6 +202,8 @@ std::uint32_t D3DExternalRenderPass::AddRenderTarget(
 
 	D3DExternalTexture* externalTexture = m_resourceFactory->GetD3DExternalTexture(externalTextureIndex);
 
+	externalTexture->SetAttachmentHeap(m_rtvHeap);
+
 	// Set the default clear colours. Even if they aren't used.
 	externalTexture->SetRenderTargetClearColour({ 0.f, 0.f, 0.f, 0.f });
 
@@ -215,7 +216,7 @@ std::uint32_t D3DExternalRenderPass::AddRenderTarget(
 
 	const Texture& renderTexture = externalTexture->GetTexture();
 
-	m_renderPassManager.AddRenderTarget(renderTexture.Get(), renderTexture.Format(), clearRenderTarget);
+	m_renderPassManager.AddRenderTarget(externalTexture->GetAttachmentHandle(), clearRenderTarget);
 
 	return renderTargetLocalIndex;
 }

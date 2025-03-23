@@ -7,7 +7,11 @@ SwapchainManager::SwapchainManager(D3DReusableDescriptorHeap* rtvHeap, UINT buff
 	m_renderTargetResources.resize(bufferCount);
 
 	for (UINT index = 0u; index < bufferCount; ++index)
-		m_renderTargets.emplace_back(rtvHeap);
+	{
+		RenderingAttachment& renderTarget = m_renderTargets.emplace_back();
+
+		renderTarget.SetAttachmentHeap(rtvHeap);
+	}
 }
 
 SwapchainManager::SwapchainManager(
@@ -65,7 +69,7 @@ void SwapchainManager::CreateRTVs()
 
 		m_swapchain->GetBuffer(static_cast<UINT>(index), IID_PPV_ARGS(&renderTargetResource));
 
-		m_renderTargets[index].Create(renderTargetResource.Get(), GetFormat());
+		m_renderTargets[index].CreateRTV(renderTargetResource.Get(), GetFormat());
 		m_renderTargetResources[index] = std::move(renderTargetResource);
 	}
 }

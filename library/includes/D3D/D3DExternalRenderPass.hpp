@@ -76,11 +76,13 @@ public:
 
 private:
 	void SetDepthStencil(
-		std::uint32_t externalTextureIndex, D3D12_RESOURCE_STATES newState, D3D12_DSV_FLAGS dsvFlags,
+		std::uint32_t externalTextureIndex, D3D12_RESOURCE_STATES newState, D3D12_DSV_FLAGS dsvFlag,
 		bool clearDepth, bool clearStencil
 	);
 
 protected:
+	D3DReusableDescriptorHeap*   m_rtvHeap;
+	D3DReusableDescriptorHeap*   m_dsvHeap;
 	D3DExternalResourceFactory*  m_resourceFactory;
 	D3DRenderPassManager         m_renderPassManager;
 	std::vector<PipelineDetails> m_pipelineDetails;
@@ -93,7 +95,9 @@ public:
 	D3DExternalRenderPass& operator=(const D3DExternalRenderPass&) = delete;
 
 	D3DExternalRenderPass(D3DExternalRenderPass&& other) noexcept
-		: m_resourceFactory{ std::exchange(other.m_resourceFactory, nullptr) },
+		: m_rtvHeap{ std::exchange(other.m_rtvHeap, nullptr) },
+		m_dsvHeap{ std::exchange(other.m_dsvHeap, nullptr) },
+		m_resourceFactory{ std::exchange(other.m_resourceFactory, nullptr) },
 		m_renderPassManager{ std::move(other.m_renderPassManager) },
 		m_pipelineDetails{ std::move(other.m_pipelineDetails) },
 		m_renderTargetTextureIndices{ std::move(other.m_renderTargetTextureIndices) },
@@ -104,6 +108,8 @@ public:
 	}
 	D3DExternalRenderPass& operator=(D3DExternalRenderPass&& other) noexcept
 	{
+		m_rtvHeap                    = std::exchange(other.m_rtvHeap, nullptr);
+		m_dsvHeap                    = std::exchange(other.m_dsvHeap, nullptr);
 		m_resourceFactory            = std::exchange(other.m_resourceFactory, nullptr);
 		m_renderPassManager          = std::move(other.m_renderPassManager);
 		m_pipelineDetails            = std::move(other.m_pipelineDetails);

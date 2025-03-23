@@ -4,6 +4,7 @@
 #include <ExternalBuffer.hpp>
 #include <D3DResources.hpp>
 #include <D3DResourceBarrier.hpp>
+#include <D3DRenderingAttachments.hpp>
 
 class D3DExternalBuffer : public ExternalBuffer
 {
@@ -59,7 +60,11 @@ public:
 		bool copySrc, bool copyDst
 	) override;
 
+	void SetAttachmentHeap(D3DReusableDescriptorHeap* attachmentHeap) noexcept;
+
 	void SetRenderTargetClearColour(const std::array<float, 4u>& colour) noexcept;
+
+	void AddDSVFlag(D3D12_DSV_FLAGS dsvFlag) noexcept;
 	void SetDepthStencilClearColour(const D3D12_DEPTH_STENCIL_VALUE& depthStencilColour) noexcept;
 	void SetDepthClearColour(float depthColour) noexcept;
 	void SetStencilClearColour(UINT8 stencilColour) noexcept;
@@ -92,10 +97,17 @@ public:
 	[[nodiscard]]
 	const Texture& GetTexture() const noexcept { return m_texture; }
 
+	[[nodiscard]]
+	D3D12_CPU_DESCRIPTOR_HANDLE GetAttachmentHandle() const noexcept
+	{
+		return m_renderingAttachment.GetCPUHandle();
+	}
+
 private:
 	Texture               m_texture;
 	D3D12_RESOURCE_STATES m_currentState;
 	D3D12_CLEAR_VALUE     m_clearValue;
+	RenderingAttachment   m_renderingAttachment;
 
 public:
 	D3DExternalTexture(const D3DExternalTexture&) = delete;
@@ -104,13 +116,15 @@ public:
 	D3DExternalTexture(D3DExternalTexture&& other) noexcept
 		: m_texture{ std::move(other.m_texture) },
 		m_currentState{ other.m_currentState },
-		m_clearValue{ other.m_clearValue }
+		m_clearValue{ other.m_clearValue },
+		m_renderingAttachment{ std::move(other.m_renderingAttachment) }
 	{}
 	D3DExternalTexture& operator=(D3DExternalTexture&& other) noexcept
 	{
-		m_texture      = std::move(other.m_texture);
-		m_currentState = other.m_currentState;
-		m_clearValue   = other.m_clearValue;
+		m_texture             = std::move(other.m_texture);
+		m_currentState        = other.m_currentState;
+		m_clearValue          = other.m_clearValue;
+		m_renderingAttachment = std::move(other.m_renderingAttachment);
 
 		return *this;
 	}

@@ -1,58 +1,20 @@
 #include <D3DRenderPassManager.hpp>
 
-void D3DRenderPassManager::AddRenderTarget(
-	ID3D12Resource* renderTargetResource, DXGI_FORMAT rtvFormat, bool clearAtStart
-) {
-	RenderTarget renderTarget{ m_rtvHeap };
-
-	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle{};
-
-	// Only create the render target view, if the resource is valid.
-	if (renderTargetResource)
-	{
-		renderTarget.Create(renderTargetResource, rtvFormat);
-
-		rtvHandle = renderTarget.GetCPUHandle();
-	}
-
-	renderTarget.SetClearAtStart(clearAtStart);
-
+void D3DRenderPassManager::AddRenderTarget(D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle, bool clearAtStart)
+{
 	m_rtvHandles.emplace_back(rtvHandle);
-	m_renderTargets.emplace_back(std::move(renderTarget));
+	m_rtvClearFlags.emplace_back(clearAtStart);
 	m_rtvClearColours.emplace_back(RTVClearColour{ 0.f, 0.f, 0.f, 0.f });
 }
 
-void D3DRenderPassManager::RecreateRenderTarget(
-	size_t renderTargetIndex, ID3D12Resource* renderTargetResource, DXGI_FORMAT rtvFormat
-) {
-	RenderTarget& renderTarget = m_renderTargets[renderTargetIndex];
-
-	renderTarget.Create(renderTargetResource, rtvFormat);
-
-	m_rtvHandles[renderTargetIndex] = renderTarget.GetCPUHandle();
+void D3DRenderPassManager::SetRTVHandle(size_t renderTargetIndex, D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle)
+{
+	m_rtvHandles[renderTargetIndex] = rtvHandle;
 }
 
 void D3DRenderPassManager::SetDepthStencilTarget(
-	ID3D12Resource* depthStencilTargetResource, DXGI_FORMAT dsvFormat, bool depthClearAtStart,
-	bool stencilClearAtStart, D3D12_DSV_FLAGS dsvFlags
+	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle, bool depthClearAtStart, bool stencilClearAtStart
 ) {
-	m_depthStencilInfo.dsvFlags |= dsvFlags;
-
-	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle{};
-
-	// Only create the depth stencil view if the resource is valid.
-	if (depthStencilTargetResource)
-	{
-		m_depthStencilTarget.Create(
-			depthStencilTargetResource, dsvFormat,
-			static_cast<D3D12_DSV_FLAGS>(m_depthStencilInfo.dsvFlags)
-		);
-
-		dsvHandle = m_depthStencilTarget.GetCPUHandle();
-	}
-
-	m_depthStencilTarget.SetClearAtStart(depthClearAtStart || stencilClearAtStart);
-
 	if (depthClearAtStart)
 		m_depthStencilInfo.clearFlags |= D3D12_CLEAR_FLAG_DEPTH;
 
@@ -62,15 +24,9 @@ void D3DRenderPassManager::SetDepthStencilTarget(
 	m_dsvHandle = dsvHandle;
 }
 
-void D3DRenderPassManager::RecreateDepthStencilTarget(
-	ID3D12Resource* depthStencilTargetResource, DXGI_FORMAT dsvFormat
-) {
-	m_depthStencilTarget.Create(
-		depthStencilTargetResource, dsvFormat,
-		static_cast<D3D12_DSV_FLAGS>(m_depthStencilInfo.dsvFlags)
-	);
-
-	m_dsvHandle = m_depthStencilTarget.GetCPUHandle();
+void D3DRenderPassManager::SetDSVHandle(D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle)
+{
+	m_dsvHandle = dsvHandle;
 }
 
 void D3DRenderPassManager::SetDepthClearValue(float depthClearValue) noexcept
@@ -116,7 +72,7 @@ void D3DRenderPassManager::StartPass(const D3DCommandList& graphicsCmdList) cons
 
 	D3D12_CPU_DESCRIPTOR_HANDLE const* dsvHandle = nullptr;
 
-	if (m_depthStencilTarget.ShouldClearAtStart())
+	if (m_depthStencilInfo.clearFlags)
 	{
 		dsvHandle = &m_dsvHandle;
 
@@ -128,10 +84,10 @@ void D3DRenderPassManager::StartPass(const D3DCommandList& graphicsCmdList) cons
 		);
 	}
 
-	const size_t renderTargetCount = std::size(m_renderTargets);
+	const size_t renderTargetCount = std::size(m_rtvClearFlags);
 
 	for (size_t index = 0u; index < renderTargetCount; ++index)
-		if (m_renderTargets[index].ShouldClearAtStart())
+		if (m_rtvClearFlags[index])
 			gfxCmdList->ClearRenderTargetView(
 				m_rtvHandles[index], std::data(m_rtvClearColours[index]), 0u, nullptr
 			);
