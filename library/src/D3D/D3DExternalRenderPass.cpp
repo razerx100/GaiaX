@@ -60,8 +60,6 @@ void D3DExternalRenderPass::ResetAttachmentReferences()
 			m_depthStencilTextureIndex
 		);
 
-		const Texture& depthStencilTexture  = externalTexture->GetTexture();
-
 		m_renderPassManager.SetDSVHandle(externalTexture->GetAttachmentHandle());
 	}
 
@@ -74,8 +72,6 @@ void D3DExternalRenderPass::ResetAttachmentReferences()
 		D3DExternalTexture* externalTexture    = m_resourceFactory->GetD3DExternalTexture(
 			renderTargetTextureIndex
 		);
-
-		const Texture& renderTargetTexture     = externalTexture->GetTexture();
 
 		m_renderPassManager.SetRTVHandle(index, externalTexture->GetAttachmentHandle());
 	}
@@ -110,8 +106,6 @@ void D3DExternalRenderPass::SetDepthStencil(
 	// We don't need to change the state if the current state is already DEPTH WRITE.
 	if (externalTexture->GetCurrentState() != D3D12_RESOURCE_STATE_DEPTH_WRITE)
 		externalTexture->SetCurrentState(newState);
-
-	const Texture& depthTexture = externalTexture->GetTexture();
 
 	m_renderPassManager.SetDepthStencilTarget(
 		externalTexture->GetAttachmentHandle(), clearDepth, clearStencil
@@ -213,8 +207,6 @@ std::uint32_t D3DExternalRenderPass::AddRenderTarget(
 		= static_cast<std::uint32_t>(std::size(m_renderTargetTextureIndices));
 
 	m_renderTargetTextureIndices.emplace_back(externalTextureIndex);
-
-	const Texture& renderTexture = externalTexture->GetTexture();
 
 	m_renderPassManager.AddRenderTarget(externalTexture->GetAttachmentHandle(), clearRenderTarget);
 
