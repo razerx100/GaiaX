@@ -55,7 +55,8 @@ class ExternalGraphicsPipeline
 	enum class State : std::uint8_t
 	{
 		Unknown         = 0u,
-		BackfaceCulling = 1u
+		BackfaceCulling = 1u,
+		DepthWrite      = 2u
 	};
 
 public:
@@ -82,9 +83,12 @@ public:
 		m_fragmentShader = fragmentShader;
 	}
 
-	void EnableDepthTesting(ExternalFormat format) noexcept
+	void EnableDepthTesting(ExternalFormat format, bool enableDepthWrite) noexcept
 	{
 		m_depthFormat = static_cast<std::uint8_t>(format);
+
+		if (enableDepthWrite)
+			m_pipelineStates |= static_cast<std::uint8_t>(State::DepthWrite);
 	}
 	void EnableStencilTesting(ExternalFormat format) noexcept
 	{
@@ -127,6 +131,13 @@ public:
 		constexpr auto backfaceStateU8 = static_cast<std::uint8_t>(State::BackfaceCulling);
 
 		return (m_pipelineStates & backfaceStateU8) == backfaceStateU8;
+	}
+	[[nodiscard]]
+	bool IsDepthWriteEnabled() const noexcept
+	{
+		constexpr auto depthWriteStateU8 = static_cast<std::uint8_t>(State::DepthWrite);
+
+		return (m_pipelineStates & depthWriteStateU8) == depthWriteStateU8;
 	}
 
 	[[nodiscard]]

@@ -98,12 +98,14 @@ void ConfigurePipelineBuilder(
 		const BOOL isDepthFormatValid   = depthFormat != DXGI_FORMAT_UNKNOWN;
 		const BOOL isStencilFormatValid = stencilFormat != DXGI_FORMAT_UNKNOWN;
 
+		const D3D12_DEPTH_WRITE_MASK depthWrite
+			= graphicsExtPipeline.IsDepthWriteEnabled()
+				? D3D12_DEPTH_WRITE_MASK_ALL : D3D12_DEPTH_WRITE_MASK_ZERO;
+
 		DepthStencilStateBuilder depthStencilBuilder{};
 
 		if (isDepthFormatValid || isStencilFormatValid)
-			depthStencilBuilder.Enable(
-				isDepthFormatValid, D3D12_DEPTH_WRITE_MASK_ALL, isStencilFormatValid
-			);
+			depthStencilBuilder.Enable(isDepthFormatValid, depthWrite, isStencilFormatValid);
 
 		DXGI_FORMAT depthStencilFormat = DXGI_FORMAT_UNKNOWN;
 
