@@ -108,11 +108,14 @@ void D3DExternalRenderPass::SetDepthStencil(
 		m_depthStencilTextureIndex
 	);
 
-	externalTexture->AddDSVFlag(dsvFlag);
-
 	// We don't need to change the state if the current state is already DEPTH WRITE.
 	if (externalTexture->GetCurrentState() != D3D12_RESOURCE_STATE_DEPTH_WRITE)
+	{
 		externalTexture->SetCurrentState(newState);
+		// The DSV flag is to make either Depth or Stencil read only. No need to set any of that
+		// if the current state is depth write.
+		externalTexture->AddDSVFlag(dsvFlag);
+	}
 
 	m_renderPassManager.SetDepthStencilTarget(clearDepth, clearStencil);
 }
