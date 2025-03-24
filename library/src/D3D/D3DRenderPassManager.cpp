@@ -44,27 +44,6 @@ void D3DRenderPassManager::SetRenderTargetClearValue(
 	m_rtvClearColours[renderTargetIndex] = clearValue;
 }
 
-bool D3DRenderPassManager::IsDepthClearColourSame(float depthClearColour) const noexcept
-{
-	return m_depthStencilInfo.depthClearColour == depthClearColour;
-}
-
-bool D3DRenderPassManager::IsStencilClearColourSame(std::uint8_t stencilClearColour) const noexcept
-{
-	return m_depthStencilInfo.stencilClearColour == stencilClearColour;
-}
-
-bool D3DRenderPassManager::IsRenderTargetClearColourSame(
-	size_t renderTargetIndex, const RTVClearColour& clearValue
-) const noexcept {
-	const RTVClearColour& rtvClearColour = m_rtvClearColours[renderTargetIndex];
-
-	return rtvClearColour[0] == clearValue[0] &&
-		rtvClearColour[1] == clearValue[1] &&
-		rtvClearColour[2] == clearValue[2] &&
-		rtvClearColour[3] == clearValue[3];
-}
-
 void D3DRenderPassManager::StartPass(const D3DCommandList& graphicsCmdList) const noexcept
 {
 	ID3D12GraphicsCommandList* gfxCmdList = graphicsCmdList.Get();

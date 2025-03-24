@@ -91,10 +91,17 @@ void D3DExternalRenderPass::SetDepthStencil(
 
 		externalTexture->SetAttachmentHeap(m_dsvHeap);
 
-		// Set the default clear colours. Even if they aren't used.
-		externalTexture->SetDepthStencilClearColour(
-			D3D12_DEPTH_STENCIL_VALUE{ .Depth = 1.f, .Stencil = 0u }
-		);
+		// Only set the default colours if the state is common. Otherwise the
+		// clear colour will cause issues if we use the same texture in multiple passes.
+		// Can't use the same texture in multiple passes with multiple different clear values without
+		// performance hit. But it should be fine to clear on one, but if we set the default
+		// state on every pass, the default value will overwrite any other values any other
+		// passes had set. But we have to set the default colours, since the colour variable is a union
+		// and we won't know if it is gonna be an RTV or DSV at the start.
+		if (externalTexture->GetCurrentState() == D3D12_RESOURCE_STATE_COMMON)
+			externalTexture->SetDepthStencilClearColour(
+				D3D12_DEPTH_STENCIL_VALUE{ .Depth = 1.f, .Stencil = 0u }
+			);
 	}
 
 	D3DExternalTexture* externalTexture = m_resourceFactory->GetD3DExternalTexture(
@@ -128,23 +135,20 @@ void D3DExternalRenderPass::SetDepthTesting(
 
 void D3DExternalRenderPass::SetDepthClearColour(float clearColour)
 {
-	if (!m_renderPassManager.IsDepthClearColourSame(clearColour))
+	if (m_depthStencilTextureIndex != std::numeric_limits<std::uint32_t>::max())
 	{
-		if (m_depthStencilTextureIndex != std::numeric_limits<std::uint32_t>::max())
-		{
-			D3DExternalTexture* externalTexture = m_resourceFactory->GetD3DExternalTexture(
-				m_depthStencilTextureIndex
-			);
+		D3DExternalTexture* externalTexture = m_resourceFactory->GetD3DExternalTexture(
+			m_depthStencilTextureIndex
+		);
 
-			externalTexture->SetDepthClearColour(clearColour);
+		externalTexture->SetDepthClearColour(clearColour);
 
-			// Only recreate if there is an already existing texture.
-			if (externalTexture->IsTextureCreated())
-				externalTexture->Recreate(ExternalTexture2DType::Depth);
-		}
-
-		m_renderPassManager.SetDepthClearValue(clearColour);
+		// Only recreate if there is an already existing texture.
+		if (externalTexture->IsTextureCreated())
+			externalTexture->Recreate(ExternalTexture2DType::Depth);
 	}
+
+	m_renderPassManager.SetDepthClearValue(clearColour);
 }
 
 void D3DExternalRenderPass::SetStencilTesting(
@@ -167,23 +171,20 @@ void D3DExternalRenderPass::SetStencilClearColour(std::uint32_t clearColour)
 {
 	const auto u8ClearColour = static_cast<UINT8>(clearColour);
 
-	if (!m_renderPassManager.IsStencilClearColourSame(u8ClearColour))
+	if (m_depthStencilTextureIndex != std::numeric_limits<std::uint32_t>::max())
 	{
-		if (m_depthStencilTextureIndex != std::numeric_limits<std::uint32_t>::max())
-		{
-			D3DExternalTexture* externalTexture = m_resourceFactory->GetD3DExternalTexture(
-				m_depthStencilTextureIndex
-			);
+		D3DExternalTexture* externalTexture = m_resourceFactory->GetD3DExternalTexture(
+			m_depthStencilTextureIndex
+		);
 
-			externalTexture->SetStencilClearColour(u8ClearColour);
+		externalTexture->SetStencilClearColour(u8ClearColour);
 
-			// Only recreate if there is an already existing texture.
-			if (externalTexture->IsTextureCreated())
-				externalTexture->Recreate(ExternalTexture2DType::Stencil);
-		}
-
-		m_renderPassManager.SetStencilClearValue(u8ClearColour);
+		// Only recreate if there is an already existing texture.
+		if (externalTexture->IsTextureCreated())
+			externalTexture->Recreate(ExternalTexture2DType::Stencil);
 	}
+
+	m_renderPassManager.SetStencilClearValue(u8ClearColour);
 }
 
 std::uint32_t D3DExternalRenderPass::AddRenderTarget(
@@ -196,8 +197,15 @@ std::uint32_t D3DExternalRenderPass::AddRenderTarget(
 
 	externalTexture->SetAttachmentHeap(m_rtvHeap);
 
-	// Set the default clear colours. Even if they aren't used.
-	externalTexture->SetRenderTargetClearColour({ 0.f, 0.f, 0.f, 0.f });
+	// Only set the default colours if the state is common. Otherwise the
+	// clear colour will cause issues if we use the same texture in multiple passes.
+	// Can't use the same texture in multiple passes with multiple different clear values without
+	// performance hit. But it should be fine to clear on one, but if we set the default
+	// state on every pass, the default value will overwrite any other values any other
+	// passes had set. But we have to set the default colours, since the colour variable is a union
+	// and we won't know if it is gonna be an RTV or DSV at the start.
+	if (externalTexture->GetCurrentState() == D3D12_RESOURCE_STATE_COMMON)
+		externalTexture->SetRenderTargetClearColour({ 0.f, 0.f, 0.f, 0.f });
 
 	externalTexture->SetCurrentState(D3D12_RESOURCE_STATE_RENDER_TARGET);
 
@@ -224,25 +232,22 @@ void D3DExternalRenderPass::SetRenderTargetClearColour(
 
 	const auto zRenderTargetIndex = static_cast<size_t>(renderTargetIndex);
 
-	if (!m_renderPassManager.IsRenderTargetClearColourSame(zRenderTargetIndex, d3dClearColour))
+	const std::uint32_t renderTargetTextureIndex = m_renderTargetTextureIndices[zRenderTargetIndex];
+
+	if (renderTargetTextureIndex != std::numeric_limits<std::uint32_t>::max())
 	{
-		const std::uint32_t renderTargetTextureIndex = m_renderTargetTextureIndices[zRenderTargetIndex];
+		D3DExternalTexture* externalTexture = m_resourceFactory->GetD3DExternalTexture(
+			renderTargetTextureIndex
+		);
 
-		if (renderTargetTextureIndex != std::numeric_limits<std::uint32_t>::max())
-		{
-			D3DExternalTexture* externalTexture = m_resourceFactory->GetD3DExternalTexture(
-				renderTargetTextureIndex
-			);
+		externalTexture->SetRenderTargetClearColour(d3dClearColour);
 
-			externalTexture->SetRenderTargetClearColour(d3dClearColour);
-
-			// Only recreate if there is an already existing texture.
-			if (externalTexture->IsTextureCreated())
-				externalTexture->Recreate(ExternalTexture2DType::RenderTarget);
-		}
-
-		m_renderPassManager.SetRenderTargetClearValue(zRenderTargetIndex, d3dClearColour);
+		// Only recreate if there is an already existing texture.
+		if (externalTexture->IsTextureCreated())
+			externalTexture->Recreate(ExternalTexture2DType::RenderTarget);
 	}
+
+	m_renderPassManager.SetRenderTargetClearValue(zRenderTargetIndex, d3dClearColour);
 }
 
 void D3DExternalRenderPass::SetSwapchainCopySource(std::uint32_t renderTargetIndex) noexcept
