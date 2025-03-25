@@ -64,6 +64,11 @@ void D3DExternalTexture::AddDSVFlag(D3D12_DSV_FLAGS dsvFlag) noexcept
 	m_renderingAttachment.AddDSVFlag(dsvFlag);
 }
 
+void D3DExternalTexture::SetDSVFlag(D3D12_DSV_FLAGS dsvFlag) noexcept
+{
+	m_renderingAttachment.SetDSVFlag(dsvFlag);
+}
+
 void D3DExternalTexture::SetDepthStencilClearColour(
 	const D3D12_DEPTH_STENCIL_VALUE& depthStencilColour
 ) noexcept {

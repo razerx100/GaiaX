@@ -9,9 +9,30 @@ void D3DRenderPassManager::AddRenderTarget(bool clearAtStart)
 	m_rtvClearColours.emplace_back(RTVClearColour{ 0.f, 0.f, 0.f, 0.f });
 }
 
-void D3DRenderPassManager::SetRTVHandle(size_t renderTargetIndex, D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle)
+std::uint32_t D3DRenderPassManager::AddStartBarrier(const ResourceBarrierBuilder& barrierBuilder)
 {
+	auto barrierIndex = std::numeric_limits<std::uint32_t>::max();
+
+	const D3D12_RESOURCE_TRANSITION_BARRIER& transtion = barrierBuilder.GetTransition();
+
+	if (transtion.StateBefore != transtion.StateAfter)
+	{
+		barrierIndex = m_startBarriers.GetCount();
+
+		m_startBarriers.AddBarrier(barrierBuilder);
+	}
+
+	return barrierIndex;
+}
+
+void D3DRenderPassManager::SetRenderTarget(
+	size_t renderTargetIndex, D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle,
+	std::uint32_t barrierIndex, ID3D12Resource* renderTarget
+) {
 	m_rtvHandles[renderTargetIndex] = rtvHandle;
+
+	if (barrierIndex != std::numeric_limits<std::uint32_t>::max())
+		m_startBarriers.SetTransitionResource(barrierIndex, renderTarget);
 }
 
 void D3DRenderPassManager::SetDepthStencilTarget(bool depthClearAtStart, bool stencilClearAtStart)
@@ -23,9 +44,13 @@ void D3DRenderPassManager::SetDepthStencilTarget(bool depthClearAtStart, bool st
 		m_depthStencilInfo.clearFlags |= D3D12_CLEAR_FLAG_STENCIL;
 }
 
-void D3DRenderPassManager::SetDSVHandle(D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle)
-{
+void D3DRenderPassManager::SetDepthStencil(
+	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle, std::uint32_t barrierIndex, ID3D12Resource* depthStencilTarget
+) {
 	m_dsvHandle = dsvHandle;
+
+	if (barrierIndex != std::numeric_limits<std::uint32_t>::max())
+		m_startBarriers.SetTransitionResource(barrierIndex, depthStencilTarget);
 }
 
 void D3DRenderPassManager::SetDepthClearValue(float depthClearValue) noexcept
@@ -47,6 +72,9 @@ void D3DRenderPassManager::SetRenderTargetClearValue(
 void D3DRenderPassManager::StartPass(const D3DCommandList& graphicsCmdList) const noexcept
 {
 	ID3D12GraphicsCommandList* gfxCmdList = graphicsCmdList.Get();
+
+	if (m_startBarriers.GetCount())
+		m_startBarriers.RecordBarriers(gfxCmdList);
 
 	D3D12_CPU_DESCRIPTOR_HANDLE const* dsvHandle = nullptr;
 
@@ -99,14 +127,8 @@ void D3DRenderPassManager::EndPassForSwapchain(
 
 	graphicsCmdList.CopyTexture(srcRenderTarget, swapchainBackBuffer, 0u, 0u);
 
-	D3DResourceBarrier<2u>{}
+	D3DResourceBarrier<>{}
 	.AddBarrier(
-		ResourceBarrierBuilder{}
-		.Transition(
-			srcRenderTarget,
-			D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET
-		)
-	).AddBarrier(
 		ResourceBarrierBuilder{}
 		.Transition(
 			swapchainBackBuffer,

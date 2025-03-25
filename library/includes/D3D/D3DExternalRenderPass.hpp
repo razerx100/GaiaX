@@ -1,6 +1,7 @@
 #ifndef D3D_EXTERNAL_RENDER_PASS_HPP_
 #define D3D_EXTERNAL_RENDER_PASS_HPP_
 #include <vector>
+#include <bitset>
 #include <limits>
 #include <utility>
 #include <ranges>
@@ -11,6 +12,12 @@
 
 class D3DExternalRenderPass : public ExternalRenderPass
 {
+	struct AttachmentDetails
+	{
+		std::uint32_t textureIndex = std::numeric_limits<std::uint32_t>::max();
+		std::uint32_t barrierIndex = std::numeric_limits<std::uint32_t>::max();
+	};
+
 public:
 	struct PipelineDetails
 	{
@@ -75,20 +82,38 @@ public:
 	}
 
 private:
+	struct ResourceStates
+	{
+		D3D12_RESOURCE_STATES beforeState;
+		D3D12_RESOURCE_STATES afterState;
+	};
+
+private:
 	void SetDepthStencil(
 		std::uint32_t externalTextureIndex, D3D12_RESOURCE_STATES newState, D3D12_DSV_FLAGS dsvFlag,
 		bool clearDepth, bool clearStencil
 	);
 
+	static constexpr size_t s_maxAttachmentCount = 9u;
+
 protected:
-	D3DReusableDescriptorHeap*   m_rtvHeap;
-	D3DReusableDescriptorHeap*   m_dsvHeap;
-	D3DExternalResourceFactory*  m_resourceFactory;
-	D3DRenderPassManager         m_renderPassManager;
-	std::vector<PipelineDetails> m_pipelineDetails;
-	std::vector<std::uint32_t>   m_renderTargetTextureIndices;
-	std::uint32_t                m_depthStencilTextureIndex;
-	std::uint32_t                m_swapchainCopySource;
+	D3DReusableDescriptorHeap*        m_rtvHeap;
+	D3DReusableDescriptorHeap*        m_dsvHeap;
+	D3DExternalResourceFactory*       m_resourceFactory;
+	D3DRenderPassManager              m_renderPassManager;
+	std::vector<PipelineDetails>      m_pipelineDetails;
+	std::vector<AttachmentDetails>    m_renderTargetAttachmentDetails;
+	AttachmentDetails                 m_depthStencilAttachmentDetails;
+	std::uint32_t                     m_swapchainCopySource;
+	std::bitset<s_maxAttachmentCount> m_firstUseFlags;
+
+	// We would want to create the item in the last state and would also want to
+	// remove unnecessary barriers. So, have to save the desired states until the
+	// resources are created.
+	std::vector<ResourceStates>       m_tempResourceStates;
+
+	static constexpr std::uint32_t s_depthAttachmentIndex = 8u;
+	// And the first 8 will be used by the render targets.
 
 public:
 	D3DExternalRenderPass(const D3DExternalRenderPass&) = delete;
@@ -100,22 +125,26 @@ public:
 		m_resourceFactory{ std::exchange(other.m_resourceFactory, nullptr) },
 		m_renderPassManager{ std::move(other.m_renderPassManager) },
 		m_pipelineDetails{ std::move(other.m_pipelineDetails) },
-		m_renderTargetTextureIndices{ std::move(other.m_renderTargetTextureIndices) },
-		m_depthStencilTextureIndex{ other.m_depthStencilTextureIndex },
-		m_swapchainCopySource{ other.m_swapchainCopySource }
+		m_renderTargetAttachmentDetails{ std::move(other.m_renderTargetAttachmentDetails) },
+		m_depthStencilAttachmentDetails{ other.m_depthStencilAttachmentDetails },
+		m_swapchainCopySource{ other.m_swapchainCopySource },
+		m_firstUseFlags{ other.m_firstUseFlags },
+		m_tempResourceStates{ std::move(other.m_tempResourceStates) }
 	{
 		other.m_resourceFactory = nullptr;
 	}
 	D3DExternalRenderPass& operator=(D3DExternalRenderPass&& other) noexcept
 	{
-		m_rtvHeap                    = std::exchange(other.m_rtvHeap, nullptr);
-		m_dsvHeap                    = std::exchange(other.m_dsvHeap, nullptr);
-		m_resourceFactory            = std::exchange(other.m_resourceFactory, nullptr);
-		m_renderPassManager          = std::move(other.m_renderPassManager);
-		m_pipelineDetails            = std::move(other.m_pipelineDetails);
-		m_renderTargetTextureIndices = std::move(other.m_renderTargetTextureIndices);
-		m_depthStencilTextureIndex   = other.m_depthStencilTextureIndex;
-		m_swapchainCopySource        = other.m_swapchainCopySource;
+		m_rtvHeap                       = std::exchange(other.m_rtvHeap, nullptr);
+		m_dsvHeap                       = std::exchange(other.m_dsvHeap, nullptr);
+		m_resourceFactory               = std::exchange(other.m_resourceFactory, nullptr);
+		m_renderPassManager             = std::move(other.m_renderPassManager);
+		m_pipelineDetails               = std::move(other.m_pipelineDetails);
+		m_renderTargetAttachmentDetails = std::move(other.m_renderTargetAttachmentDetails);
+		m_depthStencilAttachmentDetails = other.m_depthStencilAttachmentDetails;
+		m_swapchainCopySource           = other.m_swapchainCopySource;
+		m_firstUseFlags                 = other.m_firstUseFlags;
+		m_tempResourceStates            = std::move(other.m_tempResourceStates);
 
 		return *this;
 	}

@@ -20,17 +20,27 @@ public:
 
 public:
 	D3DRenderPassManager()
-		: m_rtvHandles{}, m_rtvClearFlags{}, m_rtvClearColours {}, m_dsvHandle{ .ptr = 0u },
+		: m_startBarriers{}, m_rtvHandles{}, m_rtvClearFlags{}, m_rtvClearColours{},
+		m_dsvHandle{ .ptr = 0u },
 		m_depthStencilInfo{ .depthClearColour = 1.f, .stencilClearColour = 0u, .clearFlags = 0u }
 	{}
 
 	void AddRenderTarget(bool clearAtStart);
 
-	void SetRTVHandle(size_t renderTargetIndex, D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle);
+	[[nodiscard]]
+	std::uint32_t AddStartBarrier(const ResourceBarrierBuilder& barrierBuilder);
+
+	void SetRenderTarget(
+		size_t renderTargetIndex, D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle,
+		std::uint32_t barrierIndex, ID3D12Resource* renderTarget
+	);
 
 	void SetDepthStencilTarget(bool depthClearAtStart, bool stencilClearAtStart);
 
-	void SetDSVHandle(D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle);
+	void SetDepthStencil(
+		D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle, std::uint32_t barrierIndex,
+		ID3D12Resource* depthStencilTarget
+	);
 
 	// These functions can be used every frame.
 	void SetDepthClearValue(float depthClearValue) noexcept;
@@ -50,6 +60,7 @@ public:
 	) const noexcept;
 
 private:
+	D3DResourceBarrier1_1                    m_startBarriers;
 	std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> m_rtvHandles;
 	std::vector<bool>                        m_rtvClearFlags;
 	std::vector<RTVClearColour>              m_rtvClearColours;
@@ -61,7 +72,8 @@ public:
 	D3DRenderPassManager& operator=(const D3DRenderPassManager&) = delete;
 
 	D3DRenderPassManager(D3DRenderPassManager&& other) noexcept
-		: m_rtvHandles{ std::move(other.m_rtvHandles) },
+		: m_startBarriers{ std::move(other.m_startBarriers) },
+		m_rtvHandles{ std::move(other.m_rtvHandles) },
 		m_rtvClearFlags{ std::move(other.m_rtvClearFlags) },
 		m_rtvClearColours{ std::move(other.m_rtvClearColours) },
 		m_dsvHandle{ other.m_dsvHandle },
@@ -69,6 +81,7 @@ public:
 	{}
 	D3DRenderPassManager& operator=(D3DRenderPassManager&& other) noexcept
 	{
+		m_startBarriers    = std::move(other.m_startBarriers);
 		m_rtvHandles       = std::move(other.m_rtvHandles);
 		m_rtvClearFlags    = std::move(other.m_rtvClearFlags);
 		m_rtvClearColours  = std::move(other.m_rtvClearColours);

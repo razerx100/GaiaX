@@ -48,6 +48,12 @@ public:
 	}
 
 	[[nodiscard]]
+	const D3D12_RESOURCE_TRANSITION_BARRIER& GetTransition() const noexcept
+	{
+		return m_barrier.Transition;
+	}
+
+	[[nodiscard]]
 	D3D12_RESOURCE_BARRIER Get() const noexcept { return m_barrier; }
 
 private:
@@ -75,6 +81,11 @@ public:
 	D3DResourceBarrier& AddBarrier(const ResourceBarrierBuilder& barrierBuilder)
 	{
 		return AddBarrier(barrierBuilder.Get());
+	}
+
+	void SetTransitionResource(size_t barrierIndex, ID3D12Resource* resource) noexcept
+	{
+		m_barriers[barrierIndex].Transition.pResource = resource;
 	}
 
 	void RecordBarriers(ID3D12GraphicsCommandList* commandList) const noexcept
@@ -109,11 +120,14 @@ public:
 		return AddBarrier(barrierBuilder.Get());
 	}
 
+	void SetTransitionResource(size_t barrierIndex, ID3D12Resource* resource) noexcept
+	{
+		m_barriers[barrierIndex].Transition.pResource = resource;
+	}
+
 	void RecordBarriers(ID3D12GraphicsCommandList* commandList) const noexcept
 	{
-		commandList->ResourceBarrier(
-			static_cast<UINT>(std::size(m_barriers)), std::data(m_barriers)
-		);
+		commandList->ResourceBarrier(static_cast<UINT>(std::size(m_barriers)), std::data(m_barriers));
 	}
 
 	[[nodiscard]]

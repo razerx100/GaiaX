@@ -21,6 +21,8 @@ public:
 
 	void AddDSVFlag(D3D12_DSV_FLAGS dsvFlag) noexcept { m_dsvFlags |= dsvFlag; }
 
+	void SetDSVFlag(D3D12_DSV_FLAGS dsvFlag) noexcept { m_dsvFlags = dsvFlag; }
+
 	void CreateRTV(ID3D12Resource* renderTarget, DXGI_FORMAT rtvFormat);
 
 	void CreateDSV(ID3D12Resource* depthStencilTarget, DXGI_FORMAT dsvFormat);
@@ -30,6 +32,9 @@ public:
 	{
 		return m_attachmentHeap->GetCPUHandle(m_descriptorIndex);
 	}
+
+	[[nodiscard]]
+	UINT GetDSVFlags() const noexcept { return m_dsvFlags; }
 
 private:
 	D3DReusableDescriptorHeap* m_attachmentHeap;

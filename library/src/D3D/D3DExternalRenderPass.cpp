@@ -4,9 +4,20 @@ D3DExternalRenderPass::D3DExternalRenderPass(
 	D3DExternalResourceFactory* resourceFactory, D3DReusableDescriptorHeap* rtvHeap,
 	D3DReusableDescriptorHeap* dsvHeap
 ) : m_rtvHeap{ rtvHeap }, m_dsvHeap{ dsvHeap }, m_resourceFactory{ resourceFactory },
-	m_renderPassManager{}, m_pipelineDetails{}, m_renderTargetTextureIndices{},
-	m_depthStencilTextureIndex{ std::numeric_limits<std::uint32_t>::max() },
-	m_swapchainCopySource{ std::numeric_limits<std::uint32_t>::max() }
+	m_renderPassManager{}, m_pipelineDetails{}, m_renderTargetAttachmentDetails{},
+	m_depthStencilAttachmentDetails
+	{
+		.textureIndex = std::numeric_limits<std::uint32_t>::max(),
+		.barrierIndex = std::numeric_limits<std::uint32_t>::max()
+	},
+	m_swapchainCopySource{ std::numeric_limits<std::uint32_t>::max() }, m_firstUseFlags{ 0u },
+	m_tempResourceStates(
+		s_maxAttachmentCount, ResourceStates
+		{
+			.beforeState = D3D12_RESOURCE_STATE_COMMON,
+			.afterState  = D3D12_RESOURCE_STATE_COMMON
+		}
+	)
 {}
 
 void D3DExternalRenderPass::AddPipeline(std::uint32_t pipelineIndex)
@@ -54,36 +65,82 @@ void D3DExternalRenderPass::RemovePipeline(std::uint32_t pipelineIndex) noexcept
 
 void D3DExternalRenderPass::ResetAttachmentReferences()
 {
-	if (m_depthStencilTextureIndex != std::numeric_limits<std::uint32_t>::max())
+	if (m_depthStencilAttachmentDetails.textureIndex != std::numeric_limits<std::uint32_t>::max())
 	{
 		D3DExternalTexture* externalTexture = m_resourceFactory->GetD3DExternalTexture(
-			m_depthStencilTextureIndex
+			m_depthStencilAttachmentDetails.textureIndex
 		);
 
-		m_renderPassManager.SetDSVHandle(externalTexture->GetAttachmentHandle());
+		if (!std::empty(m_tempResourceStates))
+		{
+			// If this is the first use of the depth texture, set the before state to the
+			// very last state, as the resource will be created in that state and on the future
+			// frames, this will be the before state.
+			if (m_firstUseFlags[s_depthAttachmentIndex])
+				m_tempResourceStates[s_depthAttachmentIndex].beforeState
+					= externalTexture->GetCurrentState();
+
+			const ResourceStates resourceStates = m_tempResourceStates[s_depthAttachmentIndex];
+
+			m_depthStencilAttachmentDetails.barrierIndex = m_renderPassManager.AddStartBarrier(
+				ResourceBarrierBuilder{}.Transition(
+					externalTexture->GetTexture().Get(),
+					resourceStates.beforeState, resourceStates.afterState
+				)
+			);
+		}
+
+		m_renderPassManager.SetDepthStencil(
+			externalTexture->GetAttachmentHandle(), m_depthStencilAttachmentDetails.barrierIndex,
+			externalTexture->GetTexture().Get()
+		);
 	}
 
-	const size_t renderTargetCount = std::size(m_renderTargetTextureIndices);
+	const size_t renderTargetCount = std::size(m_renderTargetAttachmentDetails);
 
 	for (size_t index = 0u; index < renderTargetCount; ++index)
 	{
-		std::uint32_t renderTargetTextureIndex = m_renderTargetTextureIndices[index];
+		AttachmentDetails& renderTargetDetails = m_renderTargetAttachmentDetails[index];
 
-		D3DExternalTexture* externalTexture    = m_resourceFactory->GetD3DExternalTexture(
-			renderTargetTextureIndex
+		D3DExternalTexture* externalTexture = m_resourceFactory->GetD3DExternalTexture(
+			renderTargetDetails.textureIndex
 		);
 
-		m_renderPassManager.SetRTVHandle(index, externalTexture->GetAttachmentHandle());
+		if (!std::empty(m_tempResourceStates))
+		{
+			// If this is the first use of the render texture, set the before state to the
+			// very last state, as the resource will be created in that state and on the future
+			// frames, this will be the before state.
+			if (m_firstUseFlags[index])
+				m_tempResourceStates[index].beforeState = externalTexture->GetCurrentState();
+
+			const ResourceStates resourceStates = m_tempResourceStates[index];
+
+			renderTargetDetails.barrierIndex = m_renderPassManager.AddStartBarrier(
+				ResourceBarrierBuilder{}.Transition(
+					externalTexture->GetTexture().Get(),
+					resourceStates.beforeState, resourceStates.afterState
+				)
+			);
+		}
+
+		m_renderPassManager.SetRenderTarget(
+			index, externalTexture->GetAttachmentHandle(), renderTargetDetails.barrierIndex,
+			externalTexture->GetTexture().Get()
+		);
 	}
+
+	if (!std::empty(m_tempResourceStates))
+		m_tempResourceStates = std::vector<ResourceStates>{};
 }
 
 void D3DExternalRenderPass::SetDepthStencil(
 	std::uint32_t externalTextureIndex, D3D12_RESOURCE_STATES newState, D3D12_DSV_FLAGS dsvFlag,
 	bool clearDepth, bool clearStencil
 ) {
-	if (m_depthStencilTextureIndex == std::numeric_limits<std::uint32_t>::max())
+	if (m_depthStencilAttachmentDetails.textureIndex == std::numeric_limits<std::uint32_t>::max())
 	{
-		m_depthStencilTextureIndex          = externalTextureIndex;
+		m_depthStencilAttachmentDetails.textureIndex = externalTextureIndex;
 
 		D3DExternalTexture* externalTexture = m_resourceFactory->GetD3DExternalTexture(
 			externalTextureIndex
@@ -98,24 +155,33 @@ void D3DExternalRenderPass::SetDepthStencil(
 		// state on every pass, the default value will overwrite any other values any other
 		// passes had set. But we have to set the default colours, since the colour variable is a union
 		// and we won't know if it is gonna be an RTV or DSV at the start.
-		if (externalTexture->GetCurrentState() == D3D12_RESOURCE_STATE_COMMON)
+		m_firstUseFlags[s_depthAttachmentIndex]
+			= externalTexture->GetCurrentState() == D3D12_RESOURCE_STATE_COMMON;
+
+		if (m_firstUseFlags[s_depthAttachmentIndex])
 			externalTexture->SetDepthStencilClearColour(
 				D3D12_DEPTH_STENCIL_VALUE{ .Depth = 1.f, .Stencil = 0u }
 			);
 	}
 
 	D3DExternalTexture* externalTexture = m_resourceFactory->GetD3DExternalTexture(
-		m_depthStencilTextureIndex
+		m_depthStencilAttachmentDetails.textureIndex
 	);
 
-	// We don't need to change the state if the current state is already DEPTH WRITE.
-	if (externalTexture->GetCurrentState() != D3D12_RESOURCE_STATE_DEPTH_WRITE)
-	{
-		externalTexture->SetCurrentState(newState);
-		// The DSV flag is to make either Depth or Stencil read only. No need to set any of that
-		// if the current state is depth write.
+	const D3D12_RESOURCE_STATES oldState = externalTexture->GetCurrentState();
+
+	externalTexture->SetCurrentState(newState);
+
+	if (!std::empty(m_tempResourceStates))
+		m_tempResourceStates[s_depthAttachmentIndex]
+			= ResourceStates{ .beforeState = oldState, .afterState  = newState };
+
+	// The DSV flag is to make either Depth or Stencil read only. Can't set any of that
+	// if any of the passes need depth write.
+	if (dsvFlag == D3D12_DSV_FLAG_NONE)
+		externalTexture->SetDSVFlag(dsvFlag);
+	else if (m_firstUseFlags[s_depthAttachmentIndex] || externalTexture->GetDSVFlags())
 		externalTexture->AddDSVFlag(dsvFlag);
-	}
 
 	m_renderPassManager.SetDepthStencilTarget(clearDepth, clearStencil);
 }
@@ -138,10 +204,10 @@ void D3DExternalRenderPass::SetDepthTesting(
 
 void D3DExternalRenderPass::SetDepthClearColour(float clearColour)
 {
-	if (m_depthStencilTextureIndex != std::numeric_limits<std::uint32_t>::max())
+	if (m_depthStencilAttachmentDetails.textureIndex != std::numeric_limits<std::uint32_t>::max())
 	{
 		D3DExternalTexture* externalTexture = m_resourceFactory->GetD3DExternalTexture(
-			m_depthStencilTextureIndex
+			m_depthStencilAttachmentDetails.textureIndex
 		);
 
 		externalTexture->SetDepthClearColour(clearColour);
@@ -174,10 +240,10 @@ void D3DExternalRenderPass::SetStencilClearColour(std::uint32_t clearColour)
 {
 	const auto u8ClearColour = static_cast<UINT8>(clearColour);
 
-	if (m_depthStencilTextureIndex != std::numeric_limits<std::uint32_t>::max())
+	if (m_depthStencilAttachmentDetails.textureIndex != std::numeric_limits<std::uint32_t>::max())
 	{
 		D3DExternalTexture* externalTexture = m_resourceFactory->GetD3DExternalTexture(
-			m_depthStencilTextureIndex
+			m_depthStencilAttachmentDetails.textureIndex
 		);
 
 		externalTexture->SetStencilClearColour(u8ClearColour);
@@ -207,19 +273,33 @@ std::uint32_t D3DExternalRenderPass::AddRenderTarget(
 	// state on every pass, the default value will overwrite any other values any other
 	// passes had set. But we have to set the default colours, since the colour variable is a union
 	// and we won't know if it is gonna be an RTV or DSV at the start.
-	if (externalTexture->GetCurrentState() == D3D12_RESOURCE_STATE_COMMON)
+	const bool firstUse = externalTexture->GetCurrentState() == D3D12_RESOURCE_STATE_COMMON;
+
+	if (firstUse)
 		externalTexture->SetRenderTargetClearColour({ 0.f, 0.f, 0.f, 0.f });
 
-	externalTexture->SetCurrentState(D3D12_RESOURCE_STATE_RENDER_TARGET);
+	const size_t renderTargetLocalIndex = std::size(m_renderTargetAttachmentDetails);
 
-	const auto renderTargetLocalIndex
-		= static_cast<std::uint32_t>(std::size(m_renderTargetTextureIndices));
+	m_firstUseFlags[renderTargetLocalIndex] = firstUse;
 
-	m_renderTargetTextureIndices.emplace_back(externalTextureIndex);
+	const D3D12_RESOURCE_STATES beforeState = externalTexture->GetCurrentState();
+	const D3D12_RESOURCE_STATES afterState  = D3D12_RESOURCE_STATE_RENDER_TARGET;
+
+	externalTexture->SetCurrentState(afterState);
+
+	if (!std::empty(m_tempResourceStates))
+		m_tempResourceStates[renderTargetLocalIndex]
+			= ResourceStates{ .beforeState = beforeState, .afterState  = afterState };
+
+	const auto u32RenderTargetLocalIndex = static_cast<std::uint32_t>(renderTargetLocalIndex);
+
+	m_renderTargetAttachmentDetails.emplace_back(
+		AttachmentDetails{ .textureIndex = externalTextureIndex }
+	);
 
 	m_renderPassManager.AddRenderTarget(clearRenderTarget);
 
-	return renderTargetLocalIndex;
+	return u32RenderTargetLocalIndex;
 }
 
 void D3DExternalRenderPass::SetRenderTargetClearColour(
@@ -235,7 +315,8 @@ void D3DExternalRenderPass::SetRenderTargetClearColour(
 
 	const auto zRenderTargetIndex = static_cast<size_t>(renderTargetIndex);
 
-	const std::uint32_t renderTargetTextureIndex = m_renderTargetTextureIndices[zRenderTargetIndex];
+	const std::uint32_t renderTargetTextureIndex
+		= m_renderTargetAttachmentDetails[zRenderTargetIndex].textureIndex;
 
 	if (renderTargetTextureIndex != std::numeric_limits<std::uint32_t>::max())
 	{
@@ -255,7 +336,13 @@ void D3DExternalRenderPass::SetRenderTargetClearColour(
 
 void D3DExternalRenderPass::SetSwapchainCopySource(std::uint32_t renderTargetIndex) noexcept
 {
-	m_swapchainCopySource = m_renderTargetTextureIndices[renderTargetIndex];
+	m_swapchainCopySource = m_renderTargetAttachmentDetails[renderTargetIndex].textureIndex;
+
+	D3DExternalTexture* externalTexture = m_resourceFactory->GetD3DExternalTexture(
+		m_swapchainCopySource
+	);
+
+	externalTexture->SetCurrentState(D3D12_RESOURCE_STATE_COPY_SOURCE);
 }
 
 void D3DExternalRenderPass::StartPass(const D3DCommandList& graphicsCmdList) const noexcept

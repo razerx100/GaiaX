@@ -65,6 +65,8 @@ public:
 	void SetRenderTargetClearColour(const std::array<float, 4u>& colour) noexcept;
 
 	void AddDSVFlag(D3D12_DSV_FLAGS dsvFlag) noexcept;
+	void SetDSVFlag(D3D12_DSV_FLAGS dsvFlag) noexcept;
+
 	void SetDepthStencilClearColour(const D3D12_DEPTH_STENCIL_VALUE& depthStencilColour) noexcept;
 	void SetDepthClearColour(float depthColour) noexcept;
 	void SetStencilClearColour(UINT8 stencilColour) noexcept;
@@ -102,6 +104,9 @@ public:
 	{
 		return m_renderingAttachment.GetCPUHandle();
 	}
+
+	[[nodiscard]]
+	UINT GetDSVFlags() const noexcept { return m_renderingAttachment.GetDSVFlags(); }
 
 private:
 	Texture               m_texture;
