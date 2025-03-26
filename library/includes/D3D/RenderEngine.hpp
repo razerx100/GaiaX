@@ -250,10 +250,9 @@ protected:
 
 public:
 	RenderEngineCommon(
-		const DeviceManager& deviceManager, std::shared_ptr<ThreadPool> threadPool, size_t frameCount,
-		std::unique_ptr<ModelManager_t> modelManager
+		const DeviceManager& deviceManager, std::shared_ptr<ThreadPool> threadPool, size_t frameCount
 	) : RenderEngine{ deviceManager, std::move(threadPool), frameCount },
-		m_modelManager{ std::move(modelManager) },
+		m_modelManager{},
 		m_modelBuffers{
 			deviceManager.GetDevice(), m_memoryManager.get(), static_cast<std::uint32_t>(frameCount)
 		},

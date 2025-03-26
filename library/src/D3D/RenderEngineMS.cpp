@@ -2,10 +2,10 @@
 
 RenderEngineMS::RenderEngineMS(
 	const DeviceManager& deviceManager, std::shared_ptr<ThreadPool> threadPool, size_t frameCount
-) : RenderEngineCommon{
-		deviceManager, std::move(threadPool), frameCount, std::make_unique<ModelManagerMS>()
-	}
+) : RenderEngineCommon{ deviceManager, std::move(threadPool), frameCount }
 {
+	m_modelManager = std::make_unique<ModelManagerMS>();
+
 	SetGraphicsDescriptorBufferLayout();
 
 	m_cameraManager.CreateBuffer(static_cast<std::uint32_t>(frameCount));

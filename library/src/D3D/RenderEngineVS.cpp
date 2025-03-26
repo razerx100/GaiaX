@@ -3,10 +3,10 @@
 // VS Individual
 RenderEngineVSIndividual::RenderEngineVSIndividual(
 	const DeviceManager& deviceManager, std::shared_ptr<ThreadPool> threadPool, size_t frameCount
-) : RenderEngineCommon{
-		deviceManager, std::move(threadPool), frameCount, std::make_unique<ModelManagerVSIndividual>()
-	}
+) : RenderEngineCommon{ deviceManager, std::move(threadPool), frameCount }
 {
+	m_modelManager = std::make_unique<ModelManagerVSIndividual>();
+
 	SetGraphicsDescriptorBufferLayout();
 
 	m_cameraManager.CreateBuffer(static_cast<std::uint32_t>(frameCount));
@@ -267,15 +267,14 @@ void RenderEngineVSIndividual::DrawingStage(
 // VS Indirect
 RenderEngineVSIndirect::RenderEngineVSIndirect(
 	const DeviceManager& deviceManager, std::shared_ptr<ThreadPool> threadPool, size_t frameCount
-) : RenderEngineCommon{
-		deviceManager, std::move(threadPool), frameCount,
-		std::make_unique<ModelManagerVSIndirect>(
-			deviceManager.GetDevice(), m_memoryManager.get(), static_cast<std::uint32_t>(frameCount)
-		)
-	},
+) : RenderEngineCommon{ deviceManager, std::move(threadPool), frameCount },
 	m_computeQueue{}, m_computeWait{}, m_computeDescriptorManagers{},
 	m_computePipelineManager{ deviceManager.GetDevice() }, m_computeRootSignature{}, m_commandSignature{}
 {
+	m_modelManager = std::make_unique<ModelManagerVSIndirect>(
+		deviceManager.GetDevice(), m_memoryManager.get(), static_cast<std::uint32_t>(frameCount)
+	);
+
 	ID3D12Device5* device = deviceManager.GetDevice();
 
 	SetGraphicsDescriptorBufferLayout();
