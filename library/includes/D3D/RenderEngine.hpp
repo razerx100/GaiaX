@@ -104,7 +104,7 @@ public:
 	[[nodiscard]]
 	ExternalResourceManager* GetExternalResourceManager() noexcept
 	{
-		return &m_externalResourceManager;
+		return m_externalResourceManager.get();
 	}
 
 	void UpdateExternalBufferDescriptor(const ExternalBufferBindingDetails& bindingDetails);
@@ -168,24 +168,24 @@ protected:
 	static constexpr size_t s_textureSRVRegisterSlot  = 1u;
 
 protected:
-	std::shared_ptr<ThreadPool>       m_threadPool;
-	MemoryManager                     m_memoryManager;
-	std::vector<UINT64>               m_counterValues;
-	D3DCommandQueue                   m_graphicsQueue;
-	std::vector<D3DFence>             m_graphicsWait;
-	D3DCommandQueue                   m_copyQueue;
-	std::vector<D3DFence>             m_copyWait;
-	StagingBufferManager              m_stagingManager;
-	D3DReusableDescriptorHeap         m_dsvHeap;
-	std::vector<D3DDescriptorManager> m_graphicsDescriptorManagers;
-	D3DExternalResourceManager        m_externalResourceManager;
-	D3DRootSignature                  m_graphicsRootSignature;
-	TextureStorage                    m_textureStorage;
-	TextureManager                    m_textureManager;
-	CameraManager                     m_cameraManager;
-	ViewportAndScissorManager         m_viewportAndScissors;
-	TemporaryDataBufferGPU            m_temporaryDataBuffer;
-	bool                              m_copyNecessary;
+	std::shared_ptr<ThreadPool>                 m_threadPool;
+	std::unique_ptr<MemoryManager>              m_memoryManager;
+	std::vector<UINT64>                         m_counterValues;
+	D3DCommandQueue                             m_graphicsQueue;
+	std::vector<D3DFence>                       m_graphicsWait;
+	D3DCommandQueue                             m_copyQueue;
+	std::vector<D3DFence>                       m_copyWait;
+	StagingBufferManager                        m_stagingManager;
+	std::unique_ptr<D3DReusableDescriptorHeap>  m_dsvHeap;
+	std::vector<D3DDescriptorManager>           m_graphicsDescriptorManagers;
+	std::unique_ptr<D3DExternalResourceManager> m_externalResourceManager;
+	D3DRootSignature                            m_graphicsRootSignature;
+	TextureStorage                              m_textureStorage;
+	TextureManager                              m_textureManager;
+	CameraManager                               m_cameraManager;
+	ViewportAndScissorManager                   m_viewportAndScissors;
+	TemporaryDataBufferGPU                      m_temporaryDataBuffer;
+	bool                                        m_copyNecessary;
 
 public:
 	RenderEngine(const RenderEngine&) = delete;
@@ -251,13 +251,13 @@ protected:
 public:
 	RenderEngineCommon(
 		const DeviceManager& deviceManager, std::shared_ptr<ThreadPool> threadPool, size_t frameCount,
-		ModelManager_t&& modelManager
+		std::unique_ptr<ModelManager_t> modelManager
 	) : RenderEngine{ deviceManager, std::move(threadPool), frameCount },
 		m_modelManager{ std::move(modelManager) },
 		m_modelBuffers{
-			deviceManager.GetDevice(), &m_memoryManager, static_cast<std::uint32_t>(frameCount)
+			deviceManager.GetDevice(), m_memoryManager.get(), static_cast<std::uint32_t>(frameCount)
 		},
-		m_meshManager{ deviceManager.GetDevice(), &m_memoryManager },
+		m_meshManager{ deviceManager.GetDevice(), m_memoryManager.get() },
 		m_graphicsPipelineManager{ deviceManager.GetDevice() },
 		m_renderPasses{}, m_swapchainRenderPass{}
 	{
@@ -281,7 +281,7 @@ public:
 		std::uint32_t modelBundleIndex, std::uint32_t modelIndex,
 		std::uint32_t oldPipelineIndex, std::uint32_t newPipelineIndex
 	) override {
-		m_modelManager.ChangeModelPipeline(
+		m_modelManager->ChangeModelPipeline(
 			modelBundleIndex, modelIndex, oldPipelineIndex, newPipelineIndex
 		);
 	}
@@ -335,8 +335,8 @@ public:
 		return static_cast<std::uint32_t>(
 			m_renderPasses.Add(
 				std::make_shared<ExternalRenderPass_t>(
-					&m_modelManager, m_externalResourceManager.GetD3DResourceFactory(),
-					rtvHeap, &m_dsvHeap
+					m_modelManager.get(), m_externalResourceManager->GetD3DResourceFactory(),
+					rtvHeap, m_dsvHeap.get()
 				)
 			)
 		);
@@ -363,8 +363,8 @@ public:
 	void SetSwapchainExternalRenderPass(D3DReusableDescriptorHeap* rtvHeap) override
 	{
 		m_swapchainRenderPass = std::make_shared<ExternalRenderPass_t>(
-			&m_modelManager, m_externalResourceManager.GetD3DResourceFactory(),
-			rtvHeap, &m_dsvHeap
+			m_modelManager.get(), m_externalResourceManager->GetD3DResourceFactory(),
+			rtvHeap, m_dsvHeap.get()
 		);
 	}
 
@@ -403,11 +403,11 @@ protected:
 
 		static_cast<Derived const*>(this)->_updatePerFrame(frameIndex);
 
-		m_externalResourceManager.UpdateExtensionData(static_cast<size_t>(frameIndex));
+		m_externalResourceManager->UpdateExtensionData(static_cast<size_t>(frameIndex));
 	}
 
 protected:
-	ModelManager_t                         m_modelManager;
+	std::unique_ptr<ModelManager_t>        m_modelManager;
 	ModelBuffers                           m_modelBuffers;
 	MeshManager_t                          m_meshManager;
 	PipelineManager<GraphicsPipeline_t>    m_graphicsPipelineManager;

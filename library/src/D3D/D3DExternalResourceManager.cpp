@@ -2,7 +2,8 @@
 #include <limits>
 
 D3DExternalResourceManager::D3DExternalResourceManager(ID3D12Device* device, MemoryManager* memoryManager)
-	: m_resourceFactory{ device, memoryManager }, m_gfxExtensions{}, m_copyQueueDetails{}
+	: m_resourceFactory{ std::make_unique<D3DExternalResourceFactory>(device, memoryManager) },
+	m_gfxExtensions{}, m_copyQueueDetails{}
 {}
 
 void D3DExternalResourceManager::OnGfxExtensionDeletion(const GraphicsTechniqueExtension& gfxExtension)
@@ -10,7 +11,7 @@ void D3DExternalResourceManager::OnGfxExtensionDeletion(const GraphicsTechniqueE
 	const std::vector<std::uint32_t>& externalIndices = gfxExtension.GetExternalBufferIndices();
 
 	for (std::uint32_t externalIndex : externalIndices)
-		m_resourceFactory.RemoveExternalBuffer(externalIndex);
+		m_resourceFactory->RemoveExternalBuffer(externalIndex);
 }
 
 std::uint32_t D3DExternalResourceManager::AddGraphicsTechniqueExtension(
@@ -86,7 +87,7 @@ void D3DExternalResourceManager::UpdateDescriptor(
 void D3DExternalResourceManager::UpdateDescriptor(
 	D3DDescriptorManager& descriptorManager, const ExternalBufferBindingDetails& bindingDetails
 ) const {
-	const Buffer& d3dBuffer = m_resourceFactory.GetD3DBuffer(
+	const Buffer& d3dBuffer = m_resourceFactory->GetD3DBuffer(
 		bindingDetails.descriptorInfo.externalBufferIndex
 	);
 
@@ -112,7 +113,7 @@ void D3DExternalResourceManager::UploadExternalBufferGPUOnlyData(
 	stagingBufferManager.AddBuffer(
 		std::move(cpuData),
 		static_cast<UINT64>(srcDataSizeInBytes),
-		&m_resourceFactory.GetD3DBuffer(static_cast<size_t>(externalBufferIndex)),
+		&m_resourceFactory->GetD3DBuffer(static_cast<size_t>(externalBufferIndex)),
 		static_cast<UINT64>(dstBufferOffset),
 		tempGPUBuffer
 	);
@@ -129,7 +130,7 @@ void D3DExternalResourceManager::QueueExternalBufferGPUCopy(
 			auto d3dSrcSize = static_cast<UINT64>(srcSize);
 
 			if (!d3dSrcSize)
-				d3dSrcSize = resourceFactory.GetD3DBuffer(srcIndex).BufferSize();
+				d3dSrcSize = resourceFactory->GetD3DBuffer(srcIndex).BufferSize();
 
 			return d3dSrcSize;
 		};
@@ -145,7 +146,7 @@ void D3DExternalResourceManager::QueueExternalBufferGPUCopy(
 		}
 	);
 
-	tempGPUBuffer.Add(m_resourceFactory.GetExternalBufferSP(externalBufferSrcIndex));
+	tempGPUBuffer.Add(m_resourceFactory->GetExternalBufferSP(externalBufferSrcIndex));
 }
 
 void D3DExternalResourceManager::CopyQueuedBuffers(const D3DCommandList& copyCmdList) noexcept
@@ -154,9 +155,9 @@ void D3DExternalResourceManager::CopyQueuedBuffers(const D3DCommandList& copyCmd
 	{
 		for (const GPUCopyDetails& copyDetails : m_copyQueueDetails)
 			copyCmdList.Copy(
-				m_resourceFactory.GetD3DBuffer(copyDetails.srcIndex),
+				m_resourceFactory->GetD3DBuffer(copyDetails.srcIndex),
 				copyDetails.srcOffset,
-				m_resourceFactory.GetD3DBuffer(copyDetails.dstIndex),
+				m_resourceFactory->GetD3DBuffer(copyDetails.dstIndex),
 				copyDetails.dstOffset, copyDetails.srcSize
 			);
 

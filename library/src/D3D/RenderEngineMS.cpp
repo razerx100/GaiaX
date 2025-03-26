@@ -2,7 +2,9 @@
 
 RenderEngineMS::RenderEngineMS(
 	const DeviceManager& deviceManager, std::shared_ptr<ThreadPool> threadPool, size_t frameCount
-) : RenderEngineCommon{ deviceManager, std::move(threadPool), frameCount, ModelManagerMS{} }
+) : RenderEngineCommon{
+		deviceManager, std::move(threadPool), frameCount, std::make_unique<ModelManagerMS>()
+	}
 {
 	SetGraphicsDescriptorBufferLayout();
 
@@ -11,7 +13,7 @@ RenderEngineMS::RenderEngineMS(
 
 void RenderEngineMS::FinaliseInitialisation(const DeviceManager& deviceManager)
 {
-	m_externalResourceManager.SetGraphicsDescriptorLayout(m_graphicsDescriptorManagers);
+	m_externalResourceManager->SetGraphicsDescriptorLayout(m_graphicsDescriptorManagers);
 
 	for (D3DDescriptorManager& descriptorManager : m_graphicsDescriptorManagers)
 		descriptorManager.CreateDescriptors();
@@ -21,7 +23,7 @@ void RenderEngineMS::FinaliseInitialisation(const DeviceManager& deviceManager)
 	{
 		D3DDescriptorManager& graphicsDescriptorManager = m_graphicsDescriptorManagers.front();
 
-		m_modelManager.SetGraphicsConstantsRootIndex(
+		m_modelManager->SetGraphicsConstantsRootIndex(
 			graphicsDescriptorManager, s_vertexShaderRegisterSpace
 		);
 
@@ -49,7 +51,7 @@ void RenderEngineMS::FinaliseInitialisation(const DeviceManager& deviceManager)
 void RenderEngineMS::SetGraphicsDescriptorBufferLayout()
 {
 	// The layout shouldn't change throughout the runtime.
-	m_modelManager.SetDescriptorLayout(m_graphicsDescriptorManagers, s_vertexShaderRegisterSpace);
+	m_modelManager->SetDescriptorLayout(m_graphicsDescriptorManagers, s_vertexShaderRegisterSpace);
 	m_meshManager.SetDescriptorLayout(m_graphicsDescriptorManagers, s_vertexShaderRegisterSpace);
 
 	SetCommonGraphicsDescriptorLayout(D3D12_SHADER_VISIBILITY_ALL); // AS, MS and PS all of them will use it.
@@ -100,7 +102,7 @@ std::uint32_t RenderEngineMS::AddModelBundle(std::shared_ptr<ModelBundle>&& mode
 
 	std::vector<std::uint32_t> modelBufferIndices = AddModelsToBuffer(*modelBundle, m_modelBuffers);
 
-	const std::uint32_t index = m_modelManager.AddModelBundle(
+	const std::uint32_t index = m_modelManager->AddModelBundle(
 		std::move(modelBundle), std::move(modelBufferIndices)
 	);
 
@@ -115,7 +117,7 @@ std::uint32_t RenderEngineMS::AddModelBundle(std::shared_ptr<ModelBundle>&& mode
 
 void RenderEngineMS::RemoveModelBundle(std::uint32_t bundleIndex) noexcept
 {
-	std::vector<std::uint32_t> modelBufferIndices = m_modelManager.RemoveModelBundle(bundleIndex);
+	std::vector<std::uint32_t> modelBufferIndices = m_modelManager->RemoveModelBundle(bundleIndex);
 
 	m_modelBuffers.Remove(modelBufferIndices);
 }
@@ -152,7 +154,7 @@ ID3D12Fence* RenderEngineMS::GenericCopyStage(
 
 			// Need to copy the old buffers first to avoid empty data being copied over
 			// the queued data.
-			m_externalResourceManager.CopyQueuedBuffers(copyCmdListScope);
+			m_externalResourceManager->CopyQueuedBuffers(copyCmdListScope);
 			m_meshManager.CopyOldBuffers(copyCmdListScope);
 			m_stagingManager.CopyAndClearQueuedBuffers(copyCmdListScope);
 		}
@@ -197,7 +199,7 @@ void RenderEngineMS::DrawRenderPassPipelines(
 		const size_t bundleCount = std::size(bundleIndices);
 
 		for (size_t index = 0u; index < bundleCount; ++index)
-			m_modelManager.DrawPipeline(
+			m_modelManager->DrawPipeline(
 				bundleIndices[index], pipelineLocalIndices[index], graphicsCmdList, m_meshManager
 			);
 	}

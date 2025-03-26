@@ -48,25 +48,25 @@ public:
 	[[nodiscard]]
 	ExternalResourceFactory* GetResourceFactory() noexcept override
 	{
-		return &m_resourceFactory;
+		return GetD3DResourceFactory();
 	}
 
 	[[nodiscard]]
 	ExternalResourceFactory const* GetResourceFactory() const noexcept override
 	{
-		return &m_resourceFactory;
+		return GetD3DResourceFactory();
 	}
 
 	[[nodiscard]]
 	D3DExternalResourceFactory* GetD3DResourceFactory() noexcept
 	{
-		return &m_resourceFactory;
+		return m_resourceFactory.get();
 	}
 
 	[[nodiscard]]
 	D3DExternalResourceFactory const* GetD3DResourceFactory() const noexcept
 	{
-		return &m_resourceFactory;
+		return m_resourceFactory.get();
 	}
 
 private:
@@ -87,9 +87,9 @@ private:
 	) const;
 
 private:
-	D3DExternalResourceFactory     m_resourceFactory;
-	ReusableVector<GfxExtension_t> m_gfxExtensions;
-	std::vector<GPUCopyDetails>    m_copyQueueDetails;
+	std::unique_ptr<D3DExternalResourceFactory> m_resourceFactory;
+	ReusableVector<GfxExtension_t>              m_gfxExtensions;
+	std::vector<GPUCopyDetails>                 m_copyQueueDetails;
 
 	static constexpr size_t s_externalBufferRegisterSpace = 2u;
 

@@ -11,18 +11,25 @@ RenderEngine::RenderEngine(
 	IDXGIAdapter3* adapter, ID3D12Device5* device, std::shared_ptr<ThreadPool> threadPool,
 	size_t frameCount
 ) : m_threadPool{ std::move(threadPool) },
-	m_memoryManager{ adapter, device, 20_MB, 400_KB },
+	m_memoryManager{ std::make_unique<MemoryManager>(adapter, device, 20_MB, 400_KB) },
 	// The fences will be initialised as 0. So, the starting value should be 1.
 	m_counterValues(frameCount, 0u),
 	m_graphicsQueue{}, m_graphicsWait{},
 	m_copyQueue{}, m_copyWait{},
-	m_stagingManager{ device, &m_memoryManager, m_threadPool.get() },
-	m_dsvHeap{ device, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE },
+	m_stagingManager{ device, m_memoryManager.get(), m_threadPool.get()},
+	m_dsvHeap{
+		std::make_unique<D3DReusableDescriptorHeap>(
+			device, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE
+		)
+	},
 	m_graphicsDescriptorManagers{},
-	m_externalResourceManager{ device, &m_memoryManager }, m_graphicsRootSignature{},
-	m_textureStorage{ device, &m_memoryManager },
+	m_externalResourceManager{
+		std::make_unique<D3DExternalResourceManager>(device, m_memoryManager.get())
+	},
+	m_graphicsRootSignature{},
+	m_textureStorage{ device, m_memoryManager.get() },
 	m_textureManager{ device },
-	m_cameraManager{ device, &m_memoryManager },
+	m_cameraManager{ device, m_memoryManager.get() },
 	m_viewportAndScissors{}, m_temporaryDataBuffer{}, m_copyNecessary{ false }
 {
 	for (size_t _ = 0u; _ < frameCount; ++_)
@@ -166,7 +173,7 @@ void RenderEngine::UnbindExternalTexture(UINT bindingIndex)
 
 void RenderEngine::RebindExternalTexture(size_t textureIndex, UINT bindingIndex)
 {
-	D3DExternalResourceFactory* resourceFactory = m_externalResourceManager.GetD3DResourceFactory();
+	D3DExternalResourceFactory* resourceFactory = m_externalResourceManager->GetD3DResourceFactory();
 
 	const Texture& texture = resourceFactory->GetD3DTexture(textureIndex);
 
@@ -179,7 +186,7 @@ void RenderEngine::RebindExternalTexture(size_t textureIndex, UINT bindingIndex)
 
 std::uint32_t RenderEngine::BindExternalTexture(size_t textureIndex)
 {
-	D3DExternalResourceFactory* resourceFactory = m_externalResourceManager.GetD3DResourceFactory();
+	D3DExternalResourceFactory* resourceFactory = m_externalResourceManager->GetD3DResourceFactory();
 
 	const Texture& texture = resourceFactory->GetD3DTexture(textureIndex);
 
@@ -252,14 +259,14 @@ void RenderEngine::SetCommonGraphicsDescriptorLayout(
 
 void RenderEngine::UpdateExternalBufferDescriptor(const ExternalBufferBindingDetails& bindingDetails)
 {
-	m_externalResourceManager.UpdateDescriptor(m_graphicsDescriptorManagers, bindingDetails);
+	m_externalResourceManager->UpdateDescriptor(m_graphicsDescriptorManagers, bindingDetails);
 }
 
 void RenderEngine::UploadExternalBufferGPUOnlyData(
 	std::uint32_t externalBufferIndex, std::shared_ptr<void> cpuData, size_t srcDataSizeInBytes,
 	size_t dstBufferOffset
 ) {
-	m_externalResourceManager.UploadExternalBufferGPUOnlyData(
+	m_externalResourceManager->UploadExternalBufferGPUOnlyData(
 		m_stagingManager, m_temporaryDataBuffer,
 		externalBufferIndex, std::move(cpuData), srcDataSizeInBytes, dstBufferOffset
 	);
@@ -269,7 +276,7 @@ void RenderEngine::QueueExternalBufferGPUCopy(
 	std::uint32_t externalBufferSrcIndex, std::uint32_t externalBufferDstIndex,
 	size_t dstBufferOffset, size_t srcBufferOffset, size_t srcDataSizeInBytes
 ) {
-	m_externalResourceManager.QueueExternalBufferGPUCopy(
+	m_externalResourceManager->QueueExternalBufferGPUCopy(
 		externalBufferSrcIndex, externalBufferDstIndex, dstBufferOffset, srcBufferOffset,
 		srcDataSizeInBytes, m_temporaryDataBuffer
 	);

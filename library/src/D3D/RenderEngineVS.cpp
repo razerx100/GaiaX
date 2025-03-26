@@ -3,7 +3,9 @@
 // VS Individual
 RenderEngineVSIndividual::RenderEngineVSIndividual(
 	const DeviceManager& deviceManager, std::shared_ptr<ThreadPool> threadPool, size_t frameCount
-) : RenderEngineCommon{ deviceManager, std::move(threadPool), frameCount, ModelManagerVSIndividual{} }
+) : RenderEngineCommon{
+		deviceManager, std::move(threadPool), frameCount, std::make_unique<ModelManagerVSIndividual>()
+	}
 {
 	SetGraphicsDescriptorBufferLayout();
 
@@ -12,7 +14,7 @@ RenderEngineVSIndividual::RenderEngineVSIndividual(
 
 void RenderEngineVSIndividual::FinaliseInitialisation(const DeviceManager& deviceManager)
 {
-	m_externalResourceManager.SetGraphicsDescriptorLayout(m_graphicsDescriptorManagers);
+	m_externalResourceManager->SetGraphicsDescriptorLayout(m_graphicsDescriptorManagers);
 
 	for (D3DDescriptorManager& descriptorManager : m_graphicsDescriptorManagers)
 		descriptorManager.CreateDescriptors();
@@ -22,7 +24,7 @@ void RenderEngineVSIndividual::FinaliseInitialisation(const DeviceManager& devic
 	{
 		D3DDescriptorManager& graphicsDescriptorManager = m_graphicsDescriptorManagers.front();
 
-		m_modelManager.SetGraphicsConstantsRootIndex(
+		m_modelManager->SetGraphicsConstantsRootIndex(
 			graphicsDescriptorManager, s_vertexShaderRegisterSpace
 		);
 
@@ -50,7 +52,7 @@ void RenderEngineVSIndividual::FinaliseInitialisation(const DeviceManager& devic
 void RenderEngineVSIndividual::SetGraphicsDescriptorBufferLayout()
 {
 	// The layout shouldn't change throughout the runtime.
-	m_modelManager.SetDescriptorLayout(m_graphicsDescriptorManagers, s_vertexShaderRegisterSpace);
+	m_modelManager->SetDescriptorLayout(m_graphicsDescriptorManagers, s_vertexShaderRegisterSpace);
 	SetCommonGraphicsDescriptorLayout(D3D12_SHADER_VISIBILITY_ALL);
 
 	for (D3DDescriptorManager& descriptorManager : m_graphicsDescriptorManagers)
@@ -101,7 +103,7 @@ std::uint32_t RenderEngineVSIndividual::AddModelBundle(std::shared_ptr<ModelBund
 
 	std::vector<std::uint32_t> modelBufferIndices = AddModelsToBuffer(*modelBundle, m_modelBuffers);
 
-	const std::uint32_t index = m_modelManager.AddModelBundle(
+	const std::uint32_t index = m_modelManager->AddModelBundle(
 		std::move(modelBundle), std::move(modelBufferIndices)
 	);
 
@@ -125,7 +127,7 @@ std::uint32_t RenderEngineVSIndividual::AddMeshBundle(std::unique_ptr<MeshBundle
 
 void RenderEngineVSIndividual::RemoveModelBundle(std::uint32_t bundleIndex) noexcept
 {
-	std::vector<std::uint32_t> modelBufferIndices = m_modelManager.RemoveModelBundle(bundleIndex);
+	std::vector<std::uint32_t> modelBufferIndices = m_modelManager->RemoveModelBundle(bundleIndex);
 
 	m_modelBuffers.Remove(modelBufferIndices);
 }
@@ -146,7 +148,7 @@ ID3D12Fence* RenderEngineVSIndividual::GenericCopyStage(
 
 			// Need to copy the old buffers first to avoid empty data being copied over
 			// the queued data.
-			m_externalResourceManager.CopyQueuedBuffers(copyCmdListScope);
+			m_externalResourceManager->CopyQueuedBuffers(copyCmdListScope);
 			m_meshManager.CopyOldBuffers(copyCmdListScope);
 			m_stagingManager.CopyAndClearQueuedBuffers(copyCmdListScope);
 		}
@@ -191,7 +193,7 @@ void RenderEngineVSIndividual::DrawRenderPassPipelines(
 		const size_t bundleCount = std::size(bundleIndices);
 
 		for (size_t index = 0u; index < bundleCount; ++index)
-			m_modelManager.DrawPipeline(
+			m_modelManager->DrawPipeline(
 				bundleIndices[index], pipelineLocalIndices[index], graphicsCmdList, m_meshManager
 			);
 	}
@@ -267,9 +269,9 @@ RenderEngineVSIndirect::RenderEngineVSIndirect(
 	const DeviceManager& deviceManager, std::shared_ptr<ThreadPool> threadPool, size_t frameCount
 ) : RenderEngineCommon{
 		deviceManager, std::move(threadPool), frameCount,
-		ModelManagerVSIndirect{
-			deviceManager.GetDevice(), &m_memoryManager, static_cast<std::uint32_t>(frameCount)
-		}
+		std::make_unique<ModelManagerVSIndirect>(
+			deviceManager.GetDevice(), m_memoryManager.get(), static_cast<std::uint32_t>(frameCount)
+		)
 	},
 	m_computeQueue{}, m_computeWait{}, m_computeDescriptorManagers{},
 	m_computePipelineManager{ deviceManager.GetDevice() }, m_computeRootSignature{}, m_commandSignature{}
@@ -301,7 +303,7 @@ void RenderEngineVSIndirect::FinaliseInitialisation(const DeviceManager& deviceM
 {
 	ID3D12Device5* device = deviceManager.GetDevice();
 
-	m_externalResourceManager.SetGraphicsDescriptorLayout(m_graphicsDescriptorManagers);
+	m_externalResourceManager->SetGraphicsDescriptorLayout(m_graphicsDescriptorManagers);
 
 	// Graphics
 	for (D3DDescriptorManager& descriptorManager : m_graphicsDescriptorManagers)
@@ -312,7 +314,7 @@ void RenderEngineVSIndirect::FinaliseInitialisation(const DeviceManager& deviceM
 	{
 		D3DDescriptorManager& graphicsDescriptorManager = m_graphicsDescriptorManagers.front();
 
-		m_modelManager.SetGraphicsConstantsRootIndex(
+		m_modelManager->SetGraphicsConstantsRootIndex(
 			graphicsDescriptorManager, s_vertexShaderRegisterSpace
 		);
 
@@ -347,7 +349,7 @@ void RenderEngineVSIndirect::FinaliseInitialisation(const DeviceManager& deviceM
 	{
 		D3DDescriptorManager& computeDescriptorManager = m_computeDescriptorManagers.front();
 
-		m_modelManager.SetComputeConstantsRootIndex(
+		m_modelManager->SetComputeConstantsRootIndex(
 			computeDescriptorManager, s_computeShaderRegisterSpace
 		);
 
@@ -378,14 +380,14 @@ void RenderEngineVSIndirect::FinaliseInitialisation(const DeviceManager& deviceM
 		ShaderName{ L"VertexShaderCSIndirect" }
 	);
 
-	m_modelManager.SetCSPSOIndex(frustumCSOIndex);
+	m_modelManager->SetCSPSOIndex(frustumCSOIndex);
 }
 
 void RenderEngineVSIndirect::SetGraphicsDescriptorBufferLayout()
 {
 	// Graphics Descriptors.
 	// The layout shouldn't change throughout the runtime.
-	m_modelManager.SetDescriptorLayoutVS(m_graphicsDescriptorManagers, s_vertexShaderRegisterSpace);
+	m_modelManager->SetDescriptorLayoutVS(m_graphicsDescriptorManagers, s_vertexShaderRegisterSpace);
 	SetCommonGraphicsDescriptorLayout(D3D12_SHADER_VISIBILITY_ALL);
 
 	const auto frameCount = std::size(m_graphicsDescriptorManagers);
@@ -407,7 +409,7 @@ void RenderEngineVSIndirect::SetGraphicsDescriptorBufferLayout()
 
 void RenderEngineVSIndirect::SetComputeDescriptorBufferLayout()
 {
-	m_modelManager.SetDescriptorLayoutCS(m_computeDescriptorManagers, s_computeShaderRegisterSpace);
+	m_modelManager->SetDescriptorLayoutCS(m_computeDescriptorManagers, s_computeShaderRegisterSpace);
 	m_meshManager.SetDescriptorLayoutCS(m_computeDescriptorManagers, s_computeShaderRegisterSpace);
 	m_cameraManager.SetDescriptorLayoutCompute(
 		m_computeDescriptorManagers, s_cameraCSCBVRegisterSlot, s_computeShaderRegisterSpace
@@ -451,7 +453,7 @@ void RenderEngineVSIndirect::UpdateRenderPassPipelines(
 		const size_t bundleCount = std::size(bundleIndices);
 
 		for (size_t index = 0u; index < bundleCount; ++index)
-			m_modelManager.UpdatePipelinePerFrame(
+			m_modelManager->UpdatePipelinePerFrame(
 				frameIndex, bundleIndices[index], pipelineLocalIndices[index], m_meshManager
 			);
 	}
@@ -485,7 +487,7 @@ void RenderEngineVSIndirect::CreateCommandSignature(ID3D12Device* device)
 		D3D12_INDIRECT_ARGUMENT_DESC{
 			.Type     = D3D12_INDIRECT_ARGUMENT_TYPE_CONSTANT,
 			.Constant = {
-				.RootParameterIndex      = m_modelManager.GetConstantsVSRootIndex(),
+				.RootParameterIndex      = m_modelManager->GetConstantsVSRootIndex(),
 				.DestOffsetIn32BitValues = 0u,
 				.Num32BitValuesToSet     = PipelineModelsVSIndirect::GetConstantCount()
 			}
@@ -561,7 +563,7 @@ void RenderEngineVSIndirect::SetModelGraphicsDescriptors()
 
 void RenderEngineVSIndirect::SetModelComputeDescriptors()
 {
-	m_modelManager.SetDescriptors(m_computeDescriptorManagers, s_computeShaderRegisterSpace);
+	m_modelManager->SetDescriptors(m_computeDescriptorManagers, s_computeShaderRegisterSpace);
 
 	const size_t frameCount = std::size(m_computeDescriptorManagers);
 
@@ -583,7 +585,7 @@ std::uint32_t RenderEngineVSIndirect::AddModelBundle(std::shared_ptr<ModelBundle
 
 	std::vector<std::uint32_t> modelBufferIndices = AddModelsToBuffer(*modelBundle, m_modelBuffers);
 
-	const std::uint32_t index = m_modelManager.AddModelBundle(
+	const std::uint32_t index = m_modelManager->AddModelBundle(
 		std::move(modelBundle), std::move(modelBufferIndices)
 	);
 
@@ -599,7 +601,7 @@ std::uint32_t RenderEngineVSIndirect::AddModelBundle(std::shared_ptr<ModelBundle
 
 void RenderEngineVSIndirect::RemoveModelBundle(std::uint32_t bundleIndex) noexcept
 {
-	std::vector<std::uint32_t> modelBufferIndices = m_modelManager.RemoveModelBundle(bundleIndex);
+	std::vector<std::uint32_t> modelBufferIndices = m_modelManager->RemoveModelBundle(bundleIndex);
 
 	m_modelBuffers.Remove(modelBufferIndices);
 }
@@ -635,7 +637,7 @@ ID3D12Fence* RenderEngineVSIndirect::GenericCopyStage(
 
 			// Need to copy the old buffers first to avoid empty data being copied over
 			// the queued data.
-			m_externalResourceManager.CopyQueuedBuffers(copyCmdListScope);
+			m_externalResourceManager->CopyQueuedBuffers(copyCmdListScope);
 			m_meshManager.CopyOldBuffers(copyCmdListScope);
 			m_stagingManager.CopyAndClearQueuedBuffers(copyCmdListScope);
 		}
@@ -673,7 +675,7 @@ ID3D12Fence* RenderEngineVSIndirect::FrustumCullingStage(
 	{
 		const CommandListScope computeCmdListScope{ computeCmdList };
 
-		m_modelManager.ResetCounterBuffer(computeCmdList, static_cast<UINT64>(frameIndex));
+		m_modelManager->ResetCounterBuffer(computeCmdList, static_cast<UINT64>(frameIndex));
 
 		m_computeDescriptorManagers[frameIndex].BindDescriptorHeap(computeCmdListScope);
 
@@ -681,7 +683,7 @@ ID3D12Fence* RenderEngineVSIndirect::FrustumCullingStage(
 
 		m_computeDescriptorManagers[frameIndex].BindDescriptors(computeCmdListScope);
 
-		m_modelManager.Dispatch(computeCmdListScope, m_computePipelineManager);
+		m_modelManager->Dispatch(computeCmdListScope, m_computePipelineManager);
 	}
 
 	const D3DFence& computeWaitFence = m_computeWait[frameIndex];
@@ -720,7 +722,7 @@ void RenderEngineVSIndirect::DrawRenderPassPipelines(
 		const size_t bundleCount = std::size(bundleIndices);
 
 		for (size_t index = 0u; index < bundleCount; ++index)
-			m_modelManager.DrawPipeline(
+			m_modelManager->DrawPipeline(
 				frameIndex, bundleIndices[index], pipelineLocalIndices[index],
 				graphicsCmdList, commandSignature, m_meshManager
 			);
