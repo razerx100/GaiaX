@@ -9,7 +9,7 @@ void D3DRenderPassManager::AddRenderTarget(bool clearAtStart)
 	m_rtvClearColours.emplace_back(RTVClearColour{ 0.f, 0.f, 0.f, 0.f });
 }
 
-std::uint32_t D3DRenderPassManager::AddStartBarrier(const ResourceBarrierBuilder& barrierBuilder)
+std::uint32_t D3DRenderPassManager::AddStartBarrier(const ResourceBarrierBuilder& barrierBuilder) noexcept
 {
 	auto barrierIndex = std::numeric_limits<std::uint32_t>::max();
 
@@ -25,17 +25,23 @@ std::uint32_t D3DRenderPassManager::AddStartBarrier(const ResourceBarrierBuilder
 	return barrierIndex;
 }
 
+void D3DRenderPassManager::SetTransitionBarrierResource(
+	std::uint32_t barrierIndex, ID3D12Resource* resource
+) noexcept {
+	if (barrierIndex != std::numeric_limits<std::uint32_t>::max())
+		m_startBarriers.SetTransitionResource(barrierIndex, resource);
+}
+
 void D3DRenderPassManager::SetRenderTarget(
 	size_t renderTargetIndex, D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle,
 	std::uint32_t barrierIndex, ID3D12Resource* renderTarget
-) {
+) noexcept {
 	m_rtvHandles[renderTargetIndex] = rtvHandle;
 
-	if (barrierIndex != std::numeric_limits<std::uint32_t>::max())
-		m_startBarriers.SetTransitionResource(barrierIndex, renderTarget);
+	SetTransitionBarrierResource(barrierIndex, renderTarget);
 }
 
-void D3DRenderPassManager::SetDepthStencilTarget(bool depthClearAtStart, bool stencilClearAtStart)
+void D3DRenderPassManager::SetDepthStencilTarget(bool depthClearAtStart, bool stencilClearAtStart) noexcept
 {
 	if (depthClearAtStart)
 		m_depthStencilInfo.clearFlags |= D3D12_CLEAR_FLAG_DEPTH;
@@ -46,11 +52,10 @@ void D3DRenderPassManager::SetDepthStencilTarget(bool depthClearAtStart, bool st
 
 void D3DRenderPassManager::SetDepthStencil(
 	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle, std::uint32_t barrierIndex, ID3D12Resource* depthStencilTarget
-) {
+) noexcept {
 	m_dsvHandle = dsvHandle;
 
-	if (barrierIndex != std::numeric_limits<std::uint32_t>::max())
-		m_startBarriers.SetTransitionResource(barrierIndex, depthStencilTarget);
+	SetTransitionBarrierResource(barrierIndex, depthStencilTarget);
 }
 
 void D3DRenderPassManager::SetDepthClearValue(float depthClearValue) noexcept

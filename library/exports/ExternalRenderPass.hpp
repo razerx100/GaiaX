@@ -17,6 +17,11 @@ enum class ExternalAttachmentStoreOp
 	DontCare
 };
 
+enum class ExternalTextureTransition
+{
+	FragmentShaderReadOnly
+};
+
 class ExternalRenderPass
 {
 public:
@@ -32,6 +37,14 @@ public:
 
 	// Should be called after something like a window resize, where the buffer handles would change.
 	virtual void ResetAttachmentReferences() = 0;
+
+	[[nodiscard]]
+	virtual std::uint32_t AddStartBarrier(
+		std::uint32_t externalTextureIndex, ExternalTextureTransition transitionState
+	) noexcept = 0;
+	virtual void UpdateStartBarrierResource(
+		std::uint32_t barrierIndex, std::uint32_t externalTextureIndex
+	) noexcept = 0;
 
 	// Since Dx12 doesn't support separate depth and stencil, if stencil testing is already enabled
 	// and the texture index is different, then the depth buffer will be created on the stencil buffer.

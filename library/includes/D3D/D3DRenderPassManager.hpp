@@ -28,19 +28,21 @@ public:
 	void AddRenderTarget(bool clearAtStart);
 
 	[[nodiscard]]
-	std::uint32_t AddStartBarrier(const ResourceBarrierBuilder& barrierBuilder);
+	std::uint32_t AddStartBarrier(const ResourceBarrierBuilder& barrierBuilder) noexcept;
+
+	void SetTransitionBarrierResource(std::uint32_t barrierIndex, ID3D12Resource* resource) noexcept;
 
 	void SetRenderTarget(
 		size_t renderTargetIndex, D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle,
 		std::uint32_t barrierIndex, ID3D12Resource* renderTarget
-	);
+	) noexcept;
 
-	void SetDepthStencilTarget(bool depthClearAtStart, bool stencilClearAtStart);
+	void SetDepthStencilTarget(bool depthClearAtStart, bool stencilClearAtStart) noexcept;
 
 	void SetDepthStencil(
 		D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle, std::uint32_t barrierIndex,
 		ID3D12Resource* depthStencilTarget
-	);
+	) noexcept;
 
 	// These functions can be used every frame.
 	void SetDepthClearValue(float depthClearValue) noexcept;

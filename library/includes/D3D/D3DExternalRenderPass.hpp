@@ -41,6 +41,14 @@ public:
 	// Should be called after something like a window resize, where the buffer handles would change.
 	void ResetAttachmentReferences() override;
 
+	[[nodiscard]]
+	std::uint32_t AddStartBarrier(
+		std::uint32_t externalTextureIndex, ExternalTextureTransition transitionState
+	) noexcept override;
+	void UpdateStartBarrierResource(
+		std::uint32_t barrierIndex, std::uint32_t externalTextureIndex
+	) noexcept override;
+
 	void SetDepthTesting(
 		std::uint32_t externalTextureIndex, ExternalAttachmentLoadOp loadOp,
 		ExternalAttachmentStoreOp storeOP

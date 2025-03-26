@@ -1,5 +1,12 @@
+#include <array>
 #include <D3DExternalRenderPass.hpp>
 
+static constexpr std::array s_externalTextureTransitionMap
+{
+	D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
+};
+
+// D3D External Render Pass
 D3DExternalRenderPass::D3DExternalRenderPass(
 	D3DExternalResourceFactory* resourceFactory, D3DReusableDescriptorHeap* rtvHeap,
 	D3DReusableDescriptorHeap* dsvHeap
@@ -132,6 +139,31 @@ void D3DExternalRenderPass::ResetAttachmentReferences()
 
 	if (!std::empty(m_tempResourceStates))
 		m_tempResourceStates = std::vector<ResourceStates>{};
+}
+
+std::uint32_t D3DExternalRenderPass::AddStartBarrier(
+	std::uint32_t externalTextureIndex, ExternalTextureTransition transitionState
+) noexcept {
+	const D3D12_RESOURCE_STATES afterState
+		= s_externalTextureTransitionMap[static_cast<size_t>(transitionState)];
+
+	D3DExternalTexture* externalTexture = m_resourceFactory->GetD3DExternalTexture(externalTextureIndex);
+
+	const D3D12_RESOURCE_STATES beforeState = externalTexture->GetCurrentState();
+
+	return m_renderPassManager.AddStartBarrier(
+		ResourceBarrierBuilder{}.Transition(
+			externalTexture->GetTexture().Get(), beforeState, afterState
+		)
+	);
+}
+
+void D3DExternalRenderPass::UpdateStartBarrierResource(
+	std::uint32_t barrierIndex, std::uint32_t externalTextureIndex
+) noexcept {
+	D3DExternalTexture* externalTexture = m_resourceFactory->GetD3DExternalTexture(externalTextureIndex);
+
+	m_renderPassManager.SetTransitionBarrierResource(barrierIndex, externalTexture->GetTexture().Get());
 }
 
 void D3DExternalRenderPass::SetDepthStencil(
