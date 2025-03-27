@@ -120,7 +120,7 @@ protected:
 	// resources are created.
 	std::vector<ResourceStates>       m_tempResourceStates;
 
-	static constexpr std::uint32_t s_depthAttachmentIndex = 8u;
+	static constexpr size_t s_depthAttachmentIndex = 8u;
 	// And the first 8 will be used by the render targets.
 
 public:
