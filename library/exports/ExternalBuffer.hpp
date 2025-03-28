@@ -58,7 +58,7 @@ public:
 
 	virtual void Create(
 		std::uint32_t width, std::uint32_t height, ExternalFormat format, ExternalTexture2DType type,
-		const ExternalTextureCreationFlags& creationFlags
+		const ExternalTextureCreationFlags& creationFlags = {}
 	) = 0;
 
 	virtual void Destroy() noexcept = 0;

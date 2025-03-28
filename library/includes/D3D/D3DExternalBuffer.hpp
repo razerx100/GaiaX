@@ -57,7 +57,7 @@ public:
 
 	void Create(
 		std::uint32_t width, std::uint32_t height, ExternalFormat format, ExternalTexture2DType type,
-		const ExternalTextureCreationFlags& creationFlags
+		const ExternalTextureCreationFlags& creationFlags = {}
 	) override;
 
 	void SetAttachmentHeap(D3DReusableDescriptorHeap* attachmentHeap) noexcept;
