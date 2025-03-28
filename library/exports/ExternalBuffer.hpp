@@ -35,14 +35,13 @@ enum class ExternalTexture2DType
 	Stencil
 };
 
-enum class ExternalTextureCreationFlagBit : std::uint32_t
+struct ExternalTextureCreationFlags
 {
 	// The two copy flags are only necessary on Vulkan for now. Until Dx12 Enhanced Barrier is more common.
 	// It is available on Win11 only now.
-	None          = 0u,
-	CopySrc       = 1u,
-	CopyDst       = 2u,
-	SampleTexture = 4u
+	bool copySrc       = false;
+	bool copyDst       = false;
+	bool sampleTexture = false;
 };
 
 class ExternalTexture
@@ -59,7 +58,7 @@ public:
 
 	virtual void Create(
 		std::uint32_t width, std::uint32_t height, ExternalFormat format, ExternalTexture2DType type,
-		std::uint32_t creationFlags
+		const ExternalTextureCreationFlags& creationFlags
 	) = 0;
 
 	virtual void Destroy() noexcept = 0;

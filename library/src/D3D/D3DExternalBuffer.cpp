@@ -24,7 +24,7 @@ D3DExternalTexture::D3DExternalTexture(ID3D12Device* device, MemoryManager* memo
 
 void D3DExternalTexture::Create(
 	std::uint32_t width, std::uint32_t height, ExternalFormat format, ExternalTexture2DType type,
-	[[maybe_unused]] std::uint32_t creationFlags
+	[[maybe_unused]] const ExternalTextureCreationFlags& creationFlags
 ) {
 	D3D12_RESOURCE_FLAGS resourceFlag = D3D12_RESOURCE_FLAG_NONE;
 	const DXGI_FORMAT resourceFormat  = GetDxgiFormat(format);
