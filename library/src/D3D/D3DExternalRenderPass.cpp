@@ -151,6 +151,8 @@ std::uint32_t D3DExternalRenderPass::AddStartBarrier(
 
 	const D3D12_RESOURCE_STATES beforeState = externalTexture->GetCurrentState();
 
+	externalTexture->SetCurrentState(afterState);
+
 	return m_renderPassManager.AddStartBarrier(
 		ResourceBarrierBuilder{}.Transition(
 			externalTexture->GetTexture().Get(), beforeState, afterState
