@@ -53,7 +53,7 @@ void D3DRenderPassManager::SetDepthStencilTarget(bool depthClearAtStart, bool st
 void D3DRenderPassManager::SetDepthStencil(
 	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle, std::uint32_t barrierIndex, ID3D12Resource* depthStencilTarget
 ) noexcept {
-	m_dsvHandle = dsvHandle;
+	m_dsvHandle = std::make_unique<D3D12_CPU_DESCRIPTOR_HANDLE>(dsvHandle);
 
 	SetTransitionBarrierResource(barrierIndex, depthStencilTarget);
 }
@@ -81,19 +81,13 @@ void D3DRenderPassManager::StartPass(const D3DCommandList& graphicsCmdList) cons
 	if (m_startBarriers.GetCount())
 		m_startBarriers.RecordBarriers(gfxCmdList);
 
-	D3D12_CPU_DESCRIPTOR_HANDLE const* dsvHandle = nullptr;
-
 	if (m_depthStencilInfo.clearFlags)
-	{
-		dsvHandle = &m_dsvHandle;
-
 		gfxCmdList->ClearDepthStencilView(
-			m_dsvHandle,
+			*m_dsvHandle,
 			static_cast<D3D12_CLEAR_FLAGS>(m_depthStencilInfo.clearFlags),
 			m_depthStencilInfo.depthClearColour, m_depthStencilInfo.stencilClearColour,
 			0u, nullptr
 		);
-	}
 
 	const size_t renderTargetCount = std::size(m_rtvClearFlags);
 
@@ -105,7 +99,7 @@ void D3DRenderPassManager::StartPass(const D3DCommandList& graphicsCmdList) cons
 
 	gfxCmdList->OMSetRenderTargets(
 		static_cast<UINT>(renderTargetCount), std::data(m_rtvHandles),
-		FALSE, dsvHandle
+		FALSE, m_dsvHandle.get()
 	);
 }
 

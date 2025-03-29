@@ -21,7 +21,7 @@ public:
 public:
 	D3DRenderPassManager()
 		: m_startBarriers{}, m_rtvHandles{}, m_rtvClearFlags{}, m_rtvClearColours{},
-		m_dsvHandle{ .ptr = 0u },
+		m_dsvHandle{},
 		m_depthStencilInfo{ .depthClearColour = 1.f, .stencilClearColour = 0u, .clearFlags = 0u }
 	{}
 
@@ -62,12 +62,12 @@ public:
 	) const noexcept;
 
 private:
-	D3DResourceBarrier1_1                    m_startBarriers;
-	std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> m_rtvHandles;
-	std::vector<bool>                        m_rtvClearFlags;
-	std::vector<RTVClearColour>              m_rtvClearColours;
-	D3D12_CPU_DESCRIPTOR_HANDLE              m_dsvHandle;
-	DepthStencilInfo                         m_depthStencilInfo;
+	D3DResourceBarrier1_1                        m_startBarriers;
+	std::vector<D3D12_CPU_DESCRIPTOR_HANDLE>     m_rtvHandles;
+	std::vector<bool>                            m_rtvClearFlags;
+	std::vector<RTVClearColour>                  m_rtvClearColours;
+	std::unique_ptr<D3D12_CPU_DESCRIPTOR_HANDLE> m_dsvHandle;
+	DepthStencilInfo                             m_depthStencilInfo;
 
 public:
 	D3DRenderPassManager(const D3DRenderPassManager&) = delete;
@@ -78,7 +78,7 @@ public:
 		m_rtvHandles{ std::move(other.m_rtvHandles) },
 		m_rtvClearFlags{ std::move(other.m_rtvClearFlags) },
 		m_rtvClearColours{ std::move(other.m_rtvClearColours) },
-		m_dsvHandle{ other.m_dsvHandle },
+		m_dsvHandle{ std::move(other.m_dsvHandle) },
 		m_depthStencilInfo{ other.m_depthStencilInfo }
 	{}
 	D3DRenderPassManager& operator=(D3DRenderPassManager&& other) noexcept
@@ -87,7 +87,7 @@ public:
 		m_rtvHandles       = std::move(other.m_rtvHandles);
 		m_rtvClearFlags    = std::move(other.m_rtvClearFlags);
 		m_rtvClearColours  = std::move(other.m_rtvClearColours);
-		m_dsvHandle        = other.m_dsvHandle;
+		m_dsvHandle        = std::move(other.m_dsvHandle);
 		m_depthStencilInfo = other.m_depthStencilInfo;
 
 		return *this;
