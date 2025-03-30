@@ -5,12 +5,11 @@
 // Vertex Shader
 static std::unique_ptr<D3DPipelineObject> CreateGraphicsPipelineVS(
 	ID3D12Device2* device, ID3D12RootSignature* graphicsRootSignature, ShaderType binaryType,
-	const std::wstring& shaderPath, const ExternalGraphicsPipeline& graphicsExtPipeline,
-	const ShaderName& vertexShader
+	const std::wstring& shaderPath, const ExternalGraphicsPipeline& graphicsExtPipeline
 ) {
 	auto vs              = std::make_unique<D3DShader>();
 	const bool vsSuccess = vs->LoadBinary(
-		shaderPath + vertexShader.GetNameWithExtension(binaryType)
+		shaderPath + graphicsExtPipeline.GetVertexShader().GetNameWithExtension(binaryType)
 	);
 
 	auto ps              = std::make_unique<D3DShader>();
@@ -54,8 +53,7 @@ std::unique_ptr<D3DPipelineObject> GraphicsPipelineVSIndirectDraw::_createGraphi
 	const std::wstring& shaderPath, const ExternalGraphicsPipeline& graphicsExtPipeline
 ) const {
 	return CreateGraphicsPipelineVS(
-		device, graphicsRootSignature, s_shaderBytecodeType,shaderPath, graphicsExtPipeline,
-		L"VertexShaderIndirect"
+		device, graphicsRootSignature, s_shaderBytecodeType,shaderPath, graphicsExtPipeline
 	);
 }
 
@@ -65,7 +63,6 @@ std::unique_ptr<D3DPipelineObject> GraphicsPipelineVSIndividualDraw::_createGrap
 	const std::wstring& shaderPath, const ExternalGraphicsPipeline& graphicsExtPipeline
 ) const {
 	return CreateGraphicsPipelineVS(
-		device, graphicsRootSignature, s_shaderBytecodeType, shaderPath, graphicsExtPipeline,
-		L"VertexShaderIndividual"
+		device, graphicsRootSignature, s_shaderBytecodeType, shaderPath, graphicsExtPipeline
 	);
 }

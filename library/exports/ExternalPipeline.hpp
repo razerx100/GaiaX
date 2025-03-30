@@ -67,15 +67,21 @@ public:
 
 public:
 	ExternalGraphicsPipeline()
-		: m_fragmentShader{}, m_renderTargetFormats{ 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u },
+		: m_vertexShader{}, m_fragmentShader{}, m_renderTargetFormats{ 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u },
 		m_blendStates{}, m_renderTargetCount{ 0u }, m_depthFormat{ 0u }, m_stencilFormat{ 0u },
 		m_pipelineStates{ 0u }
 	{}
 
-	ExternalGraphicsPipeline(const ShaderName& fragmentShader)
+	ExternalGraphicsPipeline(const ShaderName& fragmentShader, const ShaderName& vertexShader)
 		: ExternalGraphicsPipeline{}
 	{
+		SetVertexShader(vertexShader);
 		SetFragmentShader(fragmentShader);
+	}
+
+	void SetVertexShader(const ShaderName& vertexShader) noexcept
+	{
+		m_vertexShader = vertexShader;
 	}
 
 	void SetFragmentShader(const ShaderName& fragmentShader) noexcept
@@ -144,6 +150,9 @@ public:
 	const ShaderName& GetFragmentShader() const noexcept { return m_fragmentShader; }
 
 	[[nodiscard]]
+	const ShaderName& GetVertexShader() const noexcept { return m_vertexShader; }
+
+	[[nodiscard]]
 	std::uint32_t GetRenderTargetCount() const noexcept { return m_renderTargetCount; }
 
 	[[nodiscard]]
@@ -208,6 +217,7 @@ private:
 	}
 
 private:
+	ShaderName      m_vertexShader;
 	ShaderName      m_fragmentShader;
 	RenderFormats_t m_renderTargetFormats;
 	BlendStates_t   m_blendStates;
@@ -218,7 +228,8 @@ private:
 
 public:
 	ExternalGraphicsPipeline(const ExternalGraphicsPipeline& other) noexcept
-		: m_fragmentShader{ other.m_fragmentShader },
+		: m_vertexShader{ other.m_vertexShader },
+		m_fragmentShader{ other.m_fragmentShader },
 		m_renderTargetFormats{ other.m_renderTargetFormats },
 		m_blendStates{ other.m_blendStates },
 		m_renderTargetCount{ other.m_renderTargetCount },
@@ -228,6 +239,7 @@ public:
 	{}
 	ExternalGraphicsPipeline& operator=(const ExternalGraphicsPipeline& other) noexcept
 	{
+		m_vertexShader        = other.m_vertexShader;
 		m_fragmentShader      = other.m_fragmentShader;
 		m_renderTargetFormats = other.m_renderTargetFormats;
 		m_blendStates         = other.m_blendStates;
@@ -240,7 +252,8 @@ public:
 	}
 
 	ExternalGraphicsPipeline(ExternalGraphicsPipeline&& other) noexcept
-		: m_fragmentShader{ std::move(other.m_fragmentShader) },
+		: m_vertexShader{ std::move(other.m_vertexShader) },
+		m_fragmentShader{ std::move(other.m_fragmentShader) },
 		m_renderTargetFormats{ std::move(other.m_renderTargetFormats) },
 		m_blendStates{ other.m_blendStates },
 		m_renderTargetCount{ other.m_renderTargetCount },
@@ -250,6 +263,7 @@ public:
 	{}
 	ExternalGraphicsPipeline& operator=(ExternalGraphicsPipeline&& other) noexcept
 	{
+		m_vertexShader        = std::move(other.m_vertexShader);
 		m_fragmentShader      = std::move(other.m_fragmentShader);
 		m_renderTargetFormats = std::move(other.m_renderTargetFormats);
 		m_blendStates         = other.m_blendStates;
@@ -263,7 +277,8 @@ public:
 
 	bool operator==(const ExternalGraphicsPipeline& other) const noexcept
 	{
-		return m_fragmentShader == other.m_fragmentShader &&
+		return m_vertexShader == other.m_vertexShader &&
+			m_fragmentShader == other.m_fragmentShader &&
 			IsAttachmentSignatureSame(other) &&
 			AreBlendStatesSame(other.m_blendStates) &&
 			m_pipelineStates    == other.m_pipelineStates;

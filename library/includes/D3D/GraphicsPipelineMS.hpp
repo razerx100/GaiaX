@@ -14,7 +14,7 @@ private:
 	static std::unique_ptr<D3DPipelineObject> CreateGraphicsPipelineMS(
 		ID3D12Device2* device, ID3D12RootSignature* graphicsRootSignature, ShaderType binaryType,
 		const std::wstring& shaderPath, const ExternalGraphicsPipeline& graphicsExtPipeline,
-		const ShaderName& meshShader, const ShaderName& amplificationShader
+		const ShaderName& amplificationShader
 	);
 
 	[[nodiscard]]

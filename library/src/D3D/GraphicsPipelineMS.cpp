@@ -5,23 +5,21 @@ std::unique_ptr<D3DPipelineObject> GraphicsPipelineMS::_createGraphicsPipeline(
 	ID3D12Device2* device, ID3D12RootSignature* graphicsRootSignature,
 	const std::wstring& shaderPath, const ExternalGraphicsPipeline& graphicsExtPipeline
 ) const {
-	constexpr const wchar_t* meshShaderName = L"MeshShaderMSIndividual";
 	constexpr const wchar_t* ampShaderName  = L"MeshShaderASIndividual";
 
 	return CreateGraphicsPipelineMS(
-		device, graphicsRootSignature, s_shaderBytecodeType,
-		shaderPath, graphicsExtPipeline, meshShaderName, ampShaderName
+		device, graphicsRootSignature, s_shaderBytecodeType, shaderPath, graphicsExtPipeline, ampShaderName
 	);
 }
 
 std::unique_ptr<D3DPipelineObject> GraphicsPipelineMS::CreateGraphicsPipelineMS(
 	ID3D12Device2* device, ID3D12RootSignature* graphicsRootSignature, ShaderType binaryType,
 	const std::wstring& shaderPath, const ExternalGraphicsPipeline& graphicsExtPipeline,
-	const ShaderName& meshShader, const ShaderName& amplificationShader
+	const ShaderName& amplificationShader
 ) {
 	auto ms              = std::make_unique<D3DShader>();
 	const bool msSuccess = ms->LoadBinary(
-		shaderPath + meshShader.GetNameWithExtension(binaryType)
+		shaderPath + graphicsExtPipeline.GetVertexShader().GetNameWithExtension(binaryType)
 	);
 
 	auto as              = std::make_unique<D3DShader>();
