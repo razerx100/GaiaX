@@ -677,11 +677,6 @@ class ModelBundleVSIndividual : public ModelBundleCommon<PipelineModelsVSIndivid
 public:
 	ModelBundleVSIndividual() : ModelBundleCommon{} {}
 
-	void Draw(
-		const D3DCommandList& graphicsList, UINT constantsRootIndex, const D3DMeshBundleVS& meshBundle,
-		const PipelineManager<GraphicsPipeline_t>& pipelineManager
-	) const noexcept;
-
 	void DrawPipeline(
 		size_t pipelineLocalIndex, const D3DCommandList& graphicsList, UINT constantsRootIndex,
 		const D3DMeshBundleVS& meshBundle
@@ -708,11 +703,6 @@ class ModelBundleMSIndividual : public ModelBundleCommon<PipelineModelsMSIndivid
 
 public:
 	ModelBundleMSIndividual() : ModelBundleCommon{} {}
-
-	void Draw(
-		const D3DCommandList& graphicsList, UINT constantsRootIndex, const D3DMeshBundleMS& meshBundle,
-		const PipelineManager<GraphicsPipeline_t>& pipelineManager
-	) const noexcept;
 
 	void DrawPipeline(
 		size_t pipelineLocalIndex, const D3DCommandList& graphicsList, UINT constantsRootIndex,
@@ -799,15 +789,8 @@ public:
 		_removeModel(pipelineIndex, modelIndex);
 	}
 
-	void Update(size_t frameIndex, const D3DMeshBundleVS& meshBundle) const noexcept;
-
 	void UpdatePipeline(
 		size_t pipelineLocalIndex, size_t frameIndex, const D3DMeshBundleVS& meshBundle
-	) const noexcept;
-
-	void Draw(
-		size_t frameIndex, const D3DCommandList& graphicsList, ID3D12CommandSignature* commandSignature,
-		const D3DMeshBundleVS& meshBundle, const PipelineManager<GraphicsPipeline_t>& pipelineManager
 	) const noexcept;
 
 	void DrawPipeline(

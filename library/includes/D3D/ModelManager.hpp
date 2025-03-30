@@ -151,11 +151,6 @@ public:
 		std::vector<D3DDescriptorManager>& descriptorManagers, size_t vsRegisterSpace
 	);
 
-	void Draw(
-		const D3DCommandList& graphicsList, const MeshManagerVSIndividual& meshManager,
-		const PipelineManager<Pipeline_t>& pipelineManager
-	) const noexcept;
-
 	void DrawPipeline(
 		size_t modelBundleIndex, size_t pipelineLocalIndex, const D3DCommandList& graphicsList,
 		const MeshManagerVSIndividual& meshManager
@@ -242,11 +237,6 @@ public:
 		std::uint32_t newPipelineIndex
 	);
 
-	void Draw(
-		size_t frameIndex, const D3DCommandList& graphicsList, ID3D12CommandSignature* commandSignature,
-		const MeshManagerVSIndirect& meshManager,
-		const PipelineManager<GraphicsPipeline_t>& pipelineManager
-	) const noexcept;
 	void DrawPipeline(
 		size_t frameIndex, size_t modelBundleIndex, size_t pipelineLocalIndex,
 		const D3DCommandList& graphicsList, ID3D12CommandSignature* commandSignature,
@@ -259,8 +249,6 @@ public:
 
 	[[nodiscard]]
 	UINT GetConstantsVSRootIndex() const noexcept { return m_constantsVSRootIndex; }
-
-	void UpdatePerFrame(UINT64 frameIndex, const MeshManagerVSIndirect& meshManager) const noexcept;
 
 	void UpdatePipelinePerFrame(
 		UINT64 frameIndex, size_t modelBundleIndex, size_t pipelineLocalIndex,
@@ -367,11 +355,6 @@ public:
 
 	void SetDescriptorLayout(
 		std::vector<D3DDescriptorManager>& descriptorManagers, size_t msRegisterSpace
-	) const noexcept;
-
-	void Draw(
-		const D3DCommandList& graphicsList, const MeshManagerMS& meshManager,
-		const PipelineManager<Pipeline_t>& pipelineManager
 	) const noexcept;
 
 	void DrawPipeline(
