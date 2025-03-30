@@ -223,7 +223,7 @@ void PipelineModelsCSIndirect::UpdateNonPerFrameData(std::uint32_t modelBundleIn
 			PerModelData perModelData
 			{
 				.pipelineIndex = pipelineIndex,
-				.isVisible     = 1u
+				.modelFlags    = static_cast<std::uint32_t>(ModelFlag::Visibility)
 			};
 
 			memcpy(bufferStart + offset, &perModelData, perModelStride);
@@ -292,7 +292,7 @@ void PipelineModelsCSIndirect::AllocateBuffers(
 }
 
 void PipelineModelsCSIndirect::Update(
-	size_t frameIndex, const D3DMeshBundleVS& meshBundle,
+	size_t frameIndex, const D3DMeshBundleVS& meshBundle, bool skipCulling,
 	const std::vector<std::shared_ptr<Model>>& models
 ) const noexcept {
 	const size_t modelCount = std::size(m_modelData);
@@ -310,7 +310,9 @@ void PipelineModelsCSIndirect::Update(
 
 	constexpr size_t perModelStride = sizeof(PerModelData);
 	auto perModelOffset             = static_cast<size_t>(m_perModelSharedData.offset);
-	constexpr auto isVisibleOffset  = offsetof(PerModelData, isVisible);
+	constexpr auto modelFlagsOffset = offsetof(PerModelData, modelFlags);
+
+	std::uint32_t modelFlags = skipCulling ? static_cast<std::uint32_t>(ModelFlag::SkipCulling) : 0u;
 
 	for (size_t index = 0u; index < modelCount; ++index)
 	{
@@ -332,12 +334,11 @@ void PipelineModelsCSIndirect::Update(
 
 		argumentOffset += argumentStride;
 
-		// Model Visiblity
-		const auto visiblity = static_cast<std::uint32_t>(
-			m_modelData.IsInUse(index) && model->IsVisible()
-		);
+		// Model Flags
+		if (m_modelData.IsInUse(index) && model->IsVisible())
+			modelFlags |= static_cast<std::uint32_t>(ModelFlag::Visibility);
 
-		memcpy(perModelStart + perModelOffset + isVisibleOffset, &visiblity, sizeof(std::uint32_t));
+		memcpy(perModelStart + perModelOffset + modelFlagsOffset, &modelFlags, sizeof(std::uint32_t));
 
 		perModelOffset += perModelStride;
 	}
@@ -896,7 +897,7 @@ void ModelBundleVSIndirect::_addModelsToPipeline(
 }
 
 void ModelBundleVSIndirect::UpdatePipeline(
-	size_t pipelineLocalIndex, size_t frameIndex, const D3DMeshBundleVS& meshBundle
+	size_t pipelineLocalIndex, size_t frameIndex, const D3DMeshBundleVS& meshBundle, bool skipCulling
 ) const noexcept {
 	const auto& models = m_modelBundle->GetModels();
 
@@ -905,7 +906,7 @@ void ModelBundleVSIndirect::UpdatePipeline(
 
 	const PipelineModelsCSIndirect& pipeline = m_pipelines[pipelineLocalIndex];
 
-	pipeline.Update(frameIndex, meshBundle, models);
+	pipeline.Update(frameIndex, meshBundle, skipCulling, models);
 }
 
 void ModelBundleVSIndirect::DrawPipeline(

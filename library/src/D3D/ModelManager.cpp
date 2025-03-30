@@ -189,7 +189,7 @@ std::vector<std::uint32_t> ModelManagerVSIndirect::RemoveModelBundle(std::uint32
 
 void ModelManagerVSIndirect::UpdatePipelinePerFrame(
 	UINT64 frameIndex, size_t modelBundleIndex, size_t pipelineLocalIndex,
-	const MeshManagerVSIndirect& meshManager
+	const MeshManagerVSIndirect& meshManager, bool skipCulling
 ) const noexcept {
 	std::uint8_t* bufferOffsetPtr = m_perModelBundleBuffer.GetInstancePtr(frameIndex);
 	constexpr size_t strideSize   = sizeof(PerModelBundleData);
@@ -205,7 +205,7 @@ void ModelManagerVSIndirect::UpdatePipelinePerFrame(
 
 	const D3DMeshBundleVS& meshBundle     = meshManager.GetBundle(meshBundleIndex);
 
-	vsBundle.UpdatePipeline(pipelineLocalIndex, static_cast<size_t>(frameIndex), meshBundle);
+	vsBundle.UpdatePipeline(pipelineLocalIndex, static_cast<size_t>(frameIndex), meshBundle, skipCulling);
 
 	memcpy(bufferOffsetPtr + bufferOffset, &meshBundleIndex, strideSize);
 }

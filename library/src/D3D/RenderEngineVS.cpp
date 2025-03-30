@@ -449,11 +449,15 @@ void RenderEngineVSIndirect::UpdateRenderPassPipelines(
 		const std::vector<std::uint32_t>& bundleIndices        = details.modelBundleIndices;
 		const std::vector<std::uint32_t>& pipelineLocalIndices = details.pipelineLocalIndices;
 
+		const GraphicsPipelineVSIndirectDraw& d3dPipeline
+			= m_graphicsPipelineManager.GetPipeline(details.pipelineGlobalIndex);
+
 		const size_t bundleCount = std::size(bundleIndices);
 
 		for (size_t index = 0u; index < bundleCount; ++index)
 			m_modelManager->UpdatePipelinePerFrame(
-				frameIndex, bundleIndices[index], pipelineLocalIndices[index], m_meshManager
+				frameIndex, bundleIndices[index], pipelineLocalIndices[index], m_meshManager,
+				!d3dPipeline.GetExternalPipeline().IsGPUCullingEnabled()
 			);
 	}
 }

@@ -252,7 +252,7 @@ public:
 
 	void UpdatePipelinePerFrame(
 		UINT64 frameIndex, size_t modelBundleIndex, size_t pipelineLocalIndex,
-		const MeshManagerVSIndirect& meshManager
+		const MeshManagerVSIndirect& meshManager, bool skipCulling
 	) const noexcept;
 
 private:

@@ -103,6 +103,8 @@ public:
 	[[nodiscard]]
 	const std::wstring& GetShaderPath() const noexcept { return m_shaderPath; }
 
+	const Pipeline& GetPipeline(size_t index) const noexcept { return m_pipelines[index]; }
+
 private:
 	[[nodiscard]]
 	std::optional<std::uint32_t> TryToGetPSOIndex(const PipelineExt& extPipeline) const noexcept
