@@ -4,6 +4,7 @@
 #include <Shader.hpp>
 #include <cassert>
 #include <array>
+#include <bitset>
 
 enum class ExternalBlendOP : std::uint8_t
 {
@@ -52,11 +53,12 @@ struct ExternalBlendState
 
 class ExternalGraphicsPipeline
 {
-	enum class State : std::uint8_t
+	enum class State : std::uint32_t
 	{
 		Unknown         = 0u,
 		BackfaceCulling = 1u,
-		DepthWrite      = 2u
+		DepthWrite      = 2u,
+		GPUCulling      = 4u
 	};
 
 public:
@@ -69,7 +71,7 @@ public:
 	ExternalGraphicsPipeline()
 		: m_vertexShader{}, m_fragmentShader{}, m_renderTargetFormats{ 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u },
 		m_blendStates{}, m_renderTargetCount{ 0u }, m_depthFormat{ 0u }, m_stencilFormat{ 0u },
-		m_pipelineStates{ 0u }
+		m_pipelineStates{ static_cast<std::uint32_t>(State::GPUCulling) }
 	{}
 
 	ExternalGraphicsPipeline(const ShaderName& fragmentShader, const ShaderName& vertexShader)
@@ -93,8 +95,7 @@ public:
 	{
 		m_depthFormat = static_cast<std::uint8_t>(format);
 
-		if (enableDepthWrite)
-			m_pipelineStates |= static_cast<std::uint8_t>(State::DepthWrite);
+		m_pipelineStates[static_cast<size_t>(State::DepthWrite)] = enableDepthWrite;
 	}
 	void EnableStencilTesting(ExternalFormat format) noexcept
 	{
@@ -102,7 +103,11 @@ public:
 	}
 	void EnableBackfaceCulling() noexcept
 	{
-		m_pipelineStates |= static_cast<std::uint8_t>(State::BackfaceCulling);
+		m_pipelineStates[static_cast<size_t>(State::BackfaceCulling)] = true;
+	}
+	void DisableGPUCulling() noexcept
+	{
+		m_pipelineStates[static_cast<size_t>(State::GPUCulling)] = false;
 	}
 
 	void AddRenderTarget(ExternalFormat format, const ExternalBlendState& blendState)
@@ -134,16 +139,17 @@ public:
 	[[nodiscard]]
 	bool GetBackfaceCullingState() const noexcept
 	{
-		constexpr auto backfaceStateU8 = static_cast<std::uint8_t>(State::BackfaceCulling);
-
-		return (m_pipelineStates & backfaceStateU8) == backfaceStateU8;
+		return m_pipelineStates.test(static_cast<size_t>(State::BackfaceCulling));
 	}
 	[[nodiscard]]
 	bool IsDepthWriteEnabled() const noexcept
 	{
-		constexpr auto depthWriteStateU8 = static_cast<std::uint8_t>(State::DepthWrite);
-
-		return (m_pipelineStates & depthWriteStateU8) == depthWriteStateU8;
+		return m_pipelineStates.test(static_cast<size_t>(State::DepthWrite));
+	}
+	[[nodiscard]]
+	bool IsGPUCullingEnabled() const noexcept
+	{
+		return m_pipelineStates.test(static_cast<size_t>(State::GPUCulling));
 	}
 
 	[[nodiscard]]
@@ -217,14 +223,14 @@ private:
 	}
 
 private:
-	ShaderName      m_vertexShader;
-	ShaderName      m_fragmentShader;
-	RenderFormats_t m_renderTargetFormats;
-	BlendStates_t   m_blendStates;
-	std::uint8_t    m_renderTargetCount;
-	std::uint8_t    m_depthFormat;
-	std::uint8_t    m_stencilFormat;
-	std::uint16_t   m_pipelineStates;
+	ShaderName       m_vertexShader;
+	ShaderName       m_fragmentShader;
+	RenderFormats_t  m_renderTargetFormats;
+	BlendStates_t    m_blendStates;
+	std::uint8_t     m_renderTargetCount;
+	std::uint8_t     m_depthFormat;
+	std::uint8_t     m_stencilFormat;
+	std::bitset<32U> m_pipelineStates;
 
 public:
 	ExternalGraphicsPipeline(const ExternalGraphicsPipeline& other) noexcept

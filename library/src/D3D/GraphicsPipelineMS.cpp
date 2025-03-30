@@ -5,10 +5,12 @@ std::unique_ptr<D3DPipelineObject> GraphicsPipelineMS::_createGraphicsPipeline(
 	ID3D12Device2* device, ID3D12RootSignature* graphicsRootSignature,
 	const std::wstring& shaderPath, const ExternalGraphicsPipeline& graphicsExtPipeline
 ) const {
-	constexpr const wchar_t* ampShaderName  = L"MeshShaderASIndividual";
+	constexpr const wchar_t* cullingAmpShaderName   = L"MeshShaderASIndividual";
+	constexpr const wchar_t* noCullingAmpShaderName = L"MeshShaderASIndividualNoCulling";
 
 	return CreateGraphicsPipelineMS(
-		device, graphicsRootSignature, s_shaderBytecodeType, shaderPath, graphicsExtPipeline, ampShaderName
+		device, graphicsRootSignature, s_shaderBytecodeType, shaderPath, graphicsExtPipeline,
+		graphicsExtPipeline.IsGPUCullingEnabled() ? cullingAmpShaderName : noCullingAmpShaderName
 	);
 }
 
