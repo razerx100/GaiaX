@@ -159,10 +159,8 @@ public:
 	GraphicsPipelineBuilder& AddRenderTarget(
 		DXGI_FORMAT rtvFormat, const D3D12_RENDER_TARGET_BLEND_DESC& blendState
 	) {
-		const size_t maxNumRenderTargets = std::size(m_pipelineState.RTVFormats);
-
 		assert(
-			m_pipelineState.NumRenderTargets <= maxNumRenderTargets
+			m_pipelineState.NumRenderTargets <= std::size(m_pipelineState.RTVFormats)
 			&& "Can't have more than 8 RTVs attached to a pipeline."
 		);
 
