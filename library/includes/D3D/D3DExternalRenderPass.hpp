@@ -176,32 +176,30 @@ public:
 				bundleIndex, pipelineDetails.pipelineGlobalIndex
 			);
 
-			auto localIndex = std::numeric_limits<std::uint32_t>::max();
-
+			// I guess it should be okay for a model bundle to not have all the Pipelines?
 			if (!oLocalIndex)
-				localIndex = m_modelManager->AddPipelineToModelBundle(
-					bundleIndex, pipelineDetails.pipelineGlobalIndex
-				);
-			else
-				localIndex = static_cast<std::uint32_t>(*oLocalIndex);
+				continue;
 
-			std::vector<std::uint32_t>& modelIndices = pipelineDetails.modelBundleIndices;
-			std::vector<std::uint32_t>& localIndices = pipelineDetails.pipelineLocalIndices;
+			auto localIndex = static_cast<std::uint32_t>(*oLocalIndex);
 
-			auto result = std::ranges::find(modelIndices, bundleIndex);
+			std::vector<std::uint32_t>& modelBundleIndices = pipelineDetails.modelBundleIndices;
+			std::vector<std::uint32_t>& pipelineIndicesInBundle
+				= pipelineDetails.pipelineLocalIndices;
 
-			size_t resultIndex = std::size(modelIndices);
+			auto result = std::ranges::find(modelBundleIndices, bundleIndex);
 
-			if (result == std::end(modelIndices))
+			size_t resultIndex = std::size(modelBundleIndices);
+
+			if (result == std::end(modelBundleIndices))
 			{
-				modelIndices.emplace_back(0u);
-				localIndices.emplace_back(0u);
+				modelBundleIndices.emplace_back(0u);
+				pipelineIndicesInBundle.emplace_back(0u);
 			}
 			else
-				resultIndex = std::distance(std::begin(modelIndices), result);
+				resultIndex = std::distance(std::begin(modelBundleIndices), result);
 
-			modelIndices[resultIndex] = bundleIndex;
-			localIndices[resultIndex] = localIndex;
+			modelBundleIndices[resultIndex]      = bundleIndex;
+			pipelineIndicesInBundle[resultIndex] = localIndex;
 		}
 	}
 

@@ -48,12 +48,12 @@ std::uint32_t RendererDx12::AddGraphicsPipeline(const ExternalGraphicsPipeline& 
 	return m_gaia.GetRenderEngine().AddGraphicsPipeline(gfxPipeline);
 }
 
-void RendererDx12::ChangeModelPipelineInBundle(
-	std::uint32_t modelBundleIndex, std::uint32_t modelIndex,
-	std::uint32_t oldPipelineIndex, std::uint32_t newPipelineIndex
+void RendererDx12::ReconfigureModelPipelinesInBundle(
+	std::uint32_t modelBundleIndex, std::uint32_t decreasedModelsPipelineIndex,
+	std::uint32_t increasedModelsPipelineIndex
 ) {
-	m_gaia.GetRenderEngine().ChangeModelPipelineInBundle(
-		modelBundleIndex, modelIndex, oldPipelineIndex, newPipelineIndex
+	m_gaia.GetRenderEngine().ReconfigureModelPipelinesInBundle(
+		modelBundleIndex, decreasedModelsPipelineIndex, increasedModelsPipelineIndex
 	);
 }
 

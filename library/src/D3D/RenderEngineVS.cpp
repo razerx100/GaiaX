@@ -104,7 +104,7 @@ std::uint32_t RenderEngineVSIndividual::AddModelBundle(std::shared_ptr<ModelBund
 	std::vector<std::uint32_t> modelBufferIndices = AddModelsToBuffer(*modelBundle, m_modelBuffers);
 
 	const std::uint32_t index = m_modelManager->AddModelBundle(
-		std::move(modelBundle), std::move(modelBufferIndices)
+		std::move(modelBundle), modelBufferIndices
 	);
 
 	// After new models have been added, the ModelBuffer might get recreated. So, it will have
@@ -123,13 +123,6 @@ std::uint32_t RenderEngineVSIndividual::AddMeshBundle(std::unique_ptr<MeshBundle
 	m_copyNecessary = true;
 
 	return m_meshManager.AddMeshBundle(std::move(meshBundle), m_stagingManager, m_temporaryDataBuffer);
-}
-
-void RenderEngineVSIndividual::RemoveModelBundle(std::uint32_t bundleIndex) noexcept
-{
-	std::vector<std::uint32_t> modelBufferIndices = m_modelManager->RemoveModelBundle(bundleIndex);
-
-	m_modelBuffers.Remove(modelBufferIndices);
 }
 
 ID3D12Fence* RenderEngineVSIndividual::GenericCopyStage(
@@ -589,7 +582,7 @@ std::uint32_t RenderEngineVSIndirect::AddModelBundle(std::shared_ptr<ModelBundle
 	std::vector<std::uint32_t> modelBufferIndices = AddModelsToBuffer(*modelBundle, m_modelBuffers);
 
 	const std::uint32_t index = m_modelManager->AddModelBundle(
-		std::move(modelBundle), std::move(modelBufferIndices)
+		std::move(modelBundle), modelBufferIndices
 	);
 
 	// After new models have been added, the ModelBuffer might get recreated. So, it will have
@@ -600,13 +593,6 @@ std::uint32_t RenderEngineVSIndirect::AddModelBundle(std::shared_ptr<ModelBundle
 	m_copyNecessary = true;
 
 	return index;
-}
-
-void RenderEngineVSIndirect::RemoveModelBundle(std::uint32_t bundleIndex) noexcept
-{
-	std::vector<std::uint32_t> modelBufferIndices = m_modelManager->RemoveModelBundle(bundleIndex);
-
-	m_modelBuffers.Remove(modelBufferIndices);
 }
 
 std::uint32_t RenderEngineVSIndirect::AddMeshBundle(std::unique_ptr<MeshBundleTemporary> meshBundle)

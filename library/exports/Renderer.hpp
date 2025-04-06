@@ -41,9 +41,11 @@ public:
 	[[nodiscard]]
 	virtual std::uint32_t AddGraphicsPipeline(const ExternalGraphicsPipeline& gfxPipeline) = 0;
 
-	virtual void ChangeModelPipelineInBundle(
-		std::uint32_t modelBundleIndex, std::uint32_t modelIndex,
-		std::uint32_t oldPipelineIndex, std::uint32_t newPipelineIndex
+	// This function should be called after some models have been moved from one
+	// pipeline to another.
+	virtual void ReconfigureModelPipelinesInBundle(
+		std::uint32_t modelBundleIndex, std::uint32_t decreasedModelsPipelineIndex,
+		std::uint32_t increasedModelsPipelineIndex
 	) = 0;
 	virtual void RemoveGraphicsPipeline(std::uint32_t pipelineIndex) noexcept = 0;
 

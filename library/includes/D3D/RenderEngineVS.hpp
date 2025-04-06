@@ -33,8 +33,6 @@ public:
 	[[nodiscard]]
 	std::uint32_t AddMeshBundle(std::unique_ptr<MeshBundleTemporary> meshBundle) override;
 
-	void RemoveModelBundle(std::uint32_t bundleIndex) noexcept override;
-
 private:
 	void ExecutePipelineStages(
 		size_t frameIndex, ID3D12Resource* swapchainBackBuffer, UINT64& counterValue,
@@ -106,8 +104,6 @@ public:
 
 	[[nodiscard]]
 	std::uint32_t AddModelBundle(std::shared_ptr<ModelBundle>&& modelBundle) override;
-
-	void RemoveModelBundle(std::uint32_t bundleIndex) noexcept override;
 
 	[[nodiscard]]
 	std::uint32_t AddMeshBundle(std::unique_ptr<MeshBundleTemporary> meshBundle) override;

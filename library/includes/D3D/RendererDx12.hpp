@@ -29,10 +29,11 @@ public:
 	[[nodiscard]]
 	std::uint32_t AddGraphicsPipeline(const ExternalGraphicsPipeline& gfxPipeline) override;
 
-	void ChangeModelPipelineInBundle(
-		std::uint32_t modelBundleIndex, std::uint32_t modelIndex,
-		std::uint32_t oldPipelineIndex, std::uint32_t newPipelineIndex
+	void ReconfigureModelPipelinesInBundle(
+		std::uint32_t modelBundleIndex, std::uint32_t decreasedModelsPipelineIndex,
+		std::uint32_t increasedModelsPipelineIndex
 	) override;
+
 	void RemoveGraphicsPipeline(std::uint32_t pipelineIndex) noexcept override;
 
 	[[nodiscard]]

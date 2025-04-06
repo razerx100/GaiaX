@@ -22,17 +22,23 @@ public:
 	ModelManager() : m_modelBundles{} {}
 
 	[[nodiscard]]
-	std::uint32_t AddPipelineToModelBundle(
-		std::uint32_t bundleIndex, std::uint32_t pipelineIndex
-	) noexcept {
-		return m_modelBundles[bundleIndex].AddPipeline(pipelineIndex);
-	}
-
-	[[nodiscard]]
 	std::optional<size_t> GetPipelineLocalIndex(
 		std::uint32_t bundleIndex, std::uint32_t pipelineIndex
 	) const noexcept {
 		return m_modelBundles[bundleIndex].GetPipelineLocalIndex(pipelineIndex);
+	}
+
+protected:
+	static void SetModelIndicesInBuffer(
+		ModelBundle& modelBundle, const std::vector<std::uint32_t>& modelIndicesInBuffer
+	) noexcept {
+		std::vector<std::shared_ptr<Model>>& models = modelBundle.GetModels();
+
+		// The number of indices and the number of models should be the same.
+		const size_t modelCount = std::size(models);
+
+		for (size_t index = 0u; index < modelCount; ++index)
+			models[index]->SetModelIndexInBuffer(modelIndicesInBuffer[index]);
 	}
 
 protected:
@@ -61,64 +67,49 @@ class ModelManagerCommon : public ModelManager<ModelBundleType>
 public:
 	ModelManagerCommon() : ModelManager<ModelBundleType>{} {}
 
-	void ChangeModelPipeline(
-		std::uint32_t bundleIndex, std::uint32_t modelIndexInBundle, std::uint32_t oldPipelineIndex,
-		std::uint32_t newPipelineIndex
-	) {
-		this->m_modelBundles[bundleIndex].MoveModel(
-			modelIndexInBundle, oldPipelineIndex, newPipelineIndex
-		);
-	}
+	// This should only be needed in the Indirect pipeline, as we need to allocate for that.
+	void ReconfigureModels(
+		[[maybe_unused]] std::uint32_t bundleIndex,
+		[[maybe_unused]] std::uint32_t decreasedModelsPipelineIndex,
+		[[maybe_unused]] std::uint32_t increasedModelsPipelineIndex
+	) {}
 
 	// Will think about Adding a new model later.
 	[[nodiscard]]
 	std::uint32_t AddModelBundle(
-		std::shared_ptr<ModelBundle>&& modelBundle, std::vector<std::uint32_t>&& modelBufferIndices
+		std::shared_ptr<ModelBundle>&& modelBundle,
+		const std::vector<std::uint32_t>& modelIndicesInBuffer
 	) {
 		const size_t bundleIndex          = this->m_modelBundles.Add(ModelBundleType{});
 
 		ModelBundleType& localModelBundle = this->m_modelBundles[bundleIndex];
 
-		localModelBundle.SetModelIndices(std::move(modelBufferIndices));
-
-		_addModelsFromBundle(localModelBundle, *modelBundle);
+		ModelManager<ModelBundleType>::SetModelIndicesInBuffer(
+			*modelBundle, modelIndicesInBuffer
+		);
 
 		localModelBundle.SetModelBundle(std::move(modelBundle));
+
+		localModelBundle.AddNewPipelinesFromBundle();
 
 		return static_cast<std::uint32_t>(bundleIndex);
 	}
 
-	// Returns the stored model indices of the Model Buffers
+	// The model bundle is needed to cleanup the buffer indices.
 	[[nodiscard]]
-	std::vector<std::uint32_t> RemoveModelBundle(std::uint32_t bundleIndex) noexcept
+	std::shared_ptr<ModelBundle> RemoveModelBundle(std::uint32_t bundleIndex) noexcept
 	{
 		const size_t bundleIndexST        = bundleIndex;
 
 		ModelBundleType& localModelBundle = this->m_modelBundles[bundleIndexST];
 
-		std::vector<std::uint32_t> modelBufferIndices = localModelBundle.TakeModelBufferIndices();
+		std::shared_ptr<ModelBundle> modelBundle = localModelBundle.GetModelBundle();
 
 		localModelBundle.CleanupData();
 
 		this->m_modelBundles.RemoveElement(bundleIndexST);
 
-		return modelBufferIndices;
-	}
-
-private:
-	void _addModelsFromBundle(
-		ModelBundleType& localModelBundle, const ModelBundle& modelBundle
-	) {
-		const std::vector<std::shared_ptr<Model>>& models = modelBundle.GetModels();
-
-		const size_t modelCount = std::size(models);
-
-		for (size_t index = 0u; index < modelCount; ++index)
-		{
-			const std::shared_ptr<Model>& model = models[index];
-
-			localModelBundle.AddModel(model->GetPipelineIndex(), static_cast<std::uint32_t>(index));
-		}
+		return modelBundle;
 	}
 
 public:
@@ -213,12 +204,13 @@ public:
 	// Will think about Adding a new model later.
 	[[nodiscard]]
 	std::uint32_t AddModelBundle(
-		std::shared_ptr<ModelBundle>&& modelBundle, std::vector<std::uint32_t>&& modelBufferIndices
+		std::shared_ptr<ModelBundle>&& modelBundle,
+		const std::vector<std::uint32_t>& modelIndicesInBuffer
 	);
 
-	// Returns the stored model indices of the Model Buffers
+	// The model bundle is needed to cleanup the buffer indices.
 	[[nodiscard]]
-	std::vector<std::uint32_t> RemoveModelBundle(std::uint32_t bundleIndex) noexcept;
+	std::shared_ptr<ModelBundle> RemoveModelBundle(std::uint32_t bundleIndex) noexcept;
 
 	void SetDescriptorLayoutVS(
 		std::vector<D3DDescriptorManager>& descriptorManagers, size_t vsRegisterSpace
@@ -232,9 +224,9 @@ public:
 		std::vector<D3DDescriptorManager>& descriptorManagers, size_t csRegisterSpace
 	) const;
 
-	void ChangeModelPipeline(
-		std::uint32_t bundleIndex, std::uint32_t modelIndexInBundle, std::uint32_t oldPipelineIndex,
-		std::uint32_t newPipelineIndex
+	void ReconfigureModels(
+		std::uint32_t bundleIndex, std::uint32_t decreasedModelsPipelineIndex,
+		std::uint32_t increasedModelsPipelineIndex
 	);
 
 	void DrawPipeline(
@@ -244,7 +236,8 @@ public:
 	) const noexcept;
 
 	void Dispatch(
-		const D3DCommandList& computeList, const PipelineManager<ComputePipeline_t>& pipelineManager
+		const D3DCommandList& computeList,
+		const PipelineManager<ComputePipeline_t>& pipelineManager
 	) const noexcept;
 
 	[[nodiscard]]
@@ -256,11 +249,6 @@ public:
 	) const noexcept;
 
 private:
-	void _addModelsFromBundle(
-		ModelBundleVSIndirect& localModelBundle, const ModelBundle& modelBundle,
-		std::uint32_t modelBundleIndex
-	);
-
 	void UpdateAllocatedModelCount() noexcept;
 	void UpdateCounterResetValues();
 

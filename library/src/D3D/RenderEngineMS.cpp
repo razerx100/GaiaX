@@ -103,7 +103,7 @@ std::uint32_t RenderEngineMS::AddModelBundle(std::shared_ptr<ModelBundle>&& mode
 	std::vector<std::uint32_t> modelBufferIndices = AddModelsToBuffer(*modelBundle, m_modelBuffers);
 
 	const std::uint32_t index = m_modelManager->AddModelBundle(
-		std::move(modelBundle), std::move(modelBufferIndices)
+		std::move(modelBundle), modelBufferIndices
 	);
 
 	// After a new model has been added, the ModelBuffer might get recreated. So, it will have
@@ -113,13 +113,6 @@ std::uint32_t RenderEngineMS::AddModelBundle(std::shared_ptr<ModelBundle>&& mode
 	m_copyNecessary = true;
 
 	return index;
-}
-
-void RenderEngineMS::RemoveModelBundle(std::uint32_t bundleIndex) noexcept
-{
-	std::vector<std::uint32_t> modelBufferIndices = m_modelManager->RemoveModelBundle(bundleIndex);
-
-	m_modelBuffers.Remove(modelBufferIndices);
 }
 
 std::uint32_t RenderEngineMS::AddMeshBundle(std::unique_ptr<MeshBundleTemporary> meshBundle)

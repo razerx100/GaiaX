@@ -30,8 +30,6 @@ public:
 	[[nodiscard]]
 	std::uint32_t AddModelBundle(std::shared_ptr<ModelBundle>&& modelBundle) override;
 
-	void RemoveModelBundle(std::uint32_t bundleIndex) noexcept override;
-
 	[[nodiscard]]
 	std::uint32_t AddMeshBundle(std::unique_ptr<MeshBundleTemporary> meshBundle) override;
 

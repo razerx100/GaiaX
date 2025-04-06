@@ -91,12 +91,12 @@ void ModelManagerVSIndirect::SetComputeConstantsRootIndex(
 	);
 }
 
-void ModelManagerVSIndirect::ChangeModelPipeline(
-	std::uint32_t bundleIndex, std::uint32_t modelIndexInBundle, std::uint32_t oldPipelineIndex,
-	std::uint32_t newPipelineIndex
+void ModelManagerVSIndirect::ReconfigureModels(
+	std::uint32_t bundleIndex, std::uint32_t decreasedModelsPipelineIndex,
+	std::uint32_t increasedModelsPipelineIndex
 ) {
-	m_modelBundles[bundleIndex].MoveModel(
-		modelIndexInBundle, bundleIndex, oldPipelineIndex, newPipelineIndex,
+	m_modelBundles[bundleIndex].ReconfigureModels(
+		bundleIndex, decreasedModelsPipelineIndex, increasedModelsPipelineIndex,
 		m_argumentInputBuffers, m_perPipelineBuffer, m_perModelBuffer,
 		m_argumentOutputBuffers, m_counterBuffers
 	);
@@ -121,16 +121,22 @@ void ModelManagerVSIndirect::UpdateAllocatedModelCount() noexcept
 }
 
 std::uint32_t ModelManagerVSIndirect::AddModelBundle(
-	std::shared_ptr<ModelBundle>&& modelBundle, std::vector<std::uint32_t>&& modelBufferIndices
+	std::shared_ptr<ModelBundle>&& modelBundle,
+	const std::vector<std::uint32_t>& modelIndicesInBuffer
 ) {
 	const size_t bundleIndex  = m_modelBundles.Add(ModelBundleVSIndirect{});
 	const auto bundleIndexU32 = static_cast<std::uint32_t>(bundleIndex);
 
 	ModelBundleVSIndirect& localModelBundle = m_modelBundles[bundleIndex];
 
-	localModelBundle.SetModelIndices(std::move(modelBufferIndices));
+	SetModelIndicesInBuffer(*modelBundle, modelIndicesInBuffer);
 
-	_addModelsFromBundle(localModelBundle, *modelBundle, bundleIndexU32);
+	localModelBundle.SetModelBundle(std::move(modelBundle));
+
+	localModelBundle.AddNewPipelinesFromBundle(
+		bundleIndexU32, m_argumentInputBuffers, m_perPipelineBuffer, m_perModelBuffer,
+		m_argumentOutputBuffers, m_counterBuffers
+	);
 
 	UpdateCounterResetValues();
 
@@ -138,44 +144,17 @@ std::uint32_t ModelManagerVSIndirect::AddModelBundle(
 
 	UpdateAllocatedModelCount();
 
-	localModelBundle.SetModelBundle(std::move(modelBundle));
-
 	return bundleIndexU32;
 }
 
-void ModelManagerVSIndirect::_addModelsFromBundle(
-	ModelBundleVSIndirect& localModelBundle, const ModelBundle& modelBundle, std::uint32_t modelBundleIndex
-) {
-	const std::vector<std::shared_ptr<Model>>& models = modelBundle.GetModels();
-
-	const size_t modelCount = std::size(models);
-
-	std::unordered_map<std::uint32_t, std::vector<std::uint32_t>> pipelineModelIndicesMap{};
-
-	for (size_t index = 0u; index < modelCount; ++index)
-	{
-		const std::shared_ptr<Model>& model      = models[index];
-
-		std::vector<std::uint32_t>& modelIndices = pipelineModelIndicesMap[model->GetPipelineIndex()];
-
-		modelIndices.emplace_back(static_cast<std::uint32_t>(index));
-	}
-
-	for (const auto& pipelineModelIndices : pipelineModelIndicesMap)
-		localModelBundle.AddModels(
-			pipelineModelIndices.first, modelBundleIndex, pipelineModelIndices.second,
-			m_argumentInputBuffers, m_perPipelineBuffer, m_perModelBuffer,
-			m_argumentOutputBuffers, m_counterBuffers
-		);
-}
-
-std::vector<std::uint32_t> ModelManagerVSIndirect::RemoveModelBundle(std::uint32_t bundleIndex) noexcept
-{
-	const size_t bundleIndexST              = bundleIndex;
+std::shared_ptr<ModelBundle> ModelManagerVSIndirect::RemoveModelBundle(
+	std::uint32_t bundleIndex
+) noexcept {
+	const size_t bundleIndexST = bundleIndex;
 
 	ModelBundleVSIndirect& localModelBundle = m_modelBundles[bundleIndexST];
 
-	std::vector<std::uint32_t> modelBufferIndices = localModelBundle.TakeModelBufferIndices();
+	std::shared_ptr<ModelBundle> modelBundle = localModelBundle.GetModelBundle();
 
 	localModelBundle.CleanupData(
 		m_argumentInputBuffers, m_perPipelineBuffer, m_perModelBuffer,
@@ -184,7 +163,7 @@ std::vector<std::uint32_t> ModelManagerVSIndirect::RemoveModelBundle(std::uint32
 
 	m_modelBundles.RemoveElement(bundleIndexST);
 
-	return modelBufferIndices;
+	return modelBundle;
 }
 
 void ModelManagerVSIndirect::UpdatePipelinePerFrame(
@@ -205,7 +184,9 @@ void ModelManagerVSIndirect::UpdatePipelinePerFrame(
 
 	const D3DMeshBundleVS& meshBundle     = meshManager.GetBundle(meshBundleIndex);
 
-	vsBundle.UpdatePipeline(pipelineLocalIndex, static_cast<size_t>(frameIndex), meshBundle, skipCulling);
+	vsBundle.UpdatePipeline(
+		pipelineLocalIndex, static_cast<size_t>(frameIndex), meshBundle, skipCulling
+	);
 
 	memcpy(bufferOffsetPtr + bufferOffset, &meshBundleIndex, strideSize);
 }
@@ -268,14 +249,16 @@ void ModelManagerVSIndirect::SetDescriptors(
 			m_argumentInputBuffers[index].GetGPUAddress(), false
 		);
 		descriptorManager.SetRootSRV(
-			s_perPipelineSRVRegisterSlot, csRegisterSpace, m_perPipelineBuffer.GetGPUAddress(), false
+			s_perPipelineSRVRegisterSlot, csRegisterSpace, m_perPipelineBuffer.GetGPUAddress(),
+			false
 		);
 		descriptorManager.SetRootUAV(
 			s_argumenOutputUAVRegisterSlot, csRegisterSpace,
 			m_argumentOutputBuffers[index].GetGPUAddress(), false
 		);
 		descriptorManager.SetRootUAV(
-			s_counterUAVRegisterSlot, csRegisterSpace, m_counterBuffers[index].GetGPUAddress(), false
+			s_counterUAVRegisterSlot, csRegisterSpace, m_counterBuffers[index].GetGPUAddress(),
+			false
 		);
 		descriptorManager.SetRootSRV(
 			s_perModelSRVRegisterSlot, csRegisterSpace, m_perModelBuffer.GetGPUAddress(), false
@@ -326,7 +309,7 @@ void ModelManagerVSIndirect::DrawPipeline(
 	const ModelBundleVSIndirect& modelBundle = m_modelBundles[modelBundleIndex];
 
 	// Mesh
-	const D3DMeshBundleVS& meshBundle        = meshManager.GetBundle(modelBundle.GetMeshBundleIndex());
+	const D3DMeshBundleVS& meshBundle = meshManager.GetBundle(modelBundle.GetMeshBundleIndex());
 
 	// Model
 	modelBundle.DrawPipeline(
@@ -409,7 +392,7 @@ void ModelManagerMS::DrawPipeline(
 	const ModelBundleMSIndividual& modelBundle = m_modelBundles[modelBundleIndex];
 
 	// Mesh
-	const D3DMeshBundleMS& meshBundle          = meshManager.GetBundle(modelBundle.GetMeshBundleIndex());
+	const D3DMeshBundleMS& meshBundle = meshManager.GetBundle(modelBundle.GetMeshBundleIndex());
 
 	// Model
 	modelBundle.DrawPipeline(pipelineLocalIndex, graphicsList, m_constantsRootIndex, meshBundle);
