@@ -34,7 +34,8 @@ public:
 	}
 
 	void Recreate(
-		ID3D12Device2* device, ID3D12RootSignature* graphicsRootSignature, const std::wstring& shaderPath
+		ID3D12Device2* device, ID3D12RootSignature* graphicsRootSignature,
+		const std::wstring& shaderPath
 	) {
 		m_graphicsPipeline = static_cast<Derived*>(this)->_createGraphicsPipeline(
 			device, graphicsRootSignature, shaderPath, m_graphicsExternalPipeline
@@ -65,7 +66,7 @@ protected:
 	std::unique_ptr<D3DPipelineObject> m_graphicsPipeline;
 	ExternalGraphicsPipeline           m_graphicsExternalPipeline;
 
-	static constexpr ShaderType s_shaderBytecodeType = ShaderType::DXIL;
+	static constexpr ShaderBinaryType s_shaderBytecodeType = ShaderBinaryType::DXIL;
 
 public:
 	GraphicsPipelineBase(const GraphicsPipelineBase&) = delete;
@@ -86,7 +87,8 @@ public:
 
 template<typename Pipeline_t>
 void ConfigurePipelineBuilder(
-	GraphicsPipelineBuilder<Pipeline_t>& builder, const ExternalGraphicsPipeline& graphicsExtPipeline
+	GraphicsPipelineBuilder<Pipeline_t>& builder,
+	const ExternalGraphicsPipeline& graphicsExtPipeline
 ) noexcept {
 	if (graphicsExtPipeline.GetBackfaceCullingState())
 		builder.SetCullMode(D3D12_CULL_MODE_BACK);

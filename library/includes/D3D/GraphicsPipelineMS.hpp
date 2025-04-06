@@ -12,9 +12,9 @@ public:
 private:
 	[[nodiscard]]
 	static std::unique_ptr<D3DPipelineObject> CreateGraphicsPipelineMS(
-		ID3D12Device2* device, ID3D12RootSignature* graphicsRootSignature, ShaderType binaryType,
-		const std::wstring& shaderPath, const ExternalGraphicsPipeline& graphicsExtPipeline,
-		const ShaderName& amplificationShader
+		ID3D12Device2* device, ID3D12RootSignature* graphicsRootSignature,
+		ShaderBinaryType binaryType, const std::wstring& shaderPath,
+		const ExternalGraphicsPipeline& graphicsExtPipeline, const ShaderName& amplificationShader
 	);
 
 	[[nodiscard]]

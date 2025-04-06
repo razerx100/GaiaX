@@ -47,7 +47,7 @@ private:
 	std::unique_ptr<D3DPipelineObject> m_computePipeline;
 	ExternalComputePipeline            m_computeExternalPipeline;
 
-	static constexpr ShaderType s_shaderBytecodeType = ShaderType::DXIL;
+	static constexpr ShaderBinaryType s_shaderBytecodeType = ShaderBinaryType::DXIL;
 
 public:
 	ComputePipeline(const ComputePipeline&) = delete;

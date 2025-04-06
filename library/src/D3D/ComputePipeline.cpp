@@ -13,7 +13,8 @@ void ComputePipeline::Create(
 }
 
 void ComputePipeline::Recreate(
-	ID3D12Device2* device, ID3D12RootSignature* computeRootSignature, const std::wstring& shaderPath
+	ID3D12Device2* device, ID3D12RootSignature* computeRootSignature,
+	const std::wstring& shaderPath
 ) {
 	m_computePipeline = _createComputePipeline(
 		device, computeRootSignature, m_computeExternalPipeline, shaderPath
@@ -26,7 +27,9 @@ std::unique_ptr<D3DPipelineObject> ComputePipeline::_createComputePipeline(
 ) {
 	auto cs            = std::make_unique<D3DShader>();
 	const bool success = cs->LoadBinary(
-		shaderPath + computeExtPipeline.GetComputeShader().GetNameWithExtension(s_shaderBytecodeType)
+		shaderPath + computeExtPipeline.GetComputeShader().GetNameWithExtension(
+			s_shaderBytecodeType
+		)
 	);
 
 	auto pso = std::make_unique<D3DPipelineObject>();

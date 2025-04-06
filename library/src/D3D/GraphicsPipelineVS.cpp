@@ -4,7 +4,7 @@
 
 // Vertex Shader
 static std::unique_ptr<D3DPipelineObject> CreateGraphicsPipelineVS(
-	ID3D12Device2* device, ID3D12RootSignature* graphicsRootSignature, ShaderType binaryType,
+	ID3D12Device2* device, ID3D12RootSignature* graphicsRootSignature, ShaderBinaryType binaryType,
 	const std::wstring& shaderPath, const ExternalGraphicsPipeline& graphicsExtPipeline
 ) {
 	auto vs              = std::make_unique<D3DShader>();

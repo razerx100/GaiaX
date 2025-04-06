@@ -15,7 +15,7 @@ std::unique_ptr<D3DPipelineObject> GraphicsPipelineMS::_createGraphicsPipeline(
 }
 
 std::unique_ptr<D3DPipelineObject> GraphicsPipelineMS::CreateGraphicsPipelineMS(
-	ID3D12Device2* device, ID3D12RootSignature* graphicsRootSignature, ShaderType binaryType,
+	ID3D12Device2* device, ID3D12RootSignature* graphicsRootSignature, ShaderBinaryType binaryType,
 	const std::wstring& shaderPath, const ExternalGraphicsPipeline& graphicsExtPipeline,
 	const ShaderName& amplificationShader
 ) {
