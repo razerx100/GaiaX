@@ -5,16 +5,15 @@
 #include <ThreadPool.hpp>
 #include <Gaia.hpp>
 
+template<class RenderEngine_t>
 class RendererDx12 final : public Renderer
 {
 public:
 	RendererDx12(
 		[[maybe_unused]] const char* appName,
 		void* windowHandle, std::uint32_t width, std::uint32_t height, std::uint32_t bufferCount,
-		std::shared_ptr<ThreadPool>&& threadPool, RenderEngineType engineType
-	) : m_gaia{
-			windowHandle, width, height, bufferCount, std::move(threadPool), engineType
-		}
+		std::shared_ptr<ThreadPool>&& threadPool
+	) : m_gaia{ windowHandle, width, height, bufferCount, std::move(threadPool) }
 	{}
 
 	void FinaliseInitialisation() override
@@ -243,7 +242,7 @@ public:
 	}
 
 private:
-	Gaia m_gaia;
+	Gaia<RenderEngine_t> m_gaia;
 
 public:
 	RendererDx12(const RendererDx12&) = delete;
