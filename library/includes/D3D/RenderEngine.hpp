@@ -210,7 +210,6 @@ protected:
 		const ModelBundle& modelBundle, ModelBuffers& modelBuffers
 	) noexcept;
 
-
 	void WaitForGraphicsQueueToFinish();
 
 protected:
@@ -227,7 +226,7 @@ protected:
 	// Space 1
 	static constexpr size_t s_modelBuffersPixelSRVRegisterSlot    = 0u;
 
-	static constexpr size_t s_textureSRVRegisterSlot  = 1u;
+	static constexpr size_t s_textureSRVRegisterSlot = 1u;
 
 protected:
 	std::shared_ptr<ThreadPool>                 m_threadPool;
@@ -368,12 +367,6 @@ public:
 	void Resize(UINT width, UINT height)
 	{
 		m_viewportAndScissors.Resize(width, height);
-	}
-
-	[[nodiscard]]
-	size_t GetCameraRegisterSlot() const noexcept
-	{
-		return ;
 	}
 
 	void Render(size_t frameIndex, ID3D12Resource* swapchainBackBuffer)
