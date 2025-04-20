@@ -22,16 +22,27 @@ class RenderEngineMS : public
 
 public:
 	RenderEngineMS(
-		const DeviceManager& deviceManager, std::shared_ptr<ThreadPool> threadPool, size_t frameCount
+		const DeviceManager& deviceManager, std::shared_ptr<ThreadPool> threadPool,
+		size_t frameCount
 	);
 
-	void FinaliseInitialisation(const DeviceManager& deviceManager) override;
+	void FinaliseInitialisation(const DeviceManager& deviceManager);
 
 	[[nodiscard]]
-	std::uint32_t AddModelBundle(std::shared_ptr<ModelBundle>&& modelBundle) override;
+	std::uint32_t AddModelBundle(std::shared_ptr<ModelBundle>&& modelBundle);
 
 	[[nodiscard]]
-	std::uint32_t AddMeshBundle(std::unique_ptr<MeshBundleTemporary> meshBundle) override;
+	std::uint32_t AddMeshBundle(std::unique_ptr<MeshBundleTemporary> meshBundle);
+
+	void SetShaderPath(const std::wstring& shaderPath)
+	{
+		_setShaderPath(shaderPath);
+	}
+
+	void WaitForGPUToFinish()
+	{
+		WaitForGraphicsQueueToFinish();
+	}
 
 private:
 	void ExecutePipelineStages(

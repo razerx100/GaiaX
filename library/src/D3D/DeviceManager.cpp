@@ -126,5 +126,4 @@ DeviceManager::Resolution DeviceManager::GetDisplayResolution(UINT displayIndex)
 		.width  = static_cast<UINT>(displayData.DesktopCoordinates.right),
 		.height = static_cast<UINT>(displayData.DesktopCoordinates.bottom)
 	};
-
 }

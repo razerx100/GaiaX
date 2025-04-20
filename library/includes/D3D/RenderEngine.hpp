@@ -33,27 +33,78 @@ class RenderEngine
 
 public:
 	RenderEngine(
-		const DeviceManager& deviceManager, std::shared_ptr<ThreadPool> threadPool, size_t frameCount
+		const DeviceManager& deviceManager, std::shared_ptr<ThreadPool> threadPool,
+		size_t frameCount
 	);
-	virtual ~RenderEngine() = default;
 
-	virtual void FinaliseInitialisation(const DeviceManager& deviceManager) = 0;
-
+	template<class Derived>
 	[[nodiscard]]
-	size_t AddTexture(STexture&& texture);
+	size_t AddTexture(this Derived& self, STexture&& texture)
+	{
+		self.WaitForGPUToFinish();
+
+		const size_t textureIndex = self.m_textureStorage.AddTexture(
+			std::move(texture), self.m_stagingManager, self.m_temporaryDataBuffer
+		);
+
+		self.m_copyNecessary = true;
+
+		return textureIndex;
+	}
 
 	void UnbindTexture(size_t textureIndex, UINT bindingIndex);
+
+	template<class Derived>
 	[[nodiscard]]
-	std::uint32_t BindTexture(size_t textureIndex);
+	std::uint32_t BindTexture(this Derived& self, size_t textureIndex)
+	{
+		const Texture& texture = self.m_textureStorage.Get(textureIndex);
+
+		// The current caching system only works for read only single textures which are bound to
+		// multiple descriptor managers. Because we only cache one of them.
+		std::optional<UINT> localCacheIndex
+			= self.m_textureStorage.GetAndRemoveTextureLocalDescIndex(
+				static_cast<UINT>(textureIndex)
+			);
+
+		return self.BindTextureCommon(texture, localCacheIndex);
+	}
 
 	void UnbindExternalTexture(UINT bindingIndex);
 
 	void RebindExternalTexture(size_t textureIndex, UINT bindingIndex);
 
+	template<class Derived>
 	[[nodiscard]]
-	std::uint32_t BindExternalTexture(size_t textureIndex);
+	std::uint32_t BindExternalTexture(this Derived& self, size_t textureIndex)
+	{
+		D3DExternalResourceFactory* resourceFactory
+			= self.m_externalResourceManager->GetD3DResourceFactory();
 
-	void RemoveTexture(size_t textureIndex);
+		const Texture& texture = resourceFactory->GetD3DTexture(textureIndex);
+
+		// Can't cache as the underlying resource might change or we might have a separate texture
+		// on each descriptor buffer.
+		return self.BindTextureCommon(texture, {});
+	}
+
+	template<class Derived>
+	void RemoveTexture(this Derived& self, size_t textureIndex)
+	{
+		self.WaitForGPUToFinish();
+
+		std::vector<UINT> localTextureCacheIndices
+			= self.m_textureStorage.GetAndRemoveTextureCacheDetails(
+				static_cast<UINT>(textureIndex)
+			);
+
+		for (UINT localCacheIndex : localTextureCacheIndices)
+			self.m_textureManager.SetLocalDescriptorAvailability<D3D12_DESCRIPTOR_RANGE_TYPE_SRV>(
+				localCacheIndex, true
+			);
+
+		self.m_textureStorage.RemoveTexture(textureIndex);
+	}
 
 	[[nodiscard]]
 	std::uint32_t AddCamera(std::shared_ptr<Camera> camera) noexcept
@@ -63,42 +114,76 @@ public:
 	void SetCamera(std::uint32_t index) noexcept { m_cameraManager.SetCamera(index); }
 	void RemoveCamera(std::uint32_t index) noexcept { m_cameraManager.RemoveCamera(index); }
 
-	virtual void SetShaderPath(const std::wstring& shaderPath) = 0;
-
-	[[nodiscard]]
-	virtual std::uint32_t AddGraphicsPipeline(const ExternalGraphicsPipeline& gfxPipeline) = 0;
-
-	virtual void ReconfigureModelPipelinesInBundle(
-		std::uint32_t modelBundleIndex, std::uint32_t decreasedModelsPipelineIndex,
-		std::uint32_t increasedModelsPipelineIndex
-	) = 0;
-
-	virtual void RemoveGraphicsPipeline(std::uint32_t pipelineIndex) noexcept = 0;
-
-	[[nodiscard]]
-	virtual void Render(size_t frameIndex, ID3D12Resource* swapchainBackBuffer) = 0;
-	virtual void Resize(UINT width, UINT height) = 0;
-
-	[[nodiscard]]
-	virtual std::uint32_t AddModelBundle(std::shared_ptr<ModelBundle>&& modelBundle) = 0;
-
-	virtual void RemoveModelBundle(std::uint32_t bundleID) noexcept = 0;
-
-	[[nodiscard]]
-	virtual std::uint32_t AddMeshBundle(std::unique_ptr<MeshBundleTemporary> meshBundle) = 0;
-
-	virtual void RemoveMeshBundle(std::uint32_t bundleIndex) noexcept = 0;
-
-	// Making this function, so this can be overriden to add the compute queues in
-	// certain Engines.
-	virtual void WaitForGPUToFinish();
-
 	[[nodiscard]]
 	const D3DCommandQueue& GetPresentQueue() const noexcept { return m_graphicsQueue; }
 
 private:
+	template<class Derived>
 	[[nodiscard]]
-	UINT BindTextureCommon(const Texture& texture, std::optional<UINT> oLocalCacheIndex);
+	UINT BindTextureCommon(
+		this Derived& self, const Texture& texture, std::optional<UINT> oLocalCacheIndex
+	) {
+		self.WaitForGPUToFinish();
+
+		static constexpr D3D12_DESCRIPTOR_RANGE_TYPE DescType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+
+		std::optional<size_t> oFreeGlobalDescIndex
+			= self.m_textureManager.GetFreeGlobalDescriptorIndex<DescType>();
+
+		// If there is no free global index, increase the limit. Right now it should be possible to
+		// have 65535 bound textures at once. There could be more textures.
+		if (!oFreeGlobalDescIndex)
+		{
+			self.m_textureManager.IncreaseMaximumBindingCount<DescType>();
+
+			for (D3DDescriptorManager& descriptorManager : self.m_graphicsDescriptorManagers)
+			{
+				const std::vector<D3DDescriptorLayout> oldLayouts
+					= descriptorManager.GetLayouts();
+
+				self.m_textureManager.SetDescriptorLayout(
+					descriptorManager, s_textureSRVRegisterSlot, s_pixelShaderRegisterSpace
+				);
+
+				descriptorManager.RecreateDescriptors(oldLayouts);
+			}
+
+			oFreeGlobalDescIndex = self.m_textureManager.GetFreeGlobalDescriptorIndex<DescType>();
+
+			// Don't need to reset the pipelines, since the table was created as bindless.
+		}
+
+		const auto freeGlobalDescIndex = static_cast<UINT>(oFreeGlobalDescIndex.value());
+
+		self.m_textureManager.SetBindingAvailability<DescType>(freeGlobalDescIndex, false);
+
+		if (oLocalCacheIndex)
+		{
+			const UINT localCacheIndex = oLocalCacheIndex.value();
+
+			const D3D12_CPU_DESCRIPTOR_HANDLE localDescriptor
+				= self.m_textureManager.GetLocalDescriptor<DescType>(localCacheIndex);
+
+			self.m_textureManager.SetLocalDescriptorAvailability<DescType>(localCacheIndex, true);
+
+			for (D3DDescriptorManager& descriptorManager : self.m_graphicsDescriptorManagers)
+				descriptorManager.SetDescriptorSRV(
+					localDescriptor, s_textureSRVRegisterSlot, s_pixelShaderRegisterSpace,
+					freeGlobalDescIndex
+				);
+		}
+		else
+			for (D3DDescriptorManager& descriptorManager : self.m_graphicsDescriptorManagers)
+				descriptorManager.CreateSRV(
+					s_textureSRVRegisterSlot, s_pixelShaderRegisterSpace, freeGlobalDescIndex,
+					texture.Get(), texture.GetSRVDesc()
+				);
+		// Since it is a descriptor table, there is no point in setting it every time.
+		// It should be fine to just bind it once after the descriptorManagers have
+		// been created.
+
+		return freeGlobalDescIndex;
+	}
 
 public:
 	// External stuff
@@ -111,46 +196,22 @@ public:
 	void UpdateExternalBufferDescriptor(const ExternalBufferBindingDetails& bindingDetails);
 
 	void UploadExternalBufferGPUOnlyData(
-		std::uint32_t externalBufferIndex, std::shared_ptr<void> cpuData, size_t srcDataSizeInBytes,
-		size_t dstBufferOffset
+		std::uint32_t externalBufferIndex, std::shared_ptr<void> cpuData,
+		size_t srcDataSizeInBytes, size_t dstBufferOffset
 	);
 	void QueueExternalBufferGPUCopy(
 		std::uint32_t externalBufferSrcIndex, std::uint32_t externalBufferDstIndex,
 		size_t dstBufferOffset, size_t srcBufferOffset, size_t srcDataSizeInBytes
 	);
 
-	[[nodiscard]]
-	virtual std::uint32_t AddExternalRenderPass(D3DReusableDescriptorHeap* rtvHeap) = 0;
-	[[nodiscard]]
-	virtual ExternalRenderPass* GetExternalRenderPassRP(size_t index) const noexcept = 0;
-	[[nodiscard]]
-	virtual std::shared_ptr<ExternalRenderPass> GetExternalRenderPassSP(
-		size_t index
-	) const noexcept = 0;
-
-	virtual void SetSwapchainExternalRenderPass(D3DReusableDescriptorHeap* rtvHeap) = 0;
-
-	[[nodiscard]]
-	virtual ExternalRenderPass* GetSwapchainExternalRenderPassRP() const noexcept = 0;
-	[[nodiscard]]
-	virtual std::shared_ptr<ExternalRenderPass> GetSwapchainExternalRenderPassSP() const noexcept = 0;
-
-	virtual void RemoveExternalRenderPass(size_t index) noexcept = 0;
-	virtual void RemoveSwapchainExternalRenderPass() noexcept = 0;
-
-	[[nodiscard]]
-	virtual size_t GetActiveRenderPassCount() const noexcept = 0;
-
 protected:
-	[[nodiscard]]
-	virtual size_t GetCameraRegisterSlot() const noexcept = 0;
-
 	[[nodiscard]]
 	static std::vector<std::uint32_t> AddModelsToBuffer(
 		const ModelBundle& modelBundle, ModelBuffers& modelBuffers
 	) noexcept;
 
-	void SetCommonGraphicsDescriptorLayout(D3D12_SHADER_VISIBILITY cameraShaderVisibility) noexcept;
+
+	void WaitForGraphicsQueueToFinish();
 
 protected:
 	// These descriptors are bound to the pixel shader. So, they should be the same across
@@ -251,11 +312,13 @@ protected:
 
 public:
 	RenderEngineCommon(
-		const DeviceManager& deviceManager, std::shared_ptr<ThreadPool> threadPool, size_t frameCount
+		const DeviceManager& deviceManager, std::shared_ptr<ThreadPool> threadPool,
+		size_t frameCount
 	) : RenderEngine{ deviceManager, std::move(threadPool), frameCount },
 		m_modelManager{},
 		m_modelBuffers{
-			deviceManager.GetDevice(), m_memoryManager.get(), static_cast<std::uint32_t>(frameCount)
+			deviceManager.GetDevice(), m_memoryManager.get(),
+			static_cast<std::uint32_t>(frameCount)
 		},
 		m_meshManager{ deviceManager.GetDevice(), m_memoryManager.get() },
 		m_graphicsPipelineManager{ deviceManager.GetDevice() },
@@ -267,12 +330,8 @@ public:
 			);
 	}
 
-	void SetShaderPath(const std::wstring& shaderPath) override
-	{
-		m_graphicsPipelineManager.SetShaderPath(shaderPath);
-	}
 	[[nodiscard]]
-	std::uint32_t AddGraphicsPipeline(const ExternalGraphicsPipeline& gfxPipeline) override
+	std::uint32_t AddGraphicsPipeline(const ExternalGraphicsPipeline& gfxPipeline)
 	{
 		return m_graphicsPipelineManager.AddOrGetGraphicsPipeline(gfxPipeline);
 	}
@@ -280,23 +339,23 @@ public:
 	void ReconfigureModelPipelinesInBundle(
 		std::uint32_t modelBundleIndex, std::uint32_t decreasedModelsPipelineIndex,
 		std::uint32_t increasedModelsPipelineIndex
-	) override {
+	) {
 		m_modelManager->ReconfigureModels(
 			modelBundleIndex, decreasedModelsPipelineIndex, increasedModelsPipelineIndex
 		);
 	}
 
-	void RemoveGraphicsPipeline(std::uint32_t pipelineIndex) noexcept override
+	void RemoveGraphicsPipeline(std::uint32_t pipelineIndex) noexcept
 	{
 		m_graphicsPipelineManager.SetOverwritable(pipelineIndex);
 	}
 
-	void RemoveMeshBundle(std::uint32_t bundleIndex) noexcept override
+	void RemoveMeshBundle(std::uint32_t bundleIndex) noexcept
 	{
 		m_meshManager.RemoveMeshBundle(bundleIndex);
 	}
 
-	void RemoveModelBundle(std::uint32_t bundleIndex) noexcept override
+	void RemoveModelBundle(std::uint32_t bundleIndex) noexcept
 	{
 		std::shared_ptr<ModelBundle> modelBundle = m_modelManager->RemoveModelBundle(bundleIndex);
 
@@ -306,18 +365,18 @@ public:
 			m_modelBuffers.Remove(model->GetModelIndexInBuffer());
 	}
 
-	void Resize(UINT width, UINT height) override
+	void Resize(UINT width, UINT height)
 	{
 		m_viewportAndScissors.Resize(width, height);
 	}
 
 	[[nodiscard]]
-	size_t GetCameraRegisterSlot() const noexcept override
+	size_t GetCameraRegisterSlot() const noexcept
 	{
-		return Derived::s_cameraCBVRegisterSlot;
+		return ;
 	}
 
-	void Render(size_t frameIndex, ID3D12Resource* swapchainBackBuffer) final
+	void Render(size_t frameIndex, ID3D12Resource* swapchainBackBuffer)
 	{
 		// Wait for the previous Graphics command buffer to finish.
 		UINT64& counterValue = m_counterValues[frameIndex];
@@ -340,7 +399,7 @@ public:
 	}
 
 	[[nodiscard]]
-	std::uint32_t AddExternalRenderPass(D3DReusableDescriptorHeap* rtvHeap) override
+	std::uint32_t AddExternalRenderPass(D3DReusableDescriptorHeap* rtvHeap)
 	{
 		return static_cast<std::uint32_t>(
 			m_renderPasses.Add(
@@ -353,24 +412,24 @@ public:
 	}
 
 	[[nodiscard]]
-	ExternalRenderPass* GetExternalRenderPassRP(size_t index) const noexcept override
+	ExternalRenderPass* GetExternalRenderPassRP(size_t index) const noexcept
 	{
 		return m_renderPasses[index].get();
 	}
 
 	[[nodiscard]]
-	std::shared_ptr<ExternalRenderPass> GetExternalRenderPassSP(size_t index) const noexcept override
+	std::shared_ptr<ExternalRenderPass> GetExternalRenderPassSP(size_t index) const noexcept
 	{
 		return m_renderPasses[index];
 	}
 
-	void RemoveExternalRenderPass(size_t index) noexcept override
+	void RemoveExternalRenderPass(size_t index) noexcept
 	{
 		m_renderPasses[index].reset();
 		m_renderPasses.RemoveElement(index);
 	}
 
-	void SetSwapchainExternalRenderPass(D3DReusableDescriptorHeap* rtvHeap) override
+	void SetSwapchainExternalRenderPass(D3DReusableDescriptorHeap* rtvHeap)
 	{
 		m_swapchainRenderPass = std::make_shared<ExternalRenderPass_t>(
 			m_modelManager.get(), m_externalResourceManager->GetD3DResourceFactory(),
@@ -379,24 +438,24 @@ public:
 	}
 
 	[[nodiscard]]
-	ExternalRenderPass* GetSwapchainExternalRenderPassRP() const noexcept override
+	ExternalRenderPass* GetSwapchainExternalRenderPassRP() const noexcept
 	{
 		return m_swapchainRenderPass.get();
 	}
 
 	[[nodiscard]]
-	std::shared_ptr<ExternalRenderPass> GetSwapchainExternalRenderPassSP() const noexcept override
+	std::shared_ptr<ExternalRenderPass> GetSwapchainExternalRenderPassSP() const noexcept
 	{
 		return m_swapchainRenderPass;
 	}
 
-	void RemoveSwapchainExternalRenderPass() noexcept override
+	void RemoveSwapchainExternalRenderPass() noexcept
 	{
 		m_swapchainRenderPass.reset();
 	}
 
 	[[nodiscard]]
-	size_t GetActiveRenderPassCount() const noexcept override
+	size_t GetActiveRenderPassCount() const noexcept
 	{
 		size_t activeRenderPassCount = m_renderPasses.GetIndicesManager().GetActiveIndexCount();
 
@@ -414,6 +473,20 @@ protected:
 		static_cast<Derived const*>(this)->_updatePerFrame(frameIndex);
 
 		m_externalResourceManager->UpdateExtensionData(static_cast<size_t>(frameIndex));
+	}
+
+	void _setShaderPath(const std::wstring& shaderPath)
+	{
+		m_graphicsPipelineManager.SetShaderPath(shaderPath);
+	}
+
+	void SetCommonGraphicsDescriptorLayout(
+		D3D12_SHADER_VISIBILITY cameraShaderVisibility
+	) noexcept {
+		m_cameraManager.SetDescriptorLayoutGraphics(
+			m_graphicsDescriptorManagers, Derived::s_cameraCBVRegisterSlot,
+			s_vertexShaderRegisterSpace, cameraShaderVisibility
+		);
 	}
 
 protected:

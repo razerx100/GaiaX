@@ -101,7 +101,8 @@ std::uint32_t RenderEngineVSIndividual::AddModelBundle(std::shared_ptr<ModelBund
 {
 	WaitForGPUToFinish();
 
-	std::vector<std::uint32_t> modelBufferIndices = AddModelsToBuffer(*modelBundle, m_modelBuffers);
+	std::vector<std::uint32_t> modelBufferIndices
+		= AddModelsToBuffer(*modelBundle, m_modelBuffers);
 
 	const std::uint32_t index = m_modelManager->AddModelBundle(
 		std::move(modelBundle), modelBufferIndices
@@ -116,13 +117,16 @@ std::uint32_t RenderEngineVSIndividual::AddModelBundle(std::shared_ptr<ModelBund
 	return index;
 }
 
-std::uint32_t RenderEngineVSIndividual::AddMeshBundle(std::unique_ptr<MeshBundleTemporary> meshBundle)
-{
+std::uint32_t RenderEngineVSIndividual::AddMeshBundle(
+	std::unique_ptr<MeshBundleTemporary> meshBundle
+) {
 	WaitForGPUToFinish();
 
 	m_copyNecessary = true;
 
-	return m_meshManager.AddMeshBundle(std::move(meshBundle), m_stagingManager, m_temporaryDataBuffer);
+	return m_meshManager.AddMeshBundle(
+		std::move(meshBundle), m_stagingManager, m_temporaryDataBuffer
+	);
 }
 
 ID3D12Fence* RenderEngineVSIndividual::GenericCopyStage(
@@ -193,7 +197,8 @@ void RenderEngineVSIndividual::DrawRenderPassPipelines(
 }
 
 void RenderEngineVSIndividual::DrawingStage(
-	size_t frameIndex, ID3D12Resource* swapchainBackBuffer, UINT64& counterValue, ID3D12Fence* waitFence
+	size_t frameIndex, ID3D12Resource* swapchainBackBuffer, UINT64& counterValue,
+	ID3D12Fence* waitFence
 ) {
 	// Graphics Phase
 	const D3DCommandList& graphicsCmdList = m_graphicsQueue.GetCommandList(frameIndex);
@@ -262,7 +267,8 @@ RenderEngineVSIndirect::RenderEngineVSIndirect(
 	const DeviceManager& deviceManager, std::shared_ptr<ThreadPool> threadPool, size_t frameCount
 ) : RenderEngineCommon{ deviceManager, std::move(threadPool), frameCount },
 	m_computeQueue{}, m_computeWait{}, m_computeDescriptorManagers{},
-	m_computePipelineManager{ deviceManager.GetDevice() }, m_computeRootSignature{}, m_commandSignature{}
+	m_computePipelineManager{ deviceManager.GetDevice() }, m_computeRootSignature{},
+	m_commandSignature{}
 {
 	m_modelManager = std::make_unique<ModelManagerVSIndirect>(
 		deviceManager.GetDevice(), m_memoryManager.get(), static_cast<std::uint32_t>(frameCount)
@@ -379,7 +385,10 @@ void RenderEngineVSIndirect::SetGraphicsDescriptorBufferLayout()
 {
 	// Graphics Descriptors.
 	// The layout shouldn't change throughout the runtime.
-	m_modelManager->SetDescriptorLayoutVS(m_graphicsDescriptorManagers, s_vertexShaderRegisterSpace);
+	m_modelManager->SetDescriptorLayoutVS(
+		m_graphicsDescriptorManagers, s_vertexShaderRegisterSpace
+	);
+
 	SetCommonGraphicsDescriptorLayout(D3D12_SHADER_VISIBILITY_ALL);
 
 	const auto frameCount = std::size(m_graphicsDescriptorManagers);
@@ -401,15 +410,22 @@ void RenderEngineVSIndirect::SetGraphicsDescriptorBufferLayout()
 
 void RenderEngineVSIndirect::SetComputeDescriptorBufferLayout()
 {
-	m_modelManager->SetDescriptorLayoutCS(m_computeDescriptorManagers, s_computeShaderRegisterSpace);
-	m_meshManager.SetDescriptorLayoutCS(m_computeDescriptorManagers, s_computeShaderRegisterSpace);
+	m_modelManager->SetDescriptorLayoutCS(
+		m_computeDescriptorManagers, s_computeShaderRegisterSpace
+	);
+
+	m_meshManager.SetDescriptorLayoutCS(
+		m_computeDescriptorManagers, s_computeShaderRegisterSpace
+	);
+
 	m_cameraManager.SetDescriptorLayoutCompute(
 		m_computeDescriptorManagers, s_cameraCSCBVRegisterSlot, s_computeShaderRegisterSpace
 	);
 
 	for (D3DDescriptorManager& descriptorManager : m_computeDescriptorManagers)
 		descriptorManager.AddRootSRV(
-			s_modelBuffersCSSRVRegisterSlot, s_computeShaderRegisterSpace, D3D12_SHADER_VISIBILITY_ALL
+			s_modelBuffersCSSRVRegisterSlot, s_computeShaderRegisterSpace,
+			D3D12_SHADER_VISIBILITY_ALL
 		);
 }
 
@@ -426,7 +442,7 @@ void RenderEngineVSIndirect::ExecutePipelineStages(
 
 void RenderEngineVSIndirect::SetShaderPath(const std::wstring& shaderPath)
 {
-	RenderEngineCommon::SetShaderPath(shaderPath);
+	_setShaderPath(shaderPath);
 
 	m_computePipelineManager.SetShaderPath(shaderPath);
 }
@@ -694,7 +710,8 @@ ID3D12Fence* RenderEngineVSIndirect::FrustumCullingStage(
 }
 
 void RenderEngineVSIndirect::DrawRenderPassPipelines(
-	size_t frameIndex, const D3DCommandList& graphicsCmdList, const ExternalRenderPass_t& renderPass
+	size_t frameIndex, const D3DCommandList& graphicsCmdList,
+	const ExternalRenderPass_t& renderPass
 ) const noexcept {
 	const std::vector<D3DExternalRenderPass::PipelineDetails>& pipelineDetails
 		= renderPass.GetPipelineDetails();
@@ -719,7 +736,8 @@ void RenderEngineVSIndirect::DrawRenderPassPipelines(
 }
 
 void RenderEngineVSIndirect::DrawingStage(
-	size_t frameIndex, ID3D12Resource* swapchainBackBuffer, UINT64& counterValue, ID3D12Fence* waitFence
+	size_t frameIndex, ID3D12Resource* swapchainBackBuffer, UINT64& counterValue,
+	ID3D12Fence* waitFence
 ) {
 	// Graphics Phase
 	const D3DCommandList& graphicsCmdList = m_graphicsQueue.GetCommandList(frameIndex);
