@@ -33,9 +33,9 @@ public:
 	ID3D12Heap* GetHeap() const noexcept { return m_heap.Get(); }
 
 private:
-	D3DHeap       m_heap;
-	Buddy         m_allocator;
-	std::uint16_t m_id;
+	D3DHeap         m_heap;
+	Callisto::Buddy m_allocator;
+	std::uint16_t   m_id;
 
 public:
 	D3DAllocator(const D3DAllocator&) = delete;
@@ -70,7 +70,8 @@ public:
 
 public:
 	MemoryManager(
-		IDXGIAdapter3* adapter, ID3D12Device* device, UINT64 initialBudgetGPU, UINT64 initialBudgetCPU
+		IDXGIAdapter3* adapter, ID3D12Device* device, UINT64 initialBudgetGPU,
+		UINT64 initialBudgetCPU
 	);
 
 	[[nodiscard]]

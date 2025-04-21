@@ -18,9 +18,10 @@ void D3DHeap::Allocate(ID3D12Device* device, D3D12_HEAP_TYPE type, UINT64 size, 
 	};
 
 	const UINT64 alignment
-		= msaa ? D3D12_DEFAULT_MSAA_RESOURCE_PLACEMENT_ALIGNMENT : D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
+		= msaa ? D3D12_DEFAULT_MSAA_RESOURCE_PLACEMENT_ALIGNMENT
+			: D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
 
-	const UINT64 alignedSize = Align(size, alignment);
+	const UINT64 alignedSize = Callisto::Align(size, alignment);
 
 	D3D12_HEAP_DESC desc
 	{

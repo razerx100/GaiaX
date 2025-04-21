@@ -13,7 +13,8 @@ class D3DExternalResourceFactory : public ExternalResourceFactory
 	using ExternalTexture_t = std::shared_ptr<D3DExternalTexture>;
 public:
 	D3DExternalResourceFactory(ID3D12Device* device, MemoryManager* memoryManager)
-		: m_device{ device }, m_memoryManager{ memoryManager }, m_externalBuffers{}, m_externalTextures{}
+		: m_device{ device }, m_memoryManager{ memoryManager }, m_externalBuffers{},
+		m_externalTextures{}
 	{}
 
 	[[nodiscard]]
@@ -73,17 +74,18 @@ public:
 	}
 
 private:
-	ID3D12Device*                     m_device;
-	MemoryManager*                    m_memoryManager;
-	ReusableVector<ExternalBuffer_t>  m_externalBuffers;
-	ReusableVector<ExternalTexture_t> m_externalTextures;
+	ID3D12Device*                               m_device;
+	MemoryManager*                              m_memoryManager;
+	Callisto::ReusableVector<ExternalBuffer_t>  m_externalBuffers;
+	Callisto::ReusableVector<ExternalTexture_t> m_externalTextures;
 
 public:
 	D3DExternalResourceFactory(const D3DExternalResourceFactory&) = delete;
 	D3DExternalResourceFactory& operator=(const D3DExternalResourceFactory&) = delete;
 
 	D3DExternalResourceFactory(D3DExternalResourceFactory&& other) noexcept
-		: m_device{ other.m_device }, m_memoryManager{ std::exchange(other.m_memoryManager, nullptr) },
+		: m_device{ other.m_device },
+		m_memoryManager{ std::exchange(other.m_memoryManager, nullptr) },
 		m_externalBuffers{ std::move(other.m_externalBuffers) },
 		m_externalTextures{ std::move(other.m_externalTextures) }
 	{}

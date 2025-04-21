@@ -126,10 +126,10 @@ private:
 	}
 
 private:
-	ID3D12Device5*           m_device;
-	ID3D12RootSignature*     m_rootSignature;
-	std::wstring             m_shaderPath;
-	ReusableVector<Pipeline> m_pipelines;
+	ID3D12Device5*                     m_device;
+	ID3D12RootSignature*               m_rootSignature;
+	std::wstring                       m_shaderPath;
+	Callisto::ReusableVector<Pipeline> m_pipelines;
 
 public:
 	PipelineManager(const PipelineManager&) = delete;

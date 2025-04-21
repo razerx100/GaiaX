@@ -152,8 +152,8 @@ private:
 	UINT AllocateDescriptor();
 
 private:
-	D3DDescriptorHeap m_descriptorHeap;
-	IndicesManager    m_indicesManager;
+	D3DDescriptorHeap        m_descriptorHeap;
+	Callisto::IndicesManager m_indicesManager;
 
 public:
 	D3DReusableDescriptorHeap(const D3DReusableDescriptorHeap&) = delete;

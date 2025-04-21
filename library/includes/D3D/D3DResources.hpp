@@ -94,7 +94,9 @@ public:
 	template<std::integral T>
 	static UINT64 GetCBVAlignedAddress(T address) noexcept
 	{
-		return static_cast<UINT64>(Align(address, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT));
+		return static_cast<UINT64>(
+			Callisto::Align(address, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT)
+		);
 	}
 
 	[[nodiscard]]
@@ -106,7 +108,9 @@ public:
 		UINT elementCount, UINT strideSize, UINT64 firstElement = 0u, bool raw = false
 	) noexcept;
 	[[nodiscard]]
-	D3D12_CONSTANT_BUFFER_VIEW_DESC GetCBVDesc(UINT64 startingOffset, UINT bufferSize) const noexcept;
+	D3D12_CONSTANT_BUFFER_VIEW_DESC GetCBVDesc(
+		UINT64 startingOffset, UINT bufferSize
+	) const noexcept;
 
 private:
 	void SelfDestruct() noexcept;
@@ -121,7 +125,8 @@ public:
 
 	Buffer(Buffer&& other) noexcept
 		: Resource{ std::move(other) },
-		m_cpuHandle{ std::exchange(other.m_cpuHandle, nullptr) }, m_bufferSize{ other.m_bufferSize }
+		m_cpuHandle{ std::exchange(other.m_cpuHandle, nullptr) },
+		m_bufferSize{ other.m_bufferSize }
 	{}
 	Buffer& operator=(Buffer&& other) noexcept
 	{
@@ -365,7 +370,8 @@ private:
 	static D3D12_STATIC_BORDER_COLOR ConvertColour(const std::array<FLOAT, 4u>& colour) noexcept;
 
 	static D3D12_SAMPLER_DESC GetSamplerDesc(
-		const D3D12_STATIC_SAMPLER_DESC& staticSamplerDesc, const std::array<FLOAT, 4u>& borderColour
+		const D3D12_STATIC_SAMPLER_DESC& staticSamplerDesc,
+		const std::array<FLOAT, 4u>& borderColour
 	) noexcept;
 
 private:

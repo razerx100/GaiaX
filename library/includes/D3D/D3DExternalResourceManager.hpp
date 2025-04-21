@@ -88,7 +88,7 @@ private:
 
 private:
 	std::unique_ptr<D3DExternalResourceFactory> m_resourceFactory;
-	ReusableVector<GfxExtension_t>              m_gfxExtensions;
+	Callisto::ReusableVector<GfxExtension_t>    m_gfxExtensions;
 	std::vector<GPUCopyDetails>                 m_copyQueueDetails;
 
 	static constexpr size_t s_externalBufferRegisterSpace = 2u;

@@ -359,5 +359,5 @@ UINT64 Texture::GetRowPitch() const noexcept
 
 UINT64 Texture::GetRowPitchD3DAligned() const noexcept
 {
-	return Align(GetRowPitch(), D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
+	return Callisto::Align(GetRowPitch(), D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
 }

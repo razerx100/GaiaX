@@ -10,8 +10,9 @@ template<class Derived, class T>
 class ReusableD3DBuffer
 {
 public:
-	ReusableD3DBuffer(ID3D12Device* device, MemoryManager* memoryManager, D3D12_HEAP_TYPE memoryType)
-		: m_buffers{ device, memoryManager, memoryType }, m_elements{}
+	ReusableD3DBuffer(
+		ID3D12Device* device, MemoryManager* memoryManager, D3D12_HEAP_TYPE memoryType
+	) : m_buffers{ device, memoryManager, memoryType }, m_elements{}
 	{}
 
 	template<typename U>
@@ -19,12 +20,14 @@ public:
 	// Returns the index of the element in the ElementBuffer.
 	size_t Add(U&& element)
 	{
-		const size_t oldCount          = m_elements.GetCount();
-		const size_t extraElementCount = static_cast<Derived*>(this)->GetExtraElementAllocationCount();
+		const size_t oldCount = m_elements.GetCount();
 
-		const size_t elementIndex      = m_elements.Add(std::forward<U>(element), extraElementCount);
+		const size_t extraElementCount
+			= static_cast<Derived*>(this)->GetExtraElementAllocationCount();
 
-		const size_t newCount          = m_elements.GetCount();
+		const size_t elementIndex = m_elements.Add(std::forward<U>(element), extraElementCount);
+
+		const size_t newCount     = m_elements.GetCount();
 
 		if(newCount > oldCount)
 			static_cast<Derived*>(this)->CreateBuffer(newCount);
@@ -36,9 +39,12 @@ public:
 	// Returns the indices of the elements in the ElementBuffer.
 	std::vector<size_t> AddMultiple(std::vector<T>&& elements)
 	{
-		const size_t oldCount          = m_elements.GetCount();
-		const size_t extraElementCount = static_cast<Derived*>(this)->GetExtraElementAllocationCount();
-		const size_t elementCount      = std::size(elements);
+		const size_t oldCount = m_elements.GetCount();
+
+		const size_t extraElementCount
+			= static_cast<Derived*>(this)->GetExtraElementAllocationCount();
+
+		const size_t elementCount = std::size(elements);
 
 		std::vector<size_t> elementIndices{};
 		elementIndices.reserve(elementCount);
@@ -62,9 +68,12 @@ public:
 	// Returns the indices of the elements in the ElementBuffer.
 	std::vector<std::uint32_t> AddMultipleRU32(std::vector<T>&& elements)
 	{
-		const size_t oldCount          = m_elements.GetCount();
-		const size_t extraElementCount = static_cast<Derived*>(this)->GetExtraElementAllocationCount();
-		const size_t elementCount      = std::size(elements);
+		const size_t oldCount = m_elements.GetCount();
+
+		const size_t extraElementCount
+			= static_cast<Derived*>(this)->GetExtraElementAllocationCount();
+
+		const size_t elementCount = std::size(elements);
 
 		std::vector<std::uint32_t> elementIndices{};
 		elementIndices.reserve(elementCount);
@@ -91,8 +100,8 @@ protected:
 	size_t GetCount() const noexcept { return m_elements.GetCount(); }
 
 protected:
-	Buffer            m_buffers;
-	ReusableVector<T> m_elements;
+	Buffer                      m_buffers;
+	Callisto::ReusableVector<T> m_elements;
 
 public:
 	ReusableD3DBuffer(const ReusableD3DBuffer&) = delete;
@@ -129,6 +138,7 @@ private:
 		newBuffer.Create(buffersSize, D3D12_RESOURCE_STATE_GENERIC_READ);
 
 		const UINT64 oldBufferSize = m_buffer.BufferSize();
+
 		if (oldBufferSize)
 			memcpy(newBuffer.CPUHandle(), m_buffer.CPUHandle(), m_buffer.BufferSize());
 

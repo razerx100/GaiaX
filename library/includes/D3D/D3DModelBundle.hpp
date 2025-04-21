@@ -366,8 +366,8 @@ protected:
 	}
 
 protected:
-	ReusableVector<Pipeline_t>   m_pipelines;
-	std::shared_ptr<ModelBundle> m_modelBundle;
+	Callisto::ReusableVector<Pipeline_t> m_pipelines;
+	std::shared_ptr<ModelBundle>         m_modelBundle;
 
 public:
 	ModelBundleBase(const ModelBundleBase&) = delete;

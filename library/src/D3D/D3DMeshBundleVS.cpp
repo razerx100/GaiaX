@@ -15,7 +15,7 @@ void D3DMeshBundleVS::_setMeshBundle(
 	// Vertex Buffer
 	{
 		const std::vector<Vertex>& vertices = meshBundle->GetVertices();
-		const auto vertexBufferSize         = static_cast<UINT64>(sizeof(Vertex) * std::size(vertices));
+		const auto vertexBufferSize = static_cast<UINT64>(sizeof(Vertex) * std::size(vertices));
 
 		m_vertexBufferSharedData = vertexSharedBuffer.AllocateAndGetSharedData(
 			vertexBufferSize, tempBuffer
@@ -35,7 +35,9 @@ void D3DMeshBundleVS::_setMeshBundle(
 		const std::vector<std::uint32_t>& indices = meshBundle->GetVertexIndices();
 		const auto indexBufferSize                = sizeof(std::uint32_t) * std::size(indices);
 
-		m_indexBufferSharedData = indexSharedBuffer.AllocateAndGetSharedData(indexBufferSize, tempBuffer);
+		m_indexBufferSharedData = indexSharedBuffer.AllocateAndGetSharedData(
+			indexBufferSize, tempBuffer
+		);
 
 		std::shared_ptr<std::uint8_t[]> indexBufferData = CopyVectorToSharedPtr(indices);
 
@@ -58,7 +60,8 @@ void D3DMeshBundleVS::SetMeshBundle(
 	meshBundle->GenerateTemporaryData(false);
 
 	_setMeshBundle(
-		std::move(meshBundle), stagingBufferMan, vertexSharedBuffer, indexSharedBuffer, tempBuffer
+		std::move(meshBundle), stagingBufferMan, vertexSharedBuffer, indexSharedBuffer,
+		tempBuffer
 	);
 }
 
@@ -81,7 +84,9 @@ void D3DMeshBundleVS::SetMeshBundle(
 	const size_t meshCount     = std::size(meshDetailsVS);
 	const auto perMeshDataSize = static_cast<UINT64>(perMeshDataStride * meshCount);
 
-	m_perMeshSharedData    = perMeshSharedBuffer.AllocateAndGetSharedData(perMeshDataSize, tempBuffer);
+	m_perMeshSharedData = perMeshSharedBuffer.AllocateAndGetSharedData(
+		perMeshDataSize, tempBuffer
+	);
 
 	auto perMeshBufferData = std::make_shared<std::uint8_t[]>(perMeshDataSize);
 
@@ -109,7 +114,9 @@ void D3DMeshBundleVS::SetMeshBundle(
 	{
 		PerMeshBundleData bundleData
 		{
-			.meshOffset = static_cast<std::uint32_t>(m_perMeshSharedData.offset / perMeshDataStride)
+			.meshOffset = static_cast<std::uint32_t>(
+				m_perMeshSharedData.offset / perMeshDataStride
+			)
 		};
 
 		memcpy(perBundleData.get(), &bundleData, perMeshBundleDataSize);

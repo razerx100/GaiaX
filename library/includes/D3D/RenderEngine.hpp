@@ -483,12 +483,12 @@ protected:
 	}
 
 protected:
-	std::unique_ptr<ModelManager_t>        m_modelManager;
-	ModelBuffers                           m_modelBuffers;
-	MeshManager_t                          m_meshManager;
-	PipelineManager<GraphicsPipeline_t>    m_graphicsPipelineManager;
-	ReusableVector<ExternalRenderPassSP_t> m_renderPasses;
-	ExternalRenderPassSP_t                 m_swapchainRenderPass;
+	std::unique_ptr<ModelManager_t>                  m_modelManager;
+	ModelBuffers                                     m_modelBuffers;
+	MeshManager_t                                    m_meshManager;
+	PipelineManager<GraphicsPipeline_t>              m_graphicsPipelineManager;
+	Callisto::ReusableVector<ExternalRenderPassSP_t> m_renderPasses;
+	ExternalRenderPassSP_t                           m_swapchainRenderPass;
 
 public:
 	RenderEngineCommon(const RenderEngineCommon&) = delete;

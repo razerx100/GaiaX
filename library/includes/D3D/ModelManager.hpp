@@ -42,7 +42,7 @@ protected:
 	}
 
 protected:
-	ReusableVector<ModelBundleType> m_modelBundles;
+	Callisto::ReusableVector<ModelBundleType> m_modelBundles;
 
 public:
 	ModelManager(const ModelManager&) = delete;

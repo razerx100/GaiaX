@@ -68,7 +68,8 @@ SharedBufferData SharedBufferGPU::AllocateAndGetSharedData(
 	UINT64 size, TemporaryDataBufferGPU& tempBuffer
 ) {
 	auto availableAllocIndex = m_allocator.GetAvailableAllocInfo(size);
-	SharedBufferAllocator::AllocInfo allocInfo{ .offset = 0u, .size = 0u };
+
+	Callisto::SharedBufferAllocator::AllocInfo allocInfo{ .offset = 0u, .size = 0u };
 
 	if (!availableAllocIndex)
 	{

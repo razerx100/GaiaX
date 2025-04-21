@@ -78,15 +78,15 @@ private:
 	};
 
 private:
-	ID3D12Device*                     m_device;
-	MemoryManager*                    m_memoryManager;
+	ID3D12Device*                               m_device;
+	MemoryManager*                              m_memoryManager;
 	// The TextureView objects need to have the same address until their data is copied.
 	// For the transitionQueue member and also the StagingBufferManager.
-	ReusableDeque<Texture>            m_textures;
-	ReusableDeque<D3D12_SAMPLER_DESC> m_samplers;
-	std::queue<Texture const*>        m_transitionQueue;
+	Callisto::ReusableDeque<Texture>            m_textures;
+	Callisto::ReusableDeque<D3D12_SAMPLER_DESC> m_samplers;
+	std::queue<Texture const*>                  m_transitionQueue;
 
-	std::vector<TextureCacheDetails>  m_textureCacheDetails;
+	std::vector<TextureCacheDetails>            m_textureCacheDetails;
 	// Sampler cache too at some point?
 
 	static constexpr DXGI_FORMAT s_textureFormat = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
@@ -146,10 +146,10 @@ public:
 
 private:
 	ID3D12Device*     m_device;
-	IndicesManager    m_availableIndicesTextures;
-	IndicesManager    m_availableIndicesSamplers;
-	D3DDescriptorHeap m_localTextureDescHeap;
-	IndicesManager    m_textureCaches;
+	Callisto::IndicesManager m_availableIndicesTextures;
+	Callisto::IndicesManager m_availableIndicesSamplers;
+	D3DDescriptorHeap        m_localTextureDescHeap;
+	Callisto::IndicesManager m_textureCaches;
 	// Need another local heap for the samplers.
 
 private:
@@ -190,7 +190,7 @@ public:
 	[[nodiscard]]
 	std::optional<size_t> GetFreeGlobalDescriptorIndex() const noexcept
 	{
-		const IndicesManager& availableBindings = GetAvailableBindings<type>();
+		const Callisto::IndicesManager& availableBindings = GetAvailableBindings<type>();
 
 		return availableBindings.GetFirstAvailableIndex();
 	}
@@ -198,7 +198,7 @@ public:
 	template<D3D12_DESCRIPTOR_RANGE_TYPE type>
 	void SetBindingAvailability(UINT descriptorIndex, bool availability) noexcept
 	{
-		IndicesManager& availableBindings = GetAvailableBindings<type>();
+		Callisto::IndicesManager& availableBindings = GetAvailableBindings<type>();
 
 		if (std::size(availableBindings) > descriptorIndex)
 			availableBindings.ToggleAvailability(static_cast<size_t>(descriptorIndex), availability);
@@ -222,7 +222,7 @@ public:
 	template<D3D12_DESCRIPTOR_RANGE_TYPE type>
 	void SetLocalDescriptorAvailability(UINT localDescIndex, bool availability) noexcept
 	{
-		IndicesManager& localCaches = GetCaches<type>();
+		Callisto::IndicesManager& localCaches = GetCaches<type>();
 
 		localCaches.ToggleAvailability(localDescIndex, availability);
 	}
@@ -230,7 +230,7 @@ public:
 	template<D3D12_DESCRIPTOR_RANGE_TYPE type>
 	UINT GetFirstFreeLocalDescriptor()
 	{
-		IndicesManager& localCaches      = GetCaches<type>();
+		Callisto::IndicesManager& localCaches = GetCaches<type>();
 
 		std::optional<size_t> oFreeIndex = localCaches.GetFirstAvailableIndex();
 

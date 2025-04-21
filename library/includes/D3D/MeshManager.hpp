@@ -48,8 +48,8 @@ public:
 	const D3DMeshBundle& GetBundle(size_t index) const noexcept { return m_meshBundles.at(index); }
 
 protected:
-	ReusableVector<D3DMeshBundle> m_meshBundles;
-	bool                          m_oldBufferCopyNecessary;
+	Callisto::ReusableVector<D3DMeshBundle> m_meshBundles;
+	bool                                    m_oldBufferCopyNecessary;
 
 public:
 	MeshManager(const MeshManager&) = delete;

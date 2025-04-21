@@ -44,12 +44,12 @@ public:
 	ID3D12Resource* GetD3Dbuffer() const noexcept { return m_buffer.Get(); }
 
 protected:
-	ID3D12Device*         m_device;
-	MemoryManager*        m_memoryManager;
-	Buffer                m_buffer;
-	SharedBufferAllocator m_allocator;
-	D3D12_RESOURCE_STATES m_resourceState;
-	D3D12_RESOURCE_FLAGS  m_bufferFlag;
+	ID3D12Device*                   m_device;
+	MemoryManager*                  m_memoryManager;
+	Buffer                          m_buffer;
+	Callisto::SharedBufferAllocator m_allocator;
+	D3D12_RESOURCE_STATES           m_resourceState;
+	D3D12_RESOURCE_FLAGS            m_bufferFlag;
 
 public:
 	SharedBufferBase(const SharedBufferBase&) = delete;
@@ -144,7 +144,8 @@ public:
 	SharedBufferData AllocateAndGetSharedData(UINT64 size, bool copyOldBuffer = false)
 	{
 		auto availableAllocIndex = m_allocator.GetAvailableAllocInfo(size);
-		SharedBufferAllocator::AllocInfo allocInfo{ .offset = 0u, .size = 0u };
+
+		Callisto::SharedBufferAllocator::AllocInfo allocInfo{ .offset = 0u, .size = 0u };
 
 		if (!availableAllocIndex)
 		{
@@ -170,15 +171,16 @@ private:
 	[[nodiscard]]
 	UINT64 ExtendBuffer(UINT64 size, bool copyOldBuffer)
 	{
-		// I probably don't need to worry about aligning here, since it's all inside a single buffer?
+		// I probably don't need to worry about aligning here, since it's all inside a single
+		// buffer?
 		const UINT64 oldSize = m_buffer.BufferSize();
 		const UINT64 offset  = oldSize;
 		const UINT64 newSize = oldSize + size;
 
 		// If the alignment is 16bytes, at least 16bytes will be allocated. If the requested size
 		// is bigger, then there shouldn't be any issues. But if the requested size is smaller,
-		// the offset would be correct, but the buffer would be unnecessarily recreated, even though
-		// it is not necessary. So, putting a check here.
+		// the offset would be correct, but the buffer would be unnecessarily recreated, even
+		// though it is not necessary. So, putting a check here.
 		if (newSize > oldSize)
 		{
 			Buffer newBuffer{ m_device, m_memoryManager, MemoryType };

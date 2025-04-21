@@ -142,8 +142,10 @@ MemoryManager::MemoryAllocation MemoryManager::Allocate(
 		// If the newAllocationSize isn't an exponent of 2, the largest block in the
 		// buddy allocator might not be able to house it. So, we have to query the required
 		// size.
-		UINT64 minimumRequiredSize = Buddy::GetMinimumRequiredNewAllocationSizeFor(bufferSize);
-		newAllocationSize          = std::max(newAllocationSize, minimumRequiredSize);
+		UINT64 minimumRequiredSize
+			= Callisto::Buddy::GetMinimumRequiredNewAllocationSizeFor(bufferSize);
+
+		newAllocationSize = std::max(newAllocationSize, minimumRequiredSize);
 
 		const UINT64 availableMemorySize = GetAvailableMemory();
 
@@ -213,7 +215,9 @@ void MemoryManager::Deallocate(
 
 		if (eraseCondition)
 		{
-			std::queue<std::uint16_t>& availableIndices = GetAvailableIndices(isCPUAccessible, msaa);
+			std::queue<std::uint16_t>& availableIndices = GetAvailableIndices(
+				isCPUAccessible, msaa
+			);
 
 			availableIndices.push(allocator.GetID());
 			allocators.erase(result);
