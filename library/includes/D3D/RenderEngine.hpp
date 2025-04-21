@@ -245,7 +245,7 @@ protected:
 	TextureManager                              m_textureManager;
 	CameraManager                               m_cameraManager;
 	ViewportAndScissorManager                   m_viewportAndScissors;
-	TemporaryDataBufferGPU                      m_temporaryDataBuffer;
+	Callisto::TemporaryDataBufferGPU            m_temporaryDataBuffer;
 	bool                                        m_copyNecessary;
 
 public:

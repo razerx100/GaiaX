@@ -13,7 +13,7 @@ void D3DMeshBundleMS::_setMeshBundle(
 	std::unique_ptr<MeshBundleTemporary> meshBundle, StagingBufferManager& stagingBufferMan,
 	SharedBufferGPU& vertexSharedBuffer, SharedBufferGPU& vertexIndicesSharedBuffer,
 	SharedBufferGPU& primIndicesSharedBuffer, SharedBufferGPU& perMeshletSharedBuffer,
-	TemporaryDataBufferGPU& tempBuffer
+	Callisto::TemporaryDataBufferGPU& tempBuffer
 ) {
 	const std::vector<Vertex>& vertices  = meshBundle->GetVertices();
 
@@ -21,7 +21,7 @@ void D3DMeshBundleMS::_setMeshBundle(
 		(
 			const std::vector<T>& elements, StagingBufferManager& stagingBufferMan,
 			SharedBufferGPU& sharedBuffer, SharedBufferData& sharedData,
-			std::uint32_t& detailOffset, TemporaryDataBufferGPU& tempBuffer
+			std::uint32_t& detailOffset, Callisto::TemporaryDataBufferGPU& tempBuffer
 		)
 	{
 		constexpr auto stride = static_cast<UINT64>(sizeof(T));
@@ -30,7 +30,7 @@ void D3DMeshBundleMS::_setMeshBundle(
 		sharedData   = sharedBuffer.AllocateAndGetSharedData(bufferSize, tempBuffer);
 		detailOffset = static_cast<std::uint32_t>(sharedData.offset / stride);
 
-		std::shared_ptr<std::uint8_t[]> tempDataBuffer = CopyVectorToSharedPtr(elements);
+		std::shared_ptr<std::uint8_t[]> tempDataBuffer = Callisto::CopyVectorToSharedPtr(elements);
 
 		stagingBufferMan.AddBuffer(
 			std::move(tempDataBuffer), bufferSize, sharedData.bufferData, sharedData.offset,
@@ -66,7 +66,7 @@ void D3DMeshBundleMS::SetMeshBundle(
 	std::unique_ptr<MeshBundleTemporary> meshBundle, StagingBufferManager& stagingBufferMan,
 	SharedBufferGPU& vertexSharedBuffer, SharedBufferGPU& vertexIndicesSharedBuffer,
 	SharedBufferGPU& primIndicesSharedBuffer, SharedBufferGPU& perMeshletSharedBuffer,
-	TemporaryDataBufferGPU& tempBuffer
+	Callisto::TemporaryDataBufferGPU& tempBuffer
 ) {
 	// Init the temp data.
 	meshBundle->GenerateTemporaryData(true);
@@ -83,7 +83,7 @@ void D3DMeshBundleMS::SetMeshBundle(
 	SharedBufferGPU& vertexSharedBuffer, SharedBufferGPU& vertexIndicesSharedBuffer,
 	SharedBufferGPU& primIndicesSharedBuffer, SharedBufferGPU& perMeshletSharedBuffer,
 	SharedBufferGPU& perMeshSharedBuffer, SharedBufferGPU& perMeshBundleSharedBuffer,
-	TemporaryDataBufferGPU& tempBuffer
+	Callisto::TemporaryDataBufferGPU& tempBuffer
 ) {
 	constexpr auto perMeshDataStride = sizeof(AxisAlignedBoundingBox);
 
@@ -98,7 +98,9 @@ void D3DMeshBundleMS::SetMeshBundle(
 	const size_t meshCount     = std::size(meshDetailsMS);
 	const auto perMeshDataSize = static_cast<UINT64>(perMeshDataStride * meshCount);
 
-	m_perMeshSharedData    = perMeshSharedBuffer.AllocateAndGetSharedData(perMeshDataSize, tempBuffer);
+	m_perMeshSharedData = perMeshSharedBuffer.AllocateAndGetSharedData(
+		perMeshDataSize, tempBuffer
+	);
 
 	auto perMeshBufferData = std::make_shared<std::uint8_t[]>(perMeshDataSize);
 

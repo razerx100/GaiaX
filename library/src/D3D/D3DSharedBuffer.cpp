@@ -4,7 +4,7 @@
 #include <D3DSharedBuffer.hpp>
 
 // Shared Buffer GPU
-void SharedBufferGPU::CreateBuffer(UINT64 size, TemporaryDataBufferGPU& tempBuffer)
+void SharedBufferGPU::CreateBuffer(UINT64 size, Callisto::TemporaryDataBufferGPU& tempBuffer)
 {
 	// Moving it into the old buffer, as we will want to copy it back to the new bigger buffer.
 
@@ -35,7 +35,7 @@ void SharedBufferGPU::CreateBuffer(UINT64 size, TemporaryDataBufferGPU& tempBuff
 	m_buffer.Create(size, m_resourceState);
 }
 
-UINT64 SharedBufferGPU::ExtendBuffer(UINT64 size, TemporaryDataBufferGPU& tempBuffer)
+UINT64 SharedBufferGPU::ExtendBuffer(UINT64 size, Callisto::TemporaryDataBufferGPU& tempBuffer)
 {
 	// I probably don't need to worry about aligning here, since it's all inside a single buffer?
 	const UINT64 oldSize = m_buffer.BufferSize();
@@ -65,7 +65,7 @@ void SharedBufferGPU::CopyOldBuffer(const D3DCommandList& copyList) noexcept
 }
 
 SharedBufferData SharedBufferGPU::AllocateAndGetSharedData(
-	UINT64 size, TemporaryDataBufferGPU& tempBuffer
+	UINT64 size, Callisto::TemporaryDataBufferGPU& tempBuffer
 ) {
 	auto availableAllocIndex = m_allocator.GetAvailableAllocInfo(size);
 

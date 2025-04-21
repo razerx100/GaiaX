@@ -1,13 +1,15 @@
 #include <D3DExternalResourceManager.hpp>
 #include <limits>
 
-D3DExternalResourceManager::D3DExternalResourceManager(ID3D12Device* device, MemoryManager* memoryManager)
-	: m_resourceFactory{ std::make_unique<D3DExternalResourceFactory>(device, memoryManager) },
+D3DExternalResourceManager::D3DExternalResourceManager(
+	ID3D12Device* device, MemoryManager* memoryManager
+) : m_resourceFactory{ std::make_unique<D3DExternalResourceFactory>(device, memoryManager) },
 	m_gfxExtensions{}, m_copyQueueDetails{}
 {}
 
-void D3DExternalResourceManager::OnGfxExtensionDeletion(const GraphicsTechniqueExtension& gfxExtension)
-{
+void D3DExternalResourceManager::OnGfxExtensionDeletion(
+	const GraphicsTechniqueExtension& gfxExtension
+) {
 	const std::vector<std::uint32_t>& externalIndices = gfxExtension.GetExternalBufferIndices();
 
 	for (std::uint32_t externalIndex : externalIndices)
@@ -40,7 +42,8 @@ void D3DExternalResourceManager::SetGraphicsDescriptorLayout(
 
 	for (const GfxExtension_t& extension : m_gfxExtensions)
 	{
-		const std::vector<ExternalBufferBindingDetails>& bindingDetails = extension->GetBindingDetails();
+		const std::vector<ExternalBufferBindingDetails>& bindingDetails
+			= extension->GetBindingDetails();
 
 		for (const ExternalBufferBindingDetails& details : bindingDetails)
 		{
@@ -93,20 +96,20 @@ void D3DExternalResourceManager::UpdateDescriptor(
 
 	if (bindingDetails.layoutInfo.type == ExternalBufferType::CPUVisibleUniform)
 		descriptorManager.SetRootCBV(
-			static_cast<size_t>(bindingDetails.layoutInfo.bindingIndex), s_externalBufferRegisterSpace,
-			d3dBuffer.GetGPUAddress() + bindingDetails.descriptorInfo.bufferOffset,
-			true
+			static_cast<size_t>(bindingDetails.layoutInfo.bindingIndex),
+			s_externalBufferRegisterSpace,
+			d3dBuffer.GetGPUAddress() + bindingDetails.descriptorInfo.bufferOffset, true
 		);
 	else
 		descriptorManager.SetRootSRV(
-			static_cast<size_t>(bindingDetails.layoutInfo.bindingIndex), s_externalBufferRegisterSpace,
-			d3dBuffer.GetGPUAddress() + bindingDetails.descriptorInfo.bufferOffset,
-			true
+			static_cast<size_t>(bindingDetails.layoutInfo.bindingIndex),
+			s_externalBufferRegisterSpace,
+			d3dBuffer.GetGPUAddress() + bindingDetails.descriptorInfo.bufferOffset, true
 		);
 }
 
 void D3DExternalResourceManager::UploadExternalBufferGPUOnlyData(
-	StagingBufferManager& stagingBufferManager, TemporaryDataBufferGPU& tempGPUBuffer,
+	StagingBufferManager& stagingBufferManager, Callisto::TemporaryDataBufferGPU& tempGPUBuffer,
 	std::uint32_t externalBufferIndex, std::shared_ptr<void> cpuData, size_t srcDataSizeInBytes,
 	size_t dstBufferOffset
 ) const {
@@ -122,7 +125,7 @@ void D3DExternalResourceManager::UploadExternalBufferGPUOnlyData(
 void D3DExternalResourceManager::QueueExternalBufferGPUCopy(
 	std::uint32_t externalBufferSrcIndex, std::uint32_t externalBufferDstIndex,
 	size_t dstBufferOffset, size_t srcBufferOffset, size_t srcDataSizeInBytes,
-	TemporaryDataBufferGPU& tempGPUBuffer
+	Callisto::TemporaryDataBufferGPU& tempGPUBuffer
 ) {
 	auto GetSrcSize = [&resourceFactory = m_resourceFactory]
 	(std::uint32_t srcIndex, size_t srcSize) -> UINT64

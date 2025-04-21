@@ -39,9 +39,11 @@ TEST_F(D3DSharedBufferTest, SharedBufferTest)
 
 	MemoryManager memoryManager{ adapter, device, 20_MB, 200_KB };
 
-	SharedBufferGPU sharedBuffer{ device, &memoryManager, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS };
+	SharedBufferGPU sharedBuffer{
+		device, &memoryManager, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS
+	};
 
-	TemporaryDataBufferGPU tempDataBuffer{};
+	Callisto::TemporaryDataBufferGPU tempDataBuffer{};
 
 	{
 		auto allocInfo = sharedBuffer.AllocateAndGetSharedData(12u, tempDataBuffer);

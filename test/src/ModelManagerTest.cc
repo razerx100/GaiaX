@@ -393,7 +393,7 @@ TEST_F(ModelManagerTest, ModelManagerVSIndividualTest)
 
 	ModelBuffers modelBuffers{ device, &memoryManager, Constants::frameCount };
 
-	TemporaryDataBufferGPU tempDataBuffer{};
+	Callisto::TemporaryDataBufferGPU tempDataBuffer{};
 
 	{
 		auto meshVS         = std::make_unique<MeshBundleTemporaryDummy>();
@@ -573,7 +573,7 @@ TEST_F(ModelManagerTest, ModelManagerVSIndirectTest)
 
 	ModelBuffers modelBuffers{ device, &memoryManager, Constants::frameCount };
 
-	TemporaryDataBufferGPU tempDataBuffer{};
+	Callisto::TemporaryDataBufferGPU tempDataBuffer{};
 
 	{
 		auto meshVS         = std::make_unique<MeshBundleTemporaryDummy>();
@@ -793,7 +793,7 @@ TEST_F(ModelManagerTest, ModelManagerMS)
 
 	ModelBuffers modelBuffers{ device, &memoryManager, Constants::frameCount };
 
-	TemporaryDataBufferGPU tempDataBuffer{};
+	Callisto::TemporaryDataBufferGPU tempDataBuffer{};
 
 	{
 		auto meshMS         = std::make_unique<MeshBundleTemporaryDummy>();

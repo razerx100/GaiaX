@@ -33,14 +33,14 @@ public:
 		std::unique_ptr<MeshBundleTemporary> meshBundle, StagingBufferManager& stagingBufferMan,
 		SharedBufferGPU& vertexSharedBuffer, SharedBufferGPU& vertexIndicesSharedBuffer,
 		SharedBufferGPU& primIndicesSharedBuffer, SharedBufferGPU& perMeshletSharedBuffer,
-		TemporaryDataBufferGPU& tempBuffer
+		Callisto::TemporaryDataBufferGPU & tempBuffer
 	);
 	void SetMeshBundle(
 		std::unique_ptr<MeshBundleTemporary> meshBundle, StagingBufferManager& stagingBufferMan,
 		SharedBufferGPU& vertexSharedBuffer, SharedBufferGPU& vertexIndicesSharedBuffer,
 		SharedBufferGPU& primIndicesSharedBuffer, SharedBufferGPU& perMeshletSharedBuffer,
 		SharedBufferGPU& perMeshSharedBuffer, SharedBufferGPU& perMeshBundleSharedBuffer,
-		TemporaryDataBufferGPU& tempBuffer
+		Callisto::TemporaryDataBufferGPU& tempBuffer
 	);
 
 	[[nodiscard]]
@@ -87,7 +87,7 @@ private:
 		std::unique_ptr<MeshBundleTemporary> meshBundle, StagingBufferManager& stagingBufferMan,
 		SharedBufferGPU& vertexSharedBuffer, SharedBufferGPU& vertexIndicesSharedBuffer,
 		SharedBufferGPU& primIndicesSharedBuffer, SharedBufferGPU& perMeshletSharedBuffer,
-		TemporaryDataBufferGPU& tempBuffer
+		Callisto::TemporaryDataBufferGPU& tempBuffer
 	);
 
 private:

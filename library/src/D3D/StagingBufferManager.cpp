@@ -5,7 +5,7 @@
 
 StagingBufferManager& StagingBufferManager::AddTexture(
 	std::shared_ptr<void> cpuData, Texture const* dst,
-	TemporaryDataBufferGPU& tempDataBuffer, UINT mipLevelIndex/* = 0u */
+	Callisto::TemporaryDataBufferGPU& tempDataBuffer, UINT mipLevelIndex/* = 0u */
 ) {
 	const UINT64 bufferSize = dst->GetBufferSize();
 
@@ -33,7 +33,7 @@ StagingBufferManager& StagingBufferManager::AddTexture(
 
 StagingBufferManager& StagingBufferManager::AddBuffer(
 	std::shared_ptr<void> cpuData, UINT64 bufferSize, Buffer const* dst, UINT64 offset,
-	TemporaryDataBufferGPU& tempDataBuffer
+	Callisto::TemporaryDataBufferGPU& tempDataBuffer
 ) {
 	m_bufferInfo.emplace_back(
 		BufferInfo{

@@ -94,7 +94,9 @@ public:
 
 	[[nodiscard]]
 	// The offset from the start of the buffer will be returned.
-	SharedBufferData AllocateAndGetSharedData(UINT64 size, TemporaryDataBufferGPU& tempBuffer);
+	SharedBufferData AllocateAndGetSharedData(
+		UINT64 size, Callisto::TemporaryDataBufferGPU& tempBuffer
+	);
 
 	void RelinquishMemory(const SharedBufferData& sharedData) noexcept
 	{
@@ -102,9 +104,9 @@ public:
 	}
 
 private:
-	void CreateBuffer(UINT64 size, TemporaryDataBufferGPU& tempBuffer);
+	void CreateBuffer(UINT64 size, Callisto::TemporaryDataBufferGPU& tempBuffer);
 	[[nodiscard]]
-	UINT64 ExtendBuffer(UINT64 size, TemporaryDataBufferGPU& tempBuffer);
+	UINT64 ExtendBuffer(UINT64 size, Callisto::TemporaryDataBufferGPU& tempBuffer);
 
 private:
 	std::shared_ptr<Buffer> m_oldBuffer;

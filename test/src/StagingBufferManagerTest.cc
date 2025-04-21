@@ -60,7 +60,7 @@ TEST_F(StagingBufferTest, StagingTest)
 
 	auto textureData               = std::make_unique<std::uint8_t[]>(textureBufferSize);
 
-	TemporaryDataBufferGPU tempDataBuffer{};
+	Callisto::TemporaryDataBufferGPU tempDataBuffer{};
 
 	stagingBufferMan.AddBuffer(std::move(bufferData), 2_KB, &testNonPixel, 0u, tempDataBuffer);
 	stagingBufferMan.AddTexture(std::move(textureData), &testTexture, tempDataBuffer);

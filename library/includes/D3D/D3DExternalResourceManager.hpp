@@ -28,15 +28,15 @@ public:
 	) const;
 
 	void UploadExternalBufferGPUOnlyData(
-		StagingBufferManager& stagingBufferManager, TemporaryDataBufferGPU& tempGPUBuffer,
-		std::uint32_t externalBufferIndex, std::shared_ptr<void> cpuData, size_t srcDataSizeInBytes,
-		size_t dstBufferOffset
+		StagingBufferManager& stagingBufferManager,
+		Callisto::TemporaryDataBufferGPU& tempGPUBuffer, std::uint32_t externalBufferIndex,
+		std::shared_ptr<void> cpuData, size_t srcDataSizeInBytes, size_t dstBufferOffset
 	) const;
 
 	void QueueExternalBufferGPUCopy(
 		std::uint32_t externalBufferSrcIndex, std::uint32_t externalBufferDstIndex,
 		size_t dstBufferOffset, size_t srcBufferOffset, size_t srcDataSizeInBytes,
-		TemporaryDataBufferGPU& tempGPUBuffer
+		Callisto::TemporaryDataBufferGPU& tempGPUBuffer
 	);
 
 	void CopyQueuedBuffers(const D3DCommandList& copyCmdList) noexcept;
@@ -83,7 +83,8 @@ private:
 	void OnGfxExtensionDeletion(const GraphicsTechniqueExtension& gfxExtension);
 
 	void UpdateDescriptor(
-		D3DDescriptorManager& descriptorManager, const ExternalBufferBindingDetails& bindingDetails
+		D3DDescriptorManager& descriptorManager,
+		const ExternalBufferBindingDetails& bindingDetails
 	) const;
 
 private:

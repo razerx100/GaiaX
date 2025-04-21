@@ -1,8 +1,9 @@
 #include <MeshManager.hpp>
 
 // Mesh Manager VS Individual
-MeshManagerVSIndividual::MeshManagerVSIndividual(ID3D12Device5* device, MemoryManager* memoryManager)
-	: MeshManager{},
+MeshManagerVSIndividual::MeshManagerVSIndividual(
+	ID3D12Device5* device, MemoryManager* memoryManager
+) : MeshManager{},
 	m_vertexBuffer{ device, memoryManager },
 	m_indexBuffer{ device, memoryManager }
 {}
@@ -20,7 +21,7 @@ void MeshManagerVSIndividual::CopyOldBuffers(const D3DCommandList& copyList) noe
 
 void MeshManagerVSIndividual::ConfigureMeshBundle(
 	std::unique_ptr<MeshBundleTemporary> meshBundle, StagingBufferManager& stagingBufferMan,
-	D3DMeshBundleVS& d3dMeshBundle, TemporaryDataBufferGPU& tempBuffer
+	D3DMeshBundleVS& d3dMeshBundle, Callisto::TemporaryDataBufferGPU& tempBuffer
 ) {
 	d3dMeshBundle.SetMeshBundle(
 		std::move(meshBundle), stagingBufferMan, m_vertexBuffer, m_indexBuffer, tempBuffer
@@ -51,7 +52,7 @@ MeshManagerVSIndirect::MeshManagerVSIndirect(ID3D12Device5* device, MemoryManage
 
 void MeshManagerVSIndirect::ConfigureMeshBundle(
 	std::unique_ptr<MeshBundleTemporary> meshBundle, StagingBufferManager& stagingBufferMan,
-	D3DMeshBundleVS& d3dMeshBundle, TemporaryDataBufferGPU& tempBuffer
+	D3DMeshBundleVS& d3dMeshBundle, Callisto::TemporaryDataBufferGPU& tempBuffer
 ) {
 	d3dMeshBundle.SetMeshBundle(
 		std::move(meshBundle), stagingBufferMan, m_vertexBuffer, m_indexBuffer, m_perMeshDataBuffer,
@@ -131,7 +132,7 @@ MeshManagerMS::MeshManagerMS(ID3D12Device5* device, MemoryManager* memoryManager
 
 void MeshManagerMS::ConfigureMeshBundle(
 	std::unique_ptr<MeshBundleTemporary> meshBundle, StagingBufferManager& stagingBufferMan,
-	D3DMeshBundleMS& d3dMeshBundle, TemporaryDataBufferGPU& tempBuffer
+	D3DMeshBundleMS& d3dMeshBundle, Callisto::TemporaryDataBufferGPU& tempBuffer
 ) {
 	d3dMeshBundle.SetMeshBundle(
 		std::move(meshBundle), stagingBufferMan, m_vertexBuffer, m_vertexIndicesBuffer,

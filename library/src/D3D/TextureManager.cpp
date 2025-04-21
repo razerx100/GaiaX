@@ -3,10 +3,12 @@
 
 // Texture storage
 size_t TextureStorage::AddTexture(
-	STexture&& texture, StagingBufferManager& stagingBufferManager, TemporaryDataBufferGPU& tempBuffer,
-	bool msaa/* = false */
+	STexture&& texture, StagingBufferManager& stagingBufferManager,
+	Callisto::TemporaryDataBufferGPU& tempBuffer, bool msaa/* = false */
 ) {
-	const size_t index = m_textures.Add(Texture{ m_device, m_memoryManager, D3D12_HEAP_TYPE_DEFAULT });
+	const size_t index = m_textures.Add(
+		Texture{ m_device, m_memoryManager, D3D12_HEAP_TYPE_DEFAULT }
+	);
 
 	Texture* texturePtr = &m_textures[index];
 
@@ -132,5 +134,7 @@ void TextureManager::SetDescriptorTable(
 	size_t textureRegisterSpace
 ) const {
 	for (D3DDescriptorManager& descriptorManager : descriptorManagers)
-		descriptorManager.SetDescriptorTableSRV(texturesRegisterSlot, textureRegisterSpace, 0u, true);
+		descriptorManager.SetDescriptorTableSRV(
+			texturesRegisterSlot, textureRegisterSpace, 0u, true
+		);
 }

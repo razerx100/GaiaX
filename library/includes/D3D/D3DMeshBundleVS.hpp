@@ -22,13 +22,13 @@ public:
 	void SetMeshBundle(
 		std::unique_ptr<MeshBundleTemporary> meshBundle, StagingBufferManager& stagingBufferMan,
 		SharedBufferGPU& vertexSharedBuffer, SharedBufferGPU& indexSharedBuffer,
-		TemporaryDataBufferGPU& tempBuffer
+		Callisto::TemporaryDataBufferGPU& tempBuffer
 	);
 	void SetMeshBundle(
 		std::unique_ptr<MeshBundleTemporary> meshBundle, StagingBufferManager& stagingBufferMan,
 		SharedBufferGPU& vertexSharedBuffer, SharedBufferGPU& indexSharedBuffer,
 		SharedBufferGPU& perMeshSharedBuffer, SharedBufferGPU& perMeshBundleSharedBuffer,
-		TemporaryDataBufferGPU& tempBuffer
+		Callisto::TemporaryDataBufferGPU& tempBuffer
 	);
 
 	void Bind(const D3DCommandList& graphicsCmdList) const noexcept;
@@ -55,7 +55,7 @@ private:
 	void _setMeshBundle(
 		std::unique_ptr<MeshBundleTemporary> meshBundle, StagingBufferManager& stagingBufferMan,
 		SharedBufferGPU& vertexSharedBuffer, SharedBufferGPU& indexSharedBuffer,
-		TemporaryDataBufferGPU& tempBuffer
+		Callisto::TemporaryDataBufferGPU& tempBuffer
 	);
 
 private:

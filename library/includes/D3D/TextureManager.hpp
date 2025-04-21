@@ -24,7 +24,7 @@ public:
 	[[nodiscard]]
 	size_t AddTexture(
 		STexture&& texture, StagingBufferManager& stagingBufferManager,
-		TemporaryDataBufferGPU& tempBuffer, bool msaa = false
+		Callisto::TemporaryDataBufferGPU& tempBuffer, bool msaa = false
 	);
 	[[nodiscard]]
 	size_t AddSampler(const SamplerBuilder& builder);

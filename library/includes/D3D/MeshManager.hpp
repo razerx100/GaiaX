@@ -18,7 +18,7 @@ public:
 	[[nodiscard]]
 	std::uint32_t AddMeshBundle(
 		std::unique_ptr<MeshBundleTemporary> meshBundle, StagingBufferManager& stagingBufferMan,
-		TemporaryDataBufferGPU& tempBuffer
+		Callisto::TemporaryDataBufferGPU& tempBuffer
 	) {
 		D3DMeshBundle d3dMeshBundle{};
 
@@ -79,7 +79,7 @@ public:
 private:
 	void ConfigureMeshBundle(
 		std::unique_ptr<MeshBundleTemporary> meshBundle, StagingBufferManager& stagingBufferMan,
-		D3DMeshBundleVS& d3dMeshBundle, TemporaryDataBufferGPU& tempBuffer
+		D3DMeshBundleVS& d3dMeshBundle, Callisto::TemporaryDataBufferGPU& tempBuffer
 	);
 	void ConfigureRemoveMesh(size_t bundleIndex) noexcept;
 
@@ -124,7 +124,7 @@ public:
 private:
 	void ConfigureMeshBundle(
 		std::unique_ptr<MeshBundleTemporary> meshBundle, StagingBufferManager& stagingBufferMan,
-		D3DMeshBundleVS& d3dMeshBundle, TemporaryDataBufferGPU& tempBuffer
+		D3DMeshBundleVS& d3dMeshBundle, Callisto::TemporaryDataBufferGPU& tempBuffer
 	);
 	void ConfigureRemoveMesh(size_t bundleIndex) noexcept;
 
@@ -182,7 +182,7 @@ public:
 private:
 	void ConfigureMeshBundle(
 		std::unique_ptr<MeshBundleTemporary> meshBundle, StagingBufferManager& stagingBufferMan,
-		D3DMeshBundleMS& d3dMeshBundle, TemporaryDataBufferGPU& tempBuffer
+		D3DMeshBundleMS& d3dMeshBundle, Callisto::TemporaryDataBufferGPU& tempBuffer
 	);
 	void ConfigureRemoveMesh(size_t bundleIndex) noexcept;
 

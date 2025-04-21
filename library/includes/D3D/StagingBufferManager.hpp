@@ -20,11 +20,11 @@ public:
 	// is needed when a resource has exclusive ownership.
 	StagingBufferManager& AddTexture(
 		std::shared_ptr<void> cpuData, Texture const* dst,
-		TemporaryDataBufferGPU& tempDataBuffer, UINT mipLevelIndex = 0u
+		Callisto::TemporaryDataBufferGPU& tempDataBuffer, UINT mipLevelIndex = 0u
 	);
 	StagingBufferManager& AddBuffer(
 		std::shared_ptr<void> cpuData, UINT64 bufferSize, Buffer const* dst, UINT64 offset,
-		TemporaryDataBufferGPU& tempDataBuffer
+		Callisto::TemporaryDataBufferGPU& tempDataBuffer
 	);
 
 	void CopyAndClearQueuedBuffers(const D3DCommandList& copyCmdList);
@@ -61,7 +61,7 @@ private:
 	std::vector<std::shared_ptr<Buffer>> m_tempBufferToBuffer;
 	std::vector<TextureInfo>             m_textureInfo;
 	std::vector<std::shared_ptr<Buffer>> m_tempBufferToTexture;
-	TemporaryDataBufferCPU               m_cpuTempBuffer;
+	Callisto::TemporaryDataBufferCPU     m_cpuTempBuffer;
 
 public:
 	StagingBufferManager(const StagingBufferManager&) = delete;
