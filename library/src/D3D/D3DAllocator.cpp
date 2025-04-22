@@ -1,8 +1,9 @@
 #include <D3DAllocator.hpp>
-#include <Exception.hpp>
+#include <GaiaException.hpp>
 
-std::optional<UINT64> D3DAllocator::Allocate(const D3D12_RESOURCE_ALLOCATION_INFO& allocInfo) noexcept
-{
+std::optional<UINT64> D3DAllocator::Allocate(
+	const D3D12_RESOURCE_ALLOCATION_INFO& allocInfo
+) noexcept {
 	std::optional<size_t> allocationStart = m_allocator.AllocateN(
 		static_cast<size_t>(allocInfo.SizeInBytes), static_cast<size_t>(allocInfo.Alignment)
 	);
@@ -32,8 +33,12 @@ MemoryManager::MemoryManager(
 	if (availableMemory < initialBudgetCPU + initialBudgetGPU)
 		throw Exception("MemoryException", "Not Enough memory for allocation.");
 
-	m_cpuAllocators.emplace_back(CreateHeap(D3D12_HEAP_TYPE_UPLOAD, initialBudgetCPU), GetID(true));
-	m_gpuAllocators.emplace_back(CreateHeap(D3D12_HEAP_TYPE_DEFAULT, initialBudgetCPU), GetID(false));
+	m_cpuAllocators.emplace_back(
+		CreateHeap(D3D12_HEAP_TYPE_UPLOAD, initialBudgetCPU), GetID(true)
+	);
+	m_gpuAllocators.emplace_back(
+		CreateHeap(D3D12_HEAP_TYPE_DEFAULT, initialBudgetCPU), GetID(false)
+	);
 }
 
 UINT64 MemoryManager::GetAvailableMemory() const noexcept
@@ -59,8 +64,9 @@ std::vector<D3DAllocator>& MemoryManager::GetAllocators(bool cpu, bool msaa /* =
 	return cpu ? m_cpuAllocators : (msaa ? m_msaaAllocators : m_gpuAllocators);
 }
 
-std::queue<std::uint16_t>& MemoryManager::GetAvailableIndices(bool cpu, bool msaa /* = false */) noexcept
-{
+std::queue<std::uint16_t>& MemoryManager::GetAvailableIndices(
+	bool cpu, bool msaa /* = false */
+) noexcept {
 	return cpu ? m_availableCPUIndices : (msaa ? m_availableMsaaIndices : m_availableGPUIndices);
 }
 

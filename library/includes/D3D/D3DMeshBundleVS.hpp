@@ -3,7 +3,7 @@
 #include <D3DHeaders.hpp>
 #include <memory>
 #include <D3DResources.hpp>
-#include <StagingBufferManager.hpp>
+#include <D3DStagingBufferManager.hpp>
 #include <D3DCommandQueue.hpp>
 #include <D3DSharedBuffer.hpp>
 

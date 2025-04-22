@@ -4,7 +4,7 @@
 #include <cassert>
 #include <concepts>
 #include <d3dx12.h>
-#include <VertexLayout.hpp>
+#include <D3DVertexLayout.hpp>
 
 class StencilOpStateBuilder
 {

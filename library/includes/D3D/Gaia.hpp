@@ -1,10 +1,10 @@
 #ifndef GAIA_HPP_
 #define GAIA_HPP_
-#include <DeviceManager.hpp>
-#include <SwapchainManager.hpp>
+#include <D3DDeviceManager.hpp>
+#include <D3DSwapchainManager.hpp>
 #include <RendererTypes.hpp>
-#include <RenderEngineVS.hpp>
-#include <RenderEngineMS.hpp>
+#include <D3DRenderEngineVS.hpp>
+#include <D3DRenderEngineMS.hpp>
 
 template<class RenderEngine_t>
 class Gaia

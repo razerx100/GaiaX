@@ -6,9 +6,9 @@
 #include <ReusableVector.hpp>
 #include <D3DMeshBundleMS.hpp>
 #include <D3DMeshBundleVS.hpp>
-#include <GraphicsPipelineVS.hpp>
-#include <GraphicsPipelineMS.hpp>
-#include <PipelineManager.hpp>
+#include <D3DGraphicsPipelineVS.hpp>
+#include <D3DGraphicsPipelineMS.hpp>
+#include <D3DPipelineManager.hpp>
 
 class PipelineModelsBase
 {

@@ -1,8 +1,8 @@
-#include <DeviceManager.hpp>
+#include <D3DDeviceManager.hpp>
 #include <gtest/gtest.h>
 #include <memory>
 
-#include <SwapchainManager.hpp>
+#include <D3DSwapchainManager.hpp>
 #include <SimpleWindow.hpp>
 
 namespace Constants

@@ -1,7 +1,8 @@
 #include <D3DCommandQueue.hpp>
 
 // D3D CommandList
-D3DCommandList::D3DCommandList(ID3D12Device4* device, D3D12_COMMAND_LIST_TYPE type) : D3DCommandList{}
+D3DCommandList::D3DCommandList(ID3D12Device4* device, D3D12_COMMAND_LIST_TYPE type)
+	: D3DCommandList{}
 {
 	Create(device, type);
 }

@@ -1,6 +1,6 @@
 #include <D3DRootSignatureDynamic.hpp>
 #include <fstream>
-#include <Exception.hpp>
+#include <GaiaException.hpp>
 #include <format>
 
 // Sampler Builder

@@ -1,10 +1,10 @@
 #include <gtest/gtest.h>
 #include <memory>
 
-#include <DeviceManager.hpp>
-#include <ModelManager.hpp>
+#include <D3DDeviceManager.hpp>
+#include <D3DModelManager.hpp>
 #include <D3DModelBuffer.hpp>
-#include <StagingBufferManager.hpp>
+#include <D3DStagingBufferManager.hpp>
 #include <D3DDescriptorHeapManager.hpp>
 
 namespace Constants

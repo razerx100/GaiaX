@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
 #include <memory>
 
-#include <RenderEngineVS.hpp>
-#include <RenderEngineMS.hpp>
+#include <D3DRenderEngineVS.hpp>
+#include <D3DRenderEngineMS.hpp>
 
 namespace Constants
 {

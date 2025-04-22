@@ -1,7 +1,7 @@
 #include <D3DShader.hpp>
 #include <d3dcompiler.h>
 #include <format>
-#include <Exception.hpp>
+#include <GaiaException.hpp>
 #include <fstream>
 
 bool D3DShader::LoadBinary(const std::wstring& fileName)

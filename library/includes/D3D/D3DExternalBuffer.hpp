@@ -11,7 +11,8 @@ class D3DExternalBuffer : public ExternalBuffer
 public:
 	D3DExternalBuffer(
 		ID3D12Device* device, MemoryManager* memoryManager, D3D12_HEAP_TYPE memoryType,
-		D3D12_RESOURCE_STATES resourceState, D3D12_RESOURCE_FLAGS bufferFlag = D3D12_RESOURCE_FLAG_NONE
+		D3D12_RESOURCE_STATES resourceState,
+		D3D12_RESOURCE_FLAGS bufferFlag = D3D12_RESOURCE_FLAG_NONE
 	);
 
 	void Create(size_t bufferSize) override;
@@ -56,8 +57,8 @@ public:
 	D3DExternalTexture(ID3D12Device* device, MemoryManager* memoryManager);
 
 	void Create(
-		std::uint32_t width, std::uint32_t height, ExternalFormat format, ExternalTexture2DType type,
-		const ExternalTextureCreationFlags& creationFlags = {}
+		std::uint32_t width, std::uint32_t height, ExternalFormat format,
+		ExternalTexture2DType type, const ExternalTextureCreationFlags& creationFlags = {}
 	) override;
 
 	void SetAttachmentHeap(D3DReusableDescriptorHeap* attachmentHeap) noexcept;

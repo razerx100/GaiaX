@@ -1,10 +1,10 @@
-#include <DeviceManager.hpp>
+#include <D3DDeviceManager.hpp>
 #include <gtest/gtest.h>
 #include <memory>
 
 #include <D3DResources.hpp>
-#include <CameraManager.hpp>
-#include <ReusableD3DBuffer.hpp>
+#include <D3DCameraManager.hpp>
+#include <D3DReusableBuffer.hpp>
 
 namespace Constants
 {

@@ -4,7 +4,7 @@
 #include <ExternalResourceManager.hpp>
 #include <D3DExternalResourceFactory.hpp>
 #include <D3DDescriptorHeapManager.hpp>
-#include <StagingBufferManager.hpp>
+#include <D3DStagingBufferManager.hpp>
 #include <ReusableVector.hpp>
 #include <D3DCommandQueue.hpp>
 

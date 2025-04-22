@@ -1,7 +1,7 @@
 #include <D3DResources.hpp>
 #include <unordered_map>
 #include <cassert>
-#include <Exception.hpp>
+#include <GaiaException.hpp>
 
 // Resource
 Resource::Resource()

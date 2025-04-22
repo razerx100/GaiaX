@@ -1,9 +1,9 @@
-#include <DeviceManager.hpp>
+#include <D3DDeviceManager.hpp>
 #include <gtest/gtest.h>
 #include <memory>
 
 #include <D3DResources.hpp>
-#include <StagingBufferManager.hpp>
+#include <D3DStagingBufferManager.hpp>
 
 namespace Constants
 {
