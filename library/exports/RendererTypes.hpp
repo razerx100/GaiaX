@@ -7,4 +7,10 @@ enum class RenderEngineType
 	IndividualDraw,
 	MeshDraw
 };
+
+struct SolExtent
+{
+	std::uint32_t width;
+	std::uint32_t height;
+};
 #endif
