@@ -1,5 +1,7 @@
 #include <D3DExternalResourceFactory.hpp>
 
+namespace Gaia
+{
 size_t D3DExternalResourceFactory::CreateExternalBuffer(ExternalBufferType type)
 {
 	D3D12_HEAP_TYPE memoryType            = D3D12_HEAP_TYPE_DEFAULT;
@@ -24,4 +26,5 @@ size_t D3DExternalResourceFactory::CreateExternalTexture()
 	return m_externalTextures.Add(
 		std::make_shared<D3DExternalTexture>(m_device, m_memoryManager)
 	);
+}
 }

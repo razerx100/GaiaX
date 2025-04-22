@@ -1,5 +1,7 @@
 #include <D3DCommandQueue.hpp>
 
+namespace Gaia
+{
 // D3D CommandList
 D3DCommandList::D3DCommandList(ID3D12Device4* device, D3D12_COMMAND_LIST_TYPE type)
 	: D3DCommandList{}
@@ -137,4 +139,5 @@ void D3DCommandQueue::ExecuteCommandLists(
 	ID3D12CommandList* const commandLists{ commandList };
 
 	ExecuteCommandLists(&commandLists, 1u);
+}
 }

@@ -3,6 +3,8 @@
 #include <exception>
 #include <string>
 
+namespace Gaia
+{
 class Exception : public std::exception
 {
 public:
@@ -19,4 +21,5 @@ private:
 	std::string m_exceptionType;
 	std::string m_errorMessage;
 };
+}
 #endif

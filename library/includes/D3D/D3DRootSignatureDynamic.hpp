@@ -8,6 +8,8 @@
 #include <array>
 #include <cassert>
 
+namespace Gaia
+{
 enum BindlessLevel
 {
 	UnboundArray,
@@ -175,4 +177,5 @@ public:
 		return *this;
 	}
 };
+}
 #endif

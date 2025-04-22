@@ -1,5 +1,7 @@
 #include <D3DMeshManager.hpp>
 
+namespace Gaia
+{
 // Mesh Manager VS Individual
 MeshManagerVSIndividual::MeshManagerVSIndividual(
 	ID3D12Device5* device, MemoryManager* memoryManager
@@ -212,4 +214,5 @@ void MeshManagerMS::CopyOldBuffers(const D3DCommandList& copyList) noexcept
 
 		m_oldBufferCopyNecessary = false;
 	}
+}
 }

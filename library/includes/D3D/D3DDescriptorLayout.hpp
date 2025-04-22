@@ -6,6 +6,8 @@
 #include <optional>
 #include <cassert>
 
+namespace Gaia
+{
 class D3DDescriptorLayout
 {
 public:
@@ -139,4 +141,5 @@ public:
 		return *this;
 	}
 };
+}
 #endif

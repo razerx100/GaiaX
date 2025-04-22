@@ -6,6 +6,8 @@
 #include <D3DCameraManager.hpp>
 #include <D3DReusableBuffer.hpp>
 
+using namespace Gaia;
+
 namespace Constants
 {
 	constexpr size_t bufferCount = 2u;

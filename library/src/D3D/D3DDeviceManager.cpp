@@ -2,6 +2,8 @@
 #include <GaiaException.hpp>
 #include <cassert>
 
+namespace Gaia
+{
 void DeviceManager::Create(D3D_FEATURE_LEVEL featureLevel /* = D3D_FEATURE_LEVEL_12_0 */)
 {
     UINT dxgiFactoryFlags = 0u;
@@ -126,4 +128,5 @@ DeviceManager::Resolution DeviceManager::GetDisplayResolution(UINT displayIndex)
 		.width  = static_cast<UINT>(displayData.DesktopCoordinates.right),
 		.height = static_cast<UINT>(displayData.DesktopCoordinates.bottom)
 	};
+}
 }

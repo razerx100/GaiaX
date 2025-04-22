@@ -3,6 +3,8 @@
 #include <gtest/gtest.h>
 #include <memory>
 
+using namespace Gaia;
+
 class DynamicRootSignatureTest : public ::testing::Test
 {
 protected:

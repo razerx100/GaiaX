@@ -1,6 +1,8 @@
 #include <D3DExternalResourceManager.hpp>
 #include <limits>
 
+namespace Gaia
+{
 D3DExternalResourceManager::D3DExternalResourceManager(
 	ID3D12Device* device, MemoryManager* memoryManager
 ) : m_resourceFactory{ std::make_unique<D3DExternalResourceFactory>(device, memoryManager) },
@@ -166,4 +168,5 @@ void D3DExternalResourceManager::CopyQueuedBuffers(const D3DCommandList& copyCmd
 
 		m_copyQueueDetails.clear();
 	}
+}
 }

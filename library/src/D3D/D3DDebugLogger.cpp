@@ -4,6 +4,8 @@
 #include <array>
 #include <format>
 
+namespace Gaia
+{
 static std::array<const char*, 11u> messageCategories
 {
 	"D3D12_MESSAGE_CATEGORY_APPLICATION_DEFINED",
@@ -162,3 +164,4 @@ void D3DInfoQueue1Logger::UnregisterCallbacks() noexcept
 		m_debugInfoQueue->UnregisterMessageCallback(callbackCookie);
 }
 #endif // __ID3D12InfoQueue1_INTERFACE_DEFINED__
+}

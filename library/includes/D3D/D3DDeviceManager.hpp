@@ -4,6 +4,8 @@
 #include <utility>
 #include <D3DDebugLogger.hpp>
 
+namespace Gaia
+{
 class DeviceManager
 {
 public:
@@ -62,4 +64,5 @@ public:
 		m_debugLogger = std::move(other.m_debugLogger);
 	}
 };
+}
 #endif

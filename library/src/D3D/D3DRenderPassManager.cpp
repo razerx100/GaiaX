@@ -1,5 +1,7 @@
 #include <D3DRenderPassManager.hpp>
 
+namespace Gaia
+{
 void D3DRenderPassManager::AddRenderTarget(bool clearAtStart)
 {
 	// The RTV handle won't be a valid one before the resource is created. So, add an invalid one
@@ -134,4 +136,5 @@ void D3DRenderPassManager::EndPassForSwapchain(
 			D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PRESENT
 		)
 	).RecordBarriers(gfxCmdList);
+}
 }

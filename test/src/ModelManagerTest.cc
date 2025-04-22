@@ -7,6 +7,8 @@
 #include <D3DStagingBufferManager.hpp>
 #include <D3DDescriptorHeapManager.hpp>
 
+using namespace Gaia;
+
 namespace Constants
 {
 	constexpr std::uint32_t frameCount      = 2u;

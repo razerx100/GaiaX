@@ -2,6 +2,8 @@
 #define D3D_GRAPHICS_PIPELINE_MS_HPP_
 #include <D3DGraphicsPipelineBase.hpp>
 
+namespace Gaia
+{
 class GraphicsPipelineMS : public GraphicsPipelineBase<GraphicsPipelineMS>
 {
 	friend class GraphicsPipelineBase<GraphicsPipelineMS>;
@@ -37,4 +39,5 @@ public:
 		return *this;
 	}
 };
+}
 #endif

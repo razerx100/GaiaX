@@ -7,6 +7,8 @@
 #include <D3DExternalBuffer.hpp>
 #include <ReusableVector.hpp>
 
+namespace Gaia
+{
 class D3DExternalResourceFactory : public ExternalResourceFactory
 {
 	using ExternalBuffer_t  = std::shared_ptr<D3DExternalBuffer>;
@@ -99,4 +101,5 @@ public:
 		return *this;
 	}
 };
+}
 #endif

@@ -10,6 +10,8 @@
 #include <D3DGraphicsPipelineMS.hpp>
 #include <D3DPipelineManager.hpp>
 
+namespace Gaia
+{
 class PipelineModelsBase
 {
 public:
@@ -585,4 +587,5 @@ public:
 		return *this;
 	}
 };
+}
 #endif

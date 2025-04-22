@@ -1,6 +1,8 @@
 #include <D3DGraphicsPipelineMS.hpp>
 #include <D3DShader.hpp>
 
+namespace Gaia
+{
 std::unique_ptr<D3DPipelineObject> GraphicsPipelineMS::_createGraphicsPipeline(
 	ID3D12Device2* device, ID3D12RootSignature* graphicsRootSignature,
 	const std::wstring& shaderPath, const ExternalGraphicsPipeline& graphicsExtPipeline
@@ -48,4 +50,5 @@ std::unique_ptr<D3DPipelineObject> GraphicsPipelineMS::CreateGraphicsPipelineMS(
 	}
 
 	return pso;
+}
 }

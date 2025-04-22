@@ -9,6 +9,8 @@
 #include <array>
 #include <cassert>
 
+namespace Gaia
+{
 class D3DCommandList
 {
 public:
@@ -226,7 +228,10 @@ public:
 	[[nodiscard]]
 	D3DCommandList& GetCommandList(size_t index) noexcept { return m_commandLists[index]; }
 	[[nodiscard]]
-	const D3DCommandList& GetCommandList(size_t index) const noexcept { return m_commandLists[index]; }
+	const D3DCommandList& GetCommandList(size_t index) const noexcept
+	{
+		return m_commandLists[index];
+	}
 
 private:
 	void ExecuteCommandLists(
@@ -253,4 +258,5 @@ public:
 		return *this;
 	}
 };
+}
 #endif

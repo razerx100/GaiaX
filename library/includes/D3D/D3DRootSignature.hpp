@@ -6,6 +6,8 @@
 #include <utility>
 #include <string>
 
+namespace Gaia
+{
 class D3DRootSignatureStatic
 {
 public:
@@ -72,4 +74,5 @@ public:
 		return *this;
 	}
 };
+}
 #endif

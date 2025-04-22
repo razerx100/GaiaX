@@ -3,6 +3,8 @@
 #include <cassert>
 #include <GaiaException.hpp>
 
+namespace Gaia
+{
 // Resource
 Resource::Resource()
 	: m_resource{ nullptr }, m_device{ nullptr }, m_memoryManager{ nullptr },
@@ -346,7 +348,10 @@ UINT64 Texture::GetRowPitch() const noexcept
 
 	auto formatSize = formatSizeMap.find(textureFormat);
 
-	assert(formatSize != std::end(formatSizeMap) && "Texture format isn't available in the FormatSizeMap.");
+	assert(
+		formatSize != std::end(formatSizeMap)
+		&& "Texture format isn't available in the FormatSizeMap."
+	);
 
 	if (formatSize != std::end(formatSizeMap))
 	{
@@ -360,4 +365,5 @@ UINT64 Texture::GetRowPitch() const noexcept
 UINT64 Texture::GetRowPitchD3DAligned() const noexcept
 {
 	return Callisto::Align(GetRowPitch(), D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
+}
 }

@@ -6,6 +6,8 @@
 #include <D3DCommandQueue.hpp>
 #include <D3DRenderingAttachments.hpp>
 
+namespace Gaia
+{
 class D3DRenderPassManager
 {
 	struct DepthStencilInfo
@@ -93,4 +95,5 @@ public:
 		return *this;
 	}
 };
+}
 #endif

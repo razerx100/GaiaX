@@ -4,6 +4,8 @@
 #include <D3DRenderEngineVS.hpp>
 #include <D3DRenderEngineMS.hpp>
 
+using namespace Gaia;
+
 namespace Constants
 {
 	constexpr std::uint32_t frameCount = 2u;

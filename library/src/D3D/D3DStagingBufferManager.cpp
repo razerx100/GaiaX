@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <cassert>
 
+namespace Gaia
+{
 StagingBufferManager& StagingBufferManager::AddTexture(
 	std::shared_ptr<void> cpuData, Texture const* dst,
 	Callisto::TemporaryDataBufferGPU& tempDataBuffer, UINT mipLevelIndex/* = 0u */
@@ -244,4 +246,5 @@ void StagingBufferManager::CleanUpBufferInfo() noexcept
 {
 	m_bufferInfo.clear();
 	m_textureInfo.clear();
+}
 }

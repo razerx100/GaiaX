@@ -1,5 +1,7 @@
 #include <D3DViewportAndScissorManager.hpp>
 
+namespace Gaia
+{
 ViewportAndScissorManager::ViewportAndScissorManager()
 	: m_viewport
 	{
@@ -45,4 +47,5 @@ void ViewportAndScissorManager::Bind(const D3DCommandList& d3dCommandList) const
 
 	commandList->RSSetViewports(1u, &m_viewport);
 	commandList->RSSetScissorRects(1u, &m_scissor);
+}
 }

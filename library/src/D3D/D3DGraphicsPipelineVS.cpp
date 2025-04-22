@@ -2,6 +2,8 @@
 #include <D3DShader.hpp>
 #include <D3DVertexLayout.hpp>
 
+namespace Gaia
+{
 // Vertex Shader
 static std::unique_ptr<D3DPipelineObject> CreateGraphicsPipelineVS(
 	ID3D12Device2* device, ID3D12RootSignature* graphicsRootSignature, ShaderBinaryType binaryType,
@@ -65,4 +67,5 @@ std::unique_ptr<D3DPipelineObject> GraphicsPipelineVSIndividualDraw::_createGrap
 	return CreateGraphicsPipelineVS(
 		device, graphicsRootSignature, s_shaderBytecodeType, shaderPath, graphicsExtPipeline
 	);
+}
 }

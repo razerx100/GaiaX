@@ -9,6 +9,8 @@
 #include <Camera.hpp>
 #include <DirectXMath.h>
 
+namespace Gaia
+{
 class CameraManager
 {
 public:
@@ -79,4 +81,5 @@ public:
 		return *this;
 	}
 };
+}
 #endif

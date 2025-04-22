@@ -3,6 +3,8 @@
 #include <D3DHeaders.hpp>
 #include <utility>
 
+namespace Gaia
+{
 class D3DHeap
 {
 public:
@@ -39,4 +41,5 @@ public:
 		return *this;
 	}
 };
+}
 #endif

@@ -2,6 +2,8 @@
 #include <D3DExternalBuffer.hpp>
 #include <D3DExternalFormatMap.hpp>
 
+namespace Gaia
+{
 // External Buffer
 D3DExternalBuffer::D3DExternalBuffer(
 	ID3D12Device* device, MemoryManager* memoryManager, D3D12_HEAP_TYPE memoryType,
@@ -100,4 +102,5 @@ void D3DExternalTexture::Recreate(ExternalTexture2DType type)
 		resourceFlag = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
 
 	m_texture.Recreate2D(m_currentState, resourceFlag, &m_clearValue);
+}
 }

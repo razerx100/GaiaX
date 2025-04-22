@@ -1,6 +1,8 @@
 #include <D3DAllocator.hpp>
 #include <GaiaException.hpp>
 
+namespace Gaia
+{
 std::optional<UINT64> D3DAllocator::Allocate(
 	const D3D12_RESOURCE_ALLOCATION_INFO& allocInfo
 ) noexcept {
@@ -229,4 +231,5 @@ void MemoryManager::Deallocate(
 			allocators.erase(result);
 		}
 	}
+}
 }

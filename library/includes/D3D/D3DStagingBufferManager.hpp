@@ -6,6 +6,8 @@
 #include <ThreadPool.hpp>
 #include <TemporaryDataBuffer.hpp>
 
+namespace Gaia
+{
 class StagingBufferManager
 {
 public:
@@ -91,4 +93,5 @@ public:
 		return *this;
 	}
 };
+}
 #endif

@@ -5,6 +5,8 @@
 #include <D3DSwapchainManager.hpp>
 #include <SimpleWindow.hpp>
 
+using namespace Gaia;
+
 namespace Constants
 {
 	constexpr size_t bufferCount  = 2u;

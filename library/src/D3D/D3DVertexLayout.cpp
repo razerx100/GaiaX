@@ -1,5 +1,7 @@
 #include <D3DVertexLayout.hpp>
 
+namespace Gaia
+{
 VertexLayout& VertexLayout::AddInputElement(
 	std::string semanticName, DXGI_FORMAT format, UINT sizeInBytes
 ) noexcept {
@@ -36,4 +38,5 @@ D3D12_INPUT_LAYOUT_DESC VertexLayout::GetLayoutDesc() noexcept
 		.pInputElementDescs = std::data(m_inputDescs),
 		.NumElements        = static_cast<UINT>(std::size(m_inputDescs))
 	};
+}
 }

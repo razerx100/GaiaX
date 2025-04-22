@@ -5,6 +5,8 @@
 #include <D3DResources.hpp>
 #include <D3DStagingBufferManager.hpp>
 
+using namespace Gaia;
+
 namespace Constants
 {
 	constexpr size_t frameCount = 2u;

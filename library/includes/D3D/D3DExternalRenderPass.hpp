@@ -10,6 +10,8 @@
 #include <D3DRenderPassManager.hpp>
 #include <D3DExternalResourceFactory.hpp>
 
+namespace Gaia
+{
 class D3DExternalRenderPass : public ExternalRenderPass
 {
 	struct AttachmentDetails
@@ -222,4 +224,5 @@ public:
 		return *this;
 	}
 };
+}
 #endif

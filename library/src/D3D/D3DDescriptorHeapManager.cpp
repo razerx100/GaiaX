@@ -1,6 +1,8 @@
 #include <D3DDescriptorHeapManager.hpp>
 #include <cassert>
 
+namespace Gaia
+{
 D3DDescriptorHeap::D3DDescriptorHeap(
     ID3D12Device* device, D3D12_DESCRIPTOR_HEAP_TYPE type, D3D12_DESCRIPTOR_HEAP_FLAGS flag
 ) : m_descriptorHeap{},
@@ -705,4 +707,5 @@ D3D12_GPU_DESCRIPTOR_HANDLE D3DDescriptorManager::GetGPUHandleUAV(
     return m_resourceHeapGPU.GetGPUHandle(
         GetDescriptorOffsetUAV(registerSlot, registerSpace, descriptorIndex)
     );
+}
 }

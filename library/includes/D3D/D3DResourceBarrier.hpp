@@ -5,6 +5,8 @@
 #include <cassert>
 #include <D3DHeaders.hpp>
 
+namespace Gaia
+{
 class ResourceBarrierBuilder
 {
 public:
@@ -159,4 +161,5 @@ public:
 		return *this;
 	}
 };
+}
 #endif

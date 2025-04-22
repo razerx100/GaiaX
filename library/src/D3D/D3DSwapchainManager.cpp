@@ -1,5 +1,7 @@
 #include <D3DSwapchainManager.hpp>
 
+namespace Gaia
+{
 // Swapchain Manager
 SwapchainManager::SwapchainManager(D3DReusableDescriptorHeap* rtvHeap, UINT bufferCount)
 	: m_swapchain{}, m_renderTargetResources{}, m_renderTargets{}, m_presentFlag{ 0u }
@@ -98,4 +100,5 @@ SwapchainManager::Extent SwapchainManager::GetCurrentRenderArea() const noexcept
 	m_swapchain->GetDesc1(&desc);
 
 	return Extent{ .width = desc.Width, .height = desc.Height };
+}
 }

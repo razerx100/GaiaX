@@ -1,5 +1,7 @@
 #include <D3DPipelineObject.hpp>
 
+namespace Gaia
+{
 // D3D Pipeline Object
 void D3DPipelineObject::CreateGraphicsPipeline(
 	ID3D12Device2* device, const GraphicsPipelineBuilderMS& builder
@@ -35,4 +37,5 @@ void D3DPipelineObject::CreatePipelineState(
 	};
 
 	device->CreatePipelineState(&streamDesc, IID_PPV_ARGS(&m_pipelineStateObject));
+}
 }

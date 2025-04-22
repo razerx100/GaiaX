@@ -4,6 +4,8 @@
 #include <GaiaException.hpp>
 #include <fstream>
 
+namespace Gaia
+{
 bool D3DShader::LoadBinary(const std::wstring& fileName)
 {
 	std::ifstream shader{ fileName.c_str(), std::ios_base::binary | std::ios_base::ate };
@@ -66,4 +68,5 @@ D3D12_SHADER_BYTECODE D3DShader::GetByteCode() const noexcept
 	};
 
 	return byteCode;
+}
 }

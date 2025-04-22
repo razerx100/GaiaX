@@ -3,6 +3,8 @@
 
 #include <D3DSharedBuffer.hpp>
 
+namespace Gaia
+{
 // Shared Buffer GPU
 void SharedBufferGPU::CreateBuffer(UINT64 size, Callisto::TemporaryDataBufferGPU& tempBuffer)
 {
@@ -84,4 +86,5 @@ SharedBufferData SharedBufferGPU::AllocateAndGetSharedData(
 		.offset     = m_allocator.AllocateMemory(allocInfo, size),
 		.size       = size
 	};
+}
 }

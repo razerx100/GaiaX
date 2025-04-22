@@ -6,6 +6,8 @@
 #include <bitset>
 #include <type_traits>
 
+namespace Gaia
+{
 enum class DebugCallbackType
 {
 	StandardError,
@@ -164,4 +166,5 @@ using D3DDebugLogger = D3DDebugLoggerGeneric<D3DInfoQueue1Logger>;
 #else
 using D3DDebugLogger = D3DDebugLoggerGeneric<D3DInfoQueueLogger>;
 #endif // __ID3D12InfoQueue1_INTERFACE_DEFINED__
+}
 #endif

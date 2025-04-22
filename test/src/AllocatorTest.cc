@@ -3,6 +3,8 @@
 #include <gtest/gtest.h>
 #include <memory>
 
+using namespace Gaia;
+
 class AllocatorTest : public ::testing::Test
 {
 protected:

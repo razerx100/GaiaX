@@ -5,6 +5,8 @@
 #include <optional>
 #include <queue>
 
+namespace Gaia
+{
 class D3DAllocator
 {
 public:
@@ -140,4 +142,5 @@ public:
 		return *this;
 	}
 };
+}
 #endif

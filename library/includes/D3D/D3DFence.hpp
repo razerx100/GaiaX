@@ -3,6 +3,8 @@
 #include <D3DHeaders.hpp>
 #include <utility>
 
+namespace Gaia
+{
 class D3DFence
 {
 public:
@@ -38,4 +40,5 @@ public:
 		return *this;
 	}
 };
+}
 #endif

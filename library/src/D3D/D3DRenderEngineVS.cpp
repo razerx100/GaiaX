@@ -1,5 +1,7 @@
 #include <D3DRenderEngineVS.hpp>
 
+namespace Gaia
+{
 // VS Individual
 RenderEngineVSIndividual::RenderEngineVSIndividual(
 	const DeviceManager& deviceManager, std::shared_ptr<ThreadPool> threadPool, size_t frameCount
@@ -799,4 +801,5 @@ void RenderEngineVSIndirect::DrawingStage(
 
 		m_graphicsQueue.SubmitCommandLists(graphicsSubmitBuilder);
 	}
+}
 }

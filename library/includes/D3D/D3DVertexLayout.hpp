@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 
+namespace Gaia
+{
 class VertexLayout
 {
 public:
@@ -51,4 +53,5 @@ public:
 		return *this;
 	}
 };
+}
 #endif

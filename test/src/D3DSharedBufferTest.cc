@@ -4,6 +4,8 @@
 
 #include <D3DSharedBuffer.hpp>
 
+using namespace Gaia;
+
 namespace Constants
 {
 	constexpr size_t bufferCount = 2u;

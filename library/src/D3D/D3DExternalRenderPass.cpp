@@ -1,6 +1,8 @@
 #include <array>
 #include <D3DExternalRenderPass.hpp>
 
+namespace Gaia
+{
 static constexpr std::array s_externalTextureTransitionMap
 {
 	D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
@@ -392,4 +394,5 @@ void D3DExternalRenderPass::EndPassForSwapchain(
 	m_renderPassManager.EndPassForSwapchain(
 		graphicsCmdList, externalTexture->GetTexture().Get(), swapchainBackBuffer
 	);
+}
 }

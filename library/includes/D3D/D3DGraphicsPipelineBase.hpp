@@ -9,6 +9,8 @@
 #include <ExternalPipeline.hpp>
 #include <D3DExternalFormatMap.hpp>
 
+namespace Gaia
+{
 template<typename Derived>
 class GraphicsPipelineBase
 {
@@ -129,5 +131,6 @@ void ConfigurePipelineBuilder(
 			GetDxgiFormat(graphicsExtPipeline.GetRenderTargetFormat(index)),
 			GetD3DBlendState(graphicsExtPipeline.GetBlendState(index))
 		);
+}
 }
 #endif

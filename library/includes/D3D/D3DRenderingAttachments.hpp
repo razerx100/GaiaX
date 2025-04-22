@@ -5,6 +5,8 @@
 #include <utility>
 #include <D3DDescriptorHeapManager.hpp>
 
+namespace Gaia
+{
 class RenderingAttachment
 {
 public:
@@ -59,4 +61,5 @@ public:
 		return *this;
 	}
 };
+}
 #endif

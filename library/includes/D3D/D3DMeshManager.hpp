@@ -6,10 +6,9 @@
 #include <D3DSharedBuffer.hpp>
 #include <D3DStagingBufferManager.hpp>
 
-template<
-	class Derived,
-	class D3DMeshBundle
->
+namespace Gaia
+{
+template<class Derived, class D3DMeshBundle>
 class MeshManager
 {
 public:
@@ -220,4 +219,5 @@ public:
 		return *this;
 	}
 };
+}
 #endif

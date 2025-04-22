@@ -8,6 +8,8 @@
 
 #include <MeshBundle.hpp>
 
+namespace Gaia
+{
 class D3DMeshBundleMS
 {
 public:
@@ -129,4 +131,5 @@ public:
 		return *this;
 	}
 };
+}
 #endif

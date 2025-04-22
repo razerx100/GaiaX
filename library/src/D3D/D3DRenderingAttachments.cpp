@@ -1,5 +1,7 @@
 #include <D3DRenderingAttachments.hpp>
 
+namespace Gaia
+{
 // Rendering Attachment
 RenderingAttachment::~RenderingAttachment() noexcept
 {
@@ -42,4 +44,5 @@ void RenderingAttachment::CreateDSV(ID3D12Resource* depthStencilTarget, DXGI_FOR
 		m_attachmentHeap->CreateDSV(depthStencilTarget, dsvDesc, m_descriptorIndex);
 	else
 		m_descriptorIndex = m_attachmentHeap->CreateDSV(depthStencilTarget, dsvDesc);
+}
 }

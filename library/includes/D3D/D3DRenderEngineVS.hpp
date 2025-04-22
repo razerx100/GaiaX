@@ -3,6 +3,8 @@
 #include <D3DRenderEngine.hpp>
 #include <D3DModelManager.hpp>
 
+namespace Gaia
+{
 class RenderEngineVSIndividual : public
 	RenderEngineCommon
 	<
@@ -204,4 +206,5 @@ public:
 		return *this;
 	}
 };
+}
 #endif

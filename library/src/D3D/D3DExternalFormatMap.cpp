@@ -1,6 +1,8 @@
 #include <array>
 #include <D3DExternalFormatMap.hpp>
 
+namespace Gaia
+{
 static constexpr std::array s_externalFormatMap
 {
 	DXGI_FORMAT_UNKNOWN,
@@ -84,4 +86,5 @@ D3D12_RENDER_TARGET_BLEND_DESC GetD3DBlendState(const ExternalBlendState& blendS
 		.LogicOp               = D3D12_LOGIC_OP_NOOP,
 		.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL
 	};
+}
 }

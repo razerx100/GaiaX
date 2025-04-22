@@ -2,6 +2,8 @@
 #define D3D_GRAPHICS_PIPELINE_VS_HPP_
 #include <D3DGraphicsPipelineBase.hpp>
 
+namespace Gaia
+{
 namespace GraphicsPipelineVS
 {
 	void SetIATopology(const D3DCommandList& graphicsCmdList) noexcept;
@@ -65,4 +67,5 @@ public:
 		return *this;
 	}
 };
+}
 #endif

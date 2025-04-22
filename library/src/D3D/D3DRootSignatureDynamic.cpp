@@ -3,6 +3,8 @@
 #include <GaiaException.hpp>
 #include <format>
 
+namespace Gaia
+{
 // Sampler Builder
 SamplerBuilder::SamplerBuilder()
 	: m_samplerDesc{
@@ -241,4 +243,5 @@ D3DRootSignatureDynamic& D3DRootSignatureDynamic::AddDescriptorTable(
 	--m_rsSizeLimit;
 
 	return *this;
+}
 }

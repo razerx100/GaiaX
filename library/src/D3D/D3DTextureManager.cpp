@@ -1,6 +1,8 @@
 #include <D3DTextureManager.hpp>
 #include <D3DResourceBarrier.hpp>
 
+namespace Gaia
+{
 // Texture storage
 size_t TextureStorage::AddTexture(
 	STexture&& texture, StagingBufferManager& stagingBufferManager,
@@ -137,4 +139,5 @@ void TextureManager::SetDescriptorTable(
 		descriptorManager.SetDescriptorTableSRV(
 			texturesRegisterSlot, textureRegisterSpace, 0u, true
 		);
+}
 }

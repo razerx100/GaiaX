@@ -4,6 +4,8 @@
 #include <cstdint>
 #include <D3DCommandQueue.hpp>
 
+namespace Gaia
+{
 class ViewportAndScissorManager
 {
 public:
@@ -20,4 +22,5 @@ private:
 	D3D12_VIEWPORT m_viewport;
 	D3D12_RECT     m_scissor;
 };
+}
 #endif

@@ -5,6 +5,8 @@
 #include <gtest/gtest.h>
 #include <memory>
 
+using namespace Gaia;
+
 class DescriptorHeapManagerTest : public ::testing::Test
 {
 protected:

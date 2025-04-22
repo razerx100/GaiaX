@@ -1,5 +1,7 @@
 #include <D3DFence.hpp>
 
+namespace Gaia
+{
 void D3DFence::Create(ID3D12Device* device, UINT64 initialValue/* = 0u */)
 {
 	device->CreateFence(initialValue, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_fence));
@@ -21,4 +23,5 @@ void D3DFence::Wait(UINT64 waitValue) const
 UINT64 D3DFence::GetCurrentValue() const noexcept
 {
 	return m_fence->GetCompletedValue();
+}
 }

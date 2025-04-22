@@ -9,6 +9,8 @@
 
 #include <MeshBundle.hpp>
 
+namespace Gaia
+{
 class D3DMeshBundleVS
 {
 	struct PerMeshBundleData
@@ -87,4 +89,5 @@ public:
 		return *this;
 	}
 };
+}
 #endif

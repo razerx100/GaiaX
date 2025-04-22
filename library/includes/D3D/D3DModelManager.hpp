@@ -15,6 +15,8 @@
 #include <D3DMeshManager.hpp>
 #include <D3DPipelineManager.hpp>
 
+namespace Gaia
+{
 template<class ModelBundleType>
 class ModelManager
 {
@@ -372,4 +374,5 @@ public:
 		return *this;
 	}
 };
+}
 #endif

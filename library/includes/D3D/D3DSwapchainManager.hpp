@@ -6,6 +6,8 @@
 #include <D3DDescriptorHeapManager.hpp>
 #include <D3DCommandQueue.hpp>
 
+namespace Gaia
+{
 class SwapchainManager
 {
 public:
@@ -77,4 +79,5 @@ public:
 		return *this;
 	}
 };
+}
 #endif

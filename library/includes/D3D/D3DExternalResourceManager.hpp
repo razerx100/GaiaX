@@ -8,6 +8,8 @@
 #include <ReusableVector.hpp>
 #include <D3DCommandQueue.hpp>
 
+namespace Gaia
+{
 class D3DExternalResourceManager : public ExternalResourceManager
 {
 	using GfxExtension_t = std::shared_ptr<GraphicsTechniqueExtension>;
@@ -112,4 +114,5 @@ public:
 		return *this;
 	}
 };
+}
 #endif

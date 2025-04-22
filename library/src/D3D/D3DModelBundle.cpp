@@ -1,6 +1,8 @@
 #include <D3DModelBundle.hpp>
 #include <VectorToSharedPtr.hpp>
 
+namespace Gaia
+{
 // Pipeline Models Base
 D3D12_DRAW_INDEXED_ARGUMENTS PipelineModelsBase::GetDrawIndexedIndirectCommand(
 	const MeshTemporaryDetailsVS& meshDetailsVS
@@ -858,4 +860,5 @@ void ModelBundleVSIndirect::DrawPipeline(
 	const PipelineModelsVSIndirect& pipeline = m_vsPipelines[pipelineLocalIndex];
 
 	pipeline.Draw(frameIndex, commandSignature, graphicsList);
+}
 }

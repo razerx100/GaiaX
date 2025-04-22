@@ -1,5 +1,7 @@
 #include <D3DRenderEngineMS.hpp>
 
+namespace Gaia
+{
 RenderEngineMS::RenderEngineMS(
 	const DeviceManager& deviceManager, std::shared_ptr<ThreadPool> threadPool, size_t frameCount
 ) : RenderEngineCommon{ deviceManager, std::move(threadPool), frameCount }
@@ -261,4 +263,5 @@ void RenderEngineMS::DrawingStage(
 
 		m_graphicsQueue.SubmitCommandLists(graphicsSubmitBuilder);
 	}
+}
 }

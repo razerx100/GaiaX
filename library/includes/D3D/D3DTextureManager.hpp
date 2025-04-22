@@ -10,6 +10,8 @@
 #include <optional>
 #include <Texture.hpp>
 
+namespace Gaia
+{
 // This class will store the texture. A texture added here will also be added to the manager at first.
 // But can be removed and re-added.
 class TextureStorage
@@ -309,4 +311,5 @@ public:
 		return *this;
 	}
 };
+}
 #endif

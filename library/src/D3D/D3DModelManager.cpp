@@ -2,6 +2,8 @@
 #include <D3DModelManager.hpp>
 #include <D3DRootSignatureDynamic.hpp>
 
+namespace Gaia
+{
 // Model Manager VS Individual
 void ModelManagerVSIndividual::SetGraphicsConstantsRootIndex(
 	const D3DDescriptorManager& descriptorManager, size_t constantsRegisterSpace
@@ -396,4 +398,5 @@ void ModelManagerMS::DrawPipeline(
 
 	// Model
 	modelBundle.DrawPipeline(pipelineLocalIndex, graphicsList, m_constantsRootIndex, meshBundle);
+}
 }

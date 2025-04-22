@@ -1,6 +1,8 @@
 #include <D3DComputePipeline.hpp>
 #include <D3DShader.hpp>
 
+namespace Gaia
+{
 void ComputePipeline::Create(
 	ID3D12Device2* device, ID3D12RootSignature* computeRootSignature,
 	const std::wstring& shaderPath, const ExternalComputePipeline& computeExtPipeline
@@ -48,4 +50,5 @@ void ComputePipeline::Bind(const D3DCommandList& computeCmdList) const noexcept
 	ID3D12GraphicsCommandList* cmdList = computeCmdList.Get();
 
 	cmdList->SetPipelineState(m_computePipeline->Get());
+}
 }

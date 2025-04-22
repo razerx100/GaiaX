@@ -1,6 +1,8 @@
 #include <D3DHeap.hpp>
 #include <AllocatorBase.hpp>
 
+namespace Gaia
+{
 D3DHeap::D3DHeap(ID3D12Device* device, D3D12_HEAP_TYPE type, UINT64 size, bool msaa /* = false */)
 	: m_type{ type }, m_size{ 0u }, m_heap{}
 {
@@ -34,4 +36,5 @@ void D3DHeap::Allocate(ID3D12Device* device, D3D12_HEAP_TYPE type, UINT64 size, 
 	device->CreateHeap(&desc, IID_PPV_ARGS(&m_heap));
 
 	m_size = alignedSize;
+}
 }

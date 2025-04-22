@@ -6,6 +6,8 @@
 #include <d3dx12.h>
 #include <D3DVertexLayout.hpp>
 
+namespace Gaia
+{
 class StencilOpStateBuilder
 {
 public:
@@ -332,4 +334,5 @@ public:
 		return *this;
 	}
 };
+}
 #endif

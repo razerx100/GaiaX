@@ -4,6 +4,8 @@
 #include <ExternalFormat.hpp>
 #include <ExternalPipeline.hpp>
 
+namespace Gaia
+{
 [[nodiscard]]
 DXGI_FORMAT GetDxgiFormat(ExternalFormat format) noexcept;
 [[nodiscard]]
@@ -16,4 +18,5 @@ D3D12_BLEND_OP GetD3DBlendOP(ExternalBlendOP op) noexcept;
 
 [[nodiscard]]
 D3D12_RENDER_TARGET_BLEND_DESC GetD3DBlendState(const ExternalBlendState& blendState) noexcept;
+}
 #endif

@@ -6,6 +6,8 @@
 #include <utility>
 #include <concepts>
 
+namespace Gaia
+{
 template<class Derived, class T>
 class ReusableD3DBuffer
 {
@@ -313,4 +315,5 @@ public:
 		return *this;
 	}
 };
+}
 #endif

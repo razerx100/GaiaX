@@ -5,6 +5,8 @@
 #include <D3DHeaders.hpp>
 #include <D3DAllocator.hpp>
 
+namespace Gaia
+{
 class Resource
 {
 public:
@@ -378,4 +380,5 @@ private:
 	D3D12_STATIC_SAMPLER_DESC m_samplerDesc;
 	std::array<FLOAT, 4u>     m_borderColour;
 };
+}
 #endif

@@ -3,6 +3,8 @@
 #include <Model.hpp>
 #include <D3DSharedBuffer.hpp>
 
+namespace Gaia
+{
 class ModelBuffers : public ReusableD3DBuffer<ModelBuffers, std::shared_ptr<Model>>
 {
 	friend class ReusableD3DBuffer<ModelBuffers, std::shared_ptr<Model>>;
@@ -99,4 +101,5 @@ public:
 		return *this;
 	}
 };
+}
 #endif

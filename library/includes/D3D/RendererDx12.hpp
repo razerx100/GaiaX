@@ -5,6 +5,8 @@
 #include <ThreadPool.hpp>
 #include <Gaia.hpp>
 
+namespace Gaia
+{
 template<class RenderEngine_t>
 class RendererDx12 final : public Renderer
 {
@@ -258,4 +260,5 @@ public:
 		return *this;
 	}
 };
+}
 #endif

@@ -1,6 +1,8 @@
 #include <cstring>
 #include <D3DCameraManager.hpp>
 
+namespace Gaia
+{
 CameraManager::CameraManager(ID3D12Device* device, MemoryManager* memoryManager)
 	: m_activeCameraIndex{ 0u }, m_cameraBufferInstanceSize{ 0u },
 	m_cameraBuffer{ GetCPUResource<Buffer>(device, memoryManager) },
@@ -111,4 +113,5 @@ void CameraManager::SetDescriptorCompute(
 			cameraRegister, registerSpace,
 			m_cameraBuffer.GetGPUAddress() + (index * m_cameraBufferInstanceSize), false
 		);
+}
 }

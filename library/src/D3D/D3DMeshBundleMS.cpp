@@ -1,6 +1,8 @@
 #include <D3DMeshBundleMS.hpp>
 #include <VectorToSharedPtr.hpp>
 
+namespace Gaia
+{
 D3DMeshBundleMS::D3DMeshBundleMS()
 	: m_vertexBufferSharedData{ nullptr, 0u, 0u },
 	m_vertexIndicesBufferSharedData{ nullptr, 0u, 0u }, m_primIndicesBufferSharedData{ nullptr, 0u, 0u },
@@ -149,4 +151,5 @@ void D3DMeshBundleMS::SetMeshBundle(
 		stagingBufferMan, vertexSharedBuffer, vertexIndicesSharedBuffer, primIndicesSharedBuffer,
 		perMeshletSharedBuffer, tempBuffer
 	);
+}
 }

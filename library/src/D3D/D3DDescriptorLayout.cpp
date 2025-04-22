@@ -2,6 +2,8 @@
 #include <ranges>
 #include <algorithm>
 
+namespace Gaia
+{
 // D3D Descriptor Layout
 std::optional<size_t> D3DDescriptorLayout::FindBindingIndex(
     UINT registerIndex, D3D12_DESCRIPTOR_RANGE_TYPE type
@@ -185,4 +187,5 @@ D3DDescriptorLayout& D3DDescriptorLayout::AddRootUAV(
     );
 
     return *this;
+}
 }

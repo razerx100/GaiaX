@@ -11,6 +11,8 @@
 #include <D3DComputePipeline.hpp>
 #include <ReusableVector.hpp>
 
+namespace Gaia
+{
 template<typename Pipeline>
 class PipelineManager
 {
@@ -152,4 +154,5 @@ public:
 		return *this;
 	}
 };
+}
 #endif

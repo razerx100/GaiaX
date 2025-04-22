@@ -22,6 +22,8 @@
 #include <D3DExternalRenderPass.hpp>
 #include <D3DExternalResourceManager.hpp>
 
+namespace Gaia
+{
 class RenderEngine
 {
 	// Getting the values from the same values from the deviceManager for each member is kinda
@@ -516,4 +518,5 @@ public:
 		return *this;
 	}
 };
+}
 #endif

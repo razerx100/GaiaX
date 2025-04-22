@@ -10,6 +10,8 @@
 #include <memory>
 #include <optional>
 
+namespace Gaia
+{
 class D3DDescriptorHeap
 {
 public:
@@ -562,4 +564,5 @@ public:
 		return *this;
 	}
 };
+}
 #endif

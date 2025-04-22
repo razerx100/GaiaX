@@ -8,6 +8,8 @@
 #include <D3DRootSignature.hpp>
 #include <ExternalPipeline.hpp>
 
+namespace Gaia
+{
 class ComputePipeline
 {
 public:
@@ -65,4 +67,5 @@ public:
 		return *this;
 	}
 };
+}
 #endif

@@ -1,5 +1,7 @@
 #include <D3DRenderEngine.hpp>
 
+namespace Gaia
+{
 RenderEngine::RenderEngine(
 	const DeviceManager& deviceManager, std::shared_ptr<ThreadPool> threadPool, size_t frameCount
 ) : RenderEngine{
@@ -161,4 +163,5 @@ void RenderEngine::QueueExternalBufferGPUCopy(
 	);
 
 	m_copyNecessary = true;
+}
 }

@@ -10,6 +10,8 @@
 
 #include <MeshBundle.hpp>
 
+namespace Gaia
+{
 struct SharedBufferData
 {
 	Buffer const* bufferData;
@@ -215,4 +217,5 @@ public:
 
 typedef SharedBufferWriteOnly<D3D12_HEAP_TYPE_UPLOAD> SharedBufferCPU;
 typedef SharedBufferWriteOnly<D3D12_HEAP_TYPE_DEFAULT> SharedBufferGPUWriteOnly;
+}
 #endif

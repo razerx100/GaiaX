@@ -3,6 +3,8 @@
 #include <D3DHeaders.hpp>
 #include <string>
 
+namespace Gaia
+{
 class D3DShader
 {
 public:
@@ -35,4 +37,5 @@ public:
 		return *this;
 	}
 };
+}
 #endif

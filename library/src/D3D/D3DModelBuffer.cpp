@@ -1,5 +1,7 @@
 #include <D3DModelBuffer.hpp>
 
+namespace Gaia
+{
 // Model Buffers
 void ModelBuffers::CreateBuffer(size_t modelCount)
 {
@@ -122,4 +124,5 @@ void ModelBuffers::Remove(const std::vector<size_t>& indices) noexcept
 {
 	for (size_t index : indices)
 		Remove(index);
+}
 }

@@ -6,6 +6,8 @@
 #include <D3DResourceBarrier.hpp>
 #include <D3DRenderingAttachments.hpp>
 
+namespace Gaia
+{
 class D3DExternalBuffer : public ExternalBuffer
 {
 public:
@@ -135,4 +137,5 @@ public:
 		return *this;
 	}
 };
+}
 #endif

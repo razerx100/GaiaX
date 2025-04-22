@@ -6,6 +6,8 @@
 #include <D3DRenderEngineVS.hpp>
 #include <D3DRenderEngineMS.hpp>
 
+namespace Gaia
+{
 template<class RenderEngine_t>
 class Gaia
 {
@@ -153,4 +155,5 @@ public:
 		return *this;
 	}
 };
+}
 #endif
