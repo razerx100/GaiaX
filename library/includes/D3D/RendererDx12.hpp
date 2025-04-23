@@ -1,6 +1,6 @@
 #ifndef RENDERER_DX12_HPP_
 #define RENDERER_DX12_HPP_
-#include <RendererTypes.hpp>
+#include <RendererCommonTypes.hpp>
 #include <string>
 #include <ThreadPool.hpp>
 #include <Gaia.hpp>
@@ -28,19 +28,19 @@ public:
 	}
 
 	[[nodiscard]]
-	SolExtent GetCurrentRenderingExtent() const noexcept
+	RendererType::Extent GetCurrentRenderingExtent() const noexcept
 	{
 		auto [width, height] = m_gaia.GetCurrentRenderArea();
 
-		return SolExtent{ .width = width, .height = height };
+		return RendererType::Extent{ .width = width, .height = height };
 	}
 
 	[[nodiscard]]
-	SolExtent GetFirstDisplayCoordinates() const
+	RendererType::Extent GetFirstDisplayCoordinates() const
 	{
 		auto [width, height] = m_gaia.GetFirstDisplayCoordinates();
 
-		return SolExtent{ .width = width, .height = height };
+		return RendererType::Extent{ .width = width, .height = height };
 	}
 
 	void SetShaderPath(const wchar_t* path)

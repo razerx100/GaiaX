@@ -2,7 +2,6 @@
 #define GAIA_HPP_
 #include <D3DDeviceManager.hpp>
 #include <D3DSwapchainManager.hpp>
-#include <RendererTypes.hpp>
 #include <D3DRenderEngineVS.hpp>
 #include <D3DRenderEngineMS.hpp>
 
