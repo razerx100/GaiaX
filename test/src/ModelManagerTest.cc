@@ -42,40 +42,11 @@ void ModelManagerTest::TearDownTestSuite()
 	s_deviceManager.reset();
 }
 
-class PipelineModelBundleDummy : public PipelineModelBundle
-{
-	std::uint32_t              m_psoIndex = 0u;
-	std::vector<std::uint32_t> m_modelIndices;
-public:
-	void SetPipelineIndex(std::uint32_t index) noexcept { m_psoIndex = index; }
-
-	void AddModelIndex(std::uint32_t index) noexcept
-	{
-		m_modelIndices.emplace_back(index);
-	}
-
-	void RemoveModelIndex(std::uint32_t indexInBundle) noexcept
-	{
-		std::erase(m_modelIndices, indexInBundle);
-	}
-
-	[[nodiscard]]
-	std::uint32_t GetPipelineIndex() const noexcept override { return m_psoIndex; }
-	[[nodiscard]]
-	const std::vector<std::uint32_t>& GetModelIndicesInBundle() const noexcept override
-	{
-		return m_modelIndices;
-	}
-};
-
 class ModelBundleDummy : public ModelBundle
 {
-	using DummyPipelineContainer_t = std::vector<std::shared_ptr<PipelineModelBundleDummy>>;
-
-	std::uint32_t            m_meshBundleIndex = Constants::meshBundleIndex;
-	ModelContainer_t         m_models;
-	PipelineContainer_t      m_pipelines;
-	DummyPipelineContainer_t m_dummyPipelines;
+	std::uint32_t       m_meshBundleIndex = Constants::meshBundleIndex;
+	ModelContainer_t    m_models;
+	PipelineContainer_t m_pipelines;
 
 public:
 	void AddModel(std::uint32_t pipelineIndex, std::shared_ptr<Model> model) noexcept
@@ -84,14 +55,14 @@ public:
 
 		m_models.emplace_back(std::move(model));
 
-		m_dummyPipelines[pipelineIndex]->AddModelIndex(modelIndex);
+		m_pipelines[pipelineIndex]->AddModelIndex(modelIndex);
 	}
 
-	std::uint32_t AddPipeline(std::shared_ptr<PipelineModelBundleDummy> pipeline) noexcept
+	std::uint32_t AddPipeline(std::shared_ptr<PipelineModelBundle> pipeline) noexcept
 	{
 		const auto pipelineIndex = static_cast<std::uint32_t>(std::size(m_pipelines));
 
-		m_dummyPipelines.emplace_back(pipeline);
+		m_pipelines.emplace_back(pipeline);
 		m_pipelines.emplace_back(std::move(pipeline));
 
 		return pipelineIndex;
@@ -104,11 +75,11 @@ public:
 		size_t oldPipelineIndexInBundle = std::numeric_limits<size_t>::max();
 		size_t newPipelineIndexInBundle = std::numeric_limits<size_t>::max();
 
-		const size_t pipelineCount = std::size(m_dummyPipelines);
+		const size_t pipelineCount = std::size(m_pipelines);
 
 		for (size_t index = 0u; index < pipelineCount; ++index)
 		{
-			const size_t currentPipelineIndex = m_dummyPipelines[index]->GetPipelineIndex();
+			const size_t currentPipelineIndex = m_pipelines[index]->GetPipelineIndex();
 
 			if (currentPipelineIndex == oldPipelineIndex)
 				oldPipelineIndexInBundle = index;
@@ -123,8 +94,8 @@ public:
 				break;
 		}
 
-		m_dummyPipelines[oldPipelineIndexInBundle]->RemoveModelIndex(modelIndexInBundle);
-		m_dummyPipelines[newPipelineIndexInBundle]->AddModelIndex(modelIndexInBundle);
+		m_pipelines[oldPipelineIndexInBundle]->RemoveModelIndex(modelIndexInBundle);
+		m_pipelines[newPipelineIndexInBundle]->AddModelIndex(modelIndexInBundle);
 	}
 
 	[[nodiscard]]
@@ -389,7 +360,7 @@ TEST_F(ModelManagerTest, ModelManagerVSIndividualTest)
 
 	{
 		auto model       = std::make_shared<Model>();
-		auto pipeline    = std::make_shared<PipelineModelBundleDummy>();
+		auto pipeline    = std::make_shared<PipelineModelBundle>();
 		auto modelBundle = std::make_shared<ModelBundleDummy>();
 
 		modelBundle->AddPipeline(std::move(pipeline));
@@ -405,7 +376,7 @@ TEST_F(ModelManagerTest, ModelManagerVSIndividualTest)
 	}
 	{
 		auto model       = std::make_shared<Model>();
-		auto pipeline    = std::make_shared<PipelineModelBundleDummy>();
+		auto pipeline    = std::make_shared<PipelineModelBundle>();
 		auto modelBundle = std::make_shared<ModelBundleDummy>();
 
 		modelBundle->AddPipeline(std::move(pipeline));
@@ -421,8 +392,8 @@ TEST_F(ModelManagerTest, ModelManagerVSIndividualTest)
 	}
 	{
 		auto modelBundle = std::make_shared<ModelBundleDummy>();
-		auto pipeline    = std::make_shared<PipelineModelBundleDummy>();
-		auto pipeline1   = std::make_shared<PipelineModelBundleDummy>();
+		auto pipeline    = std::make_shared<PipelineModelBundle>();
+		auto pipeline1   = std::make_shared<PipelineModelBundle>();
 
 		modelBundle->AddPipeline(std::move(pipeline));
 		modelBundle->AddPipeline(std::move(pipeline1));
@@ -445,8 +416,8 @@ TEST_F(ModelManagerTest, ModelManagerVSIndividualTest)
 	::RemoveModelBundle(modelBuffers, *vsIndividual.RemoveModelBundle(1u));
 	{
 		auto modelBundle = std::make_shared<ModelBundleDummy>();
-		auto pipeline    = std::make_shared<PipelineModelBundleDummy>();
-		auto pipeline1   = std::make_shared<PipelineModelBundleDummy>();
+		auto pipeline    = std::make_shared<PipelineModelBundle>();
+		auto pipeline1   = std::make_shared<PipelineModelBundle>();
 
 		modelBundle->AddPipeline(std::move(pipeline));
 		modelBundle->AddPipeline(std::move(pipeline1));
@@ -569,7 +540,7 @@ TEST_F(ModelManagerTest, ModelManagerVSIndirectTest)
 
 	{
 		auto model       = std::make_shared<Model>();
-		auto pipeline    = std::make_shared<PipelineModelBundleDummy>();
+		auto pipeline    = std::make_shared<PipelineModelBundle>();
 		auto modelBundle = std::make_shared<ModelBundleDummy>();
 
 		modelBundle->AddPipeline(std::move(pipeline));
@@ -585,7 +556,7 @@ TEST_F(ModelManagerTest, ModelManagerVSIndirectTest)
 	}
 	{
 		auto model       = std::make_shared<Model>();
-		auto pipeline    = std::make_shared<PipelineModelBundleDummy>();
+		auto pipeline    = std::make_shared<PipelineModelBundle>();
 		auto modelBundle = std::make_shared<ModelBundleDummy>();
 
 		modelBundle->AddPipeline(std::move(pipeline));
@@ -601,8 +572,8 @@ TEST_F(ModelManagerTest, ModelManagerVSIndirectTest)
 	}
 	{
 		auto modelBundle = std::make_shared<ModelBundleDummy>();
-		auto pipeline    = std::make_shared<PipelineModelBundleDummy>();
-		auto pipeline1   = std::make_shared<PipelineModelBundleDummy>();
+		auto pipeline    = std::make_shared<PipelineModelBundle>();
+		auto pipeline1   = std::make_shared<PipelineModelBundle>();
 
 		modelBundle->AddPipeline(std::move(pipeline));
 		modelBundle->AddPipeline(std::move(pipeline1));
@@ -623,8 +594,8 @@ TEST_F(ModelManagerTest, ModelManagerVSIndirectTest)
 	::RemoveModelBundle(modelBuffers, *vsIndirect.RemoveModelBundle(1u));
 	{
 		auto modelBundle = std::make_shared<ModelBundleDummy>();
-		auto pipeline    = std::make_shared<PipelineModelBundleDummy>();
-		auto pipeline1   = std::make_shared<PipelineModelBundleDummy>();
+		auto pipeline    = std::make_shared<PipelineModelBundle>();
+		auto pipeline1   = std::make_shared<PipelineModelBundle>();
 
 		modelBundle->AddPipeline(std::move(pipeline));
 		modelBundle->AddPipeline(std::move(pipeline1));
@@ -644,7 +615,7 @@ TEST_F(ModelManagerTest, ModelManagerVSIndirectTest)
 	}
 	{
 		auto model       = std::make_shared<Model>();
-		auto pipeline    = std::make_shared<PipelineModelBundleDummy>();
+		auto pipeline    = std::make_shared<PipelineModelBundle>();
 		auto modelBundle = std::make_shared<ModelBundleDummy>();
 
 		modelBundle->AddPipeline(std::move(pipeline));
@@ -660,7 +631,7 @@ TEST_F(ModelManagerTest, ModelManagerVSIndirectTest)
 	}
 	{
 		auto model       = std::make_shared<Model>();
-		auto pipeline    = std::make_shared<PipelineModelBundleDummy>();
+		auto pipeline    = std::make_shared<PipelineModelBundle>();
 		auto modelBundle = std::make_shared<ModelBundleDummy>();
 
 		modelBundle->AddPipeline(std::move(pipeline));
@@ -676,9 +647,9 @@ TEST_F(ModelManagerTest, ModelManagerVSIndirectTest)
 	}
 	{
 		auto modelBundle = std::make_shared<ModelBundleDummy>();
-		auto pipeline    = std::make_shared<PipelineModelBundleDummy>();
-		auto pipeline1   = std::make_shared<PipelineModelBundleDummy>();
-		auto pipeline2   = std::make_shared<PipelineModelBundleDummy>();
+		auto pipeline    = std::make_shared<PipelineModelBundle>();
+		auto pipeline1   = std::make_shared<PipelineModelBundle>();
+		auto pipeline2   = std::make_shared<PipelineModelBundle>();
 
 		pipeline->SetPipelineIndex(1u);
 		pipeline1->SetPipelineIndex(2u);
@@ -796,7 +767,7 @@ TEST_F(ModelManagerTest, ModelManagerMS)
 
 	{
 		auto model       = std::make_shared<Model>();
-		auto pipeline    = std::make_shared<PipelineModelBundleDummy>();
+		auto pipeline    = std::make_shared<PipelineModelBundle>();
 		auto modelBundle = std::make_shared<ModelBundleDummy>();
 
 		modelBundle->AddPipeline(std::move(pipeline));
@@ -812,7 +783,7 @@ TEST_F(ModelManagerTest, ModelManagerMS)
 	}
 	{
 		auto model       = std::make_shared<Model>();
-		auto pipeline    = std::make_shared<PipelineModelBundleDummy>();
+		auto pipeline    = std::make_shared<PipelineModelBundle>();
 		auto modelBundle = std::make_shared<ModelBundleDummy>();
 
 		modelBundle->AddPipeline(std::move(pipeline));
@@ -828,8 +799,8 @@ TEST_F(ModelManagerTest, ModelManagerMS)
 	}
 	{
 		auto modelBundle = std::make_shared<ModelBundleDummy>();
-		auto pipeline    = std::make_shared<PipelineModelBundleDummy>();
-		auto pipeline1   = std::make_shared<PipelineModelBundleDummy>();
+		auto pipeline    = std::make_shared<PipelineModelBundle>();
+		auto pipeline1   = std::make_shared<PipelineModelBundle>();
 
 		modelBundle->AddPipeline(std::move(pipeline));
 		modelBundle->AddPipeline(std::move(pipeline1));
@@ -850,8 +821,8 @@ TEST_F(ModelManagerTest, ModelManagerMS)
 	::RemoveModelBundle(modelBuffers, *managerMS.RemoveModelBundle(1u));
 	{
 		auto modelBundle = std::make_shared<ModelBundleDummy>();
-		auto pipeline    = std::make_shared<PipelineModelBundleDummy>();
-		auto pipeline1   = std::make_shared<PipelineModelBundleDummy>();
+		auto pipeline    = std::make_shared<PipelineModelBundle>();
+		auto pipeline1   = std::make_shared<PipelineModelBundle>();
 
 		modelBundle->AddPipeline(std::move(pipeline));
 		modelBundle->AddPipeline(std::move(pipeline1));
@@ -871,9 +842,9 @@ TEST_F(ModelManagerTest, ModelManagerMS)
 	}
 	{
 		auto modelBundle = std::make_shared<ModelBundleDummy>();
-		auto pipeline    = std::make_shared<PipelineModelBundleDummy>();
-		auto pipeline1   = std::make_shared<PipelineModelBundleDummy>();
-		auto pipeline2   = std::make_shared<PipelineModelBundleDummy>();
+		auto pipeline    = std::make_shared<PipelineModelBundle>();
+		auto pipeline1   = std::make_shared<PipelineModelBundle>();
+		auto pipeline2   = std::make_shared<PipelineModelBundle>();
 
 		pipeline->SetPipelineIndex(1u);
 		pipeline1->SetPipelineIndex(2u);
