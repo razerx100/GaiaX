@@ -34,7 +34,7 @@ public:
 	std::uint32_t AddModelBundle(std::shared_ptr<ModelBundle>&& modelBundle);
 
 	[[nodiscard]]
-	std::uint32_t AddMeshBundle(std::unique_ptr<MeshBundleTemporary> meshBundle);
+	std::uint32_t AddMeshBundle(MeshBundleTemporaryData&& meshBundle);
 
 	void SetShaderPath(const std::wstring& shaderPath)
 	{

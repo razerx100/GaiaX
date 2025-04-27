@@ -117,7 +117,7 @@ std::uint32_t RenderEngineMS::AddModelBundle(std::shared_ptr<ModelBundle>&& mode
 	return index;
 }
 
-std::uint32_t RenderEngineMS::AddMeshBundle(std::unique_ptr<MeshBundleTemporary> meshBundle)
+std::uint32_t RenderEngineMS::AddMeshBundle(MeshBundleTemporaryData&& meshBundle)
 {
 	WaitForGPUToFinish();
 

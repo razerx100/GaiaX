@@ -12,6 +12,8 @@ namespace Gaia
 {
 class D3DMeshBundleMS
 {
+	using MeshBundleDetails_t = std::vector<MeshTemporaryDetailsMS>;
+
 public:
 	// The offset should be enough to identify the mesh. We wouldn't really need the size
 	// as the meshlets should already have that data.
@@ -32,13 +34,13 @@ public:
 	D3DMeshBundleMS();
 
 	void SetMeshBundle(
-		std::unique_ptr<MeshBundleTemporary> meshBundle, StagingBufferManager& stagingBufferMan,
+		MeshBundleTemporaryData&& meshBundle, StagingBufferManager& stagingBufferMan,
 		SharedBufferGPU& vertexSharedBuffer, SharedBufferGPU& vertexIndicesSharedBuffer,
 		SharedBufferGPU& primIndicesSharedBuffer, SharedBufferGPU& perMeshletSharedBuffer,
 		Callisto::TemporaryDataBufferGPU & tempBuffer
 	);
 	void SetMeshBundle(
-		std::unique_ptr<MeshBundleTemporary> meshBundle, StagingBufferManager& stagingBufferMan,
+		MeshBundleTemporaryData&& meshBundle, StagingBufferManager& stagingBufferMan,
 		SharedBufferGPU& vertexSharedBuffer, SharedBufferGPU& vertexIndicesSharedBuffer,
 		SharedBufferGPU& primIndicesSharedBuffer, SharedBufferGPU& perMeshletSharedBuffer,
 		SharedBufferGPU& perMeshSharedBuffer, SharedBufferGPU& perMeshBundleSharedBuffer,
@@ -75,7 +77,7 @@ public:
 	[[nodiscard]]
 	const MeshTemporaryDetailsMS& GetMeshDetails(size_t index) const noexcept
 	{
-		return m_bundleDetails.meshTemporaryDetailsMS[index];
+		return m_bundleDetails[index];
 	}
 
 	[[nodiscard]]
@@ -86,21 +88,21 @@ public:
 
 private:
 	void _setMeshBundle(
-		std::unique_ptr<MeshBundleTemporary> meshBundle, StagingBufferManager& stagingBufferMan,
+		MeshBundleTemporaryData&& meshBundle, StagingBufferManager& stagingBufferMan,
 		SharedBufferGPU& vertexSharedBuffer, SharedBufferGPU& vertexIndicesSharedBuffer,
 		SharedBufferGPU& primIndicesSharedBuffer, SharedBufferGPU& perMeshletSharedBuffer,
 		Callisto::TemporaryDataBufferGPU& tempBuffer
 	);
 
 private:
-	SharedBufferData           m_vertexBufferSharedData;
-	SharedBufferData           m_vertexIndicesBufferSharedData;
-	SharedBufferData           m_primIndicesBufferSharedData;
-	SharedBufferData           m_perMeshletBufferSharedData;
-	SharedBufferData           m_perMeshSharedData;
-	SharedBufferData           m_perMeshBundleSharedData;
-	MeshBundleDetailsMS        m_meshBundleDetails;
-	MeshBundleTemporaryDetails m_bundleDetails;
+	SharedBufferData    m_vertexBufferSharedData;
+	SharedBufferData    m_vertexIndicesBufferSharedData;
+	SharedBufferData    m_primIndicesBufferSharedData;
+	SharedBufferData    m_perMeshletBufferSharedData;
+	SharedBufferData    m_perMeshSharedData;
+	SharedBufferData    m_perMeshBundleSharedData;
+	MeshBundleDetailsMS m_meshBundleDetails;
+	MeshBundleDetails_t m_bundleDetails;
 
 public:
 	D3DMeshBundleMS(const D3DMeshBundleMS&) = delete;

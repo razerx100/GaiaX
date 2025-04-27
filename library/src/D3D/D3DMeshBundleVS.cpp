@@ -10,13 +10,14 @@ D3DMeshBundleVS::D3DMeshBundleVS()
 {}
 
 void D3DMeshBundleVS::_setMeshBundle(
-	std::unique_ptr<MeshBundleTemporary> meshBundle, StagingBufferManager& stagingBufferMan,
+	MeshBundleTemporaryData&& meshBundle, StagingBufferManager& stagingBufferMan,
 	SharedBufferGPU& vertexSharedBuffer, SharedBufferGPU& indexSharedBuffer,
 	Callisto::TemporaryDataBufferGPU& tempBuffer
 ) {
 	// Vertex Buffer
 	{
-		const std::vector<Vertex>& vertices = meshBundle->GetVertices();
+		const std::vector<Vertex>& vertices = meshBundle.vertices;
+
 		const auto vertexBufferSize = static_cast<UINT64>(sizeof(Vertex) * std::size(vertices));
 
 		m_vertexBufferSharedData = vertexSharedBuffer.AllocateAndGetSharedData(
@@ -35,8 +36,11 @@ void D3DMeshBundleVS::_setMeshBundle(
 
 	// Index Buffer
 	{
-		const std::vector<std::uint32_t>& indices = meshBundle->GetVertexIndices();
-		const auto indexBufferSize                = sizeof(std::uint32_t) * std::size(indices);
+		const std::vector<std::uint32_t>& indices = meshBundle.indices;
+
+		const auto indexBufferSize = static_cast<UINT64>(
+			sizeof(std::uint32_t) * std::size(indices)
+		);
 
 		m_indexBufferSharedData = indexSharedBuffer.AllocateAndGetSharedData(
 			indexBufferSize, tempBuffer
@@ -51,17 +55,14 @@ void D3DMeshBundleVS::_setMeshBundle(
 		);
 	}
 
-	m_bundleDetails = std::move(meshBundle->GetTemporaryBundleDetails());
+	m_bundleDetails = std::move(meshBundle.bundleDetails.meshTemporaryDetailsVS);
 }
 
 void D3DMeshBundleVS::SetMeshBundle(
-	std::unique_ptr<MeshBundleTemporary> meshBundle, StagingBufferManager& stagingBufferMan,
+	MeshBundleTemporaryData&& meshBundle, StagingBufferManager& stagingBufferMan,
 	SharedBufferGPU& vertexSharedBuffer, SharedBufferGPU& indexSharedBuffer,
 	Callisto::TemporaryDataBufferGPU& tempBuffer
 ) {
-	// Init the temp data.
-	meshBundle->GenerateTemporaryData(false);
-
 	_setMeshBundle(
 		std::move(meshBundle), stagingBufferMan, vertexSharedBuffer, indexSharedBuffer,
 		tempBuffer
@@ -69,20 +70,15 @@ void D3DMeshBundleVS::SetMeshBundle(
 }
 
 void D3DMeshBundleVS::SetMeshBundle(
-	std::unique_ptr<MeshBundleTemporary> meshBundle, StagingBufferManager& stagingBufferMan,
+	MeshBundleTemporaryData&& meshBundle, StagingBufferManager& stagingBufferMan,
 	SharedBufferGPU& vertexSharedBuffer, SharedBufferGPU& indexSharedBuffer,
 	SharedBufferGPU& perMeshSharedBuffer, SharedBufferGPU& perMeshBundleSharedBuffer,
 	Callisto::TemporaryDataBufferGPU& tempBuffer
 ) {
-	constexpr auto perMeshDataStride = sizeof(AxisAlignedBoundingBox);
+	constexpr size_t perMeshDataStride = sizeof(AxisAlignedBoundingBox);
 
-	// Init the temp data.
-	meshBundle->GenerateTemporaryData(false);
-
-	// Need this or else the overload which returns the R value ref will be called.
-	const MeshBundleTemporary& meshBundleR = *meshBundle;
 	const std::vector<MeshTemporaryDetailsVS>& meshDetailsVS
-		= meshBundleR.GetTemporaryBundleDetails().meshTemporaryDetailsVS;
+		= meshBundle.bundleDetails.meshTemporaryDetailsVS;
 
 	const size_t meshCount     = std::size(meshDetailsVS);
 	const auto perMeshDataSize = static_cast<UINT64>(perMeshDataStride * meshCount);
@@ -108,7 +104,7 @@ void D3DMeshBundleVS::SetMeshBundle(
 	// Mesh Bundle Data
 	constexpr size_t perMeshBundleDataSize = sizeof(PerMeshBundleData);
 
-	auto perBundleData        = std::make_shared<std::uint8_t[]>(perMeshBundleDataSize);
+	auto perBundleData = std::make_shared<std::uint8_t[]>(perMeshBundleDataSize);
 
 	m_perMeshBundleSharedData = perMeshBundleSharedBuffer.AllocateAndGetSharedData(
 		perMeshBundleDataSize, tempBuffer

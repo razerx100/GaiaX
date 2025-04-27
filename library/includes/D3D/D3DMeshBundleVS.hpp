@@ -18,16 +18,18 @@ class D3DMeshBundleVS
 		std::uint32_t meshOffset;
 	};
 
+	using MeshBundleDetails_t = std::vector<MeshTemporaryDetailsVS>;
+
 public:
 	D3DMeshBundleVS();
 
 	void SetMeshBundle(
-		std::unique_ptr<MeshBundleTemporary> meshBundle, StagingBufferManager& stagingBufferMan,
+		MeshBundleTemporaryData&& meshBundle, StagingBufferManager& stagingBufferMan,
 		SharedBufferGPU& vertexSharedBuffer, SharedBufferGPU& indexSharedBuffer,
 		Callisto::TemporaryDataBufferGPU& tempBuffer
 	);
 	void SetMeshBundle(
-		std::unique_ptr<MeshBundleTemporary> meshBundle, StagingBufferManager& stagingBufferMan,
+		MeshBundleTemporaryData&& meshBundle, StagingBufferManager& stagingBufferMan,
 		SharedBufferGPU& vertexSharedBuffer, SharedBufferGPU& indexSharedBuffer,
 		SharedBufferGPU& perMeshSharedBuffer, SharedBufferGPU& perMeshBundleSharedBuffer,
 		Callisto::TemporaryDataBufferGPU& tempBuffer
@@ -50,22 +52,22 @@ public:
 	[[nodiscard]]
 	const MeshTemporaryDetailsVS& GetMeshDetails(size_t index) const noexcept
 	{
-		return m_bundleDetails.meshTemporaryDetailsVS[index];
+		return m_bundleDetails[index];
 	}
 
 private:
 	void _setMeshBundle(
-		std::unique_ptr<MeshBundleTemporary> meshBundle, StagingBufferManager& stagingBufferMan,
+		MeshBundleTemporaryData&& meshBundle, StagingBufferManager& stagingBufferMan,
 		SharedBufferGPU& vertexSharedBuffer, SharedBufferGPU& indexSharedBuffer,
 		Callisto::TemporaryDataBufferGPU& tempBuffer
 	);
 
 private:
-	SharedBufferData           m_vertexBufferSharedData;
-	SharedBufferData           m_indexBufferSharedData;
-	SharedBufferData           m_perMeshSharedData;
-	SharedBufferData           m_perMeshBundleSharedData;
-	MeshBundleTemporaryDetails m_bundleDetails;
+	SharedBufferData    m_vertexBufferSharedData;
+	SharedBufferData    m_indexBufferSharedData;
+	SharedBufferData    m_perMeshSharedData;
+	SharedBufferData    m_perMeshBundleSharedData;
+	MeshBundleDetails_t m_bundleDetails;
 
 public:
 	D3DMeshBundleVS(const D3DMeshBundleVS&) = delete;
