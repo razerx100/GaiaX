@@ -48,9 +48,9 @@ public:
 	void SetGraphicsDescriptorLayout(std::vector<D3DDescriptorManager>& descriptorManagers);
 
 	[[nodiscard]]
-	D3DExternalResourceFactory* GetResourceFactory() const noexcept
+	auto&& GetResourceFactory(this auto&& self) noexcept
 	{
-		return m_resourceFactory.get();
+		return std::forward_like<decltype(self)>(self.m_resourceFactory);
 	}
 
 private:
@@ -72,9 +72,9 @@ private:
 	) const;
 
 private:
-	std::unique_ptr<D3DExternalResourceFactory> m_resourceFactory;
-	Callisto::ReusableVector<GfxExtension_t>    m_gfxExtensions;
-	std::vector<GPUCopyDetails>                 m_copyQueueDetails;
+	D3DExternalResourceFactory               m_resourceFactory;
+	Callisto::ReusableVector<GfxExtension_t> m_gfxExtensions;
+	std::vector<GPUCopyDetails>              m_copyQueueDetails;
 
 	static constexpr size_t s_externalBufferRegisterSpace = 2u;
 

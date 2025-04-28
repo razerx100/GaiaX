@@ -154,9 +154,11 @@ public:
 public:
 	// External stuff
 	[[nodiscard]]
-	D3DExternalResourceManager* GetExternalResourceManager() const noexcept
+	auto&& GetExternalResourceManager(this auto&& self) noexcept
 	{
-		return m_gaia.GetRenderEngine().GetExternalResourceManager();
+		return std::forward_like<decltype(self)>(
+			self.m_gaia.GetRenderEngine().GetExternalResourceManager()
+		);
 	}
 
 	void UpdateExternalBufferDescriptor(

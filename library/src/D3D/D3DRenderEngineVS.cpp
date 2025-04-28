@@ -16,7 +16,7 @@ RenderEngineVSIndividual::RenderEngineVSIndividual(
 
 void RenderEngineVSIndividual::FinaliseInitialisation(const DeviceManager& deviceManager)
 {
-	m_externalResourceManager->SetGraphicsDescriptorLayout(m_graphicsDescriptorManagers);
+	m_externalResourceManager.SetGraphicsDescriptorLayout(m_graphicsDescriptorManagers);
 
 	for (D3DDescriptorManager& descriptorManager : m_graphicsDescriptorManagers)
 		descriptorManager.CreateDescriptors();
@@ -146,7 +146,7 @@ ID3D12Fence* RenderEngineVSIndividual::GenericCopyStage(
 
 			// Need to copy the old buffers first to avoid empty data being copied over
 			// the queued data.
-			m_externalResourceManager->CopyQueuedBuffers(copyCmdListScope);
+			m_externalResourceManager.CopyQueuedBuffers(copyCmdListScope);
 			m_meshManager.CopyOldBuffers(copyCmdListScope);
 			m_stagingManager.CopyAndClearQueuedBuffers(copyCmdListScope);
 		}
@@ -302,7 +302,7 @@ void RenderEngineVSIndirect::FinaliseInitialisation(const DeviceManager& deviceM
 {
 	ID3D12Device5* device = deviceManager.GetDevice();
 
-	m_externalResourceManager->SetGraphicsDescriptorLayout(m_graphicsDescriptorManagers);
+	m_externalResourceManager.SetGraphicsDescriptorLayout(m_graphicsDescriptorManagers);
 
 	// Graphics
 	for (D3DDescriptorManager& descriptorManager : m_graphicsDescriptorManagers)
@@ -643,7 +643,7 @@ ID3D12Fence* RenderEngineVSIndirect::GenericCopyStage(
 
 			// Need to copy the old buffers first to avoid empty data being copied over
 			// the queued data.
-			m_externalResourceManager->CopyQueuedBuffers(copyCmdListScope);
+			m_externalResourceManager.CopyQueuedBuffers(copyCmdListScope);
 			m_meshManager.CopyOldBuffers(copyCmdListScope);
 			m_stagingManager.CopyAndClearQueuedBuffers(copyCmdListScope);
 		}

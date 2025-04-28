@@ -190,9 +190,9 @@ private:
 public:
 	// External stuff
 	[[nodiscard]]
-	D3DExternalResourceManager* GetExternalResourceManager() const noexcept
+	auto&& GetExternalResourceManager(this auto&& self) noexcept
 	{
-		return m_externalResourceManager.get();
+		return std::forward_like<decltype(self)>(self.m_externalResourceManager);
 	}
 
 	void UpdateExternalBufferDescriptor(const ExternalBufferBindingDetails& bindingDetails);
@@ -231,24 +231,24 @@ protected:
 	static constexpr size_t s_textureSRVRegisterSlot = 1u;
 
 protected:
-	std::shared_ptr<ThreadPool>                 m_threadPool;
-	std::unique_ptr<MemoryManager>              m_memoryManager;
-	std::vector<UINT64>                         m_counterValues;
-	D3DCommandQueue                             m_graphicsQueue;
-	std::vector<D3DFence>                       m_graphicsWait;
-	D3DCommandQueue                             m_copyQueue;
-	std::vector<D3DFence>                       m_copyWait;
-	StagingBufferManager                        m_stagingManager;
-	std::unique_ptr<D3DReusableDescriptorHeap>  m_dsvHeap;
-	std::vector<D3DDescriptorManager>           m_graphicsDescriptorManagers;
-	std::unique_ptr<D3DExternalResourceManager> m_externalResourceManager;
-	D3DRootSignature                            m_graphicsRootSignature;
-	TextureStorage                              m_textureStorage;
-	TextureManager                              m_textureManager;
-	CameraManager                               m_cameraManager;
-	ViewportAndScissorManager                   m_viewportAndScissors;
-	Callisto::TemporaryDataBufferGPU            m_temporaryDataBuffer;
-	bool                                        m_copyNecessary;
+	std::shared_ptr<ThreadPool>                m_threadPool;
+	std::unique_ptr<MemoryManager>             m_memoryManager;
+	std::vector<UINT64>                        m_counterValues;
+	D3DCommandQueue                            m_graphicsQueue;
+	std::vector<D3DFence>                      m_graphicsWait;
+	D3DCommandQueue                            m_copyQueue;
+	std::vector<D3DFence>                      m_copyWait;
+	StagingBufferManager                       m_stagingManager;
+	std::unique_ptr<D3DReusableDescriptorHeap> m_dsvHeap;
+	std::vector<D3DDescriptorManager>          m_graphicsDescriptorManagers;
+	D3DExternalResourceManager                 m_externalResourceManager;
+	D3DRootSignature                           m_graphicsRootSignature;
+	TextureStorage                             m_textureStorage;
+	TextureManager                             m_textureManager;
+	CameraManager                              m_cameraManager;
+	ViewportAndScissorManager                  m_viewportAndScissors;
+	Callisto::TemporaryDataBufferGPU           m_temporaryDataBuffer;
+	bool                                       m_copyNecessary;
 
 public:
 	RenderEngine(const RenderEngine&) = delete;
