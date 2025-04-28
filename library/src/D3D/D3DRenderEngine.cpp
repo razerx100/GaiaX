@@ -87,8 +87,7 @@ void RenderEngine::UnbindExternalTexture(UINT bindingIndex)
 
 void RenderEngine::RebindExternalTexture(size_t textureIndex, UINT bindingIndex)
 {
-	D3DExternalResourceFactory* resourceFactory
-		= m_externalResourceManager->GetD3DResourceFactory();
+	D3DExternalResourceFactory* resourceFactory = m_externalResourceManager->GetResourceFactory();
 
 	const Texture& texture = resourceFactory->GetD3DTexture(textureIndex);
 

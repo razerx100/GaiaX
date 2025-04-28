@@ -154,7 +154,7 @@ public:
 public:
 	// External stuff
 	[[nodiscard]]
-	ExternalResourceManager* GetExternalResourceManager() noexcept
+	D3DExternalResourceManager* GetExternalResourceManager() const noexcept
 	{
 		return m_gaia.GetRenderEngine().GetExternalResourceManager();
 	}

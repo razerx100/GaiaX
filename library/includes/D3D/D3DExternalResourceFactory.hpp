@@ -2,14 +2,13 @@
 #define D3D_EXTERNAL_RESOURCE_FACTORY_HPP_
 #include <utility>
 #include <vector>
-#include <ExternalResourceFactory.hpp>
 #include <D3DAllocator.hpp>
 #include <D3DExternalBuffer.hpp>
 #include <ReusableVector.hpp>
 
 namespace Gaia
 {
-class D3DExternalResourceFactory : public ExternalResourceFactory
+class D3DExternalResourceFactory
 {
 	using ExternalBuffer_t  = std::shared_ptr<D3DExternalBuffer>;
 	using ExternalTexture_t = std::shared_ptr<D3DExternalTexture>;
@@ -20,33 +19,33 @@ public:
 	{}
 
 	[[nodiscard]]
-	size_t CreateExternalBuffer(ExternalBufferType type) override;
+	size_t CreateExternalBuffer(ExternalBufferType type);
 	[[nodiscard]]
-	size_t CreateExternalTexture() override;
+	size_t CreateExternalTexture();
 
 	[[nodiscard]]
-	ExternalBuffer* GetExternalBufferRP(size_t index) const noexcept override
+	ExternalBuffer* GetExternalBufferRP(size_t index) const noexcept
 	{
 		return m_externalBuffers[index].get();
 	}
 	[[nodiscard]]
-	ExternalTexture* GetExternalTextureRP(size_t index) const noexcept override
+	ExternalTexture* GetExternalTextureRP(size_t index) const noexcept
 	{
 		return m_externalTextures[index].get();
 	}
 	[[nodiscard]]
-	D3DExternalTexture* GetD3DExternalTexture(size_t index) noexcept
+	D3DExternalTexture* GetD3DExternalTexture(size_t index) const noexcept
 	{
 		return m_externalTextures[index].get();
 	}
 
 	[[nodiscard]]
-	std::shared_ptr<ExternalBuffer> GetExternalBufferSP(size_t index) const noexcept override
+	std::shared_ptr<ExternalBuffer> GetExternalBufferSP(size_t index) const noexcept
 	{
 		return std::static_pointer_cast<ExternalBuffer>(m_externalBuffers[index]);
 	}
 	[[nodiscard]]
-	std::shared_ptr<ExternalTexture> GetExternalTextureSP(size_t index) const noexcept override
+	std::shared_ptr<ExternalTexture> GetExternalTextureSP(size_t index) const noexcept
 	{
 		return std::static_pointer_cast<ExternalTexture>(m_externalTextures[index]);
 	}
@@ -63,13 +62,13 @@ public:
 		return m_externalTextures[index]->GetTexture();
 	}
 
-	void RemoveExternalBuffer(size_t index) noexcept override
+	void RemoveExternalBuffer(size_t index) noexcept
 	{
 		m_externalBuffers[index].reset();
 		m_externalBuffers.RemoveElement(index);
 	}
 
-	void RemoveExternalTexture(size_t index) noexcept override
+	void RemoveExternalTexture(size_t index) noexcept
 	{
 		m_externalTextures[index].reset();
 		m_externalTextures.RemoveElement(index);

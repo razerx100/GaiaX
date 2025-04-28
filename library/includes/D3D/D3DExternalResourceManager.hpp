@@ -1,7 +1,7 @@
 #ifndef D3D_EXTERNAL_RESOURCE_MANAGER_HPP_
 #define D3D_EXTERNAL_RESOURCE_MANAGER_HPP_
 #include <vector>
-#include <ExternalResourceManager.hpp>
+#include <GraphicsTechniqueExtension.hpp>
 #include <D3DExternalResourceFactory.hpp>
 #include <D3DDescriptorHeapManager.hpp>
 #include <D3DStagingBufferManager.hpp>
@@ -10,7 +10,7 @@
 
 namespace Gaia
 {
-class D3DExternalResourceManager : public ExternalResourceManager
+class D3DExternalResourceManager
 {
 	using GfxExtension_t = std::shared_ptr<GraphicsTechniqueExtension>;
 
@@ -20,9 +20,9 @@ public:
 	[[nodiscard]]
 	std::uint32_t AddGraphicsTechniqueExtension(
 		std::shared_ptr<GraphicsTechniqueExtension> extension
-	) override;
+	);
 
-	void RemoveGraphicsTechniqueExtension(std::uint32_t index) noexcept override;
+	void RemoveGraphicsTechniqueExtension(std::uint32_t index) noexcept;
 
 	void UpdateDescriptor(
 		std::vector<D3DDescriptorManager>& descriptorManagers,
@@ -48,25 +48,7 @@ public:
 	void SetGraphicsDescriptorLayout(std::vector<D3DDescriptorManager>& descriptorManagers);
 
 	[[nodiscard]]
-	ExternalResourceFactory* GetResourceFactory() noexcept override
-	{
-		return GetD3DResourceFactory();
-	}
-
-	[[nodiscard]]
-	ExternalResourceFactory const* GetResourceFactory() const noexcept override
-	{
-		return GetD3DResourceFactory();
-	}
-
-	[[nodiscard]]
-	D3DExternalResourceFactory* GetD3DResourceFactory() noexcept
-	{
-		return m_resourceFactory.get();
-	}
-
-	[[nodiscard]]
-	D3DExternalResourceFactory const* GetD3DResourceFactory() const noexcept
+	D3DExternalResourceFactory* GetResourceFactory() const noexcept
 	{
 		return m_resourceFactory.get();
 	}

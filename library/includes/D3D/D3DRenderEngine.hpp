@@ -190,7 +190,7 @@ private:
 public:
 	// External stuff
 	[[nodiscard]]
-	ExternalResourceManager* GetExternalResourceManager() const noexcept
+	D3DExternalResourceManager* GetExternalResourceManager() const noexcept
 	{
 		return m_externalResourceManager.get();
 	}
