@@ -80,10 +80,10 @@ public:
 	[[nodiscard]]
 	std::uint32_t BindExternalTexture(this Derived& self, size_t textureIndex)
 	{
-		D3DExternalResourceFactory* resourceFactory
+		D3DExternalResourceFactory& resourceFactory
 			= self.m_externalResourceManager.GetResourceFactory();
 
-		const Texture& texture = resourceFactory->GetD3DTexture(textureIndex);
+		const Texture& texture = resourceFactory.GetD3DTexture(textureIndex);
 
 		// Can't cache as the underlying resource might change or we might have a separate texture
 		// on each descriptor buffer.
@@ -429,7 +429,7 @@ public:
 	{
 		m_swapchainRenderPass = std::make_shared<ExternalRenderPass_t>(
 			// This must be changed urgently
-			m_modelManager.get(), m_externalResourceManager.GetResourceFactory(),
+			m_modelManager.get(), &m_externalResourceManager.GetResourceFactory(),
 			rtvHeap, m_dsvHeap.get()
 		);
 	}
