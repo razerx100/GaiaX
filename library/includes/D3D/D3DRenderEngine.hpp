@@ -81,7 +81,7 @@ public:
 	std::uint32_t BindExternalTexture(this Derived& self, size_t textureIndex)
 	{
 		D3DExternalResourceFactory* resourceFactory
-			= self.m_externalResourceManager->GetD3DResourceFactory();
+			= self.m_externalResourceManager.GetResourceFactory();
 
 		const Texture& texture = resourceFactory->GetD3DTexture(textureIndex);
 
@@ -399,7 +399,8 @@ public:
 		return static_cast<std::uint32_t>(
 			m_renderPasses.Add(
 				std::make_shared<ExternalRenderPass_t>(
-					m_modelManager.get(), m_externalResourceManager->GetD3DResourceFactory(),
+					// This must be changed urgently
+					m_modelManager.get(), &m_externalResourceManager.GetResourceFactory(),
 					rtvHeap, m_dsvHeap.get()
 				)
 			)
@@ -427,7 +428,8 @@ public:
 	void SetSwapchainExternalRenderPass(D3DReusableDescriptorHeap* rtvHeap)
 	{
 		m_swapchainRenderPass = std::make_shared<ExternalRenderPass_t>(
-			m_modelManager.get(), m_externalResourceManager->GetD3DResourceFactory(),
+			// This must be changed urgently
+			m_modelManager.get(), m_externalResourceManager.GetResourceFactory(),
 			rtvHeap, m_dsvHeap.get()
 		);
 	}
@@ -467,7 +469,7 @@ protected:
 
 		static_cast<Derived const*>(this)->_updatePerFrame(frameIndex);
 
-		m_externalResourceManager->UpdateExtensionData(static_cast<size_t>(frameIndex));
+		m_externalResourceManager.UpdateExtensionData(static_cast<size_t>(frameIndex));
 	}
 
 	void _setShaderPath(const std::wstring& shaderPath)
