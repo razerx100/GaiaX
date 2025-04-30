@@ -151,6 +151,9 @@ public:
 		m_renderPass->SetSwapchainCopySource(renderTargetIndex, resourceFactory);
 	}
 
+	[[nodiscard]]
+	bool HasImpl() const noexcept { return m_renderPass != nullptr; }
+
 private:
 	std::shared_ptr<ExternalRenderPass_t> m_renderPass;
 

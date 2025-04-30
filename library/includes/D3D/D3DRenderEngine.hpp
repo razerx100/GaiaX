@@ -468,9 +468,16 @@ public:
 	void AddLocalPipelinesInExternalRenderPass(
 		std::uint32_t modelBundleIndex, size_t renderPassIndex
 	) {
-		m_renderPasses[renderPassIndex]->AddLocalPipelinesOfModelBundle(
-			modelBundleIndex, m_modelManager
-		);
+		// UINT32 MAX because I am not gonna store size_t for no reason.
+		// As there is no way there will be 4 million passes.
+		if (renderPassIndex == std::numeric_limits<std::uint32_t>::max())
+			m_swapchainRenderPass->AddLocalPipelinesOfModelBundle(
+				modelBundleIndex, m_modelManager
+			);
+		else
+			m_renderPasses[renderPassIndex]->AddLocalPipelinesOfModelBundle(
+				modelBundleIndex, m_modelManager
+			);
 	}
 
 protected:
