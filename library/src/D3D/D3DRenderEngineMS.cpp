@@ -6,8 +6,6 @@ RenderEngineMS::RenderEngineMS(
 	const DeviceManager& deviceManager, std::shared_ptr<ThreadPool> threadPool, size_t frameCount
 ) : RenderEngineCommon{ deviceManager, std::move(threadPool), frameCount }
 {
-	m_modelManager = std::make_unique<ModelManagerMS>();
-
 	SetGraphicsDescriptorBufferLayout();
 
 	m_cameraManager.CreateBuffer(static_cast<std::uint32_t>(frameCount));
@@ -25,7 +23,7 @@ void RenderEngineMS::FinaliseInitialisation(const DeviceManager& deviceManager)
 	{
 		D3DDescriptorManager& graphicsDescriptorManager = m_graphicsDescriptorManagers.front();
 
-		m_modelManager->SetGraphicsConstantsRootIndex(
+		m_modelManager.SetGraphicsConstantsRootIndex(
 			graphicsDescriptorManager, s_vertexShaderRegisterSpace
 		);
 
@@ -53,7 +51,7 @@ void RenderEngineMS::FinaliseInitialisation(const DeviceManager& deviceManager)
 void RenderEngineMS::SetGraphicsDescriptorBufferLayout()
 {
 	// The layout shouldn't change throughout the runtime.
-	m_modelManager->SetDescriptorLayout(m_graphicsDescriptorManagers, s_vertexShaderRegisterSpace);
+	m_modelManager.SetDescriptorLayout(m_graphicsDescriptorManagers, s_vertexShaderRegisterSpace);
 	m_meshManager.SetDescriptorLayout(m_graphicsDescriptorManagers, s_vertexShaderRegisterSpace);
 
 	SetCommonGraphicsDescriptorLayout(D3D12_SHADER_VISIBILITY_ALL); // AS, MS and PS all of them will use it.
@@ -93,7 +91,8 @@ void RenderEngineMS::SetGraphicsDescriptors()
 			s_vertexShaderRegisterSpace, true
 		);
 		m_modelBuffers.SetPixelDescriptor(
-			descriptorManager, frameIndex, s_modelBuffersPixelSRVRegisterSlot, s_pixelShaderRegisterSpace
+			descriptorManager, frameIndex, s_modelBuffersPixelSRVRegisterSlot,
+			s_pixelShaderRegisterSpace
 		);
 	}
 }
@@ -102,9 +101,11 @@ std::uint32_t RenderEngineMS::AddModelBundle(std::shared_ptr<ModelBundle>&& mode
 {
 	WaitForGPUToFinish();
 
-	std::vector<std::uint32_t> modelBufferIndices = AddModelsToBuffer(*modelBundle, m_modelBuffers);
+	std::vector<std::uint32_t> modelBufferIndices = AddModelsToBuffer(
+		*modelBundle, m_modelBuffers
+	);
 
-	const std::uint32_t index = m_modelManager->AddModelBundle(
+	const std::uint32_t index = m_modelManager.AddModelBundle(
 		std::move(modelBundle), modelBufferIndices
 	);
 
@@ -179,7 +180,7 @@ ID3D12Fence* RenderEngineMS::GenericCopyStage(
 }
 
 void RenderEngineMS::DrawRenderPassPipelines(
-	const D3DCommandList& graphicsCmdList, const ExternalRenderPass_t& renderPass
+	const D3DCommandList& graphicsCmdList, const D3DExternalRenderPass& renderPass
 ) const noexcept {
 	const std::vector<D3DExternalRenderPass::PipelineDetails>& pipelineDetails
 		= renderPass.GetPipelineDetails();
@@ -194,14 +195,15 @@ void RenderEngineMS::DrawRenderPassPipelines(
 		const size_t bundleCount = std::size(bundleIndices);
 
 		for (size_t index = 0u; index < bundleCount; ++index)
-			m_modelManager->DrawPipeline(
+			m_modelManager.DrawPipeline(
 				bundleIndices[index], pipelineLocalIndices[index], graphicsCmdList, m_meshManager
 			);
 	}
 }
 
 void RenderEngineMS::DrawingStage(
-	size_t frameIndex, ID3D12Resource* swapchainBackBuffer, UINT64& counterValue, ID3D12Fence* waitFence
+	size_t frameIndex, ID3D12Resource* swapchainBackBuffer, UINT64& counterValue,
+	ID3D12Fence* waitFence
 ) {
 	// Graphics Phase
 	const D3DCommandList& graphicsCmdList = m_graphicsQueue.GetCommandList(frameIndex);
@@ -227,7 +229,7 @@ void RenderEngineMS::DrawingStage(
 			if (!m_renderPasses.IsInUse(index))
 				continue;
 
-			const ExternalRenderPass_t& renderPass = *m_renderPasses[index];
+			const D3DExternalRenderPass& renderPass = *m_renderPasses[index];
 
 			renderPass.StartPass(graphicsCmdListScope);
 
@@ -239,13 +241,16 @@ void RenderEngineMS::DrawingStage(
 		// The one for the swapchain
 		if (m_swapchainRenderPass)
 		{
-			const ExternalRenderPass_t& renderPass = *m_swapchainRenderPass;
+			const D3DExternalRenderPass& renderPass = *m_swapchainRenderPass;
 
 			renderPass.StartPass(graphicsCmdListScope);
 
 			DrawRenderPassPipelines(graphicsCmdListScope, renderPass);
 
-			renderPass.EndPassForSwapchain(graphicsCmdListScope, swapchainBackBuffer);
+			renderPass.EndPassForSwapchain(
+				graphicsCmdListScope, swapchainBackBuffer,
+				m_externalResourceManager.GetResourceFactory()
+			);
 		}
 	}
 

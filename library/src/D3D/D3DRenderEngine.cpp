@@ -30,7 +30,8 @@ RenderEngine::RenderEngine(
 	m_textureStorage{ device, m_memoryManager.get() },
 	m_textureManager{ device },
 	m_cameraManager{ device, m_memoryManager.get() },
-	m_viewportAndScissors{}, m_temporaryDataBuffer{}, m_copyNecessary{ false }
+	m_viewportAndScissors{}, m_temporaryDataBuffer{}, m_renderPasses{}, m_swapchainRenderPass{},
+	m_copyNecessary{ false }
 {
 	for (size_t _ = 0u; _ < frameCount; ++_)
 	{

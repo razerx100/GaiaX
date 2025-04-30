@@ -33,6 +33,10 @@ class RenderEngine
 		size_t frameCount
 	);
 
+protected:
+	using ExternalRenderPassSP_t        = std::shared_ptr<D3DExternalRenderPass>;
+	using ExternalRenderPassContainer_t = Callisto::ReusableVector<ExternalRenderPassSP_t>;
+
 public:
 	RenderEngine(
 		const DeviceManager& deviceManager, std::shared_ptr<ThreadPool> threadPool,
@@ -206,6 +210,68 @@ public:
 		size_t dstBufferOffset, size_t srcBufferOffset, size_t srcDataSizeInBytes
 	);
 
+	[[nodiscard]]
+	std::uint32_t AddExternalRenderPass(D3DReusableDescriptorHeap* rtvHeap)
+	{
+		return static_cast<std::uint32_t>(
+			m_renderPasses.Add(
+				std::make_shared<D3DExternalRenderPass>(rtvHeap, m_dsvHeap.get())
+			)
+		);
+	}
+
+	[[nodiscard]]
+	D3DExternalRenderPass* GetExternalRenderPassRP(size_t index) const noexcept
+	{
+		return m_renderPasses[index].get();
+	}
+
+	[[nodiscard]]
+	std::shared_ptr<D3DExternalRenderPass> GetExternalRenderPassSP(size_t index) const noexcept
+	{
+		return m_renderPasses[index];
+	}
+
+	void RemoveExternalRenderPass(size_t index) noexcept
+	{
+		m_renderPasses[index].reset();
+		m_renderPasses.RemoveElement(index);
+	}
+
+	void SetSwapchainExternalRenderPass(D3DReusableDescriptorHeap* rtvHeap)
+	{
+		m_swapchainRenderPass = std::make_shared<D3DExternalRenderPass>(rtvHeap, m_dsvHeap.get());
+	}
+
+	[[nodiscard]]
+	D3DExternalRenderPass* GetSwapchainExternalRenderPassRP() const noexcept
+	{
+		return m_swapchainRenderPass.get();
+	}
+
+	[[nodiscard]]
+	std::shared_ptr<D3DExternalRenderPass> GetSwapchainExternalRenderPassSP() const noexcept
+	{
+		return m_swapchainRenderPass;
+	}
+
+	void RemoveSwapchainExternalRenderPass() noexcept
+	{
+		m_swapchainRenderPass.reset();
+	}
+
+	[[nodiscard]]
+	size_t GetActiveRenderPassCount() const noexcept
+	{
+		size_t activeRenderPassCount = m_renderPasses.GetIndicesManager().GetActiveIndexCount();
+
+		if (m_swapchainRenderPass)
+			++activeRenderPassCount;
+
+		return activeRenderPassCount;
+	}
+
+
 protected:
 	[[nodiscard]]
 	static std::vector<std::uint32_t> AddModelsToBuffer(
@@ -248,6 +314,8 @@ protected:
 	CameraManager                              m_cameraManager;
 	ViewportAndScissorManager                  m_viewportAndScissors;
 	Callisto::TemporaryDataBufferGPU           m_temporaryDataBuffer;
+	ExternalRenderPassContainer_t              m_renderPasses;
+	ExternalRenderPassSP_t                     m_swapchainRenderPass;
 	bool                                       m_copyNecessary;
 
 public:
@@ -272,6 +340,8 @@ public:
 		m_cameraManager{ std::move(other.m_cameraManager) },
 		m_viewportAndScissors{ other.m_viewportAndScissors },
 		m_temporaryDataBuffer{ std::move(other.m_temporaryDataBuffer) },
+		m_renderPasses{ std::move(other.m_renderPasses) },
+		m_swapchainRenderPass{ std::move(other.m_swapchainRenderPass) },
 		m_copyNecessary{ other.m_copyNecessary }
 	{}
 	RenderEngine& operator=(RenderEngine&& other) noexcept
@@ -293,6 +363,8 @@ public:
 		m_cameraManager              = std::move(other.m_cameraManager);
 		m_viewportAndScissors        = other.m_viewportAndScissors;
 		m_temporaryDataBuffer        = std::move(other.m_temporaryDataBuffer);
+		m_renderPasses               = std::move(other.m_renderPasses);
+		m_swapchainRenderPass        = std::move(other.m_swapchainRenderPass);
 		m_copyNecessary              = other.m_copyNecessary;
 
 		return *this;
@@ -307,23 +379,23 @@ template<
 >
 class RenderEngineCommon : public RenderEngine
 {
-protected:
-	using ExternalRenderPass_t   = D3DExternalRenderPassCommon<ModelManager_t>;
-	using ExternalRenderPassSP_t = std::shared_ptr<ExternalRenderPass_t>;
-
 public:
 	RenderEngineCommon(
 		const DeviceManager& deviceManager, std::shared_ptr<ThreadPool> threadPool,
 		size_t frameCount
 	) : RenderEngine{ deviceManager, std::move(threadPool), frameCount },
-		m_modelManager{},
+		m_modelManager{
+			Derived::CreateModelManager(
+				deviceManager.GetDevice(), m_memoryManager.get(),
+				static_cast<std::uint32_t>(frameCount)
+			)
+		},
 		m_modelBuffers{
 			deviceManager.GetDevice(), m_memoryManager.get(),
 			static_cast<std::uint32_t>(frameCount)
 		},
 		m_meshManager{ deviceManager.GetDevice(), m_memoryManager.get() },
-		m_graphicsPipelineManager{ deviceManager.GetDevice() },
-		m_renderPasses{}, m_swapchainRenderPass{}
+		m_graphicsPipelineManager{ deviceManager.GetDevice() }
 	{
 		for (D3DDescriptorManager& descriptorManager : m_graphicsDescriptorManagers)
 			m_textureManager.SetDescriptorLayout(
@@ -393,73 +465,12 @@ public:
 		);
 	}
 
-	[[nodiscard]]
-	std::uint32_t AddExternalRenderPass(D3DReusableDescriptorHeap* rtvHeap)
-	{
-		return static_cast<std::uint32_t>(
-			m_renderPasses.Add(
-				std::make_shared<ExternalRenderPass_t>(
-					// This must be changed urgently
-					m_modelManager.get(), &m_externalResourceManager.GetResourceFactory(),
-					rtvHeap, m_dsvHeap.get()
-				)
-			)
+	void AddLocalPipelinesInExternalRenderPass(
+		std::uint32_t modelBundleIndex, size_t renderPassIndex
+	) {
+		m_renderPasses[renderPassIndex]->AddLocalPipelinesOfModelBundle(
+			modelBundleIndex, m_modelManager
 		);
-	}
-
-	[[nodiscard]]
-	ExternalRenderPass* GetExternalRenderPassRP(size_t index) const noexcept
-	{
-		return m_renderPasses[index].get();
-	}
-
-	[[nodiscard]]
-	std::shared_ptr<ExternalRenderPass> GetExternalRenderPassSP(size_t index) const noexcept
-	{
-		return m_renderPasses[index];
-	}
-
-	void RemoveExternalRenderPass(size_t index) noexcept
-	{
-		m_renderPasses[index].reset();
-		m_renderPasses.RemoveElement(index);
-	}
-
-	void SetSwapchainExternalRenderPass(D3DReusableDescriptorHeap* rtvHeap)
-	{
-		m_swapchainRenderPass = std::make_shared<ExternalRenderPass_t>(
-			// This must be changed urgently
-			m_modelManager.get(), &m_externalResourceManager.GetResourceFactory(),
-			rtvHeap, m_dsvHeap.get()
-		);
-	}
-
-	[[nodiscard]]
-	ExternalRenderPass* GetSwapchainExternalRenderPassRP() const noexcept
-	{
-		return m_swapchainRenderPass.get();
-	}
-
-	[[nodiscard]]
-	std::shared_ptr<ExternalRenderPass> GetSwapchainExternalRenderPassSP() const noexcept
-	{
-		return m_swapchainRenderPass;
-	}
-
-	void RemoveSwapchainExternalRenderPass() noexcept
-	{
-		m_swapchainRenderPass.reset();
-	}
-
-	[[nodiscard]]
-	size_t GetActiveRenderPassCount() const noexcept
-	{
-		size_t activeRenderPassCount = m_renderPasses.GetIndicesManager().GetActiveIndexCount();
-
-		if (m_swapchainRenderPass)
-			++activeRenderPassCount;
-
-		return activeRenderPassCount;
 	}
 
 protected:
@@ -487,12 +498,10 @@ protected:
 	}
 
 protected:
-	std::unique_ptr<ModelManager_t>                  m_modelManager;
-	ModelBuffers                                     m_modelBuffers;
-	MeshManager_t                                    m_meshManager;
-	PipelineManager<GraphicsPipeline_t>              m_graphicsPipelineManager;
-	Callisto::ReusableVector<ExternalRenderPassSP_t> m_renderPasses;
-	ExternalRenderPassSP_t                           m_swapchainRenderPass;
+	ModelManager_t                      m_modelManager;
+	ModelBuffers                        m_modelBuffers;
+	MeshManager_t                       m_meshManager;
+	PipelineManager<GraphicsPipeline_t> m_graphicsPipelineManager;
 
 public:
 	RenderEngineCommon(const RenderEngineCommon&) = delete;
@@ -503,9 +512,7 @@ public:
 		m_modelManager{ std::move(other.m_modelManager) },
 		m_modelBuffers{ std::move(other.m_modelBuffers) },
 		m_meshManager{ std::move(other.m_meshManager) },
-		m_graphicsPipelineManager{ std::move(other.m_graphicsPipelineManager) },
-		m_renderPasses{ std::move(other.m_renderPasses) },
-		m_swapchainRenderPass{ std::move(other.m_swapchainRenderPass) }
+		m_graphicsPipelineManager{ std::move(other.m_graphicsPipelineManager) }
 	{}
 	RenderEngineCommon& operator=(RenderEngineCommon&& other) noexcept
 	{
@@ -514,8 +521,6 @@ public:
 		m_modelBuffers            = std::move(other.m_modelBuffers);
 		m_meshManager             = std::move(other.m_meshManager);
 		m_graphicsPipelineManager = std::move(other.m_graphicsPipelineManager);
-		m_renderPasses            = std::move(other.m_renderPasses);
-		m_swapchainRenderPass     = std::move(other.m_swapchainRenderPass);
 
 		return *this;
 	}

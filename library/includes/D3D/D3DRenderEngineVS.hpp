@@ -69,9 +69,18 @@ private:
 		m_modelBuffers.Update(frameIndex);
 	}
 
+	[[nodiscard]]
+	static ModelManagerVSIndividual CreateModelManager(
+		[[maybe_unused]] ID3D12Device5* device,
+		[[maybe_unused]] MemoryManager* memoryManager,
+		[[maybe_unused]] std::uint32_t frameCount
+	) {
+		return ModelManagerVSIndividual{};
+	}
+
 private:
 	void DrawRenderPassPipelines(
-		const D3DCommandList& graphicsCmdList, const ExternalRenderPass_t& renderPass
+		const D3DCommandList& graphicsCmdList, const D3DExternalRenderPass& renderPass
 	) const noexcept;
 
 public:
@@ -155,13 +164,24 @@ private:
 
 	void _updatePerFrame(UINT64 frameIndex) const noexcept;
 
+	[[nodiscard]]
+	static ModelManagerVSIndirect CreateModelManager(
+		ID3D12Device5* device, MemoryManager* memoryManager, std::uint32_t frameCount
+	) {
+		return ModelManagerVSIndirect
+		{
+			device, memoryManager, static_cast<std::uint32_t>(frameCount)
+		};
+	}
+
 private:
 	void DrawRenderPassPipelines(
-		size_t frameIndex , const D3DCommandList& graphicsCmdList, const ExternalRenderPass_t& renderPass
+		size_t frameIndex , const D3DCommandList& graphicsCmdList,
+		const D3DExternalRenderPass& renderPass
 	) const noexcept;
 
 	void UpdateRenderPassPipelines(
-		size_t frameIndex, const ExternalRenderPass_t& renderPass
+		size_t frameIndex, const D3DExternalRenderPass& renderPass
 	) const noexcept;
 
 private:

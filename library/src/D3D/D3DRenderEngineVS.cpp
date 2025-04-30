@@ -7,8 +7,6 @@ RenderEngineVSIndividual::RenderEngineVSIndividual(
 	const DeviceManager& deviceManager, std::shared_ptr<ThreadPool> threadPool, size_t frameCount
 ) : RenderEngineCommon{ deviceManager, std::move(threadPool), frameCount }
 {
-	m_modelManager = std::make_unique<ModelManagerVSIndividual>();
-
 	SetGraphicsDescriptorBufferLayout();
 
 	m_cameraManager.CreateBuffer(static_cast<std::uint32_t>(frameCount));
@@ -26,7 +24,7 @@ void RenderEngineVSIndividual::FinaliseInitialisation(const DeviceManager& devic
 	{
 		D3DDescriptorManager& graphicsDescriptorManager = m_graphicsDescriptorManagers.front();
 
-		m_modelManager->SetGraphicsConstantsRootIndex(
+		m_modelManager.SetGraphicsConstantsRootIndex(
 			graphicsDescriptorManager, s_vertexShaderRegisterSpace
 		);
 
@@ -54,7 +52,7 @@ void RenderEngineVSIndividual::FinaliseInitialisation(const DeviceManager& devic
 void RenderEngineVSIndividual::SetGraphicsDescriptorBufferLayout()
 {
 	// The layout shouldn't change throughout the runtime.
-	m_modelManager->SetDescriptorLayout(m_graphicsDescriptorManagers, s_vertexShaderRegisterSpace);
+	m_modelManager.SetDescriptorLayout(m_graphicsDescriptorManagers, s_vertexShaderRegisterSpace);
 	SetCommonGraphicsDescriptorLayout(D3D12_SHADER_VISIBILITY_ALL);
 
 	for (D3DDescriptorManager& descriptorManager : m_graphicsDescriptorManagers)
@@ -106,7 +104,7 @@ std::uint32_t RenderEngineVSIndividual::AddModelBundle(std::shared_ptr<ModelBund
 	std::vector<std::uint32_t> modelBufferIndices
 		= AddModelsToBuffer(*modelBundle, m_modelBuffers);
 
-	const std::uint32_t index = m_modelManager->AddModelBundle(
+	const std::uint32_t index = m_modelManager.AddModelBundle(
 		std::move(modelBundle), modelBufferIndices
 	);
 
@@ -176,7 +174,7 @@ ID3D12Fence* RenderEngineVSIndividual::GenericCopyStage(
 }
 
 void RenderEngineVSIndividual::DrawRenderPassPipelines(
-	const D3DCommandList& graphicsCmdList, const ExternalRenderPass_t& renderPass
+	const D3DCommandList& graphicsCmdList, const D3DExternalRenderPass& renderPass
 ) const noexcept {
 	const std::vector<D3DExternalRenderPass::PipelineDetails>& pipelineDetails
 		= renderPass.GetPipelineDetails();
@@ -191,7 +189,7 @@ void RenderEngineVSIndividual::DrawRenderPassPipelines(
 		const size_t bundleCount = std::size(bundleIndices);
 
 		for (size_t index = 0u; index < bundleCount; ++index)
-			m_modelManager->DrawPipeline(
+			m_modelManager.DrawPipeline(
 				bundleIndices[index], pipelineLocalIndices[index], graphicsCmdList, m_meshManager
 			);
 	}
@@ -225,7 +223,7 @@ void RenderEngineVSIndividual::DrawingStage(
 			if (!m_renderPasses.IsInUse(index))
 				continue;
 
-			const ExternalRenderPass_t& renderPass = *m_renderPasses[index];
+			const D3DExternalRenderPass& renderPass = *m_renderPasses[index];
 
 			renderPass.StartPass(graphicsCmdListScope);
 
@@ -237,13 +235,16 @@ void RenderEngineVSIndividual::DrawingStage(
 		// The one for the swapchain
 		if (m_swapchainRenderPass)
 		{
-			const ExternalRenderPass_t& renderPass = *m_swapchainRenderPass;
+			const D3DExternalRenderPass& renderPass = *m_swapchainRenderPass;
 
 			renderPass.StartPass(graphicsCmdListScope);
 
 			DrawRenderPassPipelines(graphicsCmdListScope, renderPass);
 
-			renderPass.EndPassForSwapchain(graphicsCmdListScope, swapchainBackBuffer);
+			renderPass.EndPassForSwapchain(
+				graphicsCmdListScope, swapchainBackBuffer,
+				m_externalResourceManager.GetResourceFactory()
+			);
 		}
 	}
 
@@ -271,10 +272,6 @@ RenderEngineVSIndirect::RenderEngineVSIndirect(
 	m_computePipelineManager{ deviceManager.GetDevice() }, m_computeRootSignature{},
 	m_commandSignature{}
 {
-	m_modelManager = std::make_unique<ModelManagerVSIndirect>(
-		deviceManager.GetDevice(), m_memoryManager.get(), static_cast<std::uint32_t>(frameCount)
-	);
-
 	ID3D12Device5* device = deviceManager.GetDevice();
 
 	SetGraphicsDescriptorBufferLayout();
@@ -313,7 +310,7 @@ void RenderEngineVSIndirect::FinaliseInitialisation(const DeviceManager& deviceM
 	{
 		D3DDescriptorManager& graphicsDescriptorManager = m_graphicsDescriptorManagers.front();
 
-		m_modelManager->SetGraphicsConstantsRootIndex(
+		m_modelManager.SetGraphicsConstantsRootIndex(
 			graphicsDescriptorManager, s_vertexShaderRegisterSpace
 		);
 
@@ -348,7 +345,7 @@ void RenderEngineVSIndirect::FinaliseInitialisation(const DeviceManager& deviceM
 	{
 		D3DDescriptorManager& computeDescriptorManager = m_computeDescriptorManagers.front();
 
-		m_modelManager->SetComputeConstantsRootIndex(
+		m_modelManager.SetComputeConstantsRootIndex(
 			computeDescriptorManager, s_computeShaderRegisterSpace
 		);
 
@@ -379,14 +376,14 @@ void RenderEngineVSIndirect::FinaliseInitialisation(const DeviceManager& deviceM
 		ShaderName{ L"VertexShaderCSIndirect" }
 	);
 
-	m_modelManager->SetCSPSOIndex(frustumCSOIndex);
+	m_modelManager.SetCSPSOIndex(frustumCSOIndex);
 }
 
 void RenderEngineVSIndirect::SetGraphicsDescriptorBufferLayout()
 {
 	// Graphics Descriptors.
 	// The layout shouldn't change throughout the runtime.
-	m_modelManager->SetDescriptorLayoutVS(
+	m_modelManager.SetDescriptorLayoutVS(
 		m_graphicsDescriptorManagers, s_vertexShaderRegisterSpace
 	);
 
@@ -411,7 +408,7 @@ void RenderEngineVSIndirect::SetGraphicsDescriptorBufferLayout()
 
 void RenderEngineVSIndirect::SetComputeDescriptorBufferLayout()
 {
-	m_modelManager->SetDescriptorLayoutCS(
+	m_modelManager.SetDescriptorLayoutCS(
 		m_computeDescriptorManagers, s_computeShaderRegisterSpace
 	);
 
@@ -449,7 +446,7 @@ void RenderEngineVSIndirect::SetShaderPath(const std::wstring& shaderPath)
 }
 
 void RenderEngineVSIndirect::UpdateRenderPassPipelines(
-	size_t frameIndex, const ExternalRenderPass_t& renderPass
+	size_t frameIndex, const D3DExternalRenderPass& renderPass
 ) const noexcept {
 	const std::vector<D3DExternalRenderPass::PipelineDetails>& pipelineDetails
 		= renderPass.GetPipelineDetails();
@@ -465,7 +462,7 @@ void RenderEngineVSIndirect::UpdateRenderPassPipelines(
 		const size_t bundleCount = std::size(bundleIndices);
 
 		for (size_t index = 0u; index < bundleCount; ++index)
-			m_modelManager->UpdatePipelinePerFrame(
+			m_modelManager.UpdatePipelinePerFrame(
 				frameIndex, bundleIndices[index], pipelineLocalIndices[index], m_meshManager,
 				!d3dPipeline.GetExternalPipeline().IsGPUCullingEnabled()
 			);
@@ -500,7 +497,7 @@ void RenderEngineVSIndirect::CreateCommandSignature(ID3D12Device* device)
 		D3D12_INDIRECT_ARGUMENT_DESC{
 			.Type     = D3D12_INDIRECT_ARGUMENT_TYPE_CONSTANT,
 			.Constant = {
-				.RootParameterIndex      = m_modelManager->GetConstantsVSRootIndex(),
+				.RootParameterIndex      = m_modelManager.GetConstantsVSRootIndex(),
 				.DestOffsetIn32BitValues = 0u,
 				.Num32BitValuesToSet     = PipelineModelsVSIndirect::GetConstantCount()
 			}
@@ -576,7 +573,7 @@ void RenderEngineVSIndirect::SetModelGraphicsDescriptors()
 
 void RenderEngineVSIndirect::SetModelComputeDescriptors()
 {
-	m_modelManager->SetDescriptors(m_computeDescriptorManagers, s_computeShaderRegisterSpace);
+	m_modelManager.SetDescriptors(m_computeDescriptorManagers, s_computeShaderRegisterSpace);
 
 	const size_t frameCount = std::size(m_computeDescriptorManagers);
 
@@ -596,9 +593,11 @@ std::uint32_t RenderEngineVSIndirect::AddModelBundle(std::shared_ptr<ModelBundle
 {
 	WaitForGPUToFinish();
 
-	std::vector<std::uint32_t> modelBufferIndices = AddModelsToBuffer(*modelBundle, m_modelBuffers);
+	std::vector<std::uint32_t> modelBufferIndices = AddModelsToBuffer(
+		*modelBundle, m_modelBuffers
+	);
 
-	const std::uint32_t index = m_modelManager->AddModelBundle(
+	const std::uint32_t index = m_modelManager.AddModelBundle(
 		std::move(modelBundle), modelBufferIndices
 	);
 
@@ -681,7 +680,7 @@ ID3D12Fence* RenderEngineVSIndirect::FrustumCullingStage(
 	{
 		const CommandListScope computeCmdListScope{ computeCmdList };
 
-		m_modelManager->ResetCounterBuffer(computeCmdList, static_cast<UINT64>(frameIndex));
+		m_modelManager.ResetCounterBuffer(computeCmdList, static_cast<UINT64>(frameIndex));
 
 		m_computeDescriptorManagers[frameIndex].BindDescriptorHeap(computeCmdListScope);
 
@@ -689,7 +688,7 @@ ID3D12Fence* RenderEngineVSIndirect::FrustumCullingStage(
 
 		m_computeDescriptorManagers[frameIndex].BindDescriptors(computeCmdListScope);
 
-		m_modelManager->Dispatch(computeCmdListScope, m_computePipelineManager);
+		m_modelManager.Dispatch(computeCmdListScope, m_computePipelineManager);
 	}
 
 	const D3DFence& computeWaitFence = m_computeWait[frameIndex];
@@ -712,7 +711,7 @@ ID3D12Fence* RenderEngineVSIndirect::FrustumCullingStage(
 
 void RenderEngineVSIndirect::DrawRenderPassPipelines(
 	size_t frameIndex, const D3DCommandList& graphicsCmdList,
-	const ExternalRenderPass_t& renderPass
+	const D3DExternalRenderPass& renderPass
 ) const noexcept {
 	const std::vector<D3DExternalRenderPass::PipelineDetails>& pipelineDetails
 		= renderPass.GetPipelineDetails();
@@ -729,7 +728,7 @@ void RenderEngineVSIndirect::DrawRenderPassPipelines(
 		const size_t bundleCount = std::size(bundleIndices);
 
 		for (size_t index = 0u; index < bundleCount; ++index)
-			m_modelManager->DrawPipeline(
+			m_modelManager.DrawPipeline(
 				frameIndex, bundleIndices[index], pipelineLocalIndices[index],
 				graphicsCmdList, commandSignature, m_meshManager
 			);
@@ -764,7 +763,7 @@ void RenderEngineVSIndirect::DrawingStage(
 			if (!m_renderPasses.IsInUse(index))
 				continue;
 
-			const ExternalRenderPass_t& renderPass = *m_renderPasses[index];
+			const D3DExternalRenderPass& renderPass = *m_renderPasses[index];
 
 			renderPass.StartPass(graphicsCmdListScope);
 
@@ -776,13 +775,16 @@ void RenderEngineVSIndirect::DrawingStage(
 		// The one for the swapchain
 		if (m_swapchainRenderPass)
 		{
-			const ExternalRenderPass_t& renderPass = *m_swapchainRenderPass;
+			const D3DExternalRenderPass& renderPass = *m_swapchainRenderPass;
 
 			renderPass.StartPass(graphicsCmdListScope);
 
 			DrawRenderPassPipelines(frameIndex, graphicsCmdListScope, renderPass);
 
-			renderPass.EndPassForSwapchain(graphicsCmdListScope, swapchainBackBuffer);
+			renderPass.EndPassForSwapchain(
+				graphicsCmdListScope, swapchainBackBuffer,
+				m_externalResourceManager.GetResourceFactory()
+			);
 		}
 	}
 

@@ -12,7 +12,7 @@
 
 namespace Gaia
 {
-class D3DExternalRenderPass : public ExternalRenderPass
+class D3DExternalRenderPass
 {
 	struct AttachmentDetails
 	{
@@ -29,60 +29,102 @@ public:
 	};
 
 public:
-	D3DExternalRenderPass(
-		D3DExternalResourceFactory* resourceFactory, D3DReusableDescriptorHeap* rtvHeap,
-		D3DReusableDescriptorHeap* dsvHeap
-	);
+	D3DExternalRenderPass(D3DReusableDescriptorHeap* rtvHeap, D3DReusableDescriptorHeap* dsvHeap);
 
 	// All the pipelines in a RenderPass must have the same Attachment Signature.
-	void AddPipeline(std::uint32_t pipelineIndex) override;
+	void AddPipeline(std::uint32_t pipelineIndex);
 
-	void RemoveModelBundle(std::uint32_t bundleIndex) noexcept override;
-	void RemovePipeline(std::uint32_t pipelineIndex) noexcept override;
+	template<class ModelManager_t>
+	void AddLocalPipelinesOfModelBundle(
+		std::uint32_t modelBundleIndex, const ModelManager_t& modelManager
+	) {
+		for (PipelineDetails& pipelineDetails : m_pipelineDetails)
+		{
+			std::optional<size_t> oLocalIndex = modelManager.GetPipelineLocalIndex(
+				modelBundleIndex, pipelineDetails.pipelineGlobalIndex
+			);
+
+			// I guess it should be okay for a model bundle to not have all the Pipelines?
+			if (!oLocalIndex)
+				continue;
+
+			auto localIndex = static_cast<std::uint32_t>(*oLocalIndex);
+
+			std::vector<std::uint32_t>& modelBundleIndices = pipelineDetails.modelBundleIndices;
+			std::vector<std::uint32_t>& pipelineIndicesInBundle
+				= pipelineDetails.pipelineLocalIndices;
+
+			auto result = std::ranges::find(modelBundleIndices, modelBundleIndex);
+
+			size_t resultIndex = std::size(modelBundleIndices);
+
+			if (result == std::end(modelBundleIndices))
+			{
+				modelBundleIndices.emplace_back(0u);
+				pipelineIndicesInBundle.emplace_back(0u);
+			}
+			else
+				resultIndex = std::distance(std::begin(modelBundleIndices), result);
+
+			modelBundleIndices[resultIndex]      = modelBundleIndex;
+			pipelineIndicesInBundle[resultIndex] = localIndex;
+		}
+	}
+
+	void RemoveModelBundle(std::uint32_t bundleIndex) noexcept;
+	void RemovePipeline(std::uint32_t pipelineIndex) noexcept;
 
 	// Should be called after something like a window resize, where the buffer handles would change.
-	void ResetAttachmentReferences() override;
+	void ResetAttachmentReferences(D3DExternalResourceFactory& resourceFactory);
 
 	[[nodiscard]]
 	std::uint32_t AddStartBarrier(
-		std::uint32_t externalTextureIndex, ExternalTextureTransition transitionState
-	) noexcept override;
+		std::uint32_t externalTextureIndex, ExternalTextureTransition transitionState,
+		D3DExternalResourceFactory& resourceFactory
+	) noexcept;
 	void UpdateStartBarrierResource(
-		std::uint32_t barrierIndex, std::uint32_t externalTextureIndex
-	) noexcept override;
+		std::uint32_t barrierIndex, std::uint32_t externalTextureIndex,
+		D3DExternalResourceFactory& resourceFactory
+	) noexcept;
 
 	void SetDepthTesting(
 		std::uint32_t externalTextureIndex, ExternalAttachmentLoadOp loadOp,
-		ExternalAttachmentStoreOp storeOP
-	) override;
+		ExternalAttachmentStoreOp storeOP, D3DExternalResourceFactory& resourceFactory
+	);
 	// Only necessary if the LoadOP is clear.
 	// The resource will be recreated if the colour doesn't match with the previous one.
-	void SetDepthClearColour(float clearColour) override;
+	void SetDepthClearColour(float clearColour, D3DExternalResourceFactory& resourceFactory);
 
 	void SetStencilTesting(
 		std::uint32_t externalTextureIndex, ExternalAttachmentLoadOp loadOp,
-		ExternalAttachmentStoreOp storeOP
-	) override;
+		ExternalAttachmentStoreOp storeOP, D3DExternalResourceFactory& resourceFactory
+	);
 	// Only necessary if the LoadOP is clear.
 	// The resource will be recreated if the colour doesn't match with the previous one.
-	void SetStencilClearColour(std::uint32_t clearColour) override;
+	void SetStencilClearColour(
+		std::uint32_t clearColour, D3DExternalResourceFactory& resourceFactory
+	);
 
 	std::uint32_t AddRenderTarget(
 		std::uint32_t externalTextureIndex, ExternalAttachmentLoadOp loadOp,
-		ExternalAttachmentStoreOp storeOP
-	) override;
+		ExternalAttachmentStoreOp storeOP, D3DExternalResourceFactory& resourceFactory
+	);
 	// Only necessary if the LoadOP is clear.
 	// The resource will be recreated if the colour doesn't match with the previous one.
 	void SetRenderTargetClearColour(
-		std::uint32_t renderTargetIndex, const DirectX::XMFLOAT4& clearColour
-	) override;
+		std::uint32_t renderTargetIndex, const DirectX::XMFLOAT4& clearColour,
+		D3DExternalResourceFactory& resourceFactory
+	);
 
-	void SetSwapchainCopySource(std::uint32_t renderTargetIndex) noexcept override;
+	void SetSwapchainCopySource(
+		std::uint32_t renderTargetIndex, D3DExternalResourceFactory& resourceFactory
+	) noexcept;
 
 	void StartPass(const D3DCommandList& graphicsCmdList) const noexcept;
 
 	void EndPassForSwapchain(
-		const D3DCommandList& graphicsCmdList, ID3D12Resource* swapchainBackBuffer
+		const D3DCommandList& graphicsCmdList, ID3D12Resource* swapchainBackBuffer,
+		D3DExternalResourceFactory& resourceFactory
 	) const noexcept;
 
 	[[nodiscard]]
@@ -100,8 +142,9 @@ private:
 
 private:
 	void SetDepthStencil(
-		std::uint32_t externalTextureIndex, D3D12_RESOURCE_STATES newState, D3D12_DSV_FLAGS dsvFlag,
-		bool clearDepth, bool clearStencil
+		std::uint32_t externalTextureIndex, D3D12_RESOURCE_STATES newState,
+		D3D12_DSV_FLAGS dsvFlag, bool clearDepth, bool clearStencil,
+		D3DExternalResourceFactory& resourceFactory
 	);
 
 	static constexpr size_t s_maxAttachmentCount = 9u;
@@ -109,7 +152,6 @@ private:
 protected:
 	D3DReusableDescriptorHeap*        m_rtvHeap;
 	D3DReusableDescriptorHeap*        m_dsvHeap;
-	D3DExternalResourceFactory*       m_resourceFactory;
 	D3DRenderPassManager              m_renderPassManager;
 	std::vector<PipelineDetails>      m_pipelineDetails;
 	std::vector<AttachmentDetails>    m_renderTargetAttachmentDetails;
@@ -132,7 +174,6 @@ public:
 	D3DExternalRenderPass(D3DExternalRenderPass&& other) noexcept
 		: m_rtvHeap{ std::exchange(other.m_rtvHeap, nullptr) },
 		m_dsvHeap{ std::exchange(other.m_dsvHeap, nullptr) },
-		m_resourceFactory{ std::exchange(other.m_resourceFactory, nullptr) },
 		m_renderPassManager{ std::move(other.m_renderPassManager) },
 		m_pipelineDetails{ std::move(other.m_pipelineDetails) },
 		m_renderTargetAttachmentDetails{ std::move(other.m_renderTargetAttachmentDetails) },
@@ -140,14 +181,11 @@ public:
 		m_swapchainCopySource{ other.m_swapchainCopySource },
 		m_firstUseFlags{ other.m_firstUseFlags },
 		m_tempResourceStates{ std::move(other.m_tempResourceStates) }
-	{
-		other.m_resourceFactory = nullptr;
-	}
+	{}
 	D3DExternalRenderPass& operator=(D3DExternalRenderPass&& other) noexcept
 	{
 		m_rtvHeap                       = std::exchange(other.m_rtvHeap, nullptr);
 		m_dsvHeap                       = std::exchange(other.m_dsvHeap, nullptr);
-		m_resourceFactory               = std::exchange(other.m_resourceFactory, nullptr);
 		m_renderPassManager             = std::move(other.m_renderPassManager);
 		m_pipelineDetails               = std::move(other.m_pipelineDetails);
 		m_renderTargetAttachmentDetails = std::move(other.m_renderTargetAttachmentDetails);
@@ -155,71 +193,6 @@ public:
 		m_swapchainCopySource           = other.m_swapchainCopySource;
 		m_firstUseFlags                 = other.m_firstUseFlags;
 		m_tempResourceStates            = std::move(other.m_tempResourceStates);
-
-		return *this;
-	}
-};
-
-template<typename ModelManager_t>
-class D3DExternalRenderPassCommon : public D3DExternalRenderPass
-{
-public:
-	D3DExternalRenderPassCommon(
-		ModelManager_t* modelManager, D3DExternalResourceFactory* resourceFactory,
-		D3DReusableDescriptorHeap* rtvHeap, D3DReusableDescriptorHeap* dsvHeap
-	) : D3DExternalRenderPass{ resourceFactory, rtvHeap, dsvHeap }, m_modelManager{ modelManager }
-	{}
-
-	void AddModelBundle(std::uint32_t bundleIndex) override
-	{
-		for (PipelineDetails& pipelineDetails : m_pipelineDetails)
-		{
-			std::optional<size_t> oLocalIndex = m_modelManager->GetPipelineLocalIndex(
-				bundleIndex, pipelineDetails.pipelineGlobalIndex
-			);
-
-			// I guess it should be okay for a model bundle to not have all the Pipelines?
-			if (!oLocalIndex)
-				continue;
-
-			auto localIndex = static_cast<std::uint32_t>(*oLocalIndex);
-
-			std::vector<std::uint32_t>& modelBundleIndices = pipelineDetails.modelBundleIndices;
-			std::vector<std::uint32_t>& pipelineIndicesInBundle
-				= pipelineDetails.pipelineLocalIndices;
-
-			auto result = std::ranges::find(modelBundleIndices, bundleIndex);
-
-			size_t resultIndex = std::size(modelBundleIndices);
-
-			if (result == std::end(modelBundleIndices))
-			{
-				modelBundleIndices.emplace_back(0u);
-				pipelineIndicesInBundle.emplace_back(0u);
-			}
-			else
-				resultIndex = std::distance(std::begin(modelBundleIndices), result);
-
-			modelBundleIndices[resultIndex]      = bundleIndex;
-			pipelineIndicesInBundle[resultIndex] = localIndex;
-		}
-	}
-
-private:
-	ModelManager_t* m_modelManager;
-
-public:
-	D3DExternalRenderPassCommon(const D3DExternalRenderPassCommon&) = delete;
-	D3DExternalRenderPassCommon& operator=(const D3DExternalRenderPassCommon&) = delete;
-
-	D3DExternalRenderPassCommon(D3DExternalRenderPassCommon&& other) noexcept
-		: D3DExternalRenderPass{ std::move(other) },
-		m_modelManager{ std::exchange(other.m_modelManager, nullptr) }
-	{}
-	D3DExternalRenderPassCommon& operator=(D3DExternalRenderPassCommon&& other) noexcept
-	{
-		D3DExternalRenderPass::operator=(std::move(other));
-		m_modelManager = std::exchange(other.m_modelManager, nullptr);
 
 		return *this;
 	}

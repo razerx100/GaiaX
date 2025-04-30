@@ -69,9 +69,18 @@ private:
 		m_modelBuffers.Update(frameIndex);
 	}
 
+	[[nodiscard]]
+	static ModelManagerMS CreateModelManager(
+		[[maybe_unused]] ID3D12Device5* device,
+		[[maybe_unused]] MemoryManager* memoryManager,
+		[[maybe_unused]] std::uint32_t frameCount
+	) {
+		return ModelManagerMS{};
+	}
+
 private:
 	void DrawRenderPassPipelines(
-		const D3DCommandList& graphicsCmdList, const ExternalRenderPass_t& renderPass
+		const D3DCommandList& graphicsCmdList, const D3DExternalRenderPass& renderPass
 	) const noexcept;
 
 public:
