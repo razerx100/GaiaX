@@ -26,9 +26,15 @@ template<class ExternalRenderPass_t>
 class ExternalRenderPass
 {
 public:
+	ExternalRenderPass() : m_renderPass{} {}
 	ExternalRenderPass(std::shared_ptr<ExternalRenderPass_t> renderPass)
 		: m_renderPass{ std::move(renderPass) }
 	{}
+
+	void SetRenderPassImpl(std::shared_ptr<ExternalRenderPass_t> renderPass) noexcept
+	{
+		m_renderPass = std::move(renderPass);
+	}
 
 	// All the pipelines in a RenderPass must have the same Attachment Signature.
 	void AddPipeline(std::uint32_t pipelineIndex)
