@@ -158,8 +158,15 @@ private:
 	std::shared_ptr<ExternalRenderPass_t> m_renderPass;
 
 public:
-	ExternalRenderPass(const ExternalRenderPass&) = delete;
-	ExternalRenderPass& operator=(const ExternalRenderPass&) = delete;
+	ExternalRenderPass(const ExternalRenderPass& other) noexcept
+		: m_renderPass{ other.m_renderPass }
+	{}
+	ExternalRenderPass& operator=(const ExternalRenderPass& other) noexcept
+	{
+		m_renderPass = other.m_renderPass;
+
+		return *this;
+	}
 
 	ExternalRenderPass(ExternalRenderPass&& other) noexcept
 		: m_renderPass{ std::move(other.m_renderPass) }
