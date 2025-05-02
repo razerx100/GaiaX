@@ -144,6 +144,8 @@ public:
 		m_gaia.GetRenderEngine().RemoveCamera(index);
 	}
 
+	void WaitForCurrentBackBuffer() { m_gaia.WaitForCurrentBackBuffer(); }
+	void Update() const noexcept { m_gaia.Update(); }
 	void Render() { m_gaia.Render(); }
 
 	void WaitForGPUToFinish()

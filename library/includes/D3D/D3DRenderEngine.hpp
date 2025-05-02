@@ -443,18 +443,31 @@ public:
 		m_viewportAndScissors.Resize(width, height);
 	}
 
-	void Render(size_t frameIndex, ID3D12Resource* swapchainBackBuffer)
+	void WaitForCurrentBackBuffer(size_t frameIndex)
 	{
 		// Wait for the previous Graphics command buffer to finish.
-		UINT64& counterValue = m_counterValues[frameIndex];
+		const UINT64 counterValue = m_counterValues[frameIndex];
 
 		m_graphicsWait[frameIndex].Wait(counterValue);
 		// It should be okay to clear the data now that the frame has finished
 		// its submission.
 		m_temporaryDataBuffer.Clear(frameIndex);
+	}
 
-		Update(static_cast<UINT64>(frameIndex));
+	void Update(size_t frameIndex) const noexcept
+	{
+		const auto u64FrameIndex = static_cast<UINT64>(frameIndex);
 
+		m_cameraManager.Update(u64FrameIndex);
+
+		static_cast<Derived const*>(this)->_updatePerFrame(u64FrameIndex);
+
+		m_externalResourceManager.UpdateExtensionData(frameIndex);
+	}
+
+	void Render(size_t frameIndex, ID3D12Resource* swapchainBackBuffer)
+	{
+		UINT64& counterValue   = m_counterValues[frameIndex];
 		// Passing this as the wait fence is kinda useless, but to keep
 		// all the pipelineStage function signature the same, gonna pass it
 		// as it should immedietly return.
@@ -481,15 +494,6 @@ public:
 	}
 
 protected:
-	void Update(UINT64 frameIndex) const noexcept
-	{
-		m_cameraManager.Update(frameIndex);
-
-		static_cast<Derived const*>(this)->_updatePerFrame(frameIndex);
-
-		m_externalResourceManager.UpdateExtensionData(static_cast<size_t>(frameIndex));
-	}
-
 	void _setShaderPath(const std::wstring& shaderPath)
 	{
 		m_graphicsPipelineManager.SetShaderPath(shaderPath);

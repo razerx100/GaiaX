@@ -53,6 +53,21 @@ public:
 		}
 	}
 
+	void WaitForCurrentBackBuffer()
+	{
+		const size_t nextImageIndex = m_swapchain.GetCurrentBackBufferIndex();
+
+		m_renderEngine.WaitForCurrentBackBuffer(nextImageIndex);
+	}
+
+	void Update() const noexcept
+	{
+		const size_t nextImageIndex = m_swapchain.GetCurrentBackBufferIndex();
+
+		m_renderEngine.Update(nextImageIndex);
+	}
+
+	// WaitForCurrentBackBuffer must be called before Render each frame.
 	void Render()
 	{
 		const size_t nextImageIndex      = m_swapchain.GetCurrentBackBufferIndex();
