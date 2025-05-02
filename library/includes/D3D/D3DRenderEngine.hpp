@@ -413,7 +413,7 @@ public:
 		std::uint32_t modelBundleIndex, std::uint32_t decreasedModelsPipelineIndex,
 		std::uint32_t increasedModelsPipelineIndex
 	) {
-		m_modelManager->ReconfigureModels(
+		m_modelManager.ReconfigureModels(
 			modelBundleIndex, decreasedModelsPipelineIndex, increasedModelsPipelineIndex
 		);
 	}
@@ -430,7 +430,7 @@ public:
 
 	void RemoveModelBundle(std::uint32_t bundleIndex) noexcept
 	{
-		std::shared_ptr<ModelBundle> modelBundle = m_modelManager->RemoveModelBundle(bundleIndex);
+		std::shared_ptr<ModelBundle> modelBundle = m_modelManager.RemoveModelBundle(bundleIndex);
 
 		const auto& models = modelBundle->GetModels();
 
