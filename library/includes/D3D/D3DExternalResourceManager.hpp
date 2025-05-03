@@ -12,15 +12,15 @@ namespace Gaia
 {
 class D3DExternalResourceManager
 {
-	using GfxExtension_t = std::shared_ptr<GraphicsTechniqueExtension>;
+	using GfxExtensionContainer_t = Callisto::ReusableVector<GraphicsTechniqueExtension>;
 
 public:
 	D3DExternalResourceManager(ID3D12Device* device, MemoryManager* memoryManager);
 
 	[[nodiscard]]
-	std::uint32_t AddGraphicsTechniqueExtension(
-		std::shared_ptr<GraphicsTechniqueExtension> extension
-	);
+	std::uint32_t AddGraphicsTechniqueExtension(GraphicsTechniqueExtension&& extension);
+
+	void UpdateGraphicsTechniqueExtension(size_t index, GraphicsTechniqueExtension&& extension);
 
 	void RemoveGraphicsTechniqueExtension(std::uint32_t index) noexcept;
 
@@ -42,8 +42,6 @@ public:
 	);
 
 	void CopyQueuedBuffers(const D3DCommandList& copyCmdList) noexcept;
-
-	void UpdateExtensionData(size_t frameIndex) const noexcept;
 
 	void SetGraphicsDescriptorLayout(std::vector<D3DDescriptorManager>& descriptorManagers);
 
@@ -72,9 +70,9 @@ private:
 	) const;
 
 private:
-	D3DExternalResourceFactory               m_resourceFactory;
-	Callisto::ReusableVector<GfxExtension_t> m_gfxExtensions;
-	std::vector<GPUCopyDetails>              m_copyQueueDetails;
+	D3DExternalResourceFactory  m_resourceFactory;
+	GfxExtensionContainer_t     m_gfxExtensions;
+	std::vector<GPUCopyDetails> m_copyQueueDetails;
 
 	static constexpr size_t s_externalBufferRegisterSpace = 2u;
 

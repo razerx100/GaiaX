@@ -18,22 +18,22 @@ void D3DExternalResourceManager::OnGfxExtensionDeletion(
 }
 
 std::uint32_t D3DExternalResourceManager::AddGraphicsTechniqueExtension(
-	std::shared_ptr<GraphicsTechniqueExtension> extension
+	GraphicsTechniqueExtension&& extension
 ) {
 	return static_cast<std::uint32_t>(m_gfxExtensions.Add(std::move(extension)));
 }
 
-void D3DExternalResourceManager::RemoveGraphicsTechniqueExtension(std::uint32_t index) noexcept
-{
-	OnGfxExtensionDeletion(*m_gfxExtensions[index]);
-
-	m_gfxExtensions.RemoveElement(index);
+void D3DExternalResourceManager::UpdateGraphicsTechniqueExtension(
+	size_t index, GraphicsTechniqueExtension&& extension
+) {
+	m_gfxExtensions[index] = std::move(extension);
 }
 
-void D3DExternalResourceManager::UpdateExtensionData(size_t frameIndex) const noexcept
+void D3DExternalResourceManager::RemoveGraphicsTechniqueExtension(std::uint32_t index) noexcept
 {
-	for (const GfxExtension_t& extension : m_gfxExtensions)
-		extension->UpdateCPUData(frameIndex);
+	OnGfxExtensionDeletion(m_gfxExtensions[index]);
+
+	m_gfxExtensions.RemoveElement(index);
 }
 
 void D3DExternalResourceManager::SetGraphicsDescriptorLayout(
@@ -41,10 +41,10 @@ void D3DExternalResourceManager::SetGraphicsDescriptorLayout(
 ) {
 	const size_t descriptorManagerCount = std::size(descriptorManagers);
 
-	for (const GfxExtension_t& extension : m_gfxExtensions)
+	for (const GraphicsTechniqueExtension& extension : m_gfxExtensions)
 	{
 		const std::vector<ExternalBufferBindingDetails>& bindingDetails
-			= extension->GetBindingDetails();
+			= extension.GetBindingDetails();
 
 		for (const ExternalBufferBindingDetails& details : bindingDetails)
 		{

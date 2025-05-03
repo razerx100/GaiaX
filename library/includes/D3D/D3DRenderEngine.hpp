@@ -461,8 +461,6 @@ public:
 		m_cameraManager.Update(u64FrameIndex);
 
 		static_cast<Derived const*>(this)->_updatePerFrame(u64FrameIndex);
-
-		m_externalResourceManager.UpdateExtensionData(frameIndex);
 	}
 
 	void Render(size_t frameIndex, ID3D12Resource* swapchainBackBuffer)
