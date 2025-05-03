@@ -150,8 +150,15 @@ public:
 		return m_gaia.WaitForCurrentBackBuffer();
 	}
 
-	void Update() const noexcept { m_gaia.Update(); }
-	void Render() { m_gaia.Render(); }
+	void Update(size_t nextImageIndex) const noexcept
+	{
+		m_gaia.Update(nextImageIndex);
+	}
+
+	void Render(size_t nextImageIndex)
+	{
+		m_gaia.Render(nextImageIndex);
+	}
 
 	void WaitForGPUToFinish()
 	{

@@ -63,17 +63,14 @@ public:
 		return nextImageIndex;
 	}
 
-	void Update() const noexcept
+	void Update(size_t nextImageIndex) const noexcept
 	{
-		const size_t nextImageIndex = m_swapchain.GetCurrentBackBufferIndex();
-
 		m_renderEngine.Update(nextImageIndex);
 	}
 
 	// WaitForCurrentBackBuffer must be called before Render each frame.
-	void Render()
+	void Render(size_t nextImageIndex)
 	{
-		const size_t nextImageIndex      = m_swapchain.GetCurrentBackBufferIndex();
 		ID3D12Resource* nextRenderTarget = m_swapchain.GetRenderTarget(nextImageIndex);
 
 		m_renderEngine.Render(nextImageIndex, nextRenderTarget);
