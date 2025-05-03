@@ -53,11 +53,14 @@ public:
 		}
 	}
 
-	void WaitForCurrentBackBuffer()
+	[[nodiscard]]
+	size_t WaitForCurrentBackBuffer()
 	{
 		const size_t nextImageIndex = m_swapchain.GetCurrentBackBufferIndex();
 
 		m_renderEngine.WaitForCurrentBackBuffer(nextImageIndex);
+
+		return nextImageIndex;
 	}
 
 	void Update() const noexcept
