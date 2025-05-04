@@ -76,7 +76,7 @@ void D3DExternalRenderPass::ResetAttachmentReferences(D3DExternalResourceFactory
 {
 	if (m_depthStencilAttachmentDetails.textureIndex != std::numeric_limits<std::uint32_t>::max())
 	{
-		D3DExternalTexture* externalTexture = resourceFactory.GetD3DExternalTexture(
+		D3DExternalTexture* externalTexture = resourceFactory.GetExternalTextureRP(
 			m_depthStencilAttachmentDetails.textureIndex
 		);
 
@@ -111,7 +111,7 @@ void D3DExternalRenderPass::ResetAttachmentReferences(D3DExternalResourceFactory
 	{
 		AttachmentDetails& renderTargetDetails = m_renderTargetAttachmentDetails[index];
 
-		D3DExternalTexture* externalTexture = resourceFactory.GetD3DExternalTexture(
+		D3DExternalTexture* externalTexture = resourceFactory.GetExternalTextureRP(
 			renderTargetDetails.textureIndex
 		);
 
@@ -150,7 +150,7 @@ std::uint32_t D3DExternalRenderPass::AddStartBarrier(
 	const D3D12_RESOURCE_STATES afterState
 		= s_externalTextureTransitionMap[static_cast<size_t>(transitionState)];
 
-	D3DExternalTexture* externalTexture = resourceFactory.GetD3DExternalTexture(
+	D3DExternalTexture* externalTexture = resourceFactory.GetExternalTextureRP(
 		externalTextureIndex
 	);
 
@@ -169,7 +169,7 @@ void D3DExternalRenderPass::UpdateStartBarrierResource(
 	std::uint32_t barrierIndex, std::uint32_t externalTextureIndex,
 	D3DExternalResourceFactory& resourceFactory
 ) noexcept {
-	D3DExternalTexture* externalTexture = resourceFactory.GetD3DExternalTexture(
+	D3DExternalTexture* externalTexture = resourceFactory.GetExternalTextureRP(
 		externalTextureIndex
 	);
 
@@ -186,7 +186,7 @@ void D3DExternalRenderPass::SetDepthStencil(
 	{
 		m_depthStencilAttachmentDetails.textureIndex = externalTextureIndex;
 
-		D3DExternalTexture* externalTexture = resourceFactory.GetD3DExternalTexture(
+		D3DExternalTexture* externalTexture = resourceFactory.GetExternalTextureRP(
 			externalTextureIndex
 		);
 
@@ -208,7 +208,7 @@ void D3DExternalRenderPass::SetDepthStencil(
 			);
 	}
 
-	D3DExternalTexture* externalTexture = resourceFactory.GetD3DExternalTexture(
+	D3DExternalTexture* externalTexture = resourceFactory.GetExternalTextureRP(
 		m_depthStencilAttachmentDetails.textureIndex
 	);
 
@@ -252,7 +252,7 @@ void D3DExternalRenderPass::SetDepthClearColour(
 ) {
 	if (m_depthStencilAttachmentDetails.textureIndex != std::numeric_limits<std::uint32_t>::max())
 	{
-		D3DExternalTexture* externalTexture = resourceFactory.GetD3DExternalTexture(
+		D3DExternalTexture* externalTexture = resourceFactory.GetExternalTextureRP(
 			m_depthStencilAttachmentDetails.textureIndex
 		);
 
@@ -292,7 +292,7 @@ void D3DExternalRenderPass::SetStencilClearColour(
 
 	if (m_depthStencilAttachmentDetails.textureIndex != std::numeric_limits<std::uint32_t>::max())
 	{
-		D3DExternalTexture* externalTexture = resourceFactory.GetD3DExternalTexture(
+		D3DExternalTexture* externalTexture = resourceFactory.GetExternalTextureRP(
 			m_depthStencilAttachmentDetails.textureIndex
 		);
 
@@ -313,7 +313,7 @@ std::uint32_t D3DExternalRenderPass::AddRenderTarget(
 ) {
 	const bool clearRenderTarget = loadOp == ExternalAttachmentLoadOp::Clear;
 
-	D3DExternalTexture* externalTexture = resourceFactory.GetD3DExternalTexture(
+	D3DExternalTexture* externalTexture = resourceFactory.GetExternalTextureRP(
 		externalTextureIndex
 	);
 
@@ -374,7 +374,7 @@ void D3DExternalRenderPass::SetRenderTargetClearColour(
 
 	if (renderTargetTextureIndex != std::numeric_limits<std::uint32_t>::max())
 	{
-		D3DExternalTexture* externalTexture = resourceFactory.GetD3DExternalTexture(
+		D3DExternalTexture* externalTexture = resourceFactory.GetExternalTextureRP(
 			renderTargetTextureIndex
 		);
 
@@ -393,7 +393,7 @@ void D3DExternalRenderPass::SetSwapchainCopySource(
 ) noexcept {
 	m_swapchainCopySource = m_renderTargetAttachmentDetails[renderTargetIndex].textureIndex;
 
-	D3DExternalTexture* externalTexture = resourceFactory.GetD3DExternalTexture(
+	D3DExternalTexture* externalTexture = resourceFactory.GetExternalTextureRP(
 		m_swapchainCopySource
 	);
 
@@ -409,7 +409,7 @@ void D3DExternalRenderPass::EndPassForSwapchain(
 	const D3DCommandList& graphicsCmdList, ID3D12Resource* swapchainBackBuffer,
 	D3DExternalResourceFactory& resourceFactory
 ) const noexcept {
-	D3DExternalTexture* externalTexture = resourceFactory.GetD3DExternalTexture(
+	D3DExternalTexture* externalTexture = resourceFactory.GetExternalTextureRP(
 		m_swapchainCopySource
 	);
 

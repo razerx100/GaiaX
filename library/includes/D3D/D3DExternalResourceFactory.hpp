@@ -33,11 +33,6 @@ public:
 	{
 		return m_externalTextures[index].get();
 	}
-	[[nodiscard]]
-	D3DExternalTexture* GetD3DExternalTexture(size_t index) const noexcept
-	{
-		return m_externalTextures[index].get();
-	}
 
 	[[nodiscard]]
 	std::shared_ptr<D3DExternalBuffer> GetExternalBufferSP(size_t index) const noexcept
