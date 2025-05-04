@@ -63,11 +63,6 @@ public:
 		return nextImageIndex;
 	}
 
-	void Update(size_t nextImageIndex) const noexcept
-	{
-		m_renderEngine.Update(nextImageIndex);
-	}
-
 	// WaitForCurrentBackBuffer must be called before Render each frame.
 	void Render(size_t nextImageIndex)
 	{

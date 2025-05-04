@@ -113,14 +113,6 @@ public:
 	}
 
 	[[nodiscard]]
-	std::uint32_t AddCamera(std::shared_ptr<Camera> camera) noexcept
-	{
-		return m_cameraManager.AddCamera(std::move(camera));
-	}
-	void SetCamera(std::uint32_t index) noexcept { m_cameraManager.SetCamera(index); }
-	void RemoveCamera(std::uint32_t index) noexcept { m_cameraManager.RemoveCamera(index); }
-
-	[[nodiscard]]
 	const D3DCommandQueue& GetPresentQueue() const noexcept { return m_graphicsQueue; }
 
 private:
@@ -454,13 +446,14 @@ public:
 		m_temporaryDataBuffer.Clear(frameIndex);
 	}
 
+	void UpdateCamera(size_t frameIndex, const Camera& cameraData) const noexcept
+	{
+		m_cameraManager.Update(static_cast<UINT64>(frameIndex));
+	}
+
 	void Update(size_t frameIndex) const noexcept
 	{
-		const auto u64FrameIndex = static_cast<UINT64>(frameIndex);
-
-		m_cameraManager.Update(u64FrameIndex);
-
-		static_cast<Derived const*>(this)->_updatePerFrame(u64FrameIndex);
+		static_cast<Derived const*>(this)->_updatePerFrame(static_cast<UINT64>(frameIndex));
 	}
 
 	void Render(size_t frameIndex, ID3D12Resource* swapchainBackBuffer)

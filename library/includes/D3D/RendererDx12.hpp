@@ -129,35 +129,24 @@ public:
 	}
 
 	[[nodiscard]]
-	std::uint32_t AddCamera(std::shared_ptr<Camera>&& camera) noexcept
-	{
-		return m_gaia.GetRenderEngine().AddCamera(std::move(camera));
-	}
-
-	void SetCamera(std::uint32_t index) noexcept
-	{
-		m_gaia.GetRenderEngine().SetCamera(index);
-	}
-
-	void RemoveCamera(std::uint32_t index) noexcept
-	{
-		m_gaia.GetRenderEngine().RemoveCamera(index);
-	}
-
-	[[nodiscard]]
 	size_t WaitForCurrentBackBuffer()
 	{
 		return m_gaia.WaitForCurrentBackBuffer();
 	}
 
-	void Update(size_t nextImageIndex) const noexcept
+	void UpdateCamera(size_t frameIndex, const Camera& cameraData) const noexcept
 	{
-		m_gaia.Update(nextImageIndex);
+		m_gaia.GetRenderEngine().UpdateCamera(frameIndex, cameraData);
 	}
 
-	void Render(size_t nextImageIndex)
+	void Update(size_t frameIndex) const noexcept
 	{
-		m_gaia.Render(nextImageIndex);
+		m_gaia.GetRenderEngine().Update(frameIndex);
+	}
+
+	void Render(size_t frameIndex)
+	{
+		m_gaia.Render(frameIndex);
 	}
 
 	void WaitForGPUToFinish()
