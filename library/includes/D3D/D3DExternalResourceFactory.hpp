@@ -24,12 +24,12 @@ public:
 	size_t CreateExternalTexture();
 
 	[[nodiscard]]
-	ExternalBuffer* GetExternalBufferRP(size_t index) const noexcept
+	D3DExternalBuffer* GetExternalBufferRP(size_t index) const noexcept
 	{
 		return m_externalBuffers[index].get();
 	}
 	[[nodiscard]]
-	ExternalTexture* GetExternalTextureRP(size_t index) const noexcept
+	D3DExternalTexture* GetExternalTextureRP(size_t index) const noexcept
 	{
 		return m_externalTextures[index].get();
 	}
@@ -40,14 +40,14 @@ public:
 	}
 
 	[[nodiscard]]
-	std::shared_ptr<ExternalBuffer> GetExternalBufferSP(size_t index) const noexcept
+	std::shared_ptr<D3DExternalBuffer> GetExternalBufferSP(size_t index) const noexcept
 	{
-		return std::static_pointer_cast<ExternalBuffer>(m_externalBuffers[index]);
+		return m_externalBuffers[index];
 	}
 	[[nodiscard]]
-	std::shared_ptr<ExternalTexture> GetExternalTextureSP(size_t index) const noexcept
+	std::shared_ptr<D3DExternalTexture> GetExternalTextureSP(size_t index) const noexcept
 	{
-		return std::static_pointer_cast<ExternalTexture>(m_externalTextures[index]);
+		return m_externalTextures[index];
 	}
 
 	[[nodiscard]]

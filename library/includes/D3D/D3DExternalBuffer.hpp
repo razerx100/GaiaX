@@ -8,7 +8,7 @@
 
 namespace Gaia
 {
-class D3DExternalBuffer : public ExternalBuffer
+class D3DExternalBuffer
 {
 public:
 	D3DExternalBuffer(
@@ -17,15 +17,15 @@ public:
 		D3D12_RESOURCE_FLAGS bufferFlag = D3D12_RESOURCE_FLAG_NONE
 	);
 
-	void Create(size_t bufferSize) override;
+	void Create(size_t bufferSize);
 
-	void Destroy() noexcept override { m_buffer.Destroy(); }
-
-	[[nodiscard]]
-	size_t BufferSize() const noexcept override { return m_buffer.BufferSize(); }
+	void Destroy() noexcept { m_buffer.Destroy(); }
 
 	[[nodiscard]]
-	std::uint8_t* CPUHandle() const override { return m_buffer.CPUHandle(); }
+	size_t BufferSize() const noexcept { return m_buffer.BufferSize(); }
+
+	[[nodiscard]]
+	std::uint8_t* CPUHandle() const { return m_buffer.CPUHandle(); }
 
 	[[nodiscard]]
 	const Buffer& GetBuffer() const noexcept { return m_buffer; }
@@ -53,7 +53,7 @@ public:
 	}
 };
 
-class D3DExternalTexture : public ExternalTexture
+class D3DExternalTexture
 {
 public:
 	D3DExternalTexture(ID3D12Device* device, MemoryManager* memoryManager);
@@ -61,7 +61,7 @@ public:
 	void Create(
 		std::uint32_t width, std::uint32_t height, ExternalFormat format,
 		ExternalTexture2DType type, const ExternalTextureCreationFlags& creationFlags = {}
-	) override;
+	);
 
 	void SetAttachmentHeap(D3DReusableDescriptorHeap* attachmentHeap) noexcept;
 
@@ -76,7 +76,7 @@ public:
 
 	void Recreate(ExternalTexture2DType type);
 
-	void Destroy() noexcept override { m_texture.Destroy(); }
+	void Destroy() noexcept { m_texture.Destroy(); }
 
 	void SetCurrentState(D3D12_RESOURCE_STATES newState) noexcept
 	{
@@ -84,9 +84,9 @@ public:
 	}
 
 	[[nodiscard]]
-	Extent GetExtent() const noexcept override
+	RendererType::Extent GetExtent() const noexcept
 	{
-		return Extent
+		return RendererType::Extent
 		{
 			.width  = static_cast<std::uint32_t>(m_texture.GetWidth()),
 			.height = m_texture.GetHeight()

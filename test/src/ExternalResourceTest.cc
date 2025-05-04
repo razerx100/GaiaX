@@ -7,6 +7,7 @@
 #include <D3DDeviceManager.hpp>
 
 #include <D3DExternalRenderPass.hpp>
+#include <D3DExternalBuffer.hpp>
 
 using namespace Gaia;
 
@@ -56,4 +57,31 @@ TEST_F(ExternalResourceTest, D3DExternalRenderPassTest)
 	auto vkRenderPass = std::make_shared<D3DExternalRenderPass>(&rtvHeap, &dsvHeap);
 
 	ExternalRenderPass<D3DExternalRenderPass> renderPass{ vkRenderPass };
+}
+
+TEST_F(ExternalResourceTest, D3DExternalBufferTest)
+{
+	IDXGIAdapter3* adapter = s_deviceManager->GetAdapter();
+	ID3D12Device* device   = s_deviceManager->GetDevice();
+
+	MemoryManager memoryManager{ adapter, device, 20_MB, 200_KB };
+
+	auto d3dBuffer = std::make_shared<D3DExternalBuffer>(
+		device, &memoryManager, D3D12_HEAP_TYPE_DEFAULT,
+		D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE
+	);
+
+	ExternalBuffer<D3DExternalBuffer> buffer{ d3dBuffer };
+}
+
+TEST_F(ExternalResourceTest, D3DExternalTextureTest)
+{
+	IDXGIAdapter3* adapter = s_deviceManager->GetAdapter();
+	ID3D12Device* device   = s_deviceManager->GetDevice();
+
+	MemoryManager memoryManager{ adapter, device, 20_MB, 200_KB };
+
+	auto d3dTexture = std::make_shared<D3DExternalTexture>(device, &memoryManager);
+
+	ExternalTexture<D3DExternalTexture> texture{ d3dTexture };
 }
