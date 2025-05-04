@@ -448,7 +448,7 @@ public:
 
 	void UpdateCamera(size_t frameIndex, const Camera& cameraData) const noexcept
 	{
-		m_cameraManager.Update(static_cast<UINT64>(frameIndex));
+		m_cameraManager.Update(static_cast<UINT64>(frameIndex), cameraData);
 	}
 
 	void Update(size_t frameIndex) const noexcept
