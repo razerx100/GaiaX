@@ -39,8 +39,15 @@ private:
 	std::shared_ptr<ExternalBufferImpl_t> m_buffer;
 
 public:
-	ExternalBuffer(const ExternalBuffer&) = delete;
-	ExternalBuffer& operator=(const ExternalBuffer&) = delete;
+	ExternalBuffer(const ExternalBuffer& other) noexcept
+		: m_buffer{ other.m_buffer }
+	{}
+	ExternalBuffer& operator=(const ExternalBuffer& other) noexcept
+	{
+		m_buffer = other.m_buffer;
+
+		return *this;
+	}
 
 	ExternalBuffer(ExternalBuffer&& other) noexcept
 		: m_buffer{ std::move(other.m_buffer) }
@@ -99,8 +106,15 @@ private:
 	std::shared_ptr<ExternalTextureImpl_t> m_texture;
 
 public:
-	ExternalTexture(const ExternalTexture&) = delete;
-	ExternalTexture& operator=(const ExternalTexture&) = delete;
+	ExternalTexture(const ExternalTexture& other) noexcept
+		: m_texture{ other.m_texture }
+	{}
+	ExternalTexture& operator=(const ExternalTexture& other) noexcept
+	{
+		m_texture = other.m_texture;
+
+		return *this;
+	}
 
 	ExternalTexture(ExternalTexture&& other) noexcept
 		: m_texture{ std::move(other.m_texture) }
