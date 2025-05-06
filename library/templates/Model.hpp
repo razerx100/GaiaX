@@ -467,7 +467,7 @@ public:
 				break;
 			}
 
-		if (pipelineLocalIndex == std::numeric_limits<size_t>::max())
+		if (pipelineLocalIndex != std::numeric_limits<size_t>::max())
 			oLocalIndex = pipelineLocalIndex;
 
 		return oLocalIndex;
