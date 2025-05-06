@@ -411,6 +411,8 @@ public:
 	{
 		return m_modelIndicesInBundle;
 	}
+	[[nodiscard]]
+	size_t GetModelCount() const noexcept { return std::size(m_modelIndicesInBundle); }
 
 private:
 	std::vector<std::uint32_t> m_modelIndicesInBundle;
@@ -438,7 +440,7 @@ class ModelBundle
 {
 public:
 	using ModelContainer_t    = std::vector<std::shared_ptr<Model>>;
-	using PipelineContainer_t = std::vector<std::shared_ptr<PipelineModelBundle>>;
+	using PipelineContainer_t = std::vector<PipelineModelBundle>;
 
 public:
 	ModelBundle() : m_models{}, m_pipelines{}, m_meshBundleIndex{ 0u } {}
@@ -458,6 +460,11 @@ public:
 	{
 		return std::forward_like<decltype(self)>(self.m_models);
 	}
+
+	[[nodiscard]]
+	size_t GetModelCount() const noexcept { return std::size(m_models); }
+	[[nodiscard]]
+	size_t GetPipelineCount() const noexcept { return std::size(m_pipelines); }
 
 private:
 	ModelContainer_t    m_models;
