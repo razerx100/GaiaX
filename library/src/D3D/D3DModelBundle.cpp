@@ -625,7 +625,9 @@ size_t ModelBundleVSIndirect::GetLocalPipelineIndex(std::uint32_t pipelineIndex)
 {
 	auto pipelineLocalIndex = std::numeric_limits<size_t>::max();
 
-	std::optional<size_t> oPipelineLocalIndex = FindPipeline(pipelineIndex);
+	std::optional<size_t> oPipelineLocalIndex = m_modelBundle->FindLocalPipelineIndex(
+		pipelineIndex
+	);
 
 	assert(oPipelineLocalIndex && "Local pipeline doesn't exist.");
 

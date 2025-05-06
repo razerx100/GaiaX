@@ -318,7 +318,7 @@ public:
 	[[nodiscard]]
 	std::optional<size_t> GetPipelineLocalIndex(std::uint32_t pipelineIndex) const noexcept
 	{
-		return FindPipeline(pipelineIndex);
+		return m_modelBundle->FindLocalPipelineIndex(pipelineIndex);
 	}
 
 	void SetModelBundle(std::shared_ptr<ModelBundle>&& modelBundle) noexcept
@@ -342,26 +342,6 @@ public:
 	const std::shared_ptr<ModelBundle>& GetModelBundle() const noexcept { return m_modelBundle; }
 
 protected:
-	[[nodiscard]]
-	std::optional<size_t> FindPipeline(std::uint32_t pipelineIndex) const noexcept
-	{
-		std::optional<size_t> index{};
-
-		const std::vector<PipelineModelBundle>& pipelines = m_modelBundle->GetPipelineBundles();
-
-		auto result = std::ranges::find(
-			pipelines, pipelineIndex, [](const PipelineModelBundle& pipeline)
-			{
-				return pipeline.GetPipelineIndex();
-			}
-		);
-
-		if (result != std::end(pipelines))
-			index = std::distance(std::begin(pipelines), result);
-
-		return index;
-	}
-
 	void _cleanupData() noexcept { operator=(ModelBundleBase{}); }
 
 	size_t _addPipeline(std::uint32_t localIndex)
