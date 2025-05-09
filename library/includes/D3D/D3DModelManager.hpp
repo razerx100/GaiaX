@@ -239,18 +239,18 @@ private:
 	}
 
 private:
-	std::vector<SharedBufferCPU>               m_argumentInputBuffers;
-	std::vector<SharedBufferGPUWriteOnly>      m_argumentOutputBuffers;
-	SharedBufferCPU                            m_perPipelineBuffer;
-	std::vector<SharedBufferGPUWriteOnly>      m_counterBuffers;
-	Buffer                                     m_counterResetBuffer;
-	MultiInstanceCPUBuffer<PerModelBundleData> m_perModelBundleBuffer;
-	SharedBufferCPU                            m_perModelBuffer;
-	UINT                                       m_dispatchXCount;
-	UINT                                       m_allocatedModelCount;
-	std::uint32_t                              m_csPSOIndex;
-	UINT                                       m_constantsVSRootIndex;
-	UINT                                       m_constantsCSRootIndex;
+	std::vector<SharedBufferCPU>          m_argumentInputBuffers;
+	std::vector<SharedBufferGPUWriteOnly> m_argumentOutputBuffers;
+	SharedBufferCPU                       m_perPipelineBuffer;
+	std::vector<SharedBufferGPUWriteOnly> m_counterBuffers;
+	Buffer                                m_counterResetBuffer;
+	MultiInstanceCPUBuffer                m_perModelBundleBuffer;
+	SharedBufferCPU                       m_perModelBuffer;
+	UINT                                  m_dispatchXCount;
+	UINT                                  m_allocatedModelCount;
+	std::uint32_t                         m_csPSOIndex;
+	UINT                                  m_constantsVSRootIndex;
+	UINT                                  m_constantsCSRootIndex;
 
 	// Vertex Shader ones
 	// CBV

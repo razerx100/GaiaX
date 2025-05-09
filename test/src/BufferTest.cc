@@ -116,8 +116,9 @@ TEST_F(BufferTest, ReusableBufferTest)
 
 	MemoryManager memoryManager{ adapter, device, 20_MB, 200_KB };
 
-	MultiInstanceCPUBuffer<size_t> reusableCpuMBuffer{
-		device, &memoryManager, Constants::bufferCount
+	MultiInstanceCPUBuffer reusableCpuMBuffer{
+		device, &memoryManager, Constants::bufferCount, static_cast<std::uint32_t>(sizeof(size_t))
 	};
-	reusableCpuMBuffer.ExtendBufferIfNecessaryFor(1u);
+
+	reusableCpuMBuffer.AllocateForIndex(1u);
 }

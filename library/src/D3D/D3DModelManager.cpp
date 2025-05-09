@@ -51,7 +51,9 @@ ModelManagerVSIndirect::ModelManagerVSIndirect(
 	m_perPipelineBuffer{ device, memoryManager, D3D12_RESOURCE_STATE_GENERIC_READ },
 	m_counterBuffers{},
 	m_counterResetBuffer{ device, memoryManager, D3D12_HEAP_TYPE_UPLOAD },
-	m_perModelBundleBuffer{ device, memoryManager, frameCount },
+	m_perModelBundleBuffer{
+		device, memoryManager, frameCount, static_cast<std::uint32_t>(sizeof(PerModelBundleData))
+	},
 	m_perModelBuffer{ device, memoryManager, D3D12_RESOURCE_STATE_GENERIC_READ },
 	m_dispatchXCount{ 0u }, m_allocatedModelCount{ 0u }, m_csPSOIndex{ 0u }, m_constantsVSRootIndex{ 0u },
 	m_constantsCSRootIndex{ 0u }
@@ -138,7 +140,7 @@ std::uint32_t ModelManagerVSIndirect::AddModelBundle(std::shared_ptr<ModelBundle
 
 	UpdateCounterResetValues();
 
-	m_perModelBundleBuffer.ExtendBufferIfNecessaryFor(bundleIndex);
+	m_perModelBundleBuffer.AllocateForIndex(bundleIndex);
 
 	UpdateAllocatedModelCount();
 
