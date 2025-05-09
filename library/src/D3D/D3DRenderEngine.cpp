@@ -31,7 +31,7 @@ RenderEngine::RenderEngine(
 	m_textureManager{ device },
 	m_cameraManager{ device, m_memoryManager.get() },
 	m_viewportAndScissors{}, m_temporaryDataBuffer{}, m_renderPasses{}, m_swapchainRenderPass{},
-	m_copyNecessary{ false }
+	m_gpuCopyNecessary{ false }
 {
 	for (size_t _ = 0u; _ < frameCount; ++_)
 	{
@@ -127,14 +127,6 @@ void RenderEngine::WaitForGraphicsQueueToFinish()
 		counterValue = highestCounterValue;
 }
 
-std::vector<std::uint32_t> RenderEngine::AddModelsToBuffer(
-	const ModelBundle& modelBundle, ModelBuffers& modelBuffers
-) noexcept {
-	std::vector<std::shared_ptr<Model>> models = modelBundle.GetModels();
-
-	return modelBuffers.AddMultipleRU32(std::move(models));
-}
-
 void RenderEngine::UpdateExternalBufferDescriptor(
 	const ExternalBufferBindingDetails& bindingDetails
 ) {
@@ -160,6 +152,6 @@ void RenderEngine::QueueExternalBufferGPUCopy(
 		srcDataSizeInBytes, m_temporaryDataBuffer
 	);
 
-	m_copyNecessary = true;
+	m_gpuCopyNecessary = true;
 }
 }

@@ -1,22 +1,31 @@
 #ifndef D3D_MODEL_BUFFER_HPP_
 #define D3D_MODEL_BUFFER_HPP_
-#include <Model.hpp>
-#include <D3DSharedBuffer.hpp>
+#include <ModelContainer.hpp>
+#include <D3DResources.hpp>
+#include <D3DDescriptorHeapManager.hpp>
 
 namespace Gaia
 {
-class ModelBuffers : public ReusableD3DBuffer<ModelBuffers, std::shared_ptr<Model>>
+class ModelBuffers
 {
-	friend class ReusableD3DBuffer<ModelBuffers, std::shared_ptr<Model>>;
+	using ModelContainer_t = std::shared_ptr<ModelContainer>;
 
 public:
 	ModelBuffers(
 		ID3D12Device* device, MemoryManager* memoryManager, std::uint32_t frameCount
-	) : ReusableD3DBuffer{ device, memoryManager, D3D12_HEAP_TYPE_UPLOAD },
+	) : m_modelContainer{},
+		m_vertexModelBuffers{ device, memoryManager, D3D12_HEAP_TYPE_UPLOAD },
 		m_pixelModelBuffers{ device, memoryManager, D3D12_HEAP_TYPE_UPLOAD },
 		m_modelBuffersInstanceSize{ 0u }, m_modelBuffersPixelInstanceSize{ 0u },
 		m_bufferInstanceCount{ frameCount }
 	{}
+
+	void SetModelContainer(std::shared_ptr<ModelContainer> modelContainer) noexcept
+	{
+		m_modelContainer = std::move(modelContainer);
+	}
+
+	void ExtendModelBuffers();
 
 	void SetDescriptor(
 		D3DDescriptorManager& descriptorManager, UINT64 frameIndex, size_t registerSlot,
@@ -26,11 +35,6 @@ public:
 		D3DDescriptorManager& descriptorManager, UINT64 frameIndex, size_t registerSlot,
 		size_t registerSpace
 	) const;
-
-	using ReusableD3DBuffer<ModelBuffers, std::shared_ptr<Model>>::Remove;
-
-	void Remove(const std::vector<std::uint32_t>& indices) noexcept;
-	void Remove(const std::vector<size_t>& indices) noexcept;
 
 	void Update(UINT64 bufferIndex) const noexcept;
 
@@ -74,17 +78,20 @@ private:
 	void CreateBuffer(size_t modelCount);
 
 private:
-	Buffer        m_pixelModelBuffers;
-	UINT64        m_modelBuffersInstanceSize;
-	UINT64        m_modelBuffersPixelInstanceSize;
-	std::uint32_t m_bufferInstanceCount;
+	ModelContainer_t m_modelContainer;
+	Buffer           m_vertexModelBuffers;
+	Buffer           m_pixelModelBuffers;
+	UINT64           m_modelBuffersInstanceSize;
+	UINT64           m_modelBuffersPixelInstanceSize;
+	std::uint32_t    m_bufferInstanceCount;
 
 public:
 	ModelBuffers(const ModelBuffers&) = delete;
 	ModelBuffers& operator=(const ModelBuffers&) = delete;
 
 	ModelBuffers(ModelBuffers&& other) noexcept
-		: ReusableD3DBuffer{ std::move(other) },
+		: m_modelContainer{ std::move(other.m_modelContainer) },
+		m_vertexModelBuffers{ std::move(other.m_vertexModelBuffers) },
 		m_pixelModelBuffers{ std::move(other.m_pixelModelBuffers) },
 		m_modelBuffersInstanceSize{ other.m_modelBuffersInstanceSize },
 		m_modelBuffersPixelInstanceSize{ other.m_modelBuffersPixelInstanceSize },
@@ -92,7 +99,8 @@ public:
 	{}
 	ModelBuffers& operator=(ModelBuffers&& other) noexcept
 	{
-		ReusableD3DBuffer::operator=(std::move(other));
+		m_modelContainer                = std::move(other.m_modelContainer);
+		m_vertexModelBuffers            = std::move(other.m_vertexModelBuffers);
 		m_pixelModelBuffers             = std::move(other.m_pixelModelBuffers);
 		m_modelBuffersInstanceSize      = other.m_modelBuffersInstanceSize;
 		m_modelBuffersPixelInstanceSize = other.m_modelBuffersPixelInstanceSize;

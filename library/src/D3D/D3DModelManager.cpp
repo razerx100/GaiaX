@@ -122,16 +122,12 @@ void ModelManagerVSIndirect::UpdateAllocatedModelCount() noexcept
 	m_dispatchXCount = static_cast<UINT>(std::ceil(m_allocatedModelCount / THREADBLOCKSIZE));
 }
 
-std::uint32_t ModelManagerVSIndirect::AddModelBundle(
-	std::shared_ptr<ModelBundle>&& modelBundle,
-	const std::vector<std::uint32_t>& modelIndicesInBuffer
-) {
+std::uint32_t ModelManagerVSIndirect::AddModelBundle(std::shared_ptr<ModelBundle>&& modelBundle)
+{
 	const size_t bundleIndex  = m_modelBundles.Add(ModelBundleVSIndirect{});
 	const auto bundleIndexU32 = static_cast<std::uint32_t>(bundleIndex);
 
 	ModelBundleVSIndirect& localModelBundle = m_modelBundles[bundleIndex];
-
-	SetModelIndicesInBuffer(*modelBundle, modelIndicesInBuffer);
 
 	localModelBundle.SetModelBundle(std::move(modelBundle));
 

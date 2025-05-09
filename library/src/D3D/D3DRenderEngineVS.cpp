@@ -101,18 +101,16 @@ std::uint32_t RenderEngineVSIndividual::AddModelBundle(std::shared_ptr<ModelBund
 {
 	WaitForGPUToFinish();
 
-	std::vector<std::uint32_t> modelBufferIndices
-		= AddModelsToBuffer(*modelBundle, m_modelBuffers);
+	m_modelBuffers.ExtendModelBuffers();
 
-	const std::uint32_t index = m_modelManager.AddModelBundle(
-		std::move(modelBundle), modelBufferIndices
-	);
+	const std::uint32_t index = m_modelManager.AddModelBundle(std::move(modelBundle));
 
 	// After new models have been added, the ModelBuffer might get recreated. So, it will have
 	// a new object. So, we should set that new object as the descriptor.
 	SetGraphicsDescriptors();
 
-	m_copyNecessary = true;
+	// For now at least, there is no GPU upload necessary after adding a new Mesh Shader
+	// Model Bundle.
 
 	return index;
 }
@@ -121,7 +119,7 @@ std::uint32_t RenderEngineVSIndividual::AddMeshBundle(MeshBundleTemporaryData&& 
 {
 	WaitForGPUToFinish();
 
-	m_copyNecessary = true;
+	m_gpuCopyNecessary = true;
 
 	return m_meshManager.AddMeshBundle(
 		std::move(meshBundle), m_stagingManager, m_temporaryDataBuffer
@@ -135,7 +133,7 @@ ID3D12Fence* RenderEngineVSIndividual::GenericCopyStage(
 	// If the Copy stage isn't executed, pass the waitFence on.
 	ID3D12Fence* signalledFence = waitFence;
 
-	if (m_copyNecessary)
+	if (m_gpuCopyNecessary)
 	{
 		const D3DCommandList& copyCmdList = m_copyQueue.GetCommandList(frameIndex);
 
@@ -166,8 +164,8 @@ ID3D12Fence* RenderEngineVSIndividual::GenericCopyStage(
 			m_temporaryDataBuffer.SetUsed(frameIndex);
 		}
 
-		m_copyNecessary = false;
-		signalledFence  = copyWaitFence.Get();
+		m_gpuCopyNecessary = false;
+		signalledFence     = copyWaitFence.Get();
 	}
 
 	return signalledFence;
@@ -593,20 +591,16 @@ std::uint32_t RenderEngineVSIndirect::AddModelBundle(std::shared_ptr<ModelBundle
 {
 	WaitForGPUToFinish();
 
-	std::vector<std::uint32_t> modelBufferIndices = AddModelsToBuffer(
-		*modelBundle, m_modelBuffers
-	);
+	m_modelBuffers.ExtendModelBuffers();
 
-	const std::uint32_t index = m_modelManager.AddModelBundle(
-		std::move(modelBundle), modelBufferIndices
-	);
+	const std::uint32_t index = m_modelManager.AddModelBundle(std::move(modelBundle));
 
 	// After new models have been added, the ModelBuffer might get recreated. So, it will have
 	// a new object. So, we should set that new object as the descriptor.
 	SetModelGraphicsDescriptors();
 	SetModelComputeDescriptors();
 
-	m_copyNecessary = true;
+	m_gpuCopyNecessary = true;
 
 	return index;
 }
@@ -621,7 +615,7 @@ std::uint32_t RenderEngineVSIndirect::AddMeshBundle(MeshBundleTemporaryData&& me
 
 	m_meshManager.SetDescriptorsCS(m_computeDescriptorManagers, s_computeShaderRegisterSpace);
 
-	m_copyNecessary = true;
+	m_gpuCopyNecessary = true;
 
 	return index;
 }
@@ -633,7 +627,7 @@ ID3D12Fence* RenderEngineVSIndirect::GenericCopyStage(
 	// If the Copy stage isn't executed, pass the waitFence on.
 	ID3D12Fence* signalledFence = waitFence;
 
-	if (m_copyNecessary)
+	if (m_gpuCopyNecessary)
 	{
 		const D3DCommandList& copyCmdList = m_copyQueue.GetCommandList(frameIndex);
 
@@ -664,8 +658,8 @@ ID3D12Fence* RenderEngineVSIndirect::GenericCopyStage(
 			m_temporaryDataBuffer.SetUsed(frameIndex);
 		}
 
-		m_copyNecessary = false;
-		signalledFence  = copyWaitFence.Get();
+		m_gpuCopyNecessary = false;
+		signalledFence     = copyWaitFence.Get();
 	}
 
 	return signalledFence;

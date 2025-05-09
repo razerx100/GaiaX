@@ -21,21 +21,19 @@ D3D12_DRAW_INDEXED_ARGUMENTS PipelineModelsBase::GetDrawIndexedIndirectCommand(
 
 // Pipeline Models VS Individual
 void PipelineModelsVSIndividual::DrawModel(
-	const std::shared_ptr<Model>& model, ID3D12GraphicsCommandList* graphicsList,
+	const Model& model, std::uint32_t modelIndexInBuffer, ID3D12GraphicsCommandList* graphicsList,
 	UINT constantsRootIndex, const D3DMeshBundleVS& meshBundle
 ) const noexcept {
-	if (!model->IsVisible())
+	if (!model.IsVisible())
 		return;
 
 	constexpr UINT pushConstantCount = GetConstantCount();
 
-	const std::uint32_t indexInBuffer = model->GetModelIndexInBuffer();
-
 	graphicsList->SetGraphicsRoot32BitConstants(
-		constantsRootIndex, pushConstantCount, &indexInBuffer, 0u
+		constantsRootIndex, pushConstantCount, &modelIndexInBuffer, 0u
 	);
 
-	const MeshTemporaryDetailsVS& meshDetailsVS = meshBundle.GetMeshDetails(model->GetMeshIndex());
+	const MeshTemporaryDetailsVS& meshDetailsVS = meshBundle.GetMeshDetails(model.GetMeshIndex());
 	const D3D12_DRAW_INDEXED_ARGUMENTS meshArgs = GetDrawIndexedIndirectCommand(meshDetailsVS);
 
 	graphicsList->DrawIndexedInstanced(
@@ -46,29 +44,38 @@ void PipelineModelsVSIndividual::DrawModel(
 
 void PipelineModelsVSIndividual::Draw(
 	const D3DCommandList& graphicsList, UINT constantsRootIndex, const D3DMeshBundleVS& meshBundle,
-	const PipelineModelBundle& pipelineBundle, const std::vector<std::shared_ptr<Model>>& models
+	const Callisto::ReusableVector<Model>& models,
+	const std::vector<std::uint32_t>& modelIndicesInContainer,
+	const PipelineModelBundle& pipelineBundle
 ) const noexcept {
-	const std::vector<std::uint32_t>& pipelineModelIndices
+	const std::vector<std::uint32_t>& pipelineModelIndicesInBundle
 		= pipelineBundle.GetModelIndicesInBundle();
 
 	ID3D12GraphicsCommandList* cmdList = graphicsList.Get();
 
-	for (std::uint32_t modelIndexInBundle : pipelineModelIndices)
-		DrawModel(models[modelIndexInBundle], cmdList, constantsRootIndex, meshBundle);
+	for (std::uint32_t modelIndexInBundle : pipelineModelIndicesInBundle)
+	{
+		const std::uint32_t modelIndexInContainer = modelIndicesInContainer[modelIndexInBundle];
+
+		DrawModel(
+			models[modelIndexInContainer], modelIndexInContainer, cmdList, constantsRootIndex,
+			meshBundle
+		);
+	}
 }
 
 // Pipeline Models MS Individual
 void PipelineModelsMSIndividual::DrawModel(
-	const std::shared_ptr<Model>& model, ID3D12GraphicsCommandList6* graphicsList,
+	const Model& model, std::uint32_t modelIndexInBuffer, ID3D12GraphicsCommandList6* graphicsList,
 	UINT constantsRootIndex, const D3DMeshBundleMS& meshBundle
 ) const noexcept {
-	if (!model->IsVisible())
+	if (!model.IsVisible())
 		return;
 
 	constexpr UINT pushConstantCount = GetConstantCount();
 	constexpr UINT constBufferOffset = D3DMeshBundleMS::GetConstantCount();
 
-	const MeshTemporaryDetailsMS& meshDetailsMS = meshBundle.GetMeshDetails(model->GetMeshIndex());
+	const MeshTemporaryDetailsMS& meshDetailsMS = meshBundle.GetMeshDetails(model.GetMeshIndex());
 
 	const ModelDetailsMS constants
 	{
@@ -80,7 +87,7 @@ void PipelineModelsMSIndividual::DrawModel(
 				.primOffset    = meshDetailsMS.primitiveOffset,
 				.vertexOffset  = meshDetailsMS.vertexOffset,
 			},
-		.modelBufferIndex = model->GetModelIndexInBuffer()
+		.modelBufferIndex = modelIndexInBuffer
 	};
 
 	graphicsList->SetGraphicsRoot32BitConstants(
@@ -103,15 +110,24 @@ void PipelineModelsMSIndividual::DrawModel(
 
 void PipelineModelsMSIndividual::Draw(
 	const D3DCommandList& graphicsList, UINT constantsRootIndex, const D3DMeshBundleMS& meshBundle,
-	const PipelineModelBundle& pipelineBundle, const std::vector<std::shared_ptr<Model>>& models
+	const Callisto::ReusableVector<Model>& models,
+	const std::vector<std::uint32_t>& modelIndicesInContainer,
+	const PipelineModelBundle& pipelineBundle
 ) const noexcept {
-	const std::vector<std::uint32_t>& pipelineModelIndices
+	const std::vector<std::uint32_t>& pipelineModelIndicesInBundle
 		= pipelineBundle.GetModelIndicesInBundle();
 
 	ID3D12GraphicsCommandList6* cmdList = graphicsList.Get();
 
-	for (std::uint32_t modelIndexInBundle : pipelineModelIndices)
-		DrawModel(models[modelIndexInBundle], cmdList, constantsRootIndex, meshBundle);
+	for (std::uint32_t modelIndexInBundle : pipelineModelIndicesInBundle)
+	{
+		const std::uint32_t modelIndexInContainer = modelIndicesInContainer[modelIndexInBundle];
+
+		DrawModel(
+			models[modelIndexInContainer], modelIndexInContainer, cmdList, constantsRootIndex,
+			meshBundle
+		);
+	}
 }
 
 // Pipeline Models CS Indirect
@@ -287,12 +303,14 @@ void PipelineModelsCSIndirect::AllocateBuffers(
 
 void PipelineModelsCSIndirect::Update(
 	size_t frameIndex, const D3DMeshBundleVS& meshBundle, bool skipCulling,
-	const PipelineModelBundle& pipelineBundle, const std::vector<std::shared_ptr<Model>>& models
+	const Callisto::ReusableVector<Model>& models,
+	const std::vector<std::uint32_t>& modelIndicesInContainer,
+	const PipelineModelBundle& pipelineBundle
 ) const noexcept {
-	const std::vector<std::uint32_t>& pipelineModelIndices
+	const std::vector<std::uint32_t>& pipelineModelIndicesInBundle
 		= pipelineBundle.GetModelIndicesInBundle();
 
-	const size_t modelCount = std::size(pipelineModelIndices);
+	const size_t modelCount = std::size(pipelineModelIndicesInBundle);
 
 	if (!modelCount)
 		return;
@@ -312,18 +330,20 @@ void PipelineModelsCSIndirect::Update(
 	std::uint32_t skipCullingFlag
 		= skipCulling ? static_cast<std::uint32_t>(ModelFlag::SkipCulling) : 0u;
 
-	for (std::uint32_t modelIndexInBundle : pipelineModelIndices)
+	for (std::uint32_t modelIndexInBundle : pipelineModelIndicesInBundle)
 	{
-		const std::shared_ptr<Model>& model = models[modelIndexInBundle];
+		const std::uint32_t modelIndexInContainer = modelIndicesInContainer[modelIndexInBundle];
+
+		const Model& model = models[modelIndexInContainer];
 
 		const MeshTemporaryDetailsVS& meshDetailsVS
-			= meshBundle.GetMeshDetails(model->GetMeshIndex());
+			= meshBundle.GetMeshDetails(model.GetMeshIndex());
 		const D3D12_DRAW_INDEXED_ARGUMENTS meshArgs
 			= PipelineModelsBase::GetDrawIndexedIndirectCommand(meshDetailsVS);
 
 		IndirectArgument arguments
 		{
-			.modelIndex    = model->GetModelIndexInBuffer(),
+			.modelIndex    = modelIndexInContainer,
 			.drawArguments = meshArgs
 		};
 
@@ -334,7 +354,7 @@ void PipelineModelsCSIndirect::Update(
 		// Model Flags
 		std::uint32_t modelFlags = skipCullingFlag;
 
-		if (model->IsVisible())
+		if (model.IsVisible())
 			modelFlags |= static_cast<std::uint32_t>(ModelFlag::Visibility);
 
 		memcpy(
@@ -505,14 +525,17 @@ void ModelBundleVSIndividual::DrawPipeline(
 
 	meshBundle.Bind(graphicsList);
 
-	const auto& models = m_modelBundle->GetModels();
+	const Callisto::ReusableVector<Model>& models
+		= m_modelBundle->GetModelContainer()->GetModels();
 
-	const std::vector<PipelineModelBundle>& pipelines = m_modelBundle->GetPipelineBundles();
+	const std::vector<std::uint32_t>& modelIndicesInContainer
+		= m_modelBundle->GetIndicesInContainer();
 
 	const PipelineModelsVSIndividual& d3dPipeline = m_pipelines[pipelineLocalIndex];
 
 	d3dPipeline.Draw(
-		graphicsList, constantsRootIndex, meshBundle, pipelines[pipelineLocalIndex], models
+		graphicsList, constantsRootIndex, meshBundle, models, modelIndicesInContainer,
+		m_modelBundle->GetPipeline(pipelineLocalIndex)
 	);
 }
 
@@ -540,14 +563,17 @@ void ModelBundleMSIndividual::DrawPipeline(
 
 	SetMeshBundleConstants(graphicsList.Get(), constantsRootIndex, meshBundle);
 
-	const auto& models = m_modelBundle->GetModels();
+	const Callisto::ReusableVector<Model>& models
+		= m_modelBundle->GetModelContainer()->GetModels();
 
-	const std::vector<PipelineModelBundle>& pipelines = m_modelBundle->GetPipelineBundles();
+	const std::vector<std::uint32_t>& modelIndicesInContainer
+		= m_modelBundle->GetIndicesInContainer();
 
 	const PipelineModelsMSIndividual& d3dPipeline = m_pipelines[pipelineLocalIndex];
 
 	d3dPipeline.Draw(
-		graphicsList, constantsRootIndex, meshBundle, pipelines[pipelineLocalIndex], models
+		graphicsList, constantsRootIndex, meshBundle, models, modelIndicesInContainer,
+		m_modelBundle->GetPipeline(pipelineLocalIndex)
 	);
 }
 
@@ -651,7 +677,7 @@ void ModelBundleVSIndirect::ReconfigureModels(
 	// Find the pipelines
 	const size_t pipelineCount = std::size(m_pipelines);
 
-	const std::vector<PipelineModelBundle>& pipelines = m_modelBundle->GetPipelineBundles();
+	const std::vector<PipelineModelBundle>& pipelines = m_modelBundle->GetPipelines();
 
 	for (size_t index = 0u; index < pipelineCount; ++index)
 	{
@@ -693,7 +719,7 @@ size_t ModelBundleVSIndirect::FindAddableStartIndex(
 
 	size_t totalAddableModel = 0u;
 
-	const std::vector<PipelineModelBundle>& pipelines = m_modelBundle->GetPipelineBundles();
+	const std::vector<PipelineModelBundle>& pipelines = m_modelBundle->GetPipelines();
 
 	for (size_t index = pipelineLocalIndex; index > 0u; --index)
 	{
@@ -741,7 +767,7 @@ void ModelBundleVSIndirect::ResizePreviousPipelines(
 	std::vector<SharedBufferGPUWriteOnly>& argumentOutputSharedBuffers,
 	std::vector<SharedBufferGPUWriteOnly>& counterSharedBuffers
 ) {
-	const std::vector<PipelineModelBundle>& pipelines = m_modelBundle->GetPipelineBundles();
+	const std::vector<PipelineModelBundle>& pipelines = m_modelBundle->GetPipelines();
 
 	for (size_t index = addableStartIndex; index < pipelineLocalIndex; ++index)
 	{
@@ -769,7 +795,7 @@ void ModelBundleVSIndirect::RecreateFollowingPipelines(
 ) {
 	const size_t pipelineCount = std::size(m_pipelines);
 
-	const std::vector<PipelineModelBundle>& pipelines = m_modelBundle->GetPipelineBundles();
+	const std::vector<PipelineModelBundle>& pipelines = m_modelBundle->GetPipelines();
 
 	for (size_t index = pipelineLocalIndex; index < pipelineCount; ++index)
 	{
@@ -809,7 +835,7 @@ void ModelBundleVSIndirect::SetupPipelineBuffers(
 
 	const auto pipelineCount = static_cast<std::uint32_t>(std::size(m_pipelines));
 
-	const std::vector<PipelineModelBundle>& pipelines = m_modelBundle->GetPipelineBundles();
+	const std::vector<PipelineModelBundle>& pipelines = m_modelBundle->GetPipelines();
 
 	// We don't have to mess with any other pipelines if ours is the last pipeline.
 	if (pipelineLocalIndex + 1u == pipelineCount)
@@ -856,17 +882,20 @@ void ModelBundleVSIndirect::UpdatePipeline(
 	size_t pipelineLocalIndex, size_t frameIndex, const D3DMeshBundleVS& meshBundle,
 	bool skipCulling
 ) const noexcept {
-	const auto& models = m_modelBundle->GetModels();
-
 	if (!m_pipelines.IsInUse(pipelineLocalIndex))
 		return;
 
+	const Callisto::ReusableVector<Model>& models
+		= m_modelBundle->GetModelContainer()->GetModels();
+
+	const std::vector<std::uint32_t>& modelIndicesInContainer
+		= m_modelBundle->GetIndicesInContainer();
+
 	const PipelineModelsCSIndirect& d3dPipeline = m_pipelines[pipelineLocalIndex];
 
-	const std::vector<PipelineModelBundle>& pipelines = m_modelBundle->GetPipelineBundles();
-
 	d3dPipeline.Update(
-		frameIndex, meshBundle, skipCulling, pipelines[pipelineLocalIndex], models
+		frameIndex, meshBundle, skipCulling, models, modelIndicesInContainer,
+		m_modelBundle->GetPipeline(pipelineLocalIndex)
 	);
 }
 

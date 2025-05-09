@@ -14,7 +14,7 @@
 #include <D3DCameraManager.hpp>
 #include <D3DViewportAndScissorManager.hpp>
 #include <D3DRootSignature.hpp>
-#include <Model.hpp>
+#include <ModelBundle.hpp>
 #include <Shader.hpp>
 #include <MeshBundle.hpp>
 #include <D3DModelBuffer.hpp>
@@ -263,13 +263,7 @@ public:
 		return activeRenderPassCount;
 	}
 
-
 protected:
-	[[nodiscard]]
-	static std::vector<std::uint32_t> AddModelsToBuffer(
-		const ModelBundle& modelBundle, ModelBuffers& modelBuffers
-	) noexcept;
-
 	void WaitForGraphicsQueueToFinish();
 
 protected:
@@ -308,7 +302,7 @@ protected:
 	Callisto::TemporaryDataBufferGPU           m_temporaryDataBuffer;
 	ExternalRenderPassContainer_t              m_renderPasses;
 	ExternalRenderPassSP_t                     m_swapchainRenderPass;
-	bool                                       m_copyNecessary;
+	bool                                       m_gpuCopyNecessary;
 
 public:
 	RenderEngine(const RenderEngine&) = delete;
@@ -334,7 +328,7 @@ public:
 		m_temporaryDataBuffer{ std::move(other.m_temporaryDataBuffer) },
 		m_renderPasses{ std::move(other.m_renderPasses) },
 		m_swapchainRenderPass{ std::move(other.m_swapchainRenderPass) },
-		m_copyNecessary{ other.m_copyNecessary }
+		m_gpuCopyNecessary{ other.m_gpuCopyNecessary }
 	{}
 	RenderEngine& operator=(RenderEngine&& other) noexcept
 	{
@@ -357,7 +351,7 @@ public:
 		m_temporaryDataBuffer        = std::move(other.m_temporaryDataBuffer);
 		m_renderPasses               = std::move(other.m_renderPasses);
 		m_swapchainRenderPass        = std::move(other.m_swapchainRenderPass);
-		m_copyNecessary              = other.m_copyNecessary;
+		m_gpuCopyNecessary           = other.m_gpuCopyNecessary;
 
 		return *this;
 	}
@@ -420,14 +414,10 @@ public:
 		m_meshManager.RemoveMeshBundle(bundleIndex);
 	}
 
-	void RemoveModelBundle(std::uint32_t bundleIndex) noexcept
+	[[nodiscard]]
+	std::shared_ptr<ModelBundle> RemoveModelBundle(std::uint32_t bundleIndex) noexcept
 	{
-		std::shared_ptr<ModelBundle> modelBundle = m_modelManager.RemoveModelBundle(bundleIndex);
-
-		const auto& models = modelBundle->GetModels();
-
-		for (const std::shared_ptr<Model>& model : models)
-			m_modelBuffers.Remove(model->GetModelIndexInBuffer());
+		return m_modelManager.RemoveModelBundle(bundleIndex);
 	}
 
 	void Resize(UINT width, UINT height)

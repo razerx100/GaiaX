@@ -31,19 +31,6 @@ public:
 	}
 
 protected:
-	static void SetModelIndicesInBuffer(
-		ModelBundle& modelBundle, const std::vector<std::uint32_t>& modelIndicesInBuffer
-	) noexcept {
-		std::vector<std::shared_ptr<Model>>& models = modelBundle.GetModels();
-
-		// The number of indices and the number of models should be the same.
-		const size_t modelCount = std::size(models);
-
-		for (size_t index = 0u; index < modelCount; ++index)
-			models[index]->SetModelIndexInBuffer(modelIndicesInBuffer[index]);
-	}
-
-protected:
 	Callisto::ReusableVector<ModelBundleType> m_modelBundles;
 
 public:
@@ -78,17 +65,11 @@ public:
 
 	// Will think about Adding a new model later.
 	[[nodiscard]]
-	std::uint32_t AddModelBundle(
-		std::shared_ptr<ModelBundle>&& modelBundle,
-		const std::vector<std::uint32_t>& modelIndicesInBuffer
-	) {
+	std::uint32_t AddModelBundle(std::shared_ptr<ModelBundle>&& modelBundle)
+	{
 		const size_t bundleIndex          = this->m_modelBundles.Add(ModelBundleType{});
 
 		ModelBundleType& localModelBundle = this->m_modelBundles[bundleIndex];
-
-		ModelManager<ModelBundleType>::SetModelIndicesInBuffer(
-			*modelBundle, modelIndicesInBuffer
-		);
 
 		localModelBundle.SetModelBundle(std::move(modelBundle));
 
@@ -205,10 +186,7 @@ public:
 
 	// Will think about Adding a new model later.
 	[[nodiscard]]
-	std::uint32_t AddModelBundle(
-		std::shared_ptr<ModelBundle>&& modelBundle,
-		const std::vector<std::uint32_t>& modelIndicesInBuffer
-	);
+	std::uint32_t AddModelBundle(std::shared_ptr<ModelBundle>&& modelBundle);
 
 	// The model bundle is needed to cleanup the buffer indices.
 	[[nodiscard]]

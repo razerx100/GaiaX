@@ -116,10 +116,8 @@ TEST_F(BufferTest, ReusableBufferTest)
 
 	MemoryManager memoryManager{ adapter, device, 20_MB, 200_KB };
 
-	ReusableCPUBuffer<size_t> reusableCpuBuffer{ device, &memoryManager };
-	reusableCpuBuffer.Add(1u, 100u);
-	reusableCpuBuffer.Update(1u, 99u);
-
-	MultiInstanceCPUBuffer<size_t> reusableCpuMBuffer{ device, &memoryManager, Constants::bufferCount };
+	MultiInstanceCPUBuffer<size_t> reusableCpuMBuffer{
+		device, &memoryManager, Constants::bufferCount
+	};
 	reusableCpuMBuffer.ExtendBufferIfNecessaryFor(1u);
 }

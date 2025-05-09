@@ -2,7 +2,8 @@
 #define D3D_MODEL_BUNDLE_HPP_
 #include <memory>
 #include <vector>
-#include <Model.hpp>
+#include <ModelContainer.hpp>
+#include <ModelBundle.hpp>
 #include <ReusableVector.hpp>
 #include <D3DMeshBundleMS.hpp>
 #include <D3DMeshBundleVS.hpp>
@@ -57,8 +58,9 @@ public:
 
 	void Draw(
 		const D3DCommandList& graphicsList, UINT constantsRootIndex,
-		const D3DMeshBundleVS& meshBundle, const PipelineModelBundle& pipelineBundle,
-		const std::vector<std::shared_ptr<Model>>& models
+		const D3DMeshBundleVS& meshBundle, const Callisto::ReusableVector<Model>& models,
+		const std::vector<std::uint32_t>& modelIndicesInContainer,
+		const PipelineModelBundle& pipelineBundle
 	) const noexcept;
 
 	[[nodiscard]]
@@ -66,8 +68,9 @@ public:
 
 private:
 	void DrawModel(
-		const std::shared_ptr<Model>& model, ID3D12GraphicsCommandList* graphicsList,
-		UINT constantsRootIndex, const D3DMeshBundleVS& meshBundle
+		const Model& model, std::uint32_t modelIndexInBuffer,
+		ID3D12GraphicsCommandList* graphicsList, UINT constantsRootIndex,
+		const D3DMeshBundleVS& meshBundle
 	) const noexcept;
 
 public:
@@ -111,8 +114,9 @@ public:
 
 	void Draw(
 		const D3DCommandList& graphicsList, UINT constantsRootIndex,
-		const D3DMeshBundleMS& meshBundle, const PipelineModelBundle& pipelineBundle,
-		const std::vector<std::shared_ptr<Model>>& models
+		const D3DMeshBundleMS& meshBundle, const Callisto::ReusableVector<Model>& models,
+		const std::vector<std::uint32_t>& modelIndicesInContainer,
+		const PipelineModelBundle& pipelineBundle
 	) const noexcept;
 
 	[[nodiscard]]
@@ -129,8 +133,9 @@ private:
 	}
 
 	void DrawModel(
-		const std::shared_ptr<Model>& model, ID3D12GraphicsCommandList6* graphicsList,
-		UINT constantsRootIndex, const D3DMeshBundleMS& meshBundle
+		const Model& model, std::uint32_t modelIndexInBuffer,
+		ID3D12GraphicsCommandList6* graphicsList, UINT constantsRootIndex,
+		const D3DMeshBundleMS& meshBundle
 	) const noexcept;
 
 private:
@@ -207,8 +212,9 @@ public:
 
 	void Update(
 		size_t frameIndex, const D3DMeshBundleVS& meshBundle, bool skipCulling,
-		const PipelineModelBundle& pipelineBundle,
-		const std::vector<std::shared_ptr<Model>>& models
+		const Callisto::ReusableVector<Model>& models,
+		const std::vector<std::uint32_t>& modelIndicesInContainer,
+		const PipelineModelBundle& pipelineBundle
 	) const noexcept;
 
 	void RelinquishMemory(
@@ -335,7 +341,7 @@ public:
 	[[nodiscard]]
 	std::uint32_t GetModelCount() const noexcept
 	{
-		return static_cast<std::uint32_t>(std::size(m_modelBundle->GetModels()));
+		return static_cast<std::uint32_t>(m_modelBundle->GetModelCount());
 	}
 
 	[[nodiscard]]

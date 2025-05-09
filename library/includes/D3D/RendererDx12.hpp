@@ -112,9 +112,10 @@ public:
 		return m_gaia.GetRenderEngine().AddModelBundle(std::move(modelBundle));
 	}
 
-	void RemoveModelBundle(std::uint32_t bundleIndex) noexcept
+	[[nodiscard]]
+	std::shared_ptr<ModelBundle> RemoveModelBundle(std::uint32_t bundleIndex) noexcept
 	{
-		m_gaia.GetRenderEngine().RemoveModelBundle(bundleIndex);
+		return m_gaia.GetRenderEngine().RemoveModelBundle(bundleIndex);
 	}
 
 	[[nodiscard]]

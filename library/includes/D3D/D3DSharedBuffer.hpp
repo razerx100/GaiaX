@@ -2,7 +2,6 @@
 #define D3D_SHARED_BUFFER_HPP_
 #include <D3DResources.hpp>
 #include <D3DDescriptorHeapManager.hpp>
-#include <D3DReusableBuffer.hpp>
 #include <D3DCommandQueue.hpp>
 #include <queue>
 #include <TemporaryDataBuffer.hpp>
