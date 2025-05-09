@@ -7,7 +7,7 @@
 #include <algorithm>
 #include <Model.hpp>
 #include <D3DCommandQueue.hpp>
-#include <D3DReusableBuffer.hpp>
+#include <D3DMultiInstanceBuffer.hpp>
 #include <D3DGraphicsPipelineVS.hpp>
 #include <D3DGraphicsPipelineMS.hpp>
 #include <D3DComputePipeline.hpp>

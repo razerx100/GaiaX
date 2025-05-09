@@ -4,7 +4,7 @@
 
 #include <D3DResources.hpp>
 #include <D3DCameraManager.hpp>
-#include <D3DReusableBuffer.hpp>
+#include <D3DMultiInstanceBuffer.hpp>
 
 using namespace Gaia;
 

@@ -1,5 +1,5 @@
-#ifndef D3D_REUSABLE_BUFFER_HPP_
-#define D3D_REUSABLE_BUFFER_HPP_
+#ifndef D3D_MULTI_INSTANCE_BUFFER_HPP_
+#define D3D_MULTI_INSTANCE_BUFFER_HPP_
 #include <D3DResources.hpp>
 #include <D3DDescriptorHeapManager.hpp>
 #include <utility>
@@ -65,6 +65,8 @@ public:
 		const UINT64 currentSize    = m_buffer.BufferSize();
 		constexpr size_t strideSize = GetStride();
 
+		// The index of the first element will be 0, so need to add the space for an
+		// extra element.
 		const auto minimumSpaceRequirement = static_cast<UINT64>(index * strideSize + strideSize);
 
 		if (currentSize < minimumSpaceRequirement)
