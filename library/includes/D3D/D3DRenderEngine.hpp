@@ -389,6 +389,11 @@ public:
 			);
 	}
 
+	void SetModelContainer(std::shared_ptr<ModelContainer> modelContainer) noexcept
+	{
+		m_modelBuffers.SetModelContainer(std::move(modelContainer));
+	}
+
 	[[nodiscard]]
 	std::uint32_t AddGraphicsPipeline(const ExternalGraphicsPipeline& gfxPipeline)
 	{

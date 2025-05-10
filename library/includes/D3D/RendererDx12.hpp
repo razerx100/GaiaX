@@ -106,6 +106,11 @@ public:
 		m_gaia.GetRenderEngine().RemoveTexture(textureIndex);
 	}
 
+	void SetModelContainer(std::shared_ptr<ModelContainer> modelContainer) noexcept
+	{
+		m_gaia.GetRenderEngine().SetModelContainer(std::move(modelContainer));
+	}
+
 	[[nodiscard]]
 	std::uint32_t AddModelBundle(std::shared_ptr<ModelBundle>&& modelBundle)
 	{
