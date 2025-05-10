@@ -53,7 +53,7 @@ public:
 			std::move(texture), self.m_stagingManager, self.m_temporaryDataBuffer
 		);
 
-		self.m_copyNecessary = true;
+		self.m_gpuCopyNecessary = true;
 
 		return textureIndex;
 	}
