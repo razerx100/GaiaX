@@ -187,7 +187,7 @@ public:
 	[[nodiscard]]
 	auto&& GetModel(this auto&& self, size_t localIndex) noexcept
 	{
-		const size_t containerIndex = m_modelIndicesInContainer[localIndex];
+		const size_t containerIndex = self.m_modelIndicesInContainer[localIndex];
 
 		return std::forward_like<decltype(self)>(self.m_modelContainer->GetModel(containerIndex));
 	}
